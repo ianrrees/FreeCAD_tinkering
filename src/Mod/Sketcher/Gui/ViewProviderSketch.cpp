@@ -69,6 +69,8 @@
 
 #include <Inventor/SbTime.h>
 #include <boost/scoped_ptr.hpp>
+#include <boost/signal.hpp>
+#include <boost/bind.hpp>
 
 /// Here the FreeCAD includes sorted by Base,App,Gui......
 #include <Base/Tools.h>
@@ -320,6 +322,9 @@ bool ViewProviderSketch::keyPressed(bool pressed, int key)
 {
     switch (key)
     {
+    case SoKeyboardEvent::LEFT_CONTROL:
+        signalTempAutoConstraints(pressed);
+        break;
     case SoKeyboardEvent::ESCAPE:
         {
             // make the handler quit but not the edit mode
@@ -535,6 +540,7 @@ bool ViewProviderSketch::mouseButtonPressed(int Button, bool pressed, const SbVe
                     } else {
                         prvClickTime = SbTime::getTimeOfDay();
                         prvClickPoint = point;
+                        // This is probably redundant considering the one in moveMouse
                         prvCursorPos = cursorPos;
                         newCursorPos = cursorPos;
                         if (!done)
@@ -883,6 +889,16 @@ void ViewProviderSketch::editDoubleClicked(void)
     }
 }
 
+void ViewProviderSketch::updateCursor(void)
+{
+    Gui::MDIView *mdi = Gui::Application::Instance->activeDocument()->getActiveView();
+    Gui::View3DInventorViewer *viewer;
+    viewer = dynamic_cast<Gui::View3DInventor *>(mdi)->getViewer();
+
+    if(Mode != STATUS_SKETCH_UseRubberBand)
+        mouseMove(prvCursorPos, viewer);
+}
+
 bool ViewProviderSketch::mouseMove(const SbVec2s &cursorPos, Gui::View3DInventorViewer *viewer)
 {
     if (!edit)
@@ -899,13 +915,16 @@ bool ViewProviderSketch::mouseMove(const SbVec2s &cursorPos, Gui::View3DInventor
 
     bool preselectChanged;
     if (Mode!=STATUS_SKETCH_DragPoint && Mode!=STATUS_SKETCH_DragCurve &&
-        Mode!=STATUS_SKETCH_DragConstraint) {
+        Mode!=STATUS_SKETCH_DragConstraint && Mode!=STATUS_SKETCH_UseRubberBand) {
 
         SoPickedPoint *pp = this->getPointOnRay(cursorPos, viewer);
         int PtIndex,GeoIndex,ConstrIndex,CrossIndex;
         preselectChanged = detectPreselection(pp,PtIndex,GeoIndex,ConstrIndex,CrossIndex);
         delete pp;
     }
+
+    if(Mode != STATUS_SKETCH_UseRubberBand)
+        prvCursorPos = cursorPos;
 
     switch (Mode) {
         case STATUS_NONE:
@@ -3057,8 +3076,13 @@ bool ViewProviderSketch::setEdit(int ModNum)
     // start the edit dialog
     if (sketchDlg)
         Gui::Control().showDialog(sketchDlg);
-    else
-        Gui::Control().showDialog(new TaskDlgEditSketch(this));
+    else {
+        TaskDlgEditSketch *dlg = new TaskDlgEditSketch(this);
+        this->signalTempAutoConstraints.connect(bind(&TaskDlgEditSketch::tempAutoConstraintsDisable, dlg, _1));
+        dlg->signalAutoConstraintsChanged.connect(boost::bind(&ViewProviderSketch::updateCursor, this));
+
+        Gui::Control().showDialog(dlg);
+    }
 
     solveSketch();
     draw();
@@ -3598,3 +3622,4 @@ bool ViewProviderSketch::onDelete(const std::vector<std::string> &subList)
     // if not in edit delete the whole object
     return true;
 }
+

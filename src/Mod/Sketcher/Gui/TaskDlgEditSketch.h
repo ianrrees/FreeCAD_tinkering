@@ -31,6 +31,8 @@
 #include "TaskSketcherGeneral.h"
 #include "TaskSketcherMessages.h"
 
+#include <boost/signal.hpp>
+
 namespace SketcherGui {
 
 
@@ -63,11 +65,22 @@ public:
     virtual QDialogButtonBox::StandardButtons getStandardButtons(void) const
     { return QDialogButtonBox::Close|QDialogButtonBox::Help; }
 
+    //! Intended to be used with the keyboard shortcut to disable automatic constraints
+    void tempAutoConstraintsDisable(bool disabled);
+
+    //! Used to talk with ViewProviderSketch
+    /*! TODO: It's probably worth looking at deriving ViewProviderSketch from
+        QObject, but that currently results in some messy looking problems */
+    boost::signal<void (bool)> signalAutoConstraintsChanged;
+
 protected:
     ViewProviderSketch   *sketchView;
     TaskSketcherConstrains  *Constraints;
     TaskSketcherGeneral     *General;
     TaskSketcherMessages    *Messages;
+protected Q_SLOTS:
+    /// Just for Qt -> Boost signal conversion
+    void autoConstraintsChanged(int enabled);
 };
 
 

@@ -60,6 +60,8 @@ public Q_SLOTS:
     void toggleGridView(bool on);
     void setGridSize(double val);
     void toggleGridSnap(int state);
+    /// Used to temporarially disable the Auto Constraints checkbox
+    void enableAutoConstraints(bool enabled);
 
 protected:
     void changeEvent(QEvent *e);
@@ -82,12 +84,16 @@ public:
 
 Q_SIGNALS:
     void setGridSnap(int Type);
+    void emitToggleAutoconstraints(int);
 
 public Q_SLOTS:
     void toggleGridView(bool on);
     void setGridSize(double val);
     void toggleGridSnap(int state);
     void toggleAutoconstraints(int state);
+
+    /// Used to temporarially disable the Auto Constraints checkbox
+    void enableAutoConstraints(bool enabled);
 
 private:
     ViewProviderSketch *sketchView;

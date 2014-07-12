@@ -49,11 +49,24 @@ TaskDlgEditSketch::TaskDlgEditSketch(ViewProviderSketch *sketchView)
     Content.push_back(Messages);
     Content.push_back(General);
     Content.push_back(Constraints);
+
+    connect(General, SIGNAL(emitToggleAutoconstraints(int)), this, SLOT(autoConstraintsChanged(int)));
 }
 
 TaskDlgEditSketch::~TaskDlgEditSketch()
 {
 
+}
+
+void TaskDlgEditSketch::autoConstraintsChanged(int enabled)
+{
+    signalAutoConstraintsChanged(enabled);
+}
+
+
+void TaskDlgEditSketch::tempAutoConstraintsDisable(bool disabled)
+{
+    General->enableAutoConstraints(!disabled);
 }
 
 //==== calls from the TaskView ===============================================================
