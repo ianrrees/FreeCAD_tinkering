@@ -2021,7 +2021,7 @@ void ViewProviderSketch::drawConstraintIcons()
     std::vector<constrIconQueueItem> iconQueue;
 
     for (std::vector<Sketcher::Constraint *>::const_iterator it=constraints.begin();
-         it != constraints.end(); ++it, constrId++) {
+         it != constraints.end(); ++it, ++constrId) {
 
         // Check if Icon Should be created
         bool multipleIcons = false;
@@ -2031,6 +2031,7 @@ void ViewProviderSketch::drawConstraintIcons()
             continue;
 
         switch((*it)->Type) {
+
         case Tangent:
             {   // second icon is available only for colinear line segments
                 const Part::Geometry *geo1 = getSketchObject()->getGeometry((*it)->First);
@@ -2058,8 +2059,8 @@ void ViewProviderSketch::drawConstraintIcons()
 
         // Find the Constraint Icon SoImage Node
         SoSeparator *sep = dynamic_cast<SoSeparator *>(edit->constrGroup->getChild(constrId));
-
-        SbVec3f absPos = static_cast<SoZoomTranslation *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_FIRST_TRANSLATION))->abPos.getValue();
+        
+        SbVec3f absPos = static_cast<SoTranslation *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_FIRST_TRANSLATION))->translation.getValue();
         SoImage *coinIconPtr = dynamic_cast<SoImage *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_FIRST_ICON));
         SoInfo *infoPtr = static_cast<SoInfo *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_FIRST_CONSTRAINTID));
 
@@ -2079,7 +2080,7 @@ void ViewProviderSketch::drawConstraintIcons()
 
             // Note that the second translation is meant to be applied after the first.
             // So, to get the position of the second icon, we add the two translations together
-            thisIcon.position += static_cast<SoZoomTranslation *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_SECOND_TRANSLATION))->abPos.getValue();
+            thisIcon.position += static_cast<SoTranslation *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_FIRST_TRANSLATION))->translation.getValue();
 
             thisIcon.destination = dynamic_cast<SoImage *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_SECOND_ICON));
             thisIcon.infoPtr = static_cast<SoInfo *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_SECOND_CONSTRAINTID));
