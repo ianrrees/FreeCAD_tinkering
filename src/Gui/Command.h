@@ -99,6 +99,7 @@ public:
     virtual const char* getWhatsThis  () const { return sWhatsThis;   }
     virtual const char* getPixmap     () const { return sPixmap;      }
     virtual const char* getAccel      () const { return sAccel;       }
+    virtual int         getAccelCoinId() const { return -1; }
     //@}
 
     /** @name Methods to set the properties of the command */
@@ -161,7 +162,9 @@ protected:
     virtual Action * createAction(void);
     /// Applies the menu text, tool and status tip to the passed action object
     void applyCommandData(Action* );
+    ///\TODO: Document me!
     const char* keySequenceToAccel(int) const;
+    ///\TODO: Document me!
     void adjustCameraPosition();
     //@}
 
@@ -297,6 +300,8 @@ protected:
     //@{
     const char* sAppModule;
     const char* sGroup;
+    //! The application-wide name of the command
+    /*! Used for example in CommandManager::getCommandByName */
     const char* sName;
     const char* sHelpUrl;
     int         eType;

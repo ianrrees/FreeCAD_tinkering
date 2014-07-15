@@ -265,10 +265,13 @@ ViewProviderSketch::ViewProviderSketch()
     color = hGrp->GetUnsigned("SketchVertexColor", color);
     vertexColor.setPackedValue((uint32_t)color);
     PointColor.setValue(vertexColor);
+        
+    qDebug() << "In ViewProviderSketch::ViewProviderSketch, this is :"<<(void *)this;
 }
 
 ViewProviderSketch::~ViewProviderSketch()
 {
+    qDebug() << "In ViewProviderSketch::~ViewProviderSketch, this is :"<<(void *)this;
 }
 
 // handler management ***************************************************************
@@ -320,10 +323,18 @@ void ViewProviderSketch::setAxisPickStyle(bool on)
 
 bool ViewProviderSketch::keyPressed(bool pressed, int key)
 {
+    
+    Gui::Command *disableAutoConstraints = Gui::Application::Instance->commandManager().getCommandByName("SketcherDisableAutoConstraints"),
+                 *disableSnapToGrid = Gui::Application::Instance->commandManager().getCommandByName("SketcherDisableSnapToGrid");
+    
+    // TODO:Currently these are hardwired
+    if(disableAutoConstraints && key == disableAutoConstraints->getAccelCoinId())
+        signalTempAutoConstraints(pressed);
+    else if (disableSnapToGrid && key == disableSnapToGrid->getAccelCoinId())
+        signalTempSnapToGrid(pressed);
+    else
     switch (key)
     {
-    case SoKeyboardEvent::LEFT_CONTROL:
-        signalTempAutoConstraints(pressed);
         break;
     case SoKeyboardEvent::ESCAPE:
         {
@@ -3077,7 +3088,10 @@ bool ViewProviderSketch::setEdit(int ModNum)
     if (sketchDlg)
         Gui::Control().showDialog(sketchDlg);
     else {
+        qDebug() << "In ViewProviderSketch::setEdit, this is :"<<(void *)this;
         TaskDlgEditSketch *dlg = new TaskDlgEditSketch(this);
+
+        qDebug() << "In ViewProviderSketch::setEdit, connecting to TaskDlgEditSketch at :"<<(void *)dlg;
         this->signalTempAutoConstraints.connect(bind(&TaskDlgEditSketch::tempAutoConstraintsDisable, dlg, _1));
         dlg->signalAutoConstraintsChanged.connect(boost::bind(&ViewProviderSketch::updateCursor, this));
 

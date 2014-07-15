@@ -207,6 +207,8 @@ public:
 
     /// signals when a special key is pressed, to temporarially disable auto constraints
     boost::signal<void (bool)> signalTempAutoConstraints;
+    /// signals when a special key is pressed, to temporarially disable snapping to grid
+    boost::signal<void (bool)> signalTempSnapToGrid;
 protected:
     virtual bool setEdit(int ModNum);
     virtual void unsetEdit(int ModNum);

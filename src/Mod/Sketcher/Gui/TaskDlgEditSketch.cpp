@@ -51,6 +51,7 @@ TaskDlgEditSketch::TaskDlgEditSketch(ViewProviderSketch *sketchView)
     Content.push_back(Constraints);
 
     connect(General, SIGNAL(emitToggleAutoconstraints(int)), this, SLOT(autoConstraintsChanged(int)));
+    qDebug() << "In TaskDlgEditSketch::TaskDlgEditSketch, this is :"<<(void *)this;
 }
 
 TaskDlgEditSketch::~TaskDlgEditSketch()

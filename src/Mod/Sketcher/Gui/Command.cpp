@@ -45,6 +45,8 @@
 #include <Mod/Sketcher/App/SketchObject.h>
 #include <Mod/Part/App/Part2DObject.h>
 
+#include <Inventor/events/SoKeyboardEvent.h>
+
 #include "SketchOrientationDialog.h"
 #include "ViewProviderSketch.h"
 #include "TaskSketcherValidation.h"
@@ -248,7 +250,7 @@ CmdSketcherReorientSketch::CmdSketcherReorientSketch()
 {
     sAppModule      = "Sketcher";
     sGroup          = QT_TR_NOOP("Sketcher");
-    sMenuText       = QT_TR_NOOP("Reorient sketch...");
+    sMenuText       = QT_TR_NOOP("Reorient sketch");
     sToolTipText    = QT_TR_NOOP("Reorient the selected sketch");
     sWhatsThis      = sToolTipText;
     sStatusTip      = sToolTipText;
@@ -330,7 +332,7 @@ CmdSketcherMapSketch::CmdSketcherMapSketch()
 {
     sAppModule      = "Sketcher";
     sGroup          = QT_TR_NOOP("Sketcher");
-    sMenuText       = QT_TR_NOOP("Map sketch to face...");
+    sMenuText       = QT_TR_NOOP("Map sketch to face");
     sToolTipText    = QT_TR_NOOP("Map a sketch to a face");
     sWhatsThis      = sToolTipText;
     sStatusTip      = sToolTipText;
@@ -496,10 +498,107 @@ bool CmdSketcherValidateSketch::isActive(void)
     return (hasActiveDocument() && !Gui::Control().activeDialog());
 }
 
+// TODO: Put this in a macro like the others in Gui/Command.h
+class CmdSketcherDisableAutoConstraints : public Gui::Command
+{
+public:
+    CmdSketcherDisableAutoConstraints ();
+    virtual ~CmdSketcherDisableAutoConstraints (){}
+    virtual const char* className() const
+    { return "CmdSketcherDisableAutoConstraints"; }
+    virtual int getAccelCoinId() const;
+protected: 
+    virtual void activated(int iMsg);
+    virtual bool isActive(void);
+};
 
+CmdSketcherDisableAutoConstraints::CmdSketcherDisableAutoConstraints()
+    :Command("Sketcher_DisableAutoConstraints")
+{
+    sAppModule      = "Sketcher";
+    sGroup          = QT_TR_NOOP("Sketcher");
+    sMenuText       = QT_TR_NOOP("Disable auto constraints");
+    sToolTipText    = QT_TR_NOOP("Pressing this key temporarially disables automatic constraints  **CAN'T CURRENTLY BE CHANGED**");
+    sWhatsThis      = sToolTipText;
+    sStatusTip      = sToolTipText;
+    sName           = "SketcherDisableAutoConstraints";
+    sAccel          = "...";  //TODO: This doesn't appear to work...
+//    const char* sHelpUrl;
+    eType           = ForEdit; 
+}
 
+void CmdSketcherDisableAutoConstraints::activated(int iMsg)
+{
+    qDebug() << "Activated SketcherDisableAutoConstraints";
+}
 
+bool CmdSketcherDisableAutoConstraints::isActive(void)
+{
+    Gui::Document *doc = getActiveGuiDocument();
+    if (doc) {
+        // checks if a Sketch Viewprovider is in Edit
+        SketcherGui::ViewProviderSketch* vp = dynamic_cast<SketcherGui::ViewProviderSketch*>(doc->getInEdit());
+        if(vp)
+            return true;
+    }
+    return false;
+}
 
+int CmdSketcherDisableAutoConstraints::getAccelCoinId() const
+{
+    return SoKeyboardEvent::LEFT_CONTROL;
+}
+
+// TODO: Put this in a macro like the others in Gui/Command.h
+class CmdSketcherDisableSnapToGrid : public Gui::Command
+{
+public:
+    CmdSketcherDisableSnapToGrid ();
+    virtual ~CmdSketcherDisableSnapToGrid (){}
+    virtual const char* className() const
+    { return "CmdSketcherDisableSnapToGrid"; }
+    virtual int getAccelCoinId() const;
+protected: 
+    virtual void activated(int iMsg);
+    virtual bool isActive(void);
+};
+
+CmdSketcherDisableSnapToGrid::CmdSketcherDisableSnapToGrid()
+    :Command("Sketcher_DisableSnapToGrid")
+{
+    sAppModule      = "Sketcher";
+    sGroup          = QT_TR_NOOP("Sketcher");
+    sMenuText       = QT_TR_NOOP("Disable snap to grid");
+    sToolTipText    = QT_TR_NOOP("Pressing this key temporarially disables snap to grid  **CAN'T CURRENTLY BE CHANGED**");
+    sWhatsThis      = sToolTipText;
+    sStatusTip      = sToolTipText;
+    sName           = "SketcherDisableSnapToGrid";
+    sAccel          = "...";  //TODO: This doesn't appear to work...
+//    const char* sHelpUrl;
+    eType           = ForEdit; 
+}
+
+void CmdSketcherDisableSnapToGrid::activated(int iMsg)
+{
+    qDebug() << "Activated SketcherDisableSnapToGrid";
+}
+
+bool CmdSketcherDisableSnapToGrid::isActive(void)
+{
+    Gui::Document *doc = getActiveGuiDocument();
+    if (doc) {
+        // checks if a Sketch Viewprovider is in Edit
+        SketcherGui::ViewProviderSketch* vp = dynamic_cast<SketcherGui::ViewProviderSketch*>(doc->getInEdit());
+        if(vp)
+            return true;
+    }
+    return false;
+}
+
+int CmdSketcherDisableSnapToGrid::getAccelCoinId() const
+{
+    return SoKeyboardEvent::LEFT_SHIFT;
+}
 void CreateSketcherCommands(void)
 {
     Gui::CommandManager &rcCmdMgr = Gui::Application::Instance->commandManager();
@@ -511,4 +610,6 @@ void CreateSketcherCommands(void)
     rcCmdMgr.addCommand(new CmdSketcherMapSketch());
     rcCmdMgr.addCommand(new CmdSketcherViewSketch());
     rcCmdMgr.addCommand(new CmdSketcherValidateSketch());
+    rcCmdMgr.addCommand(new CmdSketcherDisableAutoConstraints());
+    rcCmdMgr.addCommand(new CmdSketcherDisableSnapToGrid());
 }
