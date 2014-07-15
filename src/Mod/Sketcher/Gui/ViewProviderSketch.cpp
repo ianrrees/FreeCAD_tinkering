@@ -2058,9 +2058,17 @@ void ViewProviderSketch::drawConstraintIcons()
         }
 
         // Find the Constraint Icon SoImage Node
-        SoSeparator *sep = dynamic_cast<SoSeparator *>(edit->constrGroup->getChild(constrId));
+        SoSeparator *sep = static_cast<SoSeparator *>(edit->constrGroup->getChild(constrId));
+       
+        SbVec3f absPos;
+        // Somewhat hacky - we use SoZoomTranslations for most types of icon,
+        // but symmetry icons use SoTranslations...
+        SoTranslation *translationPtr = static_cast<SoTranslation *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_FIRST_TRANSLATION));
+        if(dynamic_cast<SoZoomTranslation *>(translationPtr))
+            absPos = static_cast<SoZoomTranslation *>(translationPtr)->abPos.getValue();
+        else
+            absPos = translationPtr->translation.getValue();
         
-        SbVec3f absPos = static_cast<SoTranslation *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_FIRST_TRANSLATION))->translation.getValue();
         SoImage *coinIconPtr = dynamic_cast<SoImage *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_FIRST_ICON));
         SoInfo *infoPtr = static_cast<SoInfo *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_FIRST_CONSTRAINTID));
 
@@ -2080,7 +2088,13 @@ void ViewProviderSketch::drawConstraintIcons()
 
             // Note that the second translation is meant to be applied after the first.
             // So, to get the position of the second icon, we add the two translations together
-            thisIcon.position += static_cast<SoTranslation *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_SECOND_TRANSLATION))->translation.getValue();
+            //
+            // See note ~30 lines up.
+            translationPtr = static_cast<SoTranslation *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_SECOND_TRANSLATION));
+            if(dynamic_cast<SoZoomTranslation *>(translationPtr))
+                thisIcon.position += static_cast<SoZoomTranslation *>(translationPtr)->abPos.getValue();
+            else
+                thisIcon.position += translationPtr->translation.getValue();
 
             thisIcon.destination = dynamic_cast<SoImage *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_SECOND_ICON));
             thisIcon.infoPtr = static_cast<SoInfo *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_SECOND_CONSTRAINTID));
