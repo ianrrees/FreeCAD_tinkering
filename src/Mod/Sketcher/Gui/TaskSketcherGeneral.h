@@ -62,6 +62,8 @@ public Q_SLOTS:
     void toggleGridSnap(int state);
     /// Used to temporarially disable the Auto Constraints checkbox
     void enableAutoConstraints(bool enabled);
+    /// Used to temporarially disable the Snap to Grid checkbox
+    void enableGridSnap(bool enabled);
 
 protected:
     void changeEvent(QEvent *e);
@@ -83,7 +85,7 @@ public:
                   Gui::SelectionSingleton::MessageType Reason);
 
 Q_SIGNALS:
-    void setGridSnap(int Type);
+    void emitSetGridSnap(int Type);
     void emitToggleAutoconstraints(int);
 
 public Q_SLOTS:
@@ -94,6 +96,8 @@ public Q_SLOTS:
 
     /// Used to temporarially disable the Auto Constraints checkbox
     void enableAutoConstraints(bool enabled);
+    /// Used to temporarially disable the Snap to Grid checkbox
+    void enableGridSnap(bool enabled);
 
 private:
     ViewProviderSketch *sketchView;

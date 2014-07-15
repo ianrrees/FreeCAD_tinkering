@@ -30,6 +30,7 @@
 #include "ViewProviderSketch.h"
 #include <Gui/Command.h>
 
+#include <boost/bind.hpp>
 using namespace SketcherGui;
 
 
@@ -50,8 +51,13 @@ TaskDlgEditSketch::TaskDlgEditSketch(ViewProviderSketch *sketchView)
     Content.push_back(General);
     Content.push_back(Constraints);
 
-    connect(General, SIGNAL(emitToggleAutoconstraints(int)), this, SLOT(autoConstraintsChanged(int)));
-    qDebug() << "In TaskDlgEditSketch::TaskDlgEditSketch, this is :"<<(void *)this;
+    connect(General, SIGNAL(emitToggleAutoconstraints(int)), this, SLOT(cursorChanged(void)));
+    connect(General, SIGNAL(emitSetGridSnap(int)), this, SLOT(cursorChanged(void)));
+
+    // Boost connections to the ViewProviderSketch
+    autoConstraintsConn = sketchView->signalTempAutoConstraints.connect(bind(&TaskDlgEditSketch::tempAutoConstraintsDisable, this, _1));
+    viewProviderCursorConn = this->signalCursorChange.connect(boost::bind(&ViewProviderSketch::updateCursor, sketchView));
+    snapToGridConn = sketchView->signalTempSnapToGrid.connect(bind(&TaskDlgEditSketch::tempSnapToGridDisable, this, _1));
 }
 
 TaskDlgEditSketch::~TaskDlgEditSketch()
@@ -59,15 +65,20 @@ TaskDlgEditSketch::~TaskDlgEditSketch()
 
 }
 
-void TaskDlgEditSketch::autoConstraintsChanged(int enabled)
+void TaskDlgEditSketch::cursorChanged(void)
 {
-    signalAutoConstraintsChanged(enabled);
+    signalCursorChange();
 }
 
 
-void TaskDlgEditSketch::tempAutoConstraintsDisable(bool disabled)
+void TaskDlgEditSketch::tempAutoConstraintsDisable(bool disable)
 {
-    General->enableAutoConstraints(!disabled);
+    General->enableAutoConstraints(!disable);
+}
+
+void TaskDlgEditSketch::tempSnapToGridDisable(bool disable)
+{
+    General->enableGridSnap(!disable);
 }
 
 //==== calls from the TaskView ===============================================================

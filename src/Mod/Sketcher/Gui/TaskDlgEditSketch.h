@@ -66,21 +66,26 @@ public:
     { return QDialogButtonBox::Close|QDialogButtonBox::Help; }
 
     //! Intended to be used with the keyboard shortcut to disable automatic constraints
-    void tempAutoConstraintsDisable(bool disabled);
+    void tempAutoConstraintsDisable(bool disable);
+    //! Intended to be used with the keyboard shortcut to disable snap to grid
+    void tempSnapToGridDisable(bool disable);
 
     //! Used to talk with ViewProviderSketch
     /*! TODO: It's probably worth looking at deriving ViewProviderSketch from
         QObject, but that currently results in some messy looking problems */
-    boost::signal<void (bool)> signalAutoConstraintsChanged;
+    boost::signal<void ()> signalCursorChange;
 
 protected:
     ViewProviderSketch   *sketchView;
     TaskSketcherConstrains  *Constraints;
     TaskSketcherGeneral     *General;
     TaskSketcherMessages    *Messages;
+    boost::signals::scoped_connection autoConstraintsConn,
+                                      viewProviderCursorConn,
+                                      snapToGridConn;
 protected Q_SLOTS:
     /// Just for Qt -> Boost signal conversion
-    void autoConstraintsChanged(int enabled);
+    void cursorChanged(void);
 };
 
 

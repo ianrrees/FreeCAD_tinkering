@@ -121,6 +121,18 @@ void SketcherGeneralWidget::enableAutoConstraints(bool enabled)
     ui->checkBoxAutoconstraints->setEnabled(enabled);
 }
 
+void SketcherGeneralWidget::enableGridSnap(bool enabled)
+{
+    static Qt::CheckState prevState = ui->checkBoxGridSnap->checkState();
+    if(!enabled) {
+        prevState = ui->checkBoxGridSnap->checkState();
+        ui->checkBoxGridSnap->setCheckState(Qt::Unchecked);
+    } else
+        ui->checkBoxGridSnap->setCheckState(prevState);
+
+    ui->checkBoxGridSnap->setEnabled(enabled);
+}
+
 void SketcherGeneralWidget::changeEvent(QEvent *e)
 {
     QWidget::changeEvent(e);
@@ -190,6 +202,7 @@ void TaskSketcherGeneral::setGridSize(double val)
 void TaskSketcherGeneral::toggleGridSnap(int state)
 {
     sketchView->GridSnap.setValue(state == Qt::Checked);
+    emitSetGridSnap(state);
 }
 
 void TaskSketcherGeneral::toggleAutoconstraints(int state)
@@ -201,6 +214,11 @@ void TaskSketcherGeneral::toggleAutoconstraints(int state)
 void TaskSketcherGeneral::enableAutoConstraints(bool enabled)
 {
     widget->enableAutoConstraints(enabled);
+}
+
+void TaskSketcherGeneral::enableGridSnap(bool enabled)
+{
+    widget->enableGridSnap(enabled);
 }
 
 /// @cond DOXERR

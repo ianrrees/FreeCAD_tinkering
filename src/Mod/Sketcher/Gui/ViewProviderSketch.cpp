@@ -265,13 +265,10 @@ ViewProviderSketch::ViewProviderSketch()
     color = hGrp->GetUnsigned("SketchVertexColor", color);
     vertexColor.setPackedValue((uint32_t)color);
     PointColor.setValue(vertexColor);
-        
-    qDebug() << "In ViewProviderSketch::ViewProviderSketch, this is :"<<(void *)this;
 }
 
 ViewProviderSketch::~ViewProviderSketch()
 {
-    qDebug() << "In ViewProviderSketch::~ViewProviderSketch, this is :"<<(void *)this;
 }
 
 // handler management ***************************************************************
@@ -3088,12 +3085,7 @@ bool ViewProviderSketch::setEdit(int ModNum)
     if (sketchDlg)
         Gui::Control().showDialog(sketchDlg);
     else {
-        qDebug() << "In ViewProviderSketch::setEdit, this is :"<<(void *)this;
         TaskDlgEditSketch *dlg = new TaskDlgEditSketch(this);
-
-        qDebug() << "In ViewProviderSketch::setEdit, connecting to TaskDlgEditSketch at :"<<(void *)dlg;
-        this->signalTempAutoConstraints.connect(bind(&TaskDlgEditSketch::tempAutoConstraintsDisable, dlg, _1));
-        dlg->signalAutoConstraintsChanged.connect(boost::bind(&ViewProviderSketch::updateCursor, this));
 
         Gui::Control().showDialog(dlg);
     }
