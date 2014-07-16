@@ -591,4 +591,20 @@ protected: \
     }\
 };
 
+/** The Command Macro + isActive + Coin
+ *  This macro makes it easier to define a new command.
+ *  The parameter is the class name.
+ */
+#define DEF_STD_CMD_COIN(X) class X : public Gui::Command \
+{\
+public:\
+    X();\
+    virtual const char* className() const\
+    { return #X; }\
+    virtual int getAccelCoinId() const;\
+protected: \
+    virtual void activated(int iMsg);\
+    virtual bool isActive(void);\
+};
+
 #endif // GUI_COMMAND_H

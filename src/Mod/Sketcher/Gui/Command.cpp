@@ -498,19 +498,7 @@ bool CmdSketcherValidateSketch::isActive(void)
     return (hasActiveDocument() && !Gui::Control().activeDialog());
 }
 
-// TODO: Put this in a macro like the others in Gui/Command.h
-class CmdSketcherDisableAutoConstraints : public Gui::Command
-{
-public:
-    CmdSketcherDisableAutoConstraints ();
-    virtual ~CmdSketcherDisableAutoConstraints (){}
-    virtual const char* className() const
-    { return "CmdSketcherDisableAutoConstraints"; }
-    virtual int getAccelCoinId() const;
-protected: 
-    virtual void activated(int iMsg);
-    virtual bool isActive(void);
-};
+DEF_STD_CMD_COIN(CmdSketcherDisableAutoConstraints);
 
 CmdSketcherDisableAutoConstraints::CmdSketcherDisableAutoConstraints()
     :Command("Sketcher_DisableAutoConstraints")
@@ -522,9 +510,9 @@ CmdSketcherDisableAutoConstraints::CmdSketcherDisableAutoConstraints()
     sWhatsThis      = sToolTipText;
     sStatusTip      = sToolTipText;
     sName           = "SketcherDisableAutoConstraints";
-    sAccel          = "...";  //TODO: This doesn't appear to work...
-//    const char* sHelpUrl;
+    sAccel          = "..."; // TODO: The DlgKeyboardImp and Command classes need to be updated to handle just a Ctrl or Shift press for this to work
     eType           = ForEdit; 
+    qDebug() << "Key sequence string:"<<QKeySequence(Qt::Key_Control).toString();
 }
 
 void CmdSketcherDisableAutoConstraints::activated(int iMsg)
@@ -549,19 +537,7 @@ int CmdSketcherDisableAutoConstraints::getAccelCoinId() const
     return SoKeyboardEvent::LEFT_CONTROL;
 }
 
-// TODO: Put this in a macro like the others in Gui/Command.h
-class CmdSketcherDisableSnapToGrid : public Gui::Command
-{
-public:
-    CmdSketcherDisableSnapToGrid ();
-    virtual ~CmdSketcherDisableSnapToGrid (){}
-    virtual const char* className() const
-    { return "CmdSketcherDisableSnapToGrid"; }
-    virtual int getAccelCoinId() const;
-protected: 
-    virtual void activated(int iMsg);
-    virtual bool isActive(void);
-};
+DEF_STD_CMD_COIN(CmdSketcherDisableSnapToGrid);
 
 CmdSketcherDisableSnapToGrid::CmdSketcherDisableSnapToGrid()
     :Command("Sketcher_DisableSnapToGrid")
@@ -573,8 +549,7 @@ CmdSketcherDisableSnapToGrid::CmdSketcherDisableSnapToGrid()
     sWhatsThis      = sToolTipText;
     sStatusTip      = sToolTipText;
     sName           = "SketcherDisableSnapToGrid";
-    sAccel          = "...";  //TODO: This doesn't appear to work...
-//    const char* sHelpUrl;
+    sAccel          = "...";  //TODO: The DlgKeyboardImp and Command classes need to be updated to handle just a Ctrl or Shift press for this to work
     eType           = ForEdit; 
 }
 
@@ -599,6 +574,7 @@ int CmdSketcherDisableSnapToGrid::getAccelCoinId() const
 {
     return SoKeyboardEvent::LEFT_SHIFT;
 }
+
 void CreateSketcherCommands(void)
 {
     Gui::CommandManager &rcCmdMgr = Gui::Application::Instance->commandManager();
