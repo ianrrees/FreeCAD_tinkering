@@ -60,9 +60,9 @@ public Q_SLOTS:
     void toggleGridView(bool on);
     void setGridSize(double val);
     void toggleGridSnap(int state);
-    /// Used to temporarially disable the Auto Constraints checkbox
+    /// Used to temporarily disable the Auto Constraints checkbox
     void enableAutoConstraints(bool enabled);
-    /// Used to temporarially disable the Snap to Grid checkbox
+    /// Used to temporarily disable the Snap to Grid checkbox
     void enableGridSnap(bool enabled);
 
 protected:
@@ -94,9 +94,9 @@ public Q_SLOTS:
     void toggleGridSnap(int state);
     void toggleAutoconstraints(int state);
 
-    /// Used to temporarially disable the Auto Constraints checkbox
+    /// Used to temporarily disable the Auto Constraints checkbox
     void enableAutoConstraints(bool enabled);
-    /// Used to temporarially disable the Snap to Grid checkbox
+    /// Used to temporarily disable the Snap to Grid checkbox
     void enableGridSnap(bool enabled);
 
 private:

@@ -205,9 +205,9 @@ public:
     /// signals if the sketch has been solved
     boost::signal<void (QString msg)> signalSolved;
 
-    /// signals when a special key is pressed, to temporarially disable auto constraints
+    /// signals when a special key is pressed, to temporarily disable auto constraints
     boost::signal<void (bool)> signalTempAutoConstraints;
-    /// signals when a special key is pressed, to temporarially disable snapping to grid
+    /// signals when a special key is pressed, to temporarily disable snapping to grid
     boost::signal<void (bool)> signalTempSnapToGrid;
 protected:
     virtual bool setEdit(int ModNum);

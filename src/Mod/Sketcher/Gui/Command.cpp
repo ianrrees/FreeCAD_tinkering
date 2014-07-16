@@ -506,7 +506,7 @@ CmdSketcherDisableAutoConstraints::CmdSketcherDisableAutoConstraints()
     sAppModule      = "Sketcher";
     sGroup          = QT_TR_NOOP("Sketcher");
     sMenuText       = QT_TR_NOOP("Disable auto constraints");
-    sToolTipText    = QT_TR_NOOP("Pressing this key temporarially disables automatic constraints  **CAN'T CURRENTLY BE CHANGED FROM LEFT CTRL**");
+    sToolTipText    = QT_TR_NOOP("Pressing this key temporarily disables automatic constraints  **CAN'T CURRENTLY BE CHANGED FROM LEFT CTRL**");
     sWhatsThis      = sToolTipText;
     sStatusTip      = sToolTipText;
     sName           = "SketcherDisableAutoConstraints";
@@ -545,7 +545,7 @@ CmdSketcherDisableSnapToGrid::CmdSketcherDisableSnapToGrid()
     sAppModule      = "Sketcher";
     sGroup          = QT_TR_NOOP("Sketcher");
     sMenuText       = QT_TR_NOOP("Disable snap to grid");
-    sToolTipText    = QT_TR_NOOP("Pressing this key temporarially disables snap to grid  **CAN'T CURRENTLY BE CHANGED FROM LEFT SHIFT**");
+    sToolTipText    = QT_TR_NOOP("Pressing this key temporarily disables snap to grid  **CAN'T CURRENTLY BE CHANGED FROM LEFT SHIFT**");
     sWhatsThis      = sToolTipText;
     sStatusTip      = sToolTipText;
     sName           = "SketcherDisableSnapToGrid";
