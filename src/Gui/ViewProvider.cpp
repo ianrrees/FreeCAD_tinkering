@@ -155,18 +155,18 @@ void ViewProvider::eventCallback(void * ud, SoEventCallback * node)
     try {
         // Keyboard events
         if (ev->getTypeId().isDerivedFrom(SoKeyboardEvent::getClassTypeId())) {
-            SoKeyboardEvent * ke = (SoKeyboardEvent *)ev;
+            SoKeyboardEvent *ke = (SoKeyboardEvent *)ev;
             const SbBool press = ke->getState() == SoButtonEvent::DOWN ? TRUE : FALSE;
             switch (ke->getKey()) {
             case SoKeyboardEvent::ESCAPE:
-                if (self->keyPressed (press, ke->getKey()))
+                if (self->keyPressed(ke))
                     node->setHandled();
                 else
                     Gui::Application::Instance->activeDocument()->resetEdit();
                 break;
             default:
                 // call the virtual method
-                if (self->keyPressed (press, ke->getKey()))
+                if (self->keyPressed(ke))
                     node->setHandled();
                 break;
             }

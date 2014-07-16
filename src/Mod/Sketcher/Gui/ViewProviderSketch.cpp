@@ -316,8 +316,11 @@ void ViewProviderSketch::setAxisPickStyle(bool on)
 
 // **********************************************************************************
 
-bool ViewProviderSketch::keyPressed(bool pressed, int key)
+bool ViewProviderSketch::keyPressed(const SoKeyboardEvent *keyEvent)
 {
+    bool pressed = keyEvent->getState() == SoButtonEvent::DOWN ? true : false;
+    int key = keyEvent->getKey();
+
     switch (key)
     {
     case SoKeyboardEvent::ESCAPE:
