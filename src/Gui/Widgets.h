@@ -114,7 +114,7 @@ private:
 // ------------------------------------------------------------------------------
 
 /**
- * The AccelLineEdit class provides a lineedit to specfify shortcuts.
+ * The AccelLineEdit class provides a widget to specify keyboard shortcuts.
  * \author Werner Mayer
  */
 class GuiExport AccelLineEdit : public QLineEdit
@@ -122,10 +122,11 @@ class GuiExport AccelLineEdit : public QLineEdit
   Q_OBJECT
 
 public:
-  AccelLineEdit ( QWidget * parent=0 );
-
+  AccelLineEdit(QWidget *parent = 0, bool acceptSoloModifiers = false);
+  void setAcceptSoloModifiers(bool acceptSoloModifiers);
 protected:
-  void keyPressEvent ( QKeyEvent * e);
+  void keyPressEvent(QKeyEvent * e);
+  bool soloModifiersOk;
 };
 
 // ------------------------------------------------------------------------------

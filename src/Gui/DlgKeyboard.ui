@@ -149,7 +149,7 @@
      <item>
       <widget class="QLabel" name="textLabelAssigned">
        <property name="text">
-        <string>Currently assigned to:</string>
+        <string>New shortut is assigned to:</string>
        </property>
       </widget>
      </item>

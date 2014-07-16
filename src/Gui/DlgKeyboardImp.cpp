@@ -140,6 +140,8 @@ void DlgCustomKeyboardImp::on_commandTreeWidget_currentItemChanged(QTreeWidgetIt
             QKeySequence ks2 = QString::fromAscii(cmd->getAccel());
             QKeySequence ks3 = editShortcut->text();
 
+            editShortcut->setEnabled(true);
+
             if (ks.isEmpty())
                 accelLineEditShortcut->setText( tr("none") );
             else
@@ -148,13 +150,14 @@ void DlgCustomKeyboardImp::on_commandTreeWidget_currentItemChanged(QTreeWidgetIt
             buttonAssign->setEnabled(!editShortcut->text().isEmpty() && (ks != ks3));
             buttonReset->setEnabled((ks != ks2));
         } else {
-          QKeySequence ks = QString::fromAscii(cmd->getAccel());
+            QKeySequence ks = QString::fromAscii(cmd->getAccel());
             if (ks.isEmpty())
                 accelLineEditShortcut->setText( tr("none") );
             else
                 accelLineEditShortcut->setText(ks);
             buttonAssign->setEnabled(false);
             buttonReset->setEnabled(false);
+            editShortcut->setEnabled(false);
         }
     }
 
