@@ -510,9 +510,8 @@ CmdSketcherDisableAutoConstraints::CmdSketcherDisableAutoConstraints()
     sWhatsThis      = sToolTipText;
     sStatusTip      = sToolTipText;
     sName           = "SketcherDisableAutoConstraints";
-    sAccel          = "..."; // TODO: The DlgKeyboardImp and Command classes need to be updated to handle just a Ctrl or Shift press for this to work
+    sAccel          = "Ctrl+";
     eType           = ForEdit; 
-    qDebug() << "Key sequence string:"<<QKeySequence(Qt::Key_Control).toString();
 }
 
 void CmdSketcherDisableAutoConstraints::activated(int iMsg)
@@ -532,11 +531,6 @@ bool CmdSketcherDisableAutoConstraints::isActive(void)
     return false;
 }
 
-int CmdSketcherDisableAutoConstraints::getAccelCoinId() const
-{
-    return SoKeyboardEvent::LEFT_CONTROL;
-}
-
 DEF_STD_CMD_COIN(CmdSketcherDisableSnapToGrid);
 
 CmdSketcherDisableSnapToGrid::CmdSketcherDisableSnapToGrid()
@@ -549,7 +543,7 @@ CmdSketcherDisableSnapToGrid::CmdSketcherDisableSnapToGrid()
     sWhatsThis      = sToolTipText;
     sStatusTip      = sToolTipText;
     sName           = "SketcherDisableSnapToGrid";
-    sAccel          = "...";  //TODO: The DlgKeyboardImp and Command classes need to be updated to handle just a Ctrl or Shift press for this to work
+    sAccel          = "Shift+";
     eType           = ForEdit; 
 }
 
@@ -568,11 +562,6 @@ bool CmdSketcherDisableSnapToGrid::isActive(void)
             return true;
     }
     return false;
-}
-
-int CmdSketcherDisableSnapToGrid::getAccelCoinId() const
-{
-    return SoKeyboardEvent::LEFT_SHIFT;
 }
 
 void CreateSketcherCommands(void)

@@ -194,7 +194,7 @@ void DlgCustomActionsImp::on_actionListWidget_itemActivated(QTreeWidgetItem *ite
         actionMenu      -> setText(QString::fromUtf8(pScript->getMenuText()));
         actionToolTip   -> setText(QString::fromUtf8(pScript->getToolTipText()));
         actionStatus    -> setText(QString::fromUtf8(pScript->getStatusTip()));
-        actionAccel     -> setText(QString::fromAscii(pScript->getAccel()));
+        actionAccel     -> setText(pScript->getAccel());
         pixmapLabel->clear();
         m_sPixmap = QString::null;
         const char* name = pScript->getPixmap();
@@ -261,7 +261,7 @@ void DlgCustomActionsImp::on_buttonAddAction_clicked()
     m_sPixmap = QString::null;
 
     if (!actionAccel->text().isEmpty()) {
-      macro->setAccel(actionAccel->text().toAscii());
+      macro->setAccel(actionAccel->text());
     }
     actionAccel->clear();
 
@@ -316,7 +316,7 @@ void DlgCustomActionsImp::on_buttonReplaceAction_clicked()
     m_sPixmap = QString::null;
 
     if (!actionAccel->text().isEmpty()) {
-        macro->setAccel(actionAccel->text().toAscii());
+        macro->setAccel(actionAccel->text());
     }
     actionAccel->clear();
 
@@ -331,7 +331,7 @@ void DlgCustomActionsImp::on_buttonReplaceAction_clicked()
         action->setStatusTip(QString::fromUtf8(macro->getStatusTip()));
         if( macro->getPixmap() )
             action->setIcon(Gui::BitmapFactory().pixmap(macro->getPixmap()));
-        action->setShortcut(QString::fromAscii(macro->getAccel()));
+        action->setShortcut(macro->getAccel());
     }
 
     // emit signal to notify the container widget

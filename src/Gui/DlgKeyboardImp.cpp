@@ -137,9 +137,9 @@ void DlgCustomKeyboardImp::on_commandTreeWidget_currentItemChanged(QTreeWidgetIt
     if (cmd) {
         if (cmd->getAction()) {
             QKeySequence ks = cmd->getAction()->shortcut();
-            QKeySequence ks2 = QString::fromAscii(cmd->getAccel());
+            QKeySequence ks2 = QString::fromAscii(cmd->getDefaultAccel());
             QKeySequence ks3 = editShortcut->text();
-
+            //editShortcut->setAcceptSoloModifiers(cmd->handlesModifierAccel());
             editShortcut->setEnabled(true);
 
             if (ks.isEmpty())
@@ -150,7 +150,7 @@ void DlgCustomKeyboardImp::on_commandTreeWidget_currentItemChanged(QTreeWidgetIt
             buttonAssign->setEnabled(!editShortcut->text().isEmpty() && (ks != ks3));
             buttonReset->setEnabled((ks != ks2));
         } else {
-            QKeySequence ks = QString::fromAscii(cmd->getAccel());
+            QKeySequence ks = cmd->getAccel();
             if (ks.isEmpty())
                 accelLineEditShortcut->setText( tr("none") );
             else
@@ -226,7 +226,7 @@ void DlgCustomKeyboardImp::on_buttonReset_clicked()
     CommandManager & cCmdMgr = Application::Instance->commandManager();
     Command* cmd = cCmdMgr.getCommandByName(name.constData());
     if (cmd && cmd->getAction()) {
-      cmd->getAction()->setShortcut(QString::fromAscii(cmd->getAccel()));
+      cmd->getAction()->setShortcut(QString::fromAscii(cmd->getDefaultAccel()));
         QString txt = cmd->getAction()->shortcut();
         accelLineEditShortcut->setText((txt.isEmpty() ? tr("none") : txt));
         ParameterGrp::handle hGrp = WindowParameter::getDefaultParameter()->GetGroup("Shortcut");
@@ -239,11 +239,12 @@ void DlgCustomKeyboardImp::on_buttonReset_clicked()
 /** Resets the accelerator of all commands to the default. */
 void DlgCustomKeyboardImp::on_buttonResetAll_clicked()
 {
+    //!\TODO AHHHH! So the constant strings are _Default_ keyboard accelerators...
     CommandManager & cCmdMgr = Application::Instance->commandManager();
     std::vector<Command*> cmds = cCmdMgr.getAllCommands();
     for (std::vector<Command*>::iterator it = cmds.begin(); it != cmds.end(); ++it) {
         if ((*it)->getAction()) {
-          (*it)->getAction()->setShortcut(QKeySequence(QString::fromAscii((*it)->getAccel())));
+          (*it)->getAction()->setShortcut(QKeySequence(QString::fromAscii((*it)->getDefaultAccel())));
         }
     }
 

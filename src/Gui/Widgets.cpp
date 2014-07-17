@@ -395,17 +395,11 @@ void AccelLineEdit::keyPressEvent(QKeyEvent *e)
 
         if(soloModifiersOk) {
             if(key == Qt::Key_Control || (state & Qt::CTRL) )
-                txt = tr("Ctrl");
+                txt = tr("Ctrl+");
             if(key == Qt::Key_Shift || (state & Qt::SHIFT) )
-                if(txt.isEmpty())
-                    txt = tr("Shift");
-                else
-                    txt += tr("+Shift");
+                txt += tr("Shift+");
             if(key == Qt::Key_Alt || (state & Qt::ALT) )
-                if(txt.isEmpty())
-                    txt = tr("Alt");
-                else
-                    txt += tr("+Alt");
+                txt += tr("Alt+");
             if(!txt.isEmpty())
                 setText(txt);
         }

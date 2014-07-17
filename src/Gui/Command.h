@@ -30,6 +30,8 @@
 #include <string>
 #include <vector>
 
+#include <QString>
+
 #include <Base/Type.h>
 
 class QWidget;
@@ -41,6 +43,8 @@ namespace App
   class DocumentObject;
 }
 
+class SoKeyboardEvent;
+
 namespace Gui {
 
 class Action;
@@ -51,7 +55,6 @@ class ActionGroup;
 class Document;
 class SelectionSingleton;
 class MDIView;
-class SoKeyboardEvent;
 
 
 void CreateStdCommands(void);
@@ -104,8 +107,9 @@ public:
     virtual const char* getStatusTip  () const { return sStatusTip;   }
     virtual const char* getWhatsThis  () const { return sWhatsThis;   }
     virtual const char* getPixmap     () const { return sPixmap;      }
-    virtual const char* getAccel      () const { return sAccel;       }
-    virtual int         getAccelCoinId() const { return -1; }
+    virtual const char* getDefaultAccel      () const { return sAccel;       }
+    virtual QString getAccel() const { return keyboardAccelerator; }
+
     //@}
 
     /** @name Methods to set the properties of the command */
@@ -115,7 +119,7 @@ public:
     void setToolTipText(const char*);
     void setStatusTip  (const char*);
     void setPixmap     (const char*);
-    void setAccel      (const char*);
+    void setAccel      (QString);
     //@}
 
 protected:
@@ -133,6 +137,7 @@ protected:
     const char* sPixmap;
     const char* sAccel;
     //@}
+    QString keyboardAccelerator;
 protected:
     Action *_pcAction; /**< The Action item. */
 };
@@ -356,7 +361,7 @@ public:
     const char* getToolTipText() const;
     const char* getStatusTip  () const;
     const char* getPixmap     () const;
-    const char* getAccel      () const;
+    const char* getDefaultAccel      () const;
     //@}
 
 protected:
@@ -607,7 +612,6 @@ public:\
     X();\
     virtual const char* className() const\
     { return #X; }\
-    virtual int getAccelCoinId() const;\
 protected: \
     virtual void activated(int iMsg);\
     virtual bool isActive(void);\

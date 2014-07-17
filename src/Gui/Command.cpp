@@ -201,13 +201,9 @@ void CommandBase::setPixmap(const char* s)
 #endif
 }
 
-void CommandBase::setAccel(const char* s)
+void CommandBase::setAccel(QString newAccel)
 {
-#if defined (_MSC_VER)
-    this->sAccel = _strdup(s);
-#else
-    this->sAccel = strdup(s);
-#endif
+    keyboardAccelerator = newAccel;
 }
 
 //===========================================================================
@@ -739,7 +735,7 @@ void MacroCommand::load()
             macro->setStatusTip   ( (*it)->GetASCII( "Statustip"  ).c_str() );
             if ((*it)->GetASCII("Pixmap", "nix") != "nix")
                 macro->setPixmap    ( (*it)->GetASCII( "Pixmap"     ).c_str() );
-            macro->setAccel       ( (*it)->GetASCII( "Accel",0    ).c_str() );
+            macro->setAccel(QString::fromStdString( (*it)->GetASCII("Accel", 0)) );
             Application::Instance->commandManager().addCommand( macro );
         }
     }
@@ -761,7 +757,7 @@ void MacroCommand::save()
             hMacro->SetASCII( "WhatsThis", macro->getWhatsThis  () );
             hMacro->SetASCII( "Statustip", macro->getStatusTip  () );
             hMacro->SetASCII( "Pixmap",    macro->getPixmap     () );
-            hMacro->SetASCII( "Accel",     macro->getAccel      () );
+            hMacro->SetASCII( "Accel",     macro->getAccel().toAscii() );
         }
     }
 }
@@ -895,7 +891,7 @@ Action * PythonCommand::createAction(void)
         pcAction->setStatusTip(qApp->translate(getName(), getToolTipText()));
     if (strcmp(getResource("Pixmap"),"") != 0)
         pcAction->setIcon(Gui::BitmapFactory().pixmap(getResource("Pixmap")));
-    pcAction->setShortcut     (QString::fromAscii(getAccel()));
+    pcAction->setShortcut     (QString::fromAscii(getDefaultAccel()));
 
     return pcAction;
 }
@@ -928,7 +924,7 @@ const char* PythonCommand::getPixmap() const
     return getResource("Pixmap");
 }
 
-const char* PythonCommand::getAccel() const
+const char* PythonCommand::getDefaultAccel() const
 {
     return getResource("Accel");
 }

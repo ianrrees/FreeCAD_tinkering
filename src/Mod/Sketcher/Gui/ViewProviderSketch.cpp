@@ -318,19 +318,18 @@ void ViewProviderSketch::setAxisPickStyle(bool on)
 
 // **********************************************************************************
 
-bool ViewProviderSketch::keyPressed(const SoKeyboardEvent *keyEvent)
+bool ViewProviderSketch::keyPressed(const SoKeyboardEvent &keyEvent)
 {
-    bool pressed = keyEvent->getState() == SoButtonEvent::DOWN ? true : false;
-    int key = keyEvent->getKey();
+    bool pressed = keyEvent.getState() == SoButtonEvent::DOWN ? true : false;
+    int key = keyEvent.getKey();
     
     Gui::Command *disableAutoConstraints = Gui::Application::Instance->commandManager().getCommandByName("SketcherDisableAutoConstraints"),
                  *disableSnapToGrid = Gui::Application::Instance->commandManager().getCommandByName("SketcherDisableSnapToGrid");
     
-    qDebug() <<"Hello!";
     // TODO:Currently these are hardwired
-    if(disableAutoConstraints && key == disableAutoConstraints->getAccelCoinId())
+    if(disableAutoConstraints && disableAutoConstraints->keyEventMatches(keyEvent))
         signalTempAutoConstraints(pressed);
-    else if (disableSnapToGrid && key == disableSnapToGrid->getAccelCoinId())
+    else if (disableSnapToGrid && disableSnapToGrid->keyEventMatches(keyEvent))
         signalTempSnapToGrid(pressed);
     else
     switch (key)
