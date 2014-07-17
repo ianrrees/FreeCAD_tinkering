@@ -108,6 +108,30 @@ void SketcherGeneralWidget::toggleGridSnap(int state)
 {
     emitToggleGridSnap(state);
 }
+    
+void SketcherGeneralWidget::enableAutoConstraints(bool enabled)
+{
+    static Qt::CheckState prevState = ui->checkBoxAutoconstraints->checkState();
+    if(!enabled) {
+        prevState = ui->checkBoxAutoconstraints->checkState();
+        ui->checkBoxAutoconstraints->setCheckState(Qt::Unchecked);
+    } else
+        ui->checkBoxAutoconstraints->setCheckState(prevState);
+
+    ui->checkBoxAutoconstraints->setEnabled(enabled);
+}
+
+void SketcherGeneralWidget::enableGridSnap(bool enabled)
+{
+    static Qt::CheckState prevState = ui->checkBoxGridSnap->checkState();
+    if(!enabled) {
+        prevState = ui->checkBoxGridSnap->checkState();
+        ui->checkBoxGridSnap->setCheckState(Qt::Unchecked);
+    } else
+        ui->checkBoxGridSnap->setCheckState(prevState);
+
+    ui->checkBoxGridSnap->setEnabled(enabled);
+}
 
 void SketcherGeneralWidget::changeEvent(QEvent *e)
 {
@@ -146,6 +170,11 @@ TaskSketcherGeneral::TaskSketcherGeneral(ViewProviderSketch *sketchView)
         widget, SIGNAL(emitToggleAutoconstraints(int)),
         this  , SLOT  (toggleAutoconstraints(int))
        );
+
+    QObject::connect(
+        widget, SIGNAL(emitToggleAutoconstraints(int)),
+        this, SIGNAL(emitToggleAutoconstraints(int))
+       );
     
 
     Gui::Selection().Attach(this);
@@ -173,11 +202,23 @@ void TaskSketcherGeneral::setGridSize(double val)
 void TaskSketcherGeneral::toggleGridSnap(int state)
 {
     sketchView->GridSnap.setValue(state == Qt::Checked);
+    emitSetGridSnap(state);
 }
 
 void TaskSketcherGeneral::toggleAutoconstraints(int state)
 {
     sketchView->Autoconstraints.setValue(state == Qt::Checked);
+}
+
+
+void TaskSketcherGeneral::enableAutoConstraints(bool enabled)
+{
+    widget->enableAutoConstraints(enabled);
+}
+
+void TaskSketcherGeneral::enableGridSnap(bool enabled)
+{
+    widget->enableGridSnap(enabled);
 }
 
 /// @cond DOXERR

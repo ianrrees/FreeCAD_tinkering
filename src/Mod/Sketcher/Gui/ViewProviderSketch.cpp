@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (c) 2009 Jürgen Riegel <juergen.riegel@web.de>              *
+ *   Copyright (c) 2009 Jï¿½rgen Riegel <juergen.riegel@web.de>              *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -69,6 +69,8 @@
 
 #include <Inventor/SbTime.h>
 #include <boost/scoped_ptr.hpp>
+#include <boost/signal.hpp>
+#include <boost/bind.hpp>
 
 /// Here the FreeCAD includes sorted by Base,App,Gui......
 #include <Base/Tools.h>
@@ -321,6 +323,16 @@ bool ViewProviderSketch::keyPressed(const SoKeyboardEvent *keyEvent)
     bool pressed = keyEvent->getState() == SoButtonEvent::DOWN ? true : false;
     int key = keyEvent->getKey();
 
+    
+    Gui::Command *disableAutoConstraints = Gui::Application::Instance->commandManager().getCommandByName("SketcherDisableAutoConstraints"),
+                 *disableSnapToGrid = Gui::Application::Instance->commandManager().getCommandByName("SketcherDisableSnapToGrid");
+    
+    // TODO:Currently these are hardwired
+    if(disableAutoConstraints && key == disableAutoConstraints->getAccelCoinId())
+        signalTempAutoConstraints(pressed);
+    else if (disableSnapToGrid && key == disableSnapToGrid->getAccelCoinId())
+        signalTempSnapToGrid(pressed);
+    else
     switch (key)
     {
     case SoKeyboardEvent::ESCAPE:
@@ -538,6 +550,7 @@ bool ViewProviderSketch::mouseButtonPressed(int Button, bool pressed, const SbVe
                     } else {
                         prvClickTime = SbTime::getTimeOfDay();
                         prvClickPoint = point;
+                        // This is probably redundant considering the one in moveMouse
                         prvCursorPos = cursorPos;
                         newCursorPos = cursorPos;
                         if (!done)
@@ -886,6 +899,16 @@ void ViewProviderSketch::editDoubleClicked(void)
     }
 }
 
+void ViewProviderSketch::updateCursor(void)
+{
+    Gui::MDIView *mdi = Gui::Application::Instance->activeDocument()->getActiveView();
+    Gui::View3DInventorViewer *viewer;
+    viewer = dynamic_cast<Gui::View3DInventor *>(mdi)->getViewer();
+
+    if(Mode != STATUS_SKETCH_UseRubberBand)
+        mouseMove(prvCursorPos, viewer);
+}
+
 bool ViewProviderSketch::mouseMove(const SbVec2s &cursorPos, Gui::View3DInventorViewer *viewer)
 {
     if (!edit)
@@ -902,13 +925,16 @@ bool ViewProviderSketch::mouseMove(const SbVec2s &cursorPos, Gui::View3DInventor
 
     bool preselectChanged;
     if (Mode!=STATUS_SKETCH_DragPoint && Mode!=STATUS_SKETCH_DragCurve &&
-        Mode!=STATUS_SKETCH_DragConstraint) {
+        Mode!=STATUS_SKETCH_DragConstraint && Mode!=STATUS_SKETCH_UseRubberBand) {
 
         SoPickedPoint *pp = this->getPointOnRay(cursorPos, viewer);
         int PtIndex,GeoIndex,ConstrIndex,CrossIndex;
         preselectChanged = detectPreselection(pp,PtIndex,GeoIndex,ConstrIndex,CrossIndex);
         delete pp;
     }
+
+    if(Mode != STATUS_SKETCH_UseRubberBand)
+        prvCursorPos = cursorPos;
 
     switch (Mode) {
         case STATUS_NONE:
@@ -3601,3 +3627,4 @@ bool ViewProviderSketch::onDelete(const std::vector<std::string> &subList)
     // if not in edit delete the whole object
     return true;
 }
+

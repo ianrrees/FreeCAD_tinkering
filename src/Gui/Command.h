@@ -105,6 +105,7 @@ public:
     virtual const char* getWhatsThis  () const { return sWhatsThis;   }
     virtual const char* getPixmap     () const { return sPixmap;      }
     virtual const char* getAccel      () const { return sAccel;       }
+    virtual int         getAccelCoinId() const { return -1; }
     //@}
 
     /** @name Methods to set the properties of the command */
@@ -167,7 +168,9 @@ protected:
     virtual Action * createAction(void);
     /// Applies the menu text, tool and status tip to the passed action object
     void applyCommandData(Action* );
+    ///\TODO: Document me!
     const char* keySequenceToAccel(int) const;
+    ///\TODO: Document me!
     void adjustCameraPosition();
     //@}
 
@@ -303,6 +306,8 @@ protected:
     //@{
     const char* sAppModule;
     const char* sGroup;
+    //! The application-wide name of the command
+    /*! Used for example in CommandManager::getCommandByName */
     const char* sName;
     const char* sHelpUrl;
     int         eType;
@@ -590,6 +595,22 @@ protected: \
         Gui::MDIView* view = Gui::getMainWindow()->activeWindow();\
         return view && view->isDerivedFrom(Gui::View3DInventor::getClassTypeId());\
     }\
+};
+
+/** The Command Macro + isActive + Coin
+ *  This macro makes it easier to define a new command.
+ *  The parameter is the class name.
+ */
+#define DEF_STD_CMD_COIN(X) class X : public Gui::Command \
+{\
+public:\
+    X();\
+    virtual const char* className() const\
+    { return #X; }\
+    virtual int getAccelCoinId() const;\
+protected: \
+    virtual void activated(int iMsg);\
+    virtual bool isActive(void);\
 };
 
 #endif // GUI_COMMAND_H

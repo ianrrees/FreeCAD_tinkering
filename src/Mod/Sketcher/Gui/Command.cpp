@@ -45,6 +45,8 @@
 #include <Mod/Sketcher/App/SketchObject.h>
 #include <Mod/Part/App/Part2DObject.h>
 
+#include <Inventor/events/SoKeyboardEvent.h>
+
 #include "SketchOrientationDialog.h"
 #include "ViewProviderSketch.h"
 #include "TaskSketcherValidation.h"
@@ -248,7 +250,7 @@ CmdSketcherReorientSketch::CmdSketcherReorientSketch()
 {
     sAppModule      = "Sketcher";
     sGroup          = QT_TR_NOOP("Sketcher");
-    sMenuText       = QT_TR_NOOP("Reorient sketch...");
+    sMenuText       = QT_TR_NOOP("Reorient sketch");
     sToolTipText    = QT_TR_NOOP("Reorient the selected sketch");
     sWhatsThis      = sToolTipText;
     sStatusTip      = sToolTipText;
@@ -330,7 +332,7 @@ CmdSketcherMapSketch::CmdSketcherMapSketch()
 {
     sAppModule      = "Sketcher";
     sGroup          = QT_TR_NOOP("Sketcher");
-    sMenuText       = QT_TR_NOOP("Map sketch to face...");
+    sMenuText       = QT_TR_NOOP("Map sketch to face");
     sToolTipText    = QT_TR_NOOP("Map a sketch to a face");
     sWhatsThis      = sToolTipText;
     sStatusTip      = sToolTipText;
@@ -496,9 +498,82 @@ bool CmdSketcherValidateSketch::isActive(void)
     return (hasActiveDocument() && !Gui::Control().activeDialog());
 }
 
+DEF_STD_CMD_COIN(CmdSketcherDisableAutoConstraints);
 
+CmdSketcherDisableAutoConstraints::CmdSketcherDisableAutoConstraints()
+    :Command("Sketcher_DisableAutoConstraints")
+{
+    sAppModule      = "Sketcher";
+    sGroup          = QT_TR_NOOP("Sketcher");
+    sMenuText       = QT_TR_NOOP("Disable auto constraints");
+    sToolTipText    = QT_TR_NOOP("Pressing this key temporarily disables automatic constraints  **CAN'T CURRENTLY BE CHANGED FROM LEFT CTRL**");
+    sWhatsThis      = sToolTipText;
+    sStatusTip      = sToolTipText;
+    sName           = "SketcherDisableAutoConstraints";
+    sAccel          = "..."; // TODO: The DlgKeyboardImp and Command classes need to be updated to handle just a Ctrl or Shift press for this to work
+    eType           = ForEdit; 
+    qDebug() << "Key sequence string:"<<QKeySequence(Qt::Key_Control).toString();
+}
 
+void CmdSketcherDisableAutoConstraints::activated(int iMsg)
+{
+    qDebug() << "Activated SketcherDisableAutoConstraints";
+}
 
+bool CmdSketcherDisableAutoConstraints::isActive(void)
+{
+    Gui::Document *doc = getActiveGuiDocument();
+    if (doc) {
+        // checks if a Sketch Viewprovider is in Edit
+        SketcherGui::ViewProviderSketch* vp = dynamic_cast<SketcherGui::ViewProviderSketch*>(doc->getInEdit());
+        if(vp)
+            return true;
+    }
+    return false;
+}
+
+int CmdSketcherDisableAutoConstraints::getAccelCoinId() const
+{
+    return SoKeyboardEvent::LEFT_CONTROL;
+}
+
+DEF_STD_CMD_COIN(CmdSketcherDisableSnapToGrid);
+
+CmdSketcherDisableSnapToGrid::CmdSketcherDisableSnapToGrid()
+    :Command("Sketcher_DisableSnapToGrid")
+{
+    sAppModule      = "Sketcher";
+    sGroup          = QT_TR_NOOP("Sketcher");
+    sMenuText       = QT_TR_NOOP("Disable snap to grid");
+    sToolTipText    = QT_TR_NOOP("Pressing this key temporarily disables snap to grid  **CAN'T CURRENTLY BE CHANGED FROM LEFT SHIFT**");
+    sWhatsThis      = sToolTipText;
+    sStatusTip      = sToolTipText;
+    sName           = "SketcherDisableSnapToGrid";
+    sAccel          = "...";  //TODO: The DlgKeyboardImp and Command classes need to be updated to handle just a Ctrl or Shift press for this to work
+    eType           = ForEdit; 
+}
+
+void CmdSketcherDisableSnapToGrid::activated(int iMsg)
+{
+    qDebug() << "Activated SketcherDisableSnapToGrid";
+}
+
+bool CmdSketcherDisableSnapToGrid::isActive(void)
+{
+    Gui::Document *doc = getActiveGuiDocument();
+    if (doc) {
+        // checks if a Sketch Viewprovider is in Edit
+        SketcherGui::ViewProviderSketch* vp = dynamic_cast<SketcherGui::ViewProviderSketch*>(doc->getInEdit());
+        if(vp)
+            return true;
+    }
+    return false;
+}
+
+int CmdSketcherDisableSnapToGrid::getAccelCoinId() const
+{
+    return SoKeyboardEvent::LEFT_SHIFT;
+}
 
 void CreateSketcherCommands(void)
 {
@@ -511,4 +586,6 @@ void CreateSketcherCommands(void)
     rcCmdMgr.addCommand(new CmdSketcherMapSketch());
     rcCmdMgr.addCommand(new CmdSketcherViewSketch());
     rcCmdMgr.addCommand(new CmdSketcherValidateSketch());
+    rcCmdMgr.addCommand(new CmdSketcherDisableAutoConstraints());
+    rcCmdMgr.addCommand(new CmdSketcherDisableSnapToGrid());
 }
