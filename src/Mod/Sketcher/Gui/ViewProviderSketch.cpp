@@ -322,11 +322,11 @@ bool ViewProviderSketch::keyPressed(const SoKeyboardEvent *keyEvent)
 {
     bool pressed = keyEvent->getState() == SoButtonEvent::DOWN ? true : false;
     int key = keyEvent->getKey();
-
     
     Gui::Command *disableAutoConstraints = Gui::Application::Instance->commandManager().getCommandByName("SketcherDisableAutoConstraints"),
                  *disableSnapToGrid = Gui::Application::Instance->commandManager().getCommandByName("SketcherDisableSnapToGrid");
     
+    qDebug() <<"Hello!";
     // TODO:Currently these are hardwired
     if(disableAutoConstraints && key == disableAutoConstraints->getAccelCoinId())
         signalTempAutoConstraints(pressed);

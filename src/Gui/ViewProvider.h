@@ -29,6 +29,7 @@
 #include <string>
 #include <QIcon>
 #include <boost/signals.hpp>
+#include <Inventor/events/SoKeyboardEvent.h>
 
 class SbVec2s;
 class SbVec3f;
@@ -40,7 +41,6 @@ class SoSwitch;
 class SoTransform;
 class SbMatrix;
 class SoEventCallback;
-class SoKeyboardEvent;
 class SoPickedPoint;
 class SoDetail;
 class QString;
