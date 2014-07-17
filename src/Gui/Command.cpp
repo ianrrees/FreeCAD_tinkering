@@ -28,6 +28,7 @@
 # include <QKeySequence>
 # include <QMessageBox>
 # include <Inventor/actions/SoGetBoundingBoxAction.h>
+# include <Inventor/events/SoKeyboardEvent.h>
 # include <Inventor/nodes/SoOrthographicCamera.h>
 # include <Inventor/nodes/SoPerspectiveCamera.h>
 #endif
@@ -147,6 +148,12 @@ Action * CommandBase::createAction()
 {
     // does nothing
     return 0;
+}
+
+bool CommandBase::keyEventMatches(const SoKeyboardEvent &ev) const
+{
+    qDebug() << "Got here, accel is "<<getAccel();
+    return false;
 }
 
 void CommandBase::setMenuText(const char* s)

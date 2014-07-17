@@ -51,6 +51,7 @@ class ActionGroup;
 class Document;
 class SelectionSingleton;
 class MDIView;
+class SoKeyboardEvent;
 
 
 void CreateStdCommands(void);
@@ -90,6 +91,11 @@ public:
     /// The C++ class name is needed as context for the translation framework
     virtual const char* className() const = 0;
     //@}
+
+    //! Evaluates whether a keypress event matches the keyboard accelerator
+    /*! Returns true if the passed event matches
+     *  the keyboard accelerator, false otherwise*/
+    virtual bool keyEventMatches(const SoKeyboardEvent &ev) const;
 
     /** @name Methods to get the properties of the command */
     //@{
