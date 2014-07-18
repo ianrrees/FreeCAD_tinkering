@@ -59,6 +59,7 @@
 #include <App/Document.h>
 #include <App/DocumentObject.h>
 
+#include<QDebug>
 
 using Base::Interpreter;
 using namespace Gui;
@@ -118,6 +119,15 @@ using namespace Gui::DockWnd;
  * \endcode
  * An instance of \a OpenCommand must be created and added to the \ref Gui::CommandManager to make the class known to FreeCAD.
  * To see how menus and toolbars can be built go to the @ref workbench.
+ *
+ * \section Keyboard Accelerators
+ * The default keyboard accelerators (specified in constructors of
+ * Command-derived classes) can be changed by the end user.  Changes
+ * are made through the GUI via Tools->Customize->Keyboard, which is provided
+ * by Gui::DlgCustomKeyboardImp .  Changes to keyboard accelerators are saved
+ * via the parameters system (see Gui::WindowParameter) as soon as they are
+ * changed in the Gui::DlgCustomKeyboardImp, and re-loaded through
+ * Workbench::setupCustomShortcuts .
  *
  * @see Gui::Command, Gui::CommandManager
  */

@@ -100,6 +100,12 @@ public:
      *  the keyboard accelerator, false otherwise*/
     virtual bool keyEventMatches(const SoKeyboardEvent &ev) const;
 
+    //! Returns true iff the user should be able to change keyboard accelerators
+    virtual bool allowAccelChanges() const { return getAction() == NULL; }
+
+    //! Returns true iff this command can accept keyboard accelerators including only modifier keys
+    virtual bool allowModifierAccel() const { return false; }
+
     /** @name Methods to get the properties of the command */
     //@{
     virtual const char* getMenuText   () const { return sMenuText;    }
@@ -118,7 +124,7 @@ public:
     void setToolTipText(const char*);
     void setStatusTip  (const char*);
     void setPixmap     (const char*);
-    void setAccel      (QString);
+    void setAccel(QString);
     //@}
 
 protected:
@@ -134,6 +140,7 @@ protected:
     const char* sWhatsThis;
     const char* sStatusTip;
     const char* sPixmap;
+    //! Sets the default keyboard accelerator
     const char* sAccel;
     //@}
     QString keyboardAccelerator;
@@ -601,19 +608,5 @@ protected: \
     }\
 };
 
-/** The Command Macro + isActive + Coin
- *  This macro makes it easier to define a new command.
- *  The parameter is the class name.
- */
-#define DEF_STD_CMD_COIN(X) class X : public Gui::Command \
-{\
-public:\
-    X();\
-    virtual const char* className() const\
-    { return #X; }\
-protected: \
-    virtual void activated(int iMsg);\
-    virtual bool isActive(void);\
-};
 
 #endif // GUI_COMMAND_H

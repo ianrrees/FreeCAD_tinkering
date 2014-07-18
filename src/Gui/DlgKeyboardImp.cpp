@@ -126,38 +126,58 @@ void DlgCustomKeyboardImp::showEvent(QShowEvent* e)
 /** Shows the description for the corresponding command */
 void DlgCustomKeyboardImp::on_commandTreeWidget_currentItemChanged(QTreeWidgetItem* item)
 {
-    if (!item)
+    /* See DlgKeyboard.ui for names of the different widgets */
+    if(!item)
         return;
 
     QVariant data = item->data(1, Qt::UserRole);
     QByteArray name = data.toByteArray(); // command name
 
-    CommandManager & cCmdMgr = Application::Instance->commandManager();
-    Command* cmd = cCmdMgr.getCommandByName(name.constData());
-    if (cmd) {
-        if (cmd->getAction()) {
-            QKeySequence ks = cmd->getAction()->shortcut();
-            QKeySequence ks2 = QString::fromAscii(cmd->getDefaultAccel());
-            QKeySequence ks3 = editShortcut->text();
-            //editShortcut->setAcceptSoloModifiers(cmd->handlesModifierAccel());
+    CommandManager &cCmdMgr = Application::Instance->commandManager();
+    Command *cmd = cCmdMgr.getCommandByName(name.constData());
+    if(cmd) {
+        editShortcut->setAcceptSoloModifiers(cmd->allowModifierAccel());
+        QString defaultAccelStr = QString::fromAscii(cmd->getDefaultAccel());
+        if(cmd->getAction()) {
+            // Custom accelerators are enabled, and
+            // the command has an associated Action
             editShortcut->setEnabled(true);
 
-            if (ks.isEmpty())
-                accelLineEditShortcut->setText( tr("none") );
-            else
-                accelLineEditShortcut->setText(ks);
+            QKeySequence currentKeyseq = cmd->getAction()->shortcut();
+            QKeySequence defaultKeyseq = defaultAccelStr;
+            QKeySequence proposedKeyseq = editShortcut->text();
 
-            buttonAssign->setEnabled(!editShortcut->text().isEmpty() && (ks != ks3));
-            buttonReset->setEnabled((ks != ks2));
-        } else {
-            QKeySequence ks = cmd->getAccel();
-            if (ks.isEmpty())
+            if(currentKeyseq.isEmpty())
                 accelLineEditShortcut->setText( tr("none") );
             else
-                accelLineEditShortcut->setText(ks);
+                accelLineEditShortcut->setText(currentKeyseq);
+
+            buttonAssign->setEnabled( !editShortcut->text().isEmpty() &&
+                                      (currentKeyseq != proposedKeyseq) );
+            buttonReset->setEnabled((currentKeyseq != defaultKeyseq));
+        } else if(cmd->allowAccelChanges()) {
+            // Custom accelerators are enabled, but the command
+            // doesn't have an associated Action
+            editShortcut->setEnabled(true);
+
+            accelLineEditShortcut->setText( cmd->getAccel() );
+
+            buttonAssign->setEnabled(!editShortcut->text().isEmpty() &&
+                                     editShortcut->text() != cmd->getAccel());
+
+            buttonReset->setEnabled(defaultAccelStr != cmd->getAccel());
+
+        } else {
+            // Custom accelerators are not enabled for this command
+            editShortcut->setEnabled(false);
+
+            QKeySequence currentKeyseq = cmd->getAccel();
+            if(currentKeyseq.isEmpty())
+                accelLineEditShortcut->setText( tr("none") );
+            else
+                accelLineEditShortcut->setText(currentKeyseq);
             buttonAssign->setEnabled(false);
             buttonReset->setEnabled(false);
-            editShortcut->setEnabled(false);
         }
     }
 
@@ -200,15 +220,21 @@ void DlgCustomKeyboardImp::on_buttonAssign_clicked()
 
     CommandManager & cCmdMgr = Application::Instance->commandManager();
     Command* cmd = cCmdMgr.getCommandByName(name.constData());
-    if (cmd && cmd->getAction()) {
-        QKeySequence shortcut = editShortcut->text();
-        cmd->getAction()->setShortcut(shortcut);
+    if (cmd) {
+        if (cmd->getAction()) {
+            QKeySequence shortcut = editShortcut->text();
+            cmd->getAction()->setShortcut(shortcut);
+        } else if (cmd->allowAccelChanges()) {
+            cmd->setAccel(editShortcut->text());
+        }
+
         accelLineEditShortcut->setText(editShortcut->text());
         editShortcut->clear();
 
         ParameterGrp::handle hGrp = WindowParameter::getDefaultParameter()->GetGroup("Shortcut");
         hGrp->SetASCII(name.constData(), accelLineEditShortcut->text().toUtf8());
         buttonAssign->setEnabled(false);
+        //TODO: I think this falls over if the shortcut just changed back to it's default value?
         buttonReset->setEnabled(true);
     }
 }
@@ -225,9 +251,15 @@ void DlgCustomKeyboardImp::on_buttonReset_clicked()
 
     CommandManager & cCmdMgr = Application::Instance->commandManager();
     Command* cmd = cCmdMgr.getCommandByName(name.constData());
-    if (cmd && cmd->getAction()) {
-      cmd->getAction()->setShortcut(QString::fromAscii(cmd->getDefaultAccel()));
-        QString txt = cmd->getAction()->shortcut();
+    if (cmd) {
+        QString txt;
+        if (cmd->getAction()) {
+            cmd->getAction()->setShortcut(QString::fromAscii(cmd->getDefaultAccel()));
+            txt = cmd->getAction()->shortcut();
+        } else if (cmd->allowAccelChanges()) {
+            cmd->setAccel( QString::fromAscii(cmd->getDefaultAccel()) );
+            txt = QString::fromAscii(cmd->getDefaultAccel());
+        }
         accelLineEditShortcut->setText((txt.isEmpty() ? tr("none") : txt));
         ParameterGrp::handle hGrp = WindowParameter::getDefaultParameter()->GetGroup("Shortcut");
         hGrp->RemoveASCII(name.constData());
@@ -245,6 +277,8 @@ void DlgCustomKeyboardImp::on_buttonResetAll_clicked()
     for (std::vector<Command*>::iterator it = cmds.begin(); it != cmds.end(); ++it) {
         if ((*it)->getAction()) {
           (*it)->getAction()->setShortcut(QKeySequence(QString::fromAscii((*it)->getDefaultAccel())));
+        } else if ((*it)->allowAccelChanges()) {
+            (*it)->setAccel( QString::fromAscii((*it)->getDefaultAccel()) );
         }
     }
 
@@ -264,8 +298,9 @@ void DlgCustomKeyboardImp::on_editShortcut_textChanged(const QString& sc)
 
     CommandManager & cCmdMgr = Application::Instance->commandManager();
     Command* cmd = cCmdMgr.getCommandByName(name.constData());
-    if (cmd && !cmd->getAction()) {
-        buttonAssign->setEnabled(false); // command not in use
+
+    if (cmd && !cmd->getAction() && !cmd->allowAccelChanges()) {
+        buttonAssign->setEnabled(false);
         return;
     }
 
@@ -279,7 +314,8 @@ void DlgCustomKeyboardImp::on_editShortcut_textChanged(const QString& sc)
         CommandManager & cCmdMgr = Application::Instance->commandManager();
         std::vector<Command*> cmds = cCmdMgr.getAllCommands();
         for (std::vector<Command*>::iterator it = cmds.begin(); it != cmds.end(); ++it) {
-            if ((*it)->getAction() && (*it)->getAction()->shortcut() == ks) {
+            if ( (*it)->getAction() && ( (*it)->getAction()->shortcut() == ks ||
+                                         (*it)->getAccel() == sc ) ) {
                 ++countAmbiguous;
                 ambiguousCommand = QString::fromAscii((*it)->getName()); // store the last one
                 ambiguousMenu = qApp->translate((*it)->className(), (*it)->getMenuText());

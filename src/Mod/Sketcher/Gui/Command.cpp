@@ -498,7 +498,20 @@ bool CmdSketcherValidateSketch::isActive(void)
     return (hasActiveDocument() && !Gui::Control().activeDialog());
 }
 
-DEF_STD_CMD_COIN(CmdSketcherDisableAutoConstraints);
+// Yanked from src/Gui/Command.h
+#define SKETCHER_MODIFIERACCEL_COMMAND(X) class X : public Gui::Command \
+{\
+public:\
+    X();\
+    virtual const char* className() const\
+    { return #X; }\
+    virtual bool allowAccelChanges() const { return true; }\
+    virtual bool allowModifierAccel() const { return true; }\
+protected: \
+    virtual void activated(int iMsg);\
+};
+
+SKETCHER_MODIFIERACCEL_COMMAND(CmdSketcherDisableAutoConstraints);
 
 CmdSketcherDisableAutoConstraints::CmdSketcherDisableAutoConstraints()
     :Command("Sketcher_DisableAutoConstraints")
@@ -506,32 +519,20 @@ CmdSketcherDisableAutoConstraints::CmdSketcherDisableAutoConstraints()
     sAppModule      = "Sketcher";
     sGroup          = QT_TR_NOOP("Sketcher");
     sMenuText       = QT_TR_NOOP("Disable auto constraints");
-    sToolTipText    = QT_TR_NOOP("Pressing this key temporarily disables automatic constraints  **CAN'T CURRENTLY BE CHANGED FROM LEFT CTRL**");
+    sToolTipText    = QT_TR_NOOP("Temporarily disables automatic constraints while editing a sketch");
     sWhatsThis      = sToolTipText;
     sStatusTip      = sToolTipText;
     sName           = "SketcherDisableAutoConstraints";
     sAccel          = "Ctrl+";
+    keyboardAccelerator = QString::fromAscii(sAccel);
     eType           = ForEdit; 
 }
 
 void CmdSketcherDisableAutoConstraints::activated(int iMsg)
 {
-    qDebug() << "Activated SketcherDisableAutoConstraints";
 }
 
-bool CmdSketcherDisableAutoConstraints::isActive(void)
-{
-    Gui::Document *doc = getActiveGuiDocument();
-    if (doc) {
-        // checks if a Sketch Viewprovider is in Edit
-        SketcherGui::ViewProviderSketch* vp = dynamic_cast<SketcherGui::ViewProviderSketch*>(doc->getInEdit());
-        if(vp)
-            return true;
-    }
-    return false;
-}
-
-DEF_STD_CMD_COIN(CmdSketcherDisableSnapToGrid);
+SKETCHER_MODIFIERACCEL_COMMAND(CmdSketcherDisableSnapToGrid);
 
 CmdSketcherDisableSnapToGrid::CmdSketcherDisableSnapToGrid()
     :Command("Sketcher_DisableSnapToGrid")
@@ -539,29 +540,17 @@ CmdSketcherDisableSnapToGrid::CmdSketcherDisableSnapToGrid()
     sAppModule      = "Sketcher";
     sGroup          = QT_TR_NOOP("Sketcher");
     sMenuText       = QT_TR_NOOP("Disable snap to grid");
-    sToolTipText    = QT_TR_NOOP("Pressing this key temporarily disables snap to grid  **CAN'T CURRENTLY BE CHANGED FROM LEFT SHIFT**");
+    sToolTipText    = QT_TR_NOOP("Temporarily disables snap to grid while editing a sketch");
     sWhatsThis      = sToolTipText;
     sStatusTip      = sToolTipText;
     sName           = "SketcherDisableSnapToGrid";
     sAccel          = "Shift+";
+    keyboardAccelerator = QString::fromAscii(sAccel);
     eType           = ForEdit; 
 }
 
 void CmdSketcherDisableSnapToGrid::activated(int iMsg)
 {
-    qDebug() << "Activated SketcherDisableSnapToGrid";
-}
-
-bool CmdSketcherDisableSnapToGrid::isActive(void)
-{
-    Gui::Document *doc = getActiveGuiDocument();
-    if (doc) {
-        // checks if a Sketch Viewprovider is in Edit
-        SketcherGui::ViewProviderSketch* vp = dynamic_cast<SketcherGui::ViewProviderSketch*>(doc->getInEdit());
-        if(vp)
-            return true;
-    }
-    return false;
 }
 
 void CreateSketcherCommands(void)
