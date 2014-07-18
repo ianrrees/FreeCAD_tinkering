@@ -109,7 +109,6 @@ public:
     virtual const char* getPixmap     () const { return sPixmap;      }
     virtual const char* getDefaultAccel      () const { return sAccel;       }
     virtual QString getAccel() const { return keyboardAccelerator; }
-
     //@}
 
     /** @name Methods to set the properties of the command */
