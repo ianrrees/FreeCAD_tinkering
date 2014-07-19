@@ -101,7 +101,7 @@ public:
     virtual bool keyEventMatches(const SoKeyboardEvent &ev) const;
 
     //! Returns true iff the user should be able to change keyboard accelerators
-    virtual bool allowAccelChanges() const { return getAction() == NULL; }
+    virtual bool allowAccelChanges() const { return getAction() != NULL; }
 
     //! Returns true iff this command can accept keyboard accelerators including only modifier keys
     virtual bool allowModifierAccel() const { return false; }

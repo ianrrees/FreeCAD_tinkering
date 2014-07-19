@@ -326,12 +326,11 @@ bool ViewProviderSketch::keyPressed(const SoKeyboardEvent &keyEvent)
     Gui::Command *disableAutoConstraints = Gui::Application::Instance->commandManager().getCommandByName("SketcherDisableAutoConstraints"),
                  *disableSnapToGrid = Gui::Application::Instance->commandManager().getCommandByName("SketcherDisableSnapToGrid");
     
-    // TODO:Currently these are hardwired
-    if(disableAutoConstraints && disableAutoConstraints->keyEventMatches(keyEvent))
+    if (disableAutoConstraints && disableAutoConstraints->keyEventMatches(keyEvent))
         signalTempAutoConstraints(pressed);
-    else if (disableSnapToGrid && disableSnapToGrid->keyEventMatches(keyEvent))
+    if (disableSnapToGrid && disableSnapToGrid->keyEventMatches(keyEvent))
         signalTempSnapToGrid(pressed);
-    else
+
     switch (key)
     {
     case SoKeyboardEvent::ESCAPE:

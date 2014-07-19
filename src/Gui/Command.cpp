@@ -59,8 +59,6 @@
 #include <App/Document.h>
 #include <App/DocumentObject.h>
 
-#include<QDebug>
-
 using Base::Interpreter;
 using namespace Gui;
 using namespace Gui::Dialog;
@@ -162,8 +160,56 @@ Action * CommandBase::createAction()
 
 bool CommandBase::keyEventMatches(const SoKeyboardEvent &ev) const
 {
-    qDebug() << "Got here, accel is "<<getAccel();
-    return false;
+    static double prevDownTime = 0;
+    static bool ctrlPrevPressed = false,
+                shiftPrevPressed = false,
+                altPrevPressed = false;
+
+    QKeySequence qSeq(getAccel());
+
+    bool reqCtrl = QKeySequence(QObject::tr("Ctrl+")).matches(qSeq) != QKeySequence::NoMatch,
+         reqShift = QKeySequence(QObject::tr("Shift+")).matches(qSeq) != QKeySequence::NoMatch,
+         reqAlt = QKeySequence(QObject::tr("Alt+")).matches(qSeq) != QKeySequence::NoMatch;
+
+    QString reqKey = qSeq.toString().remove(QObject::tr("Ctrl+")).remove(QObject::tr("Shift+")).remove(QObject::tr("Alt+"));
+
+    QChar eventCharacter = QChar::fromAscii(ev.getPrintableCharacter());
+
+    if(!(reqCtrl || reqShift || reqAlt) & reqKey.length() != 1)
+        return false;
+
+    bool ret = false;
+    if(ev.getState() == SoButtonEvent::DOWN) {
+        // See if the buttons being pressed include all the buttons required by the event
+        if( (!reqCtrl || ev.wasCtrlDown()) &&
+            (!reqShift || ev.wasShiftDown()) &&
+            (!reqAlt || ev.wasAltDown())        ) {
+            // All modifiers were satisfied
+            // TODO: HACK
+            if(reqKey.length() == 0 || QString(eventCharacter).toUpper() == reqKey)
+                ret = true;
+        }
+    } else if(ev.getState() == SoButtonEvent::UP) {
+        // See if the button being released takes us out of the required set of buttons
+
+        if( (reqCtrl && !ev.wasCtrlDown() && ctrlPrevPressed) ||
+            (reqShift && !ev.wasShiftDown() && shiftPrevPressed) ||
+            (reqAlt && !ev.wasAltDown() && altPrevPressed) )
+            // One of the required modifiers was released
+            ret = true;
+        //TODO: HACK
+        else if(reqKey.length() == 1 && QString(eventCharacter).toUpper() == reqKey)
+            ret = true;
+    }
+
+    if(ev.getState() == SoButtonEvent::DOWN &&
+       prevDownTime != ev.getTime().getValue()) {
+        prevDownTime = ev.getTime().getValue();
+        ctrlPrevPressed = ev.wasCtrlDown();
+        shiftPrevPressed = ev.wasShiftDown();
+        altPrevPressed = ev.wasAltDown();
+    }
+    return ret;
 }
 
 void CommandBase::setMenuText(const char* s)

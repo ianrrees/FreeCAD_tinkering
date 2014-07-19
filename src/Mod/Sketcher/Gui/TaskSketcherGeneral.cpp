@@ -112,6 +112,11 @@ void SketcherGeneralWidget::toggleGridSnap(int state)
 void SketcherGeneralWidget::enableAutoConstraints(bool enabled)
 {
     static Qt::CheckState prevState = ui->checkBoxAutoconstraints->checkState();
+
+    // Can get called multiple times with the state not changing between.
+    if(ui->checkBoxAutoconstraints->isEnabled() == enabled)
+        return;
+
     if(!enabled) {
         prevState = ui->checkBoxAutoconstraints->checkState();
         ui->checkBoxAutoconstraints->setCheckState(Qt::Unchecked);
@@ -124,6 +129,11 @@ void SketcherGeneralWidget::enableAutoConstraints(bool enabled)
 void SketcherGeneralWidget::enableGridSnap(bool enabled)
 {
     static Qt::CheckState prevState = ui->checkBoxGridSnap->checkState();
+
+    // Can get called multiple times with the state not changing between.
+    if(ui->checkBoxGridSnap->isEnabled() == enabled)
+        return;
+
     if(!enabled) {
         prevState = ui->checkBoxGridSnap->checkState();
         ui->checkBoxGridSnap->setCheckState(Qt::Unchecked);
