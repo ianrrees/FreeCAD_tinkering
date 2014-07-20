@@ -282,7 +282,10 @@ protected:
     QImage renderConstrIcon(const QString &type,
                             const QColor &iconColor,
                             const QStringList &labels,
-                            const QList<QColor> &labelColors);
+                            const QList<QColor> &labelColors,
+                            //! If not NULL, gets set to the number of pixels
+                            //! that the text extends below the icon base.
+                            int *vPad = NULL);
 
     /// Copies a QImage constraint icon into a SoImage*
     /*! Used by drawTypicalConstraintIcon() and drawMergedConstraintIcons() */

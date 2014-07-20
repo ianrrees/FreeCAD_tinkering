@@ -2173,6 +2173,7 @@ void ViewProviderSketch::drawMergedConstraintIcons(IconQueue iconQueue)
     SoInfo *thisInfo;
     // Tracks all constraint IDs that are combined into this icon
     QString idString;
+    int lastVPad;
 
     while(!iconQueue.empty()) {
         IconQueue::iterator i = iconQueue.begin();
@@ -2229,16 +2230,26 @@ void ViewProviderSketch::drawMergedConstraintIcons(IconQueue iconQueue)
             compositeIcon = renderConstrIcon(thisType,
                                              iconColor,
                                              labels,
-                                             labelColors);
+                                             labelColors,
+                                             &lastVPad);
         } else {
+            int thisVPad;
             QImage partialIcon = renderConstrIcon(thisType,
                                                   iconColor,
                                                   labels,
-                                                  labelColors);
+                                                  labelColors,
+                                                  &thisVPad);
 
             // Stack vertically for now.  Down the road, it might make sense
             // to figure out the best orientation automatically.  IR
             int oldHeight = compositeIcon.height();
+
+            // This is overkill for the currentl used (20 July 2014) font,
+            // since it always seems to have the same vertical pad, but this
+            // might not always be the case.  The 3 pixel buffer might need
+            // to vary depending on font size too...
+            oldHeight -= std::max(lastVPad - 3, 0);
+
             compositeIcon = compositeIcon.copy(0, 0,
                                                std::max(partialIcon.width(),
                                                         compositeIcon.width()),
@@ -2247,6 +2258,7 @@ void ViewProviderSketch::drawMergedConstraintIcons(IconQueue iconQueue)
 
             QPainter qp(&compositeIcon);
             qp.drawImage(0, oldHeight, partialIcon);
+            lastVPad = thisVPad;
         }
     }
     thisInfo->string.setValue(idString.toAscii().data());
@@ -2257,7 +2269,8 @@ void ViewProviderSketch::drawMergedConstraintIcons(IconQueue iconQueue)
 QImage ViewProviderSketch::renderConstrIcon(const QString &type,
                                             const QColor &iconColor,
                                             const QStringList &labels,
-                                            const QList<QColor> &labelColors)
+                                            const QList<QColor> &labelColors,
+                                            int *vPad)
 {
     // Constants to help create constraint icons
     QString joinStr = QString::fromAscii(", ");
@@ -2273,6 +2286,9 @@ QImage ViewProviderSketch::renderConstrIcon(const QString &type,
     int labelWidth = qfm.boundingRect(labels.join(joinStr)).width();
     // See Qt docs on qRect::bottom() for explanation of the +1
     int pxBelowBase = qfm.boundingRect(labels.join(joinStr)).bottom() + 1;
+
+    if(vPad)
+        *vPad = pxBelowBase;
 
     QImage image = icon.copy(0, 0, icon.width() + labelWidth,
                                    icon.height() + pxBelowBase);
