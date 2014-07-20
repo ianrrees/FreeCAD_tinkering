@@ -2124,26 +2124,31 @@ void ViewProviderSketch::combineConstraintIcons(IconQueue iconQueue)
         thisGroup.push_back(iconQueue.back());
         iconQueue.pop_back();
 
-        
-        for(IconQueue::iterator i = iconQueue.begin(); i != iconQueue.end();
-            ++i) {
+        IconQueue::iterator i = iconQueue.begin();
+        while(i != iconQueue.end()) {
             bool addedToGroup = false;
 
             for(IconQueue::iterator j = thisGroup.begin();
-                j != thisGroup.end(); ++j) {
+                j != thisGroup.end(); ++j)
                 if(i->position.equals(j->position, maxDistSquared)) {
+                    // Found an icon in iconQueue that's close enough to
+                    // a member of thisGroup, so move it into thisGroup
                     thisGroup.push_back(*i);
                     i = iconQueue.erase(i);
                     addedToGroup = true;
                     break;
                 }
 
-            }
-            if(addedToGroup)
+            if(addedToGroup) {
                 if(i == iconQueue.end())
+                    // We just got the last icon out of iconQueue
                     break;
                 else
+                    // Start looking through the iconQueue again, in case
+                    // we have an icon that's now close enough to thisGroup
                     i = iconQueue.begin();
+            } else
+                ++i;
         }
 
         if(thisGroup.size() == 1)
