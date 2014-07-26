@@ -207,6 +207,10 @@ public:
     std::vector<SbVec2f> getGLPolygon(const std::vector<SbVec2s>&) const;
     const std::vector<SbVec2s>& getPolygon(SbBool* clip_inner=0) const;
     //@}
+    
+    /// Returns the screen coordinates of the origin of the path's tail object
+    /*! Return value is in floating-point pixels, origin at bottom-left. */
+    SbVec2f screenCoordsOfPath(SoPath *path);
 
     /** @name Edit methods */
     //@{
