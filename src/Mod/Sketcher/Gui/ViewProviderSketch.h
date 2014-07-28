@@ -25,6 +25,7 @@
 #define SKETCHERGUI_VIEWPROVIDERSKETCH_H
 
 #include <Mod/Part/Gui/ViewProvider2DObject.h>
+#include <Inventor/SbImage.h>
 #include <Inventor/SbColor.h>
 #include <Base/Tools2D.h>
 #include <Gui/Selection.h>
@@ -153,7 +154,14 @@ public:
                            SbLine&) const;
 
     /// helper to detect preselection
-    bool detectPreselection(const SoPickedPoint *Point);
+    bool detectPreselection(const SoPickedPoint *Point,
+                            const Gui::View3DInventorViewer *viewer,
+                            const SbVec2s &cursorPos);
+
+    /// Helper for detectPreselection(), for constraints only.
+    std::set<int> detectPreselectionConstr(const SoPickedPoint *Point,
+                                           const Gui::View3DInventorViewer *viewer,
+                                           const SbVec2s &cursorPos);
 
     /// box selection method
     void doBoxSelection(const SbVec2s &startPos, const SbVec2s &endPos,
@@ -201,6 +209,7 @@ public:
     //@}
 
     friend class DrawSketchHandler;
+    friend struct ::EditData;
 
     /// signals if the constraints list has changed
     boost::signal<void ()> signalConstraintsChanged;
@@ -269,6 +278,10 @@ protected:
 
     /// Internal type used for drawing constraint icons
     typedef std::vector<constrIconQueueItem> IconQueue;
+    /// For constraint icon bounding boxes
+    typedef std::pair<QRect, std::set<int> > ConstrIconBB;
+    /// For constraint icon bounding boxes
+    typedef std::vector<ConstrIconBB> ConstrIconBBVec;
 
     void combineConstraintIcons(IconQueue iconQueue);
 
@@ -283,10 +296,10 @@ protected:
                             const QColor &iconColor,
                             const QStringList &labels,
                             const QList<QColor> &labelColors,
-                            //! Hack alert - this gets populated with bounding
-                            //! box of the icon first, then of the labels in
-                            //! the same order as they were passed in.
-                            std::vector<QRect> &boundingBoxes,
+                            //! Gets populated with bounding boxes (in icon
+                            //! image coordinates) for the icon at left, then
+                            //! labels for different constraints.
+                            std::vector<QRect> *boundingBoxes = NULL,
                             //! If not NULL, gets set to the number of pixels
                             //! that the text extends below the icon base.
                             int *vPad = NULL);
@@ -297,6 +310,9 @@ protected:
 
     /// Essentially a version of sendConstraintIconToCoin, with a blank icon
     void clearCoinImage(SoImage *soImagePtr);
+
+    /// Returns the size that Coin should display the indicated image at
+    SbVec3s getDisplayedSize(const SoImage *) const;
     //@}
 
     void setPositionText(const Base::Vector2D &Pos, const SbString &txt);

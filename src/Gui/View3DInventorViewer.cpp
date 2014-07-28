@@ -739,7 +739,7 @@ const std::vector<SbVec2s>& View3DInventorViewer::getPolygon(SbBool* clip_inner)
     return navigation->getPolygon(clip_inner);
 }
 
-SbVec2f View3DInventorViewer::screenCoordsOfPath(SoPath *path)
+SbVec2f View3DInventorViewer::screenCoordsOfPath(SoPath *path) const
 {
     // Generate a matrix (well, a SoGetMatrixAction) that
     // moves us us to the picked object's coordinate space.

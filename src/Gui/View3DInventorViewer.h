@@ -210,7 +210,7 @@ public:
     
     /// Returns the screen coordinates of the origin of the path's tail object
     /*! Return value is in floating-point pixels, origin at bottom-left. */
-    SbVec2f screenCoordsOfPath(SoPath *path);
+    SbVec2f screenCoordsOfPath(SoPath *path) const;
 
     /** @name Edit methods */
     //@{

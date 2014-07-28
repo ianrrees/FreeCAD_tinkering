@@ -200,7 +200,7 @@ struct EditData {
     // icons (like the one used by the constraint IDs we insert into the Coin
     // rendering tree) to a vector of those bounding boxes paired with relevant
     // constraint IDs.
-    std::map<QString, std::vector<std::pair<QRect, std::set<int> > > > combinedConstrBoxes;
+    std::map<QString, ViewProviderSketch::ConstrIconBBVec> combinedConstrBoxes;
 
     // nodes for the visuals
     SoSeparator   *EditRoot;
@@ -933,7 +933,7 @@ bool ViewProviderSketch::mouseMove(const SbVec2s &cursorPos, Gui::View3DInventor
 
         SoPickedPoint *pp = this->getPointOnRay(cursorPos, viewer);
 
-        preselectChanged = detectPreselection(pp);
+        preselectChanged = detectPreselection(pp, viewer, cursorPos);
 
         delete pp;
     }
@@ -1403,7 +1403,71 @@ void ViewProviderSketch::onSelectionChanged(const Gui::SelectionChanges& msg)
     }
 }
 
-bool ViewProviderSketch::detectPreselection(const SoPickedPoint *Point)
+std::set<int> ViewProviderSketch::detectPreselectionConstr(const SoPickedPoint *Point,
+                                                           const Gui::View3DInventorViewer *viewer,
+                                                           const SbVec2s &cursorPos)
+{
+    std::set<int> constrIndices;
+    SoPath *path = Point->getPath();
+    SoNode *tail = path->getTail();
+    SoNode *tailFather = path->getNode(path->getLength()-2);
+
+    for (int i=0; i < edit->constrGroup->getNumChildren(); ++i)
+        if (edit->constrGroup->getChild(i) == tailFather) {
+            SoSeparator *sep = static_cast<SoSeparator *>(tailFather);
+            if(sep->getNumChildren() > CONSTRAINT_SEPARATOR_INDEX_FIRST_CONSTRAINTID) {
+                SoInfo *constrIds = NULL;
+                if(tail == sep->getChild(CONSTRAINT_SEPARATOR_INDEX_FIRST_ICON)) {
+                    // First icon was hit
+                    constrIds = static_cast<SoInfo *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_FIRST_CONSTRAINTID));
+
+                } else {
+                    // Assume second icon was hit
+                    constrIds = static_cast<SoInfo *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_SECOND_CONSTRAINTID));
+                }
+                if(constrIds) {
+                    QString constrIdsStr = QString::fromAscii(constrIds->string.getValue().getString());
+                    if(edit->combinedConstrBoxes.count(constrIdsStr) && dynamic_cast<SoImage *>(tail)) {
+                        // If it's a combined constraint icon
+
+                        // Screen dimensions of the icon
+                        SbVec3s iconSize = getDisplayedSize(static_cast<SoImage *>(tail));
+                        // Center of the icon
+                        SbVec2f iconCoords = viewer->screenCoordsOfPath(path);
+                        // Coordinates of the mouse cursor on the icon, origin at top-left
+                        int iconX = cursorPos[0] - iconCoords[0] + iconSize[0]/2,
+                            iconY = iconCoords[1] - cursorPos[1] + iconSize[1]/2;
+
+                        for(ConstrIconBBVec::iterator b = edit->combinedConstrBoxes[constrIdsStr].begin();
+                            b != edit->combinedConstrBoxes[constrIdsStr].end(); ++b) {
+                            if(b->first.contains(iconX, iconY))
+                                // We've found a bounding box that contains the mouse pointer!
+                                for(std::set<int>::iterator k = b->second.begin();
+                                    k != b->second.end(); ++k)
+                                    constrIndices.insert(*k);
+                        }
+                    } else {
+                        // It's a constraint icon, not a combined one
+                        QStringList constrIdStrings = constrIdsStr.split(QString::fromAscii(","));
+                        while(!constrIdStrings.empty())
+                            constrIndices.insert(constrIdStrings.takeAt(0).toInt());
+                    }
+                }
+            }
+                else {
+                // other constraint icons - eg radius...
+                constrIndices.clear();
+                constrIndices.insert(i);
+            }
+            break;
+
+        }
+    return constrIndices;
+}
+
+bool ViewProviderSketch::detectPreselection(const SoPickedPoint *Point,
+                                            const Gui::View3DInventorViewer *viewer,
+                                            const SbVec2s &cursorPos)
 {
     assert(edit);
 
@@ -1449,45 +1513,7 @@ bool ViewProviderSketch::detectPreselection(const SoPickedPoint *Point)
             } else {
                 // checking if a constraint is hit
                 if (tailFather2 == edit->constrGroup)
-                    for (int i=0; i < edit->constrGroup->getNumChildren(); ++i)
-                        if (edit->constrGroup->getChild(i) == tailFather) {
-                            SoSeparator *sep = static_cast<SoSeparator *>(tailFather);
-                            if(sep->getNumChildren() > CONSTRAINT_SEPARATOR_INDEX_FIRST_CONSTRAINTID) {
-                                SoInfo *constrIds = NULL;
-                                if(tail == sep->getChild(CONSTRAINT_SEPARATOR_INDEX_FIRST_ICON)) {
-                                    // First icon was hit
-                                    constrIds = static_cast<SoInfo *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_FIRST_CONSTRAINTID));
-
-                                } else {
-                                    // Assume second icon was hit
-                                    constrIds = static_cast<SoInfo *>(sep->getChild(CONSTRAINT_SEPARATOR_INDEX_SECOND_CONSTRAINTID));
-                                }
-                                SbString constrIdsStr = constrIds->string.getValue();
-                                if(constrIds && constrIdsStr.getLength()) {
-        ///////////////Hacking
-  //      if(pp) {
-  //          SoPath *path = pp->getPath();
-  //          SoNode *tailFather2 = path->getNode(path->getLength()-3);
-  //          if (tailFather2 == edit->constrGroup) {
-  //
-  //              SbVec2f imageCoords = viewer->screenCoordsOfPath(path);
-  //              qDebug() <<cursorPos[0]<<'\t'<<cursorPos[1]<<"\t-\t"<<imageCoords[0] <<'\t'<<imageCoords[1];
-  //          }
-  //      }
-        ////////////////End hacking
-                                    QStringList constrIdStrings = QString::fromAscii(constrIdsStr.getString()).split(QString::fromAscii(","));
-                                    while(!constrIdStrings.empty())
-                                        constrIndices.insert(constrIdStrings.takeAt(0).toInt());
-                                }
-                            }
-                                else {
-                                // other constraint icons - eg radius...
-                                constrIndices.clear();
-                                constrIndices.insert(i);
-                            }
-                            break;
-
-                        }
+                    constrIndices = detectPreselectionConstr(Point, viewer, cursorPos);
             }
         }
 
@@ -1618,6 +1644,15 @@ bool ViewProviderSketch::detectPreselection(const SoPickedPoint *Point)
     return false;
 }
 
+SbVec3s ViewProviderSketch::getDisplayedSize(const SoImage *iconPtr) const
+{
+    SbVec3s iconSize = iconPtr->image.getValue().getSize();
+    if(iconPtr->width.getValue() != -1)
+        iconSize[0] = iconPtr->width.getValue();
+    if(iconPtr->height.getValue() != -1)
+        iconSize[1] = iconPtr->height.getValue();
+    return iconSize;
+}
 void ViewProviderSketch::doBoxSelection(const SbVec2s &startPos, const SbVec2s &endPos,
                                         const Gui::View3DInventorViewer *viewer)
 {
@@ -2204,13 +2239,13 @@ void ViewProviderSketch::drawMergedConstraintIcons(IconQueue iconQueue)
     int lastVPad;
 
     QStringList labels;
-    std::set<int> ids;
+    std::vector<int> ids;
     QString thisType;
     QColor iconColor;
     QList<QColor> labelColors;
     int maxColorPriority;
 
-    std::vector<std::pair<QRect, std::set<int> > > boundingBoxes;
+    ConstrIconBBVec boundingBoxes;
     while(!iconQueue.empty()) {
         IconQueue::iterator i = iconQueue.begin();
 
@@ -2218,7 +2253,7 @@ void ViewProviderSketch::drawMergedConstraintIcons(IconQueue iconQueue)
         labels.append(i->label);
 
         ids.clear();
-        ids.insert(i->constraintId);
+        ids.push_back(i->constraintId);
 
         thisType = i->type;
         iconColor = constrColor(i->constraintId);
@@ -2251,7 +2286,7 @@ void ViewProviderSketch::drawMergedConstraintIcons(IconQueue iconQueue)
             }
 
             labels.append(i->label);
-            ids.insert(i->constraintId);
+            ids.push_back(i->constraintId);
             labelColors.append(constrColor(i->constraintId));
 
             if(constrColorPriority(i->constraintId) > maxColorPriority) {
@@ -2267,6 +2302,7 @@ void ViewProviderSketch::drawMergedConstraintIcons(IconQueue iconQueue)
             
         // To be inserted into edit->combinedConstBoxes
         std::vector<QRect> boundingBoxesVec;
+        int oldHeight = 0;
 
         // Render the icon here.
         if(compositeIcon.isNull()) {
@@ -2274,24 +2310,20 @@ void ViewProviderSketch::drawMergedConstraintIcons(IconQueue iconQueue)
                                              iconColor,
                                              labels,
                                              labelColors,
-                                             boundingBoxesVec,
+                                             &boundingBoxesVec,
                                              &lastVPad);
-            for(std::vector<QRect>::iterator i = boundingBoxesVec.begin();
-                i != boundingBoxesVec.end(); ++i)
-                //TODO: seperate out by the labels.
-                boundingBoxes.push_back(std::pair<QRect, std::set<int> >(*i, ids));
         } else {
             int thisVPad;
             QImage partialIcon = renderConstrIcon(thisType,
                                                   iconColor,
                                                   labels,
                                                   labelColors,
-                                                  boundingBoxesVec,
+                                                  &boundingBoxesVec,
                                                   &thisVPad);
 
             // Stack vertically for now.  Down the road, it might make sense
             // to figure out the best orientation automatically.
-            int oldHeight = compositeIcon.height();
+            oldHeight = compositeIcon.height();
 
             // This is overkill for the currently used (20 July 2014) font,
             // since it always seems to have the same vertical pad, but this
@@ -2308,35 +2340,44 @@ void ViewProviderSketch::drawMergedConstraintIcons(IconQueue iconQueue)
             QPainter qp(&compositeIcon);
             qp.drawImage(0, oldHeight, partialIcon);
 
-            for(std::vector<QRect>::iterator i = boundingBoxesVec.begin();
-                i != boundingBoxesVec.end(); ++i)
-                //TODO: seperate out by the labels.
-                boundingBoxes.push_back(std::pair<QRect, std::set<int> >(i->adjusted(0, oldHeight, 0, oldHeight), ids));
-
             lastVPad = thisVPad;
         }
+
+        // Add bounding boxes for the icon we just rendered to boundingBoxes
+        std::vector<int>::iterator id = ids.begin();
+        std::set<int> nextIds;
+        for(std::vector<QRect>::iterator bb = boundingBoxesVec.begin();
+            bb != boundingBoxesVec.end(); ++bb) {
+            nextIds.clear();
+
+            if(bb == boundingBoxesVec.begin()) {
+                // The first bounding box is for the icon at left, so assign
+                // all IDs for that type of constraint to the icon.
+                for(std::vector<int>::iterator j = ids.begin();
+                    j != ids.end(); ++j)
+                    nextIds.insert(*j);
+            } else
+                nextIds.insert(*(id++));
+
+            ConstrIconBB newBB(bb->adjusted(0, oldHeight, 0, oldHeight),
+                               nextIds);
+
+            boundingBoxes.push_back(newBB);
+        }
     }
-    //TODO: Think about whether we will get conflicting entries by doing this...
-/*    qDebug() << "Constraints for "<<idString<<" - icon is "<<compositeIcon.width()<<'x'<<compositeIcon.height();
-    for(std::vector<std::pair<QRect, std::set<int> > >::iterator i = boundingBoxes.begin();
-        i!= boundingBoxes.end(); ++i) {
-        qDebug() << i->first << ':';
-        for(std::set<int>::iterator j = i->second.begin(); j != i->second.end(); ++j)
-            qDebug() << '\t' << *j;
-    }
-*/
-// In edit: std::map<QString, std::vector<std::pair<QRect, std::set<int> > > > combinedConstrBoxes;
     edit->combinedConstrBoxes[idString] = boundingBoxes;
     thisInfo->string.setValue(idString.toAscii().data());
     sendConstraintIconToCoin(compositeIcon, thisDest);
 }
 
 
+/// Note: labels, labelColors, and boundignBoxes are all
+/// assumed to be the same length.
 QImage ViewProviderSketch::renderConstrIcon(const QString &type,
                                             const QColor &iconColor,
                                             const QStringList &labels,
                                             const QList<QColor> &labelColors,
-                                            std::vector<QRect> &boundingBoxes,
+                                            std::vector<QRect> *boundingBoxes,
                                             int *vPad)
 {
     // Constants to help create constraint icons
@@ -2360,7 +2401,8 @@ QImage ViewProviderSketch::renderConstrIcon(const QString &type,
                                    icon.height() + pxBelowBase);
 
     // Make a bounding box for the icon
-    boundingBoxes.push_back(QRect(0, 0, icon.width(), icon.height()));
+    if(boundingBoxes)
+        boundingBoxes->push_back(QRect(0, 0, icon.width(), icon.height()));
 
     // Render the Icons
     QPainter qp(&image);
@@ -2391,22 +2433,25 @@ QImage ViewProviderSketch::renderConstrIcon(const QString &type,
                 qp.drawText(icon.width() + cursorOffset, icon.height(),
                             *labelItr);
     
-                // Make a bounding box for this label
-                labelBB = qfm.boundingRect(*labelItr);
-                labelBB.moveTo(icon.width() + cursorOffset,
-                               icon.height() - qfm.height());
+                if(boundingBoxes) {
+                    labelBB = qfm.boundingRect(*labelItr);
+                    labelBB.moveTo(icon.width() + cursorOffset,
+                                   icon.height() - qfm.height());
+                    boundingBoxes->push_back(labelBB);
+                }
             } else {
                 qp.drawText(icon.width() + cursorOffset, icon.height(),
                             *labelItr + joinStr);
 
-                // Make a bounding box for this label
-                labelBB = qfm.boundingRect(*labelItr + joinStr);
-                labelBB.moveTo(icon.width() + cursorOffset,
-                               icon.height() - qfm.height());
+                if(boundingBoxes) {
+                    labelBB = qfm.boundingRect(*labelItr + joinStr);
+                    labelBB.moveTo(icon.width() + cursorOffset,
+                                   icon.height() - qfm.height());
+                    boundingBoxes->push_back(labelBB);
+                }
 
                 cursorOffset += qfm.width(*labelItr + joinStr);
             }
-            boundingBoxes.push_back(labelBB);
         }
     }
 
@@ -2417,12 +2462,10 @@ void ViewProviderSketch::drawTypicalConstraintIcon(const constrIconQueueItem &i)
 {
     QColor color = constrColor(i.constraintId);
 
-    std::vector<QRect> garbage;   //TODO: Clean this up
     QImage image = renderConstrIcon(i.type,
                                     color,
                                     QStringList(i.label),
-                                    QList<QColor>() << color,
-                                    garbage);
+                                    QList<QColor>() << color);
 
     i.infoPtr->string.setValue(QString::number(i.constraintId).toAscii().data());
     sendConstraintIconToCoin(image, i.destination);
