@@ -283,6 +283,10 @@ protected:
                             const QColor &iconColor,
                             const QStringList &labels,
                             const QList<QColor> &labelColors,
+                            //! Hack alert - this gets populated with bounding
+                            //! box of the icon first, then of the labels in
+                            //! the same order as they were passed in.
+                            std::vector<QRect> &boundingBoxes,
                             //! If not NULL, gets set to the number of pixels
                             //! that the text extends below the icon base.
                             int *vPad = NULL);
