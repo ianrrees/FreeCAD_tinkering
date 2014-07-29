@@ -889,9 +889,6 @@ void ViewProviderSketch::editDoubleClicked(void)
     }
     else if (edit->PreselectConstraintSet.empty() != true) {
         // Find the constraint
-// This looks like old debug code?  Not changing edit->PreselectConstraint to edit->PreselectConstraintSet just yet
-//        Base::Console().Log("double click constraint:%d\n",edit->PreselectConstraint);
-
         const std::vector<Sketcher::Constraint *> &constrlist = getSketchObject()->Constraints.getValues();
 
         for(std::set<int>::iterator it = edit->PreselectConstraintSet.begin();
@@ -905,7 +902,7 @@ void ViewProviderSketch::editDoubleClicked(void)
                 Constr->Type == Sketcher::Radius || Constr->Type == Sketcher::Angle) {
 
                 // Coin's SoIdleSensor causes problems on some platform while Qt seems to work properly (#0001517)
-                EditDatumDialog * editDatumDialog = new EditDatumDialog(this, *it);
+                EditDatumDialog *editDatumDialog = new EditDatumDialog(this, *it);
                 QCoreApplication::postEvent(editDatumDialog, new QEvent(QEvent::User));
                 edit->editDatumDialog = true; // avoid to double handle "ESC"
             }
@@ -2234,6 +2231,7 @@ void ViewProviderSketch::drawMergedConstraintIcons(IconQueue iconQueue)
     float closest = FLT_MAX;  // Closest distance between avPos and any icon
     SoImage *thisDest;
     SoInfo *thisInfo;
+
     // Tracks all constraint IDs that are combined into this icon
     QString idString;
     int lastVPad;
@@ -2294,8 +2292,8 @@ void ViewProviderSketch::drawMergedConstraintIcons(IconQueue iconQueue)
                 iconColor= constrColor(i->constraintId);
             }
 
-            idString.append(QString::fromAscii(","));
-            idString.append(QString::number(i->constraintId));
+            idString.append(QString::fromAscii(",") +
+                            QString::number(i->constraintId));
 
             i = iconQueue.erase(i);
         }
@@ -2365,6 +2363,14 @@ void ViewProviderSketch::drawMergedConstraintIcons(IconQueue iconQueue)
             boundingBoxes.push_back(newBB);
         }
     }
+
+    qDebug()<<"Coords for "<<idString;
+    for(ConstrIconBBVec::iterator i = boundingBoxes.begin(); i!=boundingBoxes.end(); ++i) {
+        qDebug()<<i->first;
+        for(std::set<int>::iterator j = i->second.begin(); j!= i->second.end(); ++j)
+            qDebug()<<'\t'<<*j;
+    }
+
     edit->combinedConstrBoxes[idString] = boundingBoxes;
     thisInfo->string.setValue(idString.toAscii().data());
     sendConstraintIconToCoin(compositeIcon, thisDest);
@@ -2418,6 +2424,7 @@ QImage ViewProviderSketch::renderConstrIcon(const QString &type,
 
         //In Python: "for label, color in zip(labels, labelColors):"
         QStringList::const_iterator labelItr;
+        QString labelStr;
         QList<QColor>::const_iterator colorItr;
         QRect labelBB;
         for(labelItr = labels.begin(), colorItr = labelColors.begin();
@@ -2425,33 +2432,26 @@ QImage ViewProviderSketch::renderConstrIcon(const QString &type,
             ++labelItr, ++colorItr) {
 
             qp.setPen(*colorItr);
-            if(labelItr + 1 == labels.end()) {  // if this is the last label
-                // Note: text can sometimes draw to the left of the starting
-                //       position, eg italic fonts.  Check QFontMetrics
-                //       documentation for more info, but be mindful if the
-                //       icon.width() is ever very small (or removed).
-                qp.drawText(icon.width() + cursorOffset, icon.height(),
-                            *labelItr);
-    
-                if(boundingBoxes) {
-                    labelBB = qfm.boundingRect(*labelItr);
-                    labelBB.moveTo(icon.width() + cursorOffset,
-                                   icon.height() - qfm.height());
-                    boundingBoxes->push_back(labelBB);
-                }
-            } else {
-                qp.drawText(icon.width() + cursorOffset, icon.height(),
-                            *labelItr + joinStr);
+            
+            if(labelItr + 1 == labels.end()) // if this is the last label
+                labelStr = *labelItr;
+            else
+                labelStr = *labelItr + joinStr;
 
-                if(boundingBoxes) {
-                    labelBB = qfm.boundingRect(*labelItr + joinStr);
-                    labelBB.moveTo(icon.width() + cursorOffset,
-                                   icon.height() - qfm.height());
-                    boundingBoxes->push_back(labelBB);
-                }
+            // Note: text can sometimes draw to the left of the starting
+            //       position, eg italic fonts.  Check QFontMetrics
+            //       documentation for more info, but be mindful if the
+            //       icon.width() is ever very small (or removed).
+            qp.drawText(icon.width() + cursorOffset, icon.height(), labelStr);
 
-                cursorOffset += qfm.width(*labelItr + joinStr);
+            if(boundingBoxes) {
+                labelBB = qfm.boundingRect(labelStr);
+                labelBB.moveTo(icon.width() + cursorOffset,
+                               icon.height() - qfm.height() + pxBelowBase);
+                boundingBoxes->push_back(labelBB);
             }
+                
+            cursorOffset += qfm.width(labelStr);
         }
     }
 
