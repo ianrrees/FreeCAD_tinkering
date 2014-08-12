@@ -393,6 +393,11 @@ bool ViewProviderSketch::keyPressed(bool pressed, int key)
                 return true;
             }
             if (edit) {
+                if(edit->rubberbandSelect != NULL) {
+                    edit->rubberbandSelect->releaseMouseModel();
+                    delete edit->rubberbandSelect;
+                    edit->rubberbandSelect = NULL;
+                }
                 // #0001479: 'Escape' key dismissing dialog cancels Sketch editing
                 // If we receive a button release event but not a press event before
                 // then ignore this one.
@@ -497,6 +502,9 @@ void ViewProviderSketch::getCoordsOnSketchPlane(double &u, double &v,const SbVec
     v = S.y;
 }
 
+//TODO: Look into changing this to take a mouse event and a viewer, and if that
+// change is made, get rid of handleMousePress() in favour of the version that
+// takes a Coin event.  IR
 bool ViewProviderSketch::mouseButtonPressed(int Button, bool pressed, const SbVec2s &cursorPos,
                                             Gui::View3DInventorViewer *viewer)
 {
@@ -574,8 +582,10 @@ bool ViewProviderSketch::mouseButtonPressed(int Button, bool pressed, const SbVe
                             Mode = STATUS_SKETCH_StartRubberBand;
                             edit->rubberbandSelect = new Gui::RubberbandSelection;
                             edit->rubberbandSelect->grabMouseModel(viewer);
-                            viewer->setRenderFramebuffer(true);
-                            qDebug() << "Gah";
+                            edit->rubberbandSelect->handleMousePress(cursorPos,
+                                                                     Button,
+                                                                     pressed,
+                                                                     viewer->getViewportRegion());
                         }
                     }
 
@@ -757,16 +767,27 @@ bool ViewProviderSketch::mouseButtonPressed(int Button, bool pressed, const SbVe
                 case STATUS_SKETCH_StartRubberBand: // a single click happened, so clear selection
                     Mode = STATUS_NONE;
                     Gui::Selection().clearSelection();
+                    if(edit->rubberbandSelect != NULL) {
+                        edit->rubberbandSelect->handleMousePress(cursorPos,
+                                                                 Button,
+                                                                 pressed,
+                                                                 viewer->getViewportRegion());
+                        edit->rubberbandSelect->releaseMouseModel();
+                        delete edit->rubberbandSelect;
+                        edit->rubberbandSelect = NULL;
+                    }
                     return true;
                 case STATUS_SKETCH_UseRubberBand:
                     doBoxSelection(prvCursorPos, cursorPos, viewer);
                     if(edit->rubberbandSelect != NULL) {
+                        edit->rubberbandSelect->handleMousePress(cursorPos,
+                                                                 Button,
+                                                                 pressed,
+                                                                 viewer->getViewportRegion());
                         edit->rubberbandSelect->releaseMouseModel();
                         delete edit->rubberbandSelect;
                         edit->rubberbandSelect = NULL;
-                        viewer->setRenderFramebuffer(false);
-                    } else
-                        qDebug() << "Something went wrong 2";
+                    }
 
                     // a redraw is required in order to clear the rubberband
                     draw(true);
@@ -937,6 +958,9 @@ void ViewProviderSketch::editDoubleClicked(void)
     }
 }
 
+//TODO: Look into changing this to take a mouse event and a viewer, and if that
+// change is made, get rid of handleMove() in favour of the version that
+// takes a Coin event.  IR
 bool ViewProviderSketch::mouseMove(const SbVec2s &cursorPos, Gui::View3DInventorViewer *viewer)
 {
     if (!edit)
@@ -1072,44 +1096,9 @@ bool ViewProviderSketch::mouseMove(const SbVec2s &cursorPos, Gui::View3DInventor
             return true;
         }
         case STATUS_SKETCH_UseRubberBand: {
-            // Probably our problem with anti-aliasing...
-            if(edit->rubberbandSelect != NULL) {
+            if(edit->rubberbandSelect != NULL)
                 edit->rubberbandSelect->handleMove(cursorPos,
                                                    viewer->getViewportRegion());
-                edit->rubberbandSelect->redraw();
-            } else
-                qDebug()<<"Something's wrong";
-
-
-/*            Gui::GLPainter p;
-            p.begin(viewer);
-            p.setColor(1.0, 1.0, 0.0, 0.0);
-            p.setLogicOp(GL_XOR);
-            p.setLineWidth(3.0f);
-            p.setLineStipple(2, 0x3F3F);
-            // first redraw the old rectangle with XOR to restore the correct colors
-            p.drawRect(prvCursorPos.getValue()[0],
-                       viewer->getGLWidget()->height() - prvCursorPos.getValue()[1],
-                       newCursorPos.getValue()[0],
-                       viewer->getGLWidget()->height() - newCursorPos.getValue()[1]);
-            newCursorPos = cursorPos;
-            // now draw the new rectangle
-            p.drawRect(prvCursorPos.getValue()[0],
-                       viewer->getGLWidget()->height() - prvCursorPos.getValue()[1],
-                       newCursorPos.getValue()[0],
-                       viewer->getGLWidget()->height() - newCursorPos.getValue()[1]);
-            p.end();
-*/
-
-        /*    QPainter qp;
-            qp.begin(viewer->getWidget());
-            QPen pen(Qt::green, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-            qp.setPen(pen);
-            qp.setBrush(Qt::SolidPattern);
-            qp.setCompositionMode(QPainter::CompositionMode_Source);
-            qp.drawLine(0, 0, 100, 100);
-            qp.drawLine(100, 0, 0,100);
-            qp.end();*/
             return true;
         }
         default:
@@ -3991,8 +3980,11 @@ void ViewProviderSketch::setEditViewer(Gui::View3DInventorViewer* viewer, int Mo
 
 void ViewProviderSketch::unsetEditViewer(Gui::View3DInventorViewer* viewer)
 {
-    if (antiAliasing != Gui::View3DInventorViewer::None)
-        viewer->setAntiAliasingMode(Gui::View3DInventorViewer::AntiAliasing(antiAliasing));
+    if(edit->rubberbandSelect != NULL) {
+        edit->rubberbandSelect->releaseMouseModel();
+        delete edit->rubberbandSelect;
+        edit->rubberbandSelect = NULL;
+    }
     viewer->setEditing(FALSE);
     SoNode* root = viewer->getSceneGraph();
     static_cast<Gui::SoFCUnifiedSelection*>(root)->selectionRole.setValue(TRUE);

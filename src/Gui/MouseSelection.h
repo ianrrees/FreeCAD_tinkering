@@ -75,6 +75,11 @@ public:
     int handleEvent(const SoEvent *const ev, const SbViewportRegion &vp);
     /// Handles mouse movement, for use where the original event isn't avaiable
     int handleMove(const SbVec2s &pos, const SbViewportRegion &vp);
+    /// Handles mouse button presses, for use where the original event isn't avaiable
+    int handleMousePress(const SbVec2s &pos,
+                         int button,
+                         bool pressed,
+                         const SbViewportRegion &vp);
     //@}
 
 protected:

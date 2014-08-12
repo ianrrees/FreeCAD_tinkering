@@ -58,10 +58,6 @@ void AbstractMouseSelection::grabMouseModel(Gui::View3DInventorViewer* viewer )
     _pcView3D = viewer;
     m_cPrevCursor = _pcView3D->getWidget()->cursor();
 
-    //TODO: turn this into the appropriate enum instead of all this casting
-    m_antiAliasing = (int)_pcView3D->getAntiAliasingMode();
-    _pcView3D->setAntiAliasingMode(View3DInventorViewer::None);
-
     // do initialization of your mousemodel
     initialize();
 }
@@ -73,7 +69,6 @@ void AbstractMouseSelection::releaseMouseModel()
         terminate();
 
         _pcView3D->getWidget()->setCursor(m_cPrevCursor);
-        _pcView3D->setAntiAliasingMode(View3DInventorViewer::AntiAliasing(m_antiAliasing));
         _pcView3D = 0;
     }
 }
@@ -98,7 +93,6 @@ int AbstractMouseSelection::handleEvent(const SoEvent * const ev, const SbViewpo
     y = h-y; // the origin is at the left bottom corner (instead of left top corner)
 
     if (ev->getTypeId().isDerivedFrom(SoMouseButtonEvent::getClassTypeId())) {
-        qDebug() << "Mouse event in AbstractMouseSelection::handleEvent()";
         const SoMouseButtonEvent * const event = (const SoMouseButtonEvent *) ev;
         const SbBool press = event->getState() == SoButtonEvent::DOWN ? TRUE : FALSE;
 
@@ -111,7 +105,6 @@ int AbstractMouseSelection::handleEvent(const SoEvent * const ev, const SbViewpo
         }
     }
     else if (ev->getTypeId().isDerivedFrom(SoLocation2Event::getClassTypeId())) {
-        qDebug() << "Location event in AbstractMouseSelection::handleEvent()";
         ret = locationEvent(static_cast<const SoLocation2Event*>(ev), QPoint(x,y));
     }
     else if (ev->getTypeId().isDerivedFrom(SoKeyboardEvent::getClassTypeId())) {
@@ -139,8 +132,6 @@ int AbstractMouseSelection::handleMove(const SbVec2s &pos,
     // Origin is at the left bottom corner (instead of left top corner)
     y = h - y; 
 
-    qDebug() << "Location event in AbstractMouseSelection::handleMove()";
-
     // TODO: Look into why we need the first pointer
     // here - it doesn't seem to ge used.  IR
     ret = locationEvent(NULL, QPoint(x,y));
@@ -151,6 +142,39 @@ int AbstractMouseSelection::handleMove(const SbVec2s &pos,
     return ret;
 }
 
+int AbstractMouseSelection::handleMousePress(const SbVec2s &pos,
+                                             int button,
+                                             bool pressed,
+                                             const SbViewportRegion& vp)
+{
+    int ret=Continue;
+
+    const SbVec2s &sz = vp.getWindowSize();
+    short w, h;
+    sz.getValue(w, h);
+
+    short x, y;
+    pos.getValue(x,y);
+    y = h - y; // the origin is at the left bottom corner (instead of left top corner)
+
+    SoMouseButtonEvent *ev = new SoMouseButtonEvent;
+    ev->setButton(SoMouseButtonEvent::Button(button));
+    if(pressed)
+        ev->setState(SoButtonEvent::DOWN);
+    else
+        ev->setState(SoButtonEvent::UP);
+
+    if(pressed)
+        _clPoly.push_back(ev->getPosition());
+    
+    ret = mouseButtonEvent(ev, QPoint(x,y));
+
+    if (ret == Restart)
+        _clPoly.clear();
+
+    delete ev;
+    return ret;
+}
 // -----------------------------------------------------------------------------------
 
 BaseMouseSelection::BaseMouseSelection()
@@ -287,6 +311,9 @@ PolyPickerSelection::PolyPickerSelection()
 
 void PolyPickerSelection::initialize()
 {
+    m_antiAliasing = (int)_pcView3D->getAntiAliasingMode();
+    _pcView3D->setAntiAliasingMode(View3DInventorViewer::None);
+
     QPixmap p(cursor_cut_scissors);
     QCursor cursor(p, 4, 4);
     _pcView3D->getWidget()->setCursor(cursor);
@@ -294,6 +321,7 @@ void PolyPickerSelection::initialize()
 
 void PolyPickerSelection::terminate()
 {
+    _pcView3D->setAntiAliasingMode(View3DInventorViewer::AntiAliasing(m_antiAliasing));
 //  _pcView3D->getGLWidget()->releaseMouse();
 }
 
@@ -522,6 +550,9 @@ BrushSelection::BrushSelection()
 
 void BrushSelection::initialize()
 {
+    m_antiAliasing = (int)_pcView3D->getAntiAliasingMode();
+    _pcView3D->setAntiAliasingMode(View3DInventorViewer::None);
+
     QPixmap p(cursor_cut_scissors);
     QCursor cursor(p, 4, 4);
     _pcView3D->getWidget()->setCursor(cursor);
@@ -529,6 +560,7 @@ void BrushSelection::initialize()
 
 void BrushSelection::terminate()
 {
+    _pcView3D->setAntiAliasingMode(View3DInventorViewer::AntiAliasing(m_antiAliasing));
 }
 
 void BrushSelection::setColor(float r, float g, float b, float a)
@@ -739,10 +771,13 @@ RectangleSelection::~RectangleSelection()
 
 void RectangleSelection::initialize()
 {
+    m_antiAliasing = (int)_pcView3D->getAntiAliasingMode();
+    _pcView3D->setAntiAliasingMode(View3DInventorViewer::None);
 }
 
 void RectangleSelection::terminate()
 {
+    _pcView3D->setAntiAliasingMode(View3DInventorViewer::AntiAliasing(m_antiAliasing));
 }
 
 void RectangleSelection::draw ()
