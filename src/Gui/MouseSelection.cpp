@@ -43,8 +43,6 @@
 #include "View3DInventorViewer.h"
 #include "GLPainter.h"
 
-#include<QDebug>
-
 using namespace Gui; 
 
 AbstractMouseSelection::AbstractMouseSelection() : _pcView3D(0)
@@ -53,7 +51,7 @@ AbstractMouseSelection::AbstractMouseSelection() : _pcView3D(0)
     mustRedraw = false;
 }
 
-void AbstractMouseSelection::grabMouseModel(Gui::View3DInventorViewer* viewer )
+void AbstractMouseSelection::grabMouseModel(Gui::View3DInventorViewer *viewer)
 {
     _pcView3D = viewer;
     m_cPrevCursor = _pcView3D->getWidget()->cursor();

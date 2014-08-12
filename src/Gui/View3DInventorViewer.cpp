@@ -118,7 +118,6 @@
 
 #include <Inventor/draggers/SoCenterballDragger.h>
 
-#include<QDebug>
 //#define FC_LOGGING_CB
 
 #define new DEBUG_CLIENTBLOCK

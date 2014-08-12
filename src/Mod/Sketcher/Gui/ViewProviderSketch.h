@@ -124,17 +124,17 @@ public:
     //@{
     /// mode table
     enum SketchMode{
-        STATUS_NONE,              /**< enum value View provider is in neutral. */
-        STATUS_SELECT_Point,      /**< enum value a point was selected. */
-        STATUS_SELECT_Edge,       /**< enum value an edge was selected. */
-        STATUS_SELECT_Constraint, /**< enum value a constraint was selected. */
-        STATUS_SELECT_Cross,      /**< enum value the base coordinate system was selected. */
-        STATUS_SKETCH_DragPoint,  /**< enum value while dragging a point. */
-        STATUS_SKETCH_DragCurve,  /**< enum value while dragging a curve. */
-        STATUS_SKETCH_DragConstraint,  /**< enum value while dragging a compatible constraint. */
-        STATUS_SKETCH_UseHandler, /**< enum value a DrawSketchHandler is in control. */
-        STATUS_SKETCH_StartRubberBand, /**< enum value for initiating a rubber band selection */
-        STATUS_SKETCH_UseRubberBand /**< enum value when making a rubber band selection *//**< enum value a DrawSketchHandler is in control. */
+        STATUS_NONE,              /**< View provider is in neutral. */
+        STATUS_SELECT_Point,      /**< A point was selected. */
+        STATUS_SELECT_Edge,       /**< An edge was selected. */
+        STATUS_SELECT_Constraint, /**< A constraint was selected. */
+        STATUS_SELECT_Cross,      /**< The base coordinate system was selected. */
+        STATUS_SKETCH_DragPoint,  /**< While dragging a point. */
+        STATUS_SKETCH_DragCurve,  /**< While dragging a curve. */
+        STATUS_SKETCH_DragConstraint,  /**< While dragging a compatible constraint. */
+        STATUS_SKETCH_UseHandler, /**< A DrawSketchHandler is in control. */
+        STATUS_SKETCH_StartRubberBand, /**< For initiating a rubber band selection */
+        STATUS_SKETCH_UseRubberBand /**< when making a rubber band selection *//**< enum value a DrawSketchHandler is in control. */
     };
     /// is called by GuiCommands to set the drawing mode
     void setSketchMode(SketchMode mode) {Mode = mode;}
@@ -166,6 +166,9 @@ public:
     /// box selection method
     void doBoxSelection(const SbVec2s &startPos, const SbVec2s &endPos,
                         const Gui::View3DInventorViewer *viewer);
+
+    /// Takes down the Gui::RubberbandSelection object
+    void finishBoxSelection();
 
     /// helper change the color of the sketch according to selection and solver status
     void updateColor(void);

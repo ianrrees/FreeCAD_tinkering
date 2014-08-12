@@ -256,7 +256,7 @@ public:
     { return false; }
     /// is called when the Provider is in edit and the mouse is clicked 
     virtual bool mouseButtonPressed(int button, bool pressed, const SbVec2s &cursorPos,
-                                    View3DInventorViewer* viewer)
+                                    View3DInventorViewer *viewer)
     { return false; }
     /// set up the context-menu with the supported edit modes
     virtual void setupContextMenu(QMenu*, QObject*, const char*) {}

@@ -327,12 +327,7 @@ void ViewProviderSketch::purgeHandler(void)
     Gui::View3DInventorViewer *viewer;
     viewer = static_cast<Gui::View3DInventor *>(mdi)->getViewer();
 
-    if(edit->rubberbandSelect) {
-        edit->rubberbandSelect->releaseMouseModel();
-        delete edit->rubberbandSelect;
-        edit->rubberbandSelect = NULL;
-        viewer->setRenderFramebuffer(false);
-    }
+    finishBoxSelection();
 
     SoNode* root = viewer->getSceneGraph();
     static_cast<Gui::SoFCUnifiedSelection*>(root)->selectionRole.setValue(FALSE);
@@ -393,11 +388,8 @@ bool ViewProviderSketch::keyPressed(bool pressed, int key)
                 return true;
             }
             if (edit) {
-                if(edit->rubberbandSelect != NULL) {
-                    edit->rubberbandSelect->releaseMouseModel();
-                    delete edit->rubberbandSelect;
-                    edit->rubberbandSelect = NULL;
-                }
+                finishBoxSelection();
+
                 // #0001479: 'Escape' key dismissing dialog cancels Sketch editing
                 // If we receive a button release event but not a press event before
                 // then ignore this one.
@@ -765,32 +757,13 @@ bool ViewProviderSketch::mouseButtonPressed(int Button, bool pressed, const SbVe
                     Mode = STATUS_NONE;
                     return true;
                 case STATUS_SKETCH_StartRubberBand: // a single click happened, so clear selection
-                    Mode = STATUS_NONE;
                     Gui::Selection().clearSelection();
-                    if(edit->rubberbandSelect != NULL) {
-                        edit->rubberbandSelect->handleMousePress(cursorPos,
-                                                                 Button,
-                                                                 pressed,
-                                                                 viewer->getViewportRegion());
-                        edit->rubberbandSelect->releaseMouseModel();
-                        delete edit->rubberbandSelect;
-                        edit->rubberbandSelect = NULL;
-                    }
+                    finishBoxSelection();
+                    Mode = STATUS_NONE;
                     return true;
                 case STATUS_SKETCH_UseRubberBand:
                     doBoxSelection(prvCursorPos, cursorPos, viewer);
-                    if(edit->rubberbandSelect != NULL) {
-                        edit->rubberbandSelect->handleMousePress(cursorPos,
-                                                                 Button,
-                                                                 pressed,
-                                                                 viewer->getViewportRegion());
-                        edit->rubberbandSelect->releaseMouseModel();
-                        delete edit->rubberbandSelect;
-                        edit->rubberbandSelect = NULL;
-                    }
-
-                    // a redraw is required in order to clear the rubberband
-                    draw(true);
+                    finishBoxSelection();
                     Mode = STATUS_NONE;
                     return true;
                 case STATUS_SKETCH_UseHandler:
@@ -1932,6 +1905,15 @@ void ViewProviderSketch::doBoxSelection(const SbVec2s &startPos, const SbVec2s &
     pnt0 = proj(Plm.getPosition());
     if (polygon.Contains(Base::Vector2D(pnt0.x, pnt0.y)))
         Gui::Selection().addSelection(doc->getName(), sketchObject->getNameInDocument(), "RootPoint");
+}
+
+void ViewProviderSketch::finishBoxSelection()
+{
+    if(edit && edit->rubberbandSelect != NULL) {
+        edit->rubberbandSelect->releaseMouseModel();
+        delete edit->rubberbandSelect;
+        edit->rubberbandSelect = NULL;
+    }
 }
 
 void ViewProviderSketch::updateColor(void)
@@ -3980,11 +3962,7 @@ void ViewProviderSketch::setEditViewer(Gui::View3DInventorViewer* viewer, int Mo
 
 void ViewProviderSketch::unsetEditViewer(Gui::View3DInventorViewer* viewer)
 {
-    if(edit->rubberbandSelect != NULL) {
-        edit->rubberbandSelect->releaseMouseModel();
-        delete edit->rubberbandSelect;
-        edit->rubberbandSelect = NULL;
-    }
+    finishBoxSelection();
     viewer->setEditing(FALSE);
     SoNode* root = viewer->getSceneGraph();
     static_cast<Gui::SoFCUnifiedSelection*>(root)->selectionRole.setValue(TRUE);
