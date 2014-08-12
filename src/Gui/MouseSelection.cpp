@@ -43,6 +43,8 @@
 #include "View3DInventorViewer.h"
 #include "GLPainter.h"
 
+#include<QDebug>
+
 using namespace Gui; 
 
 AbstractMouseSelection::AbstractMouseSelection() : _pcView3D(0)
@@ -51,10 +53,12 @@ AbstractMouseSelection::AbstractMouseSelection() : _pcView3D(0)
     mustRedraw = false;
 }
 
-void AbstractMouseSelection::grabMouseModel( Gui::View3DInventorViewer* viewer )
+void AbstractMouseSelection::grabMouseModel(Gui::View3DInventorViewer* viewer )
 {
     _pcView3D = viewer;
     m_cPrevCursor = _pcView3D->getWidget()->cursor();
+
+    //TODO: turn this into the appropriate enum instead of all this casting
     m_antiAliasing = (int)_pcView3D->getAntiAliasingMode();
     _pcView3D->setAntiAliasingMode(View3DInventorViewer::None);
 
@@ -94,6 +98,7 @@ int AbstractMouseSelection::handleEvent(const SoEvent * const ev, const SbViewpo
     y = h-y; // the origin is at the left bottom corner (instead of left top corner)
 
     if (ev->getTypeId().isDerivedFrom(SoMouseButtonEvent::getClassTypeId())) {
+        qDebug() << "Mouse event in AbstractMouseSelection::handleEvent()";
         const SoMouseButtonEvent * const event = (const SoMouseButtonEvent *) ev;
         const SbBool press = event->getState() == SoButtonEvent::DOWN ? TRUE : FALSE;
 
@@ -106,11 +111,39 @@ int AbstractMouseSelection::handleEvent(const SoEvent * const ev, const SbViewpo
         }
     }
     else if (ev->getTypeId().isDerivedFrom(SoLocation2Event::getClassTypeId())) {
+        qDebug() << "Location event in AbstractMouseSelection::handleEvent()";
         ret = locationEvent(static_cast<const SoLocation2Event*>(ev), QPoint(x,y));
     }
     else if (ev->getTypeId().isDerivedFrom(SoKeyboardEvent::getClassTypeId())) {
         ret = keyboardEvent(static_cast<const SoKeyboardEvent*>(ev));
     }
+
+    if (ret == Restart)
+        _clPoly.clear();
+
+    return ret;
+}
+
+int AbstractMouseSelection::handleMove(const SbVec2s &pos,
+                                       const SbViewportRegion& vp)
+{
+    int ret = Continue;
+
+    const SbVec2s &sz = vp.getWindowSize(); 
+    short w, h;
+    sz.getValue(w, h);
+
+    short x, y;
+    pos.getValue(x, y);
+
+    // Origin is at the left bottom corner (instead of left top corner)
+    y = h - y; 
+
+    qDebug() << "Location event in AbstractMouseSelection::handleMove()";
+
+    // TODO: Look into why we need the first pointer
+    // here - it doesn't seem to ge used.  IR
+    ret = locationEvent(NULL, QPoint(x,y));
 
     if (ret == Restart)
         _clPoly.clear();

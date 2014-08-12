@@ -86,6 +86,7 @@
 #include <Gui/Utilities.h>
 #include <Gui/MainWindow.h>
 #include <Gui/MenuManager.h>
+#include <Gui/MouseSelection.h>
 #include <Gui/View3DInventor.h>
 #include <Gui/View3DInventorViewer.h>
 #include <Gui/DlgEditFileIncludeProptertyExternal.h>
@@ -151,6 +152,7 @@ struct EditData {
     blockedPreselection(false),
     FullyConstrained(false),
     //ActSketch(0),
+    rubberbandSelect(NULL),
     EditRoot(0),
     PointsMaterials(0),
     CurvesMaterials(0),
@@ -183,11 +185,15 @@ struct EditData {
 
     // instance of the solver
     Sketcher::Sketch ActSketch;
-    // container to track our own selected parts
+
+    // containers to track our own selected parts
     std::set<int> SelPointSet;
     std::set<int> SelCurvSet; // also holds cross axes at -1 and -2
     std::set<int> SelConstraintSet;
     std::vector<int> CurvIdToGeoId; // conversion of SoLineSet index to GeoId
+
+    // For drawing Rubberband selection
+    Gui::RubberbandSelection *rubberbandSelect;
 
     // helper data structures for the constraint rendering
     std::vector<ConstraintType> vConstrType;
@@ -320,6 +326,13 @@ void ViewProviderSketch::purgeHandler(void)
     Gui::MDIView *mdi = Gui::Application::Instance->activeDocument()->getActiveView();
     Gui::View3DInventorViewer *viewer;
     viewer = static_cast<Gui::View3DInventor *>(mdi)->getViewer();
+
+    if(edit->rubberbandSelect) {
+        edit->rubberbandSelect->releaseMouseModel();
+        delete edit->rubberbandSelect;
+        edit->rubberbandSelect = NULL;
+        viewer->setRenderFramebuffer(false);
+    }
 
     SoNode* root = viewer->getSceneGraph();
     static_cast<Gui::SoFCUnifiedSelection*>(root)->selectionRole.setValue(FALSE);
@@ -485,7 +498,7 @@ void ViewProviderSketch::getCoordsOnSketchPlane(double &u, double &v,const SbVec
 }
 
 bool ViewProviderSketch::mouseButtonPressed(int Button, bool pressed, const SbVec2s &cursorPos,
-                                            const Gui::View3DInventorViewer *viewer)
+                                            Gui::View3DInventorViewer *viewer)
 {
     assert(edit);
 
@@ -557,8 +570,13 @@ bool ViewProviderSketch::mouseButtonPressed(int Button, bool pressed, const SbVe
                         prvClickPoint = point;
                         prvCursorPos = cursorPos;
                         newCursorPos = cursorPos;
-                        if (!done)
+                        if (!done) {
                             Mode = STATUS_SKETCH_StartRubberBand;
+                            edit->rubberbandSelect = new Gui::RubberbandSelection;
+                            edit->rubberbandSelect->grabMouseModel(viewer);
+                            viewer->setRenderFramebuffer(true);
+                            qDebug() << "Gah";
+                        }
                     }
 
                     return done;
@@ -742,6 +760,14 @@ bool ViewProviderSketch::mouseButtonPressed(int Button, bool pressed, const SbVe
                     return true;
                 case STATUS_SKETCH_UseRubberBand:
                     doBoxSelection(prvCursorPos, cursorPos, viewer);
+                    if(edit->rubberbandSelect != NULL) {
+                        edit->rubberbandSelect->releaseMouseModel();
+                        delete edit->rubberbandSelect;
+                        edit->rubberbandSelect = NULL;
+                        viewer->setRenderFramebuffer(false);
+                    } else
+                        qDebug() << "Something went wrong 2";
+
                     // a redraw is required in order to clear the rubberband
                     draw(true);
                     Mode = STATUS_NONE;
@@ -1046,7 +1072,16 @@ bool ViewProviderSketch::mouseMove(const SbVec2s &cursorPos, Gui::View3DInventor
             return true;
         }
         case STATUS_SKETCH_UseRubberBand: {
-            Gui::GLPainter p;
+            // Probably our problem with anti-aliasing...
+            if(edit->rubberbandSelect != NULL) {
+                edit->rubberbandSelect->handleMove(cursorPos,
+                                                   viewer->getViewportRegion());
+                edit->rubberbandSelect->redraw();
+            } else
+                qDebug()<<"Something's wrong";
+
+
+/*            Gui::GLPainter p;
             p.begin(viewer);
             p.setColor(1.0, 1.0, 0.0, 0.0);
             p.setLogicOp(GL_XOR);
@@ -1064,6 +1099,17 @@ bool ViewProviderSketch::mouseMove(const SbVec2s &cursorPos, Gui::View3DInventor
                        newCursorPos.getValue()[0],
                        viewer->getGLWidget()->height() - newCursorPos.getValue()[1]);
             p.end();
+*/
+
+        /*    QPainter qp;
+            qp.begin(viewer->getWidget());
+            QPen pen(Qt::green, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+            qp.setPen(pen);
+            qp.setBrush(Qt::SolidPattern);
+            qp.setCompositionMode(QPainter::CompositionMode_Source);
+            qp.drawLine(0, 0, 100, 100);
+            qp.drawLine(100, 0, 0,100);
+            qp.end();*/
             return true;
         }
         default:

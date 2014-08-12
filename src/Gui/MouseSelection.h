@@ -62,7 +62,7 @@ public:
     virtual void initialize() = 0;
     /// implement this in derived classes
     virtual void terminate () = 0;
-    void grabMouseModel(Gui::View3DInventorViewer*);
+    void grabMouseModel(Gui::View3DInventorViewer *);
     void releaseMouseModel(void);
     const std::vector<SbVec2s>& getPositions() const { return _clPoly; }
     SbBool isInner() const { return m_bInner; }
@@ -71,7 +71,10 @@ public:
 
     /** @name Mouse events*/
     //@{
-    int handleEvent(const SoEvent * const ev, const SbViewportRegion& vp);
+    /// Process an arbitrary SoEvent
+    int handleEvent(const SoEvent *const ev, const SbViewportRegion &vp);
+    /// Handles mouse movement, for use where the original event isn't avaiable
+    int handleMove(const SbVec2s &pos, const SbViewportRegion &vp);
     //@}
 
 protected:

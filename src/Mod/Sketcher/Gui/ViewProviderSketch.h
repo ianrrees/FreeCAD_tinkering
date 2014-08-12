@@ -205,7 +205,7 @@ public:
     virtual bool keyPressed(bool pressed, int key);
     /// is called when the Provider is in edit and the mouse is clicked
     virtual bool mouseButtonPressed(int Button, bool pressed, const SbVec2s &pos,
-                                    const Gui::View3DInventorViewer *viewer);
+                                    Gui::View3DInventorViewer *viewer);
     //@}
 
     friend class DrawSketchHandler;
