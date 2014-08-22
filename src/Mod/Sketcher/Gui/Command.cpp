@@ -250,7 +250,7 @@ CmdSketcherReorientSketch::CmdSketcherReorientSketch()
 {
     sAppModule      = "Sketcher";
     sGroup          = QT_TR_NOOP("Sketcher");
-    sMenuText       = QT_TR_NOOP("Reorient sketch");
+    sMenuText       = QT_TR_NOOP("Reorient sketch...");
     sToolTipText    = QT_TR_NOOP("Reorient the selected sketch");
     sWhatsThis      = sToolTipText;
     sStatusTip      = sToolTipText;
@@ -332,7 +332,7 @@ CmdSketcherMapSketch::CmdSketcherMapSketch()
 {
     sAppModule      = "Sketcher";
     sGroup          = QT_TR_NOOP("Sketcher");
-    sMenuText       = QT_TR_NOOP("Map sketch to face");
+    sMenuText       = QT_TR_NOOP("Map sketch to face...");
     sToolTipText    = QT_TR_NOOP("Map a sketch to a face");
     sWhatsThis      = sToolTipText;
     sStatusTip      = sToolTipText;

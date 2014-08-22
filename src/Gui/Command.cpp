@@ -167,11 +167,11 @@ bool CommandBase::keyEventMatches(const SoKeyboardEvent &ev) const
 
     QKeySequence qSeq(getAccel());
 
-    bool reqCtrl = QKeySequence(QObject::tr("Ctrl+")).matches(qSeq) != QKeySequence::NoMatch,
-         reqShift = QKeySequence(QObject::tr("Shift+")).matches(qSeq) != QKeySequence::NoMatch,
-         reqAlt = QKeySequence(QObject::tr("Alt+")).matches(qSeq) != QKeySequence::NoMatch;
+    bool reqCtrl = QKeySequence(QString::fromLatin1("Ctrl+")).matches(qSeq) != QKeySequence::NoMatch,
+         reqShift = QKeySequence(QString::fromLatin1("Shift+")).matches(qSeq) != QKeySequence::NoMatch,
+         reqAlt = QKeySequence(QString::fromLatin1("Alt+")).matches(qSeq) != QKeySequence::NoMatch;
 
-    QString reqKey = qSeq.toString().remove(QObject::tr("Ctrl+")).remove(QObject::tr("Shift+")).remove(QObject::tr("Alt+"));
+    QString reqKey = qSeq.toString().remove(QString::fromLatin1("Ctrl+")).remove(QString::fromLatin1("Shift+")).remove(QString::fromLatin1("Alt+"));
 
     QChar eventCharacter = QChar::fromAscii(ev.getPrintableCharacter());
 
