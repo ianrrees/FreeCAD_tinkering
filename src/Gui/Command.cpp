@@ -28,6 +28,7 @@
 # include <QKeySequence>
 # include <QMessageBox>
 # include <Inventor/actions/SoGetBoundingBoxAction.h>
+# include <Inventor/events/SoKeyboardEvent.h>
 # include <Inventor/nodes/SoOrthographicCamera.h>
 # include <Inventor/nodes/SoPerspectiveCamera.h>
 #endif
@@ -57,7 +58,6 @@
 
 #include <App/Document.h>
 #include <App/DocumentObject.h>
-
 
 using Base::Interpreter;
 using namespace Gui;
@@ -118,6 +118,15 @@ using namespace Gui::DockWnd;
  * An instance of \a OpenCommand must be created and added to the \ref Gui::CommandManager to make the class known to FreeCAD.
  * To see how menus and toolbars can be built go to the @ref workbench.
  *
+ * \section Keyboard Accelerators
+ * The default keyboard accelerators (specified in constructors of
+ * Command-derived classes) can be changed by the end user.  Changes
+ * are made through the GUI via Tools->Customize->Keyboard, which is provided
+ * by Gui::DlgCustomKeyboardImp .  Changes to keyboard accelerators are saved
+ * via the parameters system (see Gui::WindowParameter) as soon as they are
+ * changed in the Gui::DlgCustomKeyboardImp, and re-loaded through
+ * Workbench::setupCustomShortcuts .
+ *
  * @see Gui::Command, Gui::CommandManager
  */
 
@@ -147,6 +156,60 @@ Action * CommandBase::createAction()
 {
     // does nothing
     return 0;
+}
+
+bool CommandBase::keyEventMatches(const SoKeyboardEvent &ev) const
+{
+    static double prevDownTime = 0;
+    static bool ctrlPrevPressed = false,
+                shiftPrevPressed = false,
+                altPrevPressed = false;
+
+    QKeySequence qSeq(getAccel());
+
+    bool reqCtrl = QKeySequence(QObject::tr("Ctrl+")).matches(qSeq) != QKeySequence::NoMatch,
+         reqShift = QKeySequence(QObject::tr("Shift+")).matches(qSeq) != QKeySequence::NoMatch,
+         reqAlt = QKeySequence(QObject::tr("Alt+")).matches(qSeq) != QKeySequence::NoMatch;
+
+    QString reqKey = qSeq.toString().remove(QObject::tr("Ctrl+")).remove(QObject::tr("Shift+")).remove(QObject::tr("Alt+"));
+
+    QChar eventCharacter = QChar::fromAscii(ev.getPrintableCharacter());
+
+    if(!(reqCtrl || reqShift || reqAlt) & reqKey.length() != 1)
+        return false;
+
+    bool ret = false;
+    if(ev.getState() == SoButtonEvent::DOWN) {
+        // See if the buttons being pressed include all the buttons required by the event
+        if( (!reqCtrl || ev.wasCtrlDown()) &&
+            (!reqShift || ev.wasShiftDown()) &&
+            (!reqAlt || ev.wasAltDown())        ) {
+            // All modifiers were satisfied
+            // TODO: HACK
+            if(reqKey.length() == 0 || QString(eventCharacter).toUpper() == reqKey)
+                ret = true;
+        }
+    } else if(ev.getState() == SoButtonEvent::UP) {
+        // See if the button being released takes us out of the required set of buttons
+
+        if( (reqCtrl && !ev.wasCtrlDown() && ctrlPrevPressed) ||
+            (reqShift && !ev.wasShiftDown() && shiftPrevPressed) ||
+            (reqAlt && !ev.wasAltDown() && altPrevPressed) )
+            // One of the required modifiers was released
+            ret = true;
+        //TODO: HACK
+        else if(reqKey.length() == 1 && QString(eventCharacter).toUpper() == reqKey)
+            ret = true;
+    }
+
+    if(ev.getState() == SoButtonEvent::DOWN &&
+       prevDownTime != ev.getTime().getValue()) {
+        prevDownTime = ev.getTime().getValue();
+        ctrlPrevPressed = ev.wasCtrlDown();
+        shiftPrevPressed = ev.wasShiftDown();
+        altPrevPressed = ev.wasAltDown();
+    }
+    return ret;
 }
 
 void CommandBase::setMenuText(const char* s)
@@ -194,13 +257,9 @@ void CommandBase::setPixmap(const char* s)
 #endif
 }
 
-void CommandBase::setAccel(const char* s)
+void CommandBase::setAccel(QString newAccel)
 {
-#if defined (_MSC_VER)
-    this->sAccel = _strdup(s);
-#else
-    this->sAccel = strdup(s);
-#endif
+    keyboardAccelerator = newAccel;
 }
 
 //===========================================================================
@@ -732,7 +791,7 @@ void MacroCommand::load()
             macro->setStatusTip   ( (*it)->GetASCII( "Statustip"  ).c_str() );
             if ((*it)->GetASCII("Pixmap", "nix") != "nix")
                 macro->setPixmap    ( (*it)->GetASCII( "Pixmap"     ).c_str() );
-            macro->setAccel       ( (*it)->GetASCII( "Accel",0    ).c_str() );
+            macro->setAccel(QString::fromStdString( (*it)->GetASCII("Accel", 0)) );
             Application::Instance->commandManager().addCommand( macro );
         }
     }
@@ -754,7 +813,7 @@ void MacroCommand::save()
             hMacro->SetASCII( "WhatsThis", macro->getWhatsThis  () );
             hMacro->SetASCII( "Statustip", macro->getStatusTip  () );
             hMacro->SetASCII( "Pixmap",    macro->getPixmap     () );
-            hMacro->SetASCII( "Accel",     macro->getAccel      () );
+            hMacro->SetASCII( "Accel",     macro->getAccel().toAscii() );
         }
     }
 }
@@ -888,7 +947,7 @@ Action * PythonCommand::createAction(void)
         pcAction->setStatusTip(qApp->translate(getName(), getToolTipText()));
     if (strcmp(getResource("Pixmap"),"") != 0)
         pcAction->setIcon(Gui::BitmapFactory().pixmap(getResource("Pixmap")));
-    pcAction->setShortcut     (QString::fromAscii(getAccel()));
+    pcAction->setShortcut     (QString::fromAscii(getDefaultAccel()));
 
     return pcAction;
 }
@@ -921,7 +980,7 @@ const char* PythonCommand::getPixmap() const
     return getResource("Pixmap");
 }
 
-const char* PythonCommand::getAccel() const
+const char* PythonCommand::getDefaultAccel() const
 {
     return getResource("Accel");
 }

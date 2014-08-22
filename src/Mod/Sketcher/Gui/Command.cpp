@@ -45,6 +45,8 @@
 #include <Mod/Sketcher/App/SketchObject.h>
 #include <Mod/Part/App/Part2DObject.h>
 
+#include <Inventor/events/SoKeyboardEvent.h>
+
 #include "SketchOrientationDialog.h"
 #include "ViewProviderSketch.h"
 #include "TaskSketcherValidation.h"
@@ -248,7 +250,7 @@ CmdSketcherReorientSketch::CmdSketcherReorientSketch()
 {
     sAppModule      = "Sketcher";
     sGroup          = QT_TR_NOOP("Sketcher");
-    sMenuText       = QT_TR_NOOP("Reorient sketch...");
+    sMenuText       = QT_TR_NOOP("Reorient sketch");
     sToolTipText    = QT_TR_NOOP("Reorient the selected sketch");
     sWhatsThis      = sToolTipText;
     sStatusTip      = sToolTipText;
@@ -330,7 +332,7 @@ CmdSketcherMapSketch::CmdSketcherMapSketch()
 {
     sAppModule      = "Sketcher";
     sGroup          = QT_TR_NOOP("Sketcher");
-    sMenuText       = QT_TR_NOOP("Map sketch to face...");
+    sMenuText       = QT_TR_NOOP("Map sketch to face");
     sToolTipText    = QT_TR_NOOP("Map a sketch to a face");
     sWhatsThis      = sToolTipText;
     sStatusTip      = sToolTipText;
@@ -496,9 +498,60 @@ bool CmdSketcherValidateSketch::isActive(void)
     return (hasActiveDocument() && !Gui::Control().activeDialog());
 }
 
+// Yanked from src/Gui/Command.h
+#define SKETCHER_MODIFIERACCEL_COMMAND(X) class X : public Gui::Command \
+{\
+public:\
+    X();\
+    virtual const char* className() const\
+    { return #X; }\
+    virtual bool allowAccelChanges() const { return true; }\
+    virtual bool allowModifierAccel() const { return true; }\
+protected: \
+    virtual void activated(int iMsg);\
+};
 
+SKETCHER_MODIFIERACCEL_COMMAND(CmdSketcherDisableAutoConstraints);
 
+CmdSketcherDisableAutoConstraints::CmdSketcherDisableAutoConstraints()
+    :Command("Sketcher_DisableAutoConstraints")
+{
+    sAppModule      = "Sketcher";
+    sGroup          = QT_TR_NOOP("Sketcher");
+    sMenuText       = QT_TR_NOOP("Disable auto constraints");
+    sToolTipText    = QT_TR_NOOP("Temporarily disables automatic constraints while editing a sketch");
+    sWhatsThis      = sToolTipText;
+    sStatusTip      = sToolTipText;
+    sName           = "SketcherDisableAutoConstraints";
+    sAccel          = "Ctrl+";
+    keyboardAccelerator = QString::fromAscii(sAccel);
+    eType           = ForEdit; 
+}
 
+void CmdSketcherDisableAutoConstraints::activated(int iMsg)
+{
+}
+
+SKETCHER_MODIFIERACCEL_COMMAND(CmdSketcherDisableSnapToGrid);
+
+CmdSketcherDisableSnapToGrid::CmdSketcherDisableSnapToGrid()
+    :Command("Sketcher_DisableSnapToGrid")
+{
+    sAppModule      = "Sketcher";
+    sGroup          = QT_TR_NOOP("Sketcher");
+    sMenuText       = QT_TR_NOOP("Disable snap to grid");
+    sToolTipText    = QT_TR_NOOP("Temporarily disables snap to grid while editing a sketch");
+    sWhatsThis      = sToolTipText;
+    sStatusTip      = sToolTipText;
+    sName           = "SketcherDisableSnapToGrid";
+    sAccel          = "Shift+";
+    keyboardAccelerator = QString::fromAscii(sAccel);
+    eType           = ForEdit; 
+}
+
+void CmdSketcherDisableSnapToGrid::activated(int iMsg)
+{
+}
 
 void CreateSketcherCommands(void)
 {
@@ -511,4 +564,6 @@ void CreateSketcherCommands(void)
     rcCmdMgr.addCommand(new CmdSketcherMapSketch());
     rcCmdMgr.addCommand(new CmdSketcherViewSketch());
     rcCmdMgr.addCommand(new CmdSketcherValidateSketch());
+    rcCmdMgr.addCommand(new CmdSketcherDisableAutoConstraints());
+    rcCmdMgr.addCommand(new CmdSketcherDisableSnapToGrid());
 }

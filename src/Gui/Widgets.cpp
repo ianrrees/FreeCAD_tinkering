@@ -355,85 +355,85 @@ void ActionSelector::on_downButton_clicked()
 
 /**
  * Constructs a line edit with no text.
- * The \a parent and \a name arguments are sent to the QLineEdit constructor.
+ * 
+ * The \a parent argument is sent to the QLineEdit constructor.
+ *
+ * \a acceptSoloModifiers specifies whether modifier keys by themselves
+ * (eg: Ctrl) should be accepted as valid input.  If left to false, modifiers
+ * must be combined with other keys to be accepted (eg: Ctrl + P).
  */
-AccelLineEdit::AccelLineEdit ( QWidget * parent )
+AccelLineEdit::AccelLineEdit(QWidget *parent, bool acceptSoloModifiers)
   : QLineEdit(parent)
 {
     setText(tr("none"));
+    soloModifiersOk = acceptSoloModifiers;
+}
+
+void AccelLineEdit::setAcceptSoloModifiers(bool acceptSoloModifiers)
+{
+    soloModifiersOk = acceptSoloModifiers;
 }
 
 /**
  * Checks which keys are pressed and show it as text.
  */
-void AccelLineEdit::keyPressEvent ( QKeyEvent * e)
+void AccelLineEdit::keyPressEvent(QKeyEvent *e)
 {
-    QString txt;
-    setText(tr("none"));
-
     int key = e->key();
     Qt::KeyboardModifiers state = e->modifiers();
 
-    if (key == Qt::Key_Control)
-        return;
-    else if (key == Qt::Key_Shift)
-        return;
-    else if (key == Qt::Key_Alt)
-        return;
-    else if (state == Qt::NoModifier && key == Qt::Key_Backspace)
+    setText(tr("none"));
+
+    if (state == Qt::NoModifier && key == Qt::Key_Backspace)
         return; // clears the edit field
+
+    QString txt;
+
+    if( key == Qt::Key_Control ||
+        key == Qt::Key_Shift ||
+        key == Qt::Key_Alt ) {
+
+        if(soloModifiersOk) {
+            if(key == Qt::Key_Control || (state & Qt::CTRL) )
+                txt = tr("Ctrl+");
+            if(key == Qt::Key_Shift || (state & Qt::SHIFT) )
+                txt += tr("Shift+");
+            if(key == Qt::Key_Alt || (state & Qt::ALT) )
+                txt += tr("Alt+");
+            if(!txt.isEmpty())
+                setText(txt);
+        }
+        return; 
+    }
 
     switch(state)
     {
     case Qt::ControlModifier:
-        {
-            QKeySequence ks(Qt::CTRL+key);
-            txt += (QString)(ks);
-            setText(txt);
-        }   break;
+        txt = QKeySequence(Qt::CTRL + key).toString();
+        break;
     case Qt::AltModifier:
-        {
-            QKeySequence ks(Qt::ALT+key);
-            txt += (QString)(ks);
-            setText(txt);
-        }   break;
+        txt = QKeySequence(Qt::ALT + key).toString();
+        break;
     case Qt::ShiftModifier:
-        {
-            QKeySequence ks(Qt::SHIFT+key);
-            txt += (QString)(ks);
-            setText(txt);
-        }   break;
-    case Qt::ControlModifier+Qt::AltModifier:
-        {
-            QKeySequence ks(Qt::CTRL+Qt::ALT+key);
-            txt += (QString)(ks);
-            setText(txt);
-        }   break;
-    case Qt::ControlModifier+Qt::ShiftModifier:
-        {
-            QKeySequence ks(Qt::CTRL+Qt::SHIFT+key);
-            txt += (QString)(ks);
-            setText(txt);
-        }   break;
-    case Qt::ShiftModifier+Qt::AltModifier:
-        {
-            QKeySequence ks(Qt::SHIFT+Qt::ALT+key);
-            txt += (QString)(ks);
-            setText(txt);
-        }   break;
-    case Qt::ControlModifier+Qt::AltModifier+Qt::ShiftModifier:
-        {
-            QKeySequence ks(Qt::CTRL+Qt::ALT+Qt::SHIFT+key);
-            txt += (QString)(ks);
-            setText(txt);
-        }   break;
+        txt = QKeySequence(Qt::SHIFT + key).toString();
+        break;
+    case Qt::ControlModifier + Qt::AltModifier:
+        txt = QKeySequence(Qt::CTRL + Qt::ALT + key).toString();
+        break;
+    case Qt::ControlModifier + Qt::ShiftModifier:
+        txt = QKeySequence(Qt::CTRL + Qt::SHIFT + key).toString();
+        break;
+    case Qt::ShiftModifier + Qt::AltModifier:
+        txt = QKeySequence(Qt::SHIFT + Qt::ALT+key).toString();
+        break;
+    case Qt::ControlModifier + Qt::AltModifier + Qt::ShiftModifier:
+        txt = QKeySequence(Qt::CTRL + Qt::ALT + Qt::SHIFT + key).toString();
+        break;
     default:
-        {
-            QKeySequence ks(key);
-            txt += (QString)(ks);
-            setText(txt);
-        }   break;
+        txt = QKeySequence(key).toString();
+        break;
     }
+    setText(txt);
 }
 
 // ------------------------------------------------------------------------------

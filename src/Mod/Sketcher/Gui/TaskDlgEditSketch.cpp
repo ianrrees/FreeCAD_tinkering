@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (c) 2009 Jürgen Riegel <juergen.riegel@web.de>              *
+ *   Copyright (c) 2009 Jï¿½rgen Riegel <juergen.riegel@web.de>              *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -30,6 +30,7 @@
 #include "ViewProviderSketch.h"
 #include <Gui/Command.h>
 
+#include <boost/bind.hpp>
 using namespace SketcherGui;
 
 
@@ -51,11 +52,35 @@ TaskDlgEditSketch::TaskDlgEditSketch(ViewProviderSketch *sketchView)
     Content.push_back(General);
     Content.push_back(Constraints);
     Content.push_back(Elements);
+
+    connect(General, SIGNAL(emitToggleAutoconstraints(int)), this, SLOT(cursorChanged(void)));
+    connect(General, SIGNAL(emitSetGridSnap(int)), this, SLOT(cursorChanged(void)));
+
+    // Boost connections to the ViewProviderSketch
+    autoConstraintsConn = sketchView->signalTempAutoConstraints.connect(bind(&TaskDlgEditSketch::tempAutoConstraintsDisable, this, _1));
+    viewProviderCursorConn = this->signalCursorChange.connect(boost::bind(&ViewProviderSketch::updateCursor, sketchView));
+    snapToGridConn = sketchView->signalTempSnapToGrid.connect(bind(&TaskDlgEditSketch::tempSnapToGridDisable, this, _1));
 }
 
 TaskDlgEditSketch::~TaskDlgEditSketch()
 {
 
+}
+
+void TaskDlgEditSketch::cursorChanged(void)
+{
+    signalCursorChange();
+}
+
+
+void TaskDlgEditSketch::tempAutoConstraintsDisable(bool disable)
+{
+    General->enableAutoConstraints(!disable);
+}
+
+void TaskDlgEditSketch::tempSnapToGridDisable(bool disable)
+{
+    General->enableGridSnap(!disable);
 }
 
 //==== calls from the TaskView ===============================================================

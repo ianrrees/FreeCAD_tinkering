@@ -71,6 +71,8 @@
 
 #include <Inventor/SbTime.h>
 #include <boost/scoped_ptr.hpp>
+#include <boost/signal.hpp>
+#include <boost/bind.hpp>
 
 /// Here the FreeCAD includes sorted by Base,App,Gui......
 #include <Base/Tools.h>
@@ -337,8 +339,23 @@ void ViewProviderSketch::setAxisPickStyle(bool on)
 
 // **********************************************************************************
 
-bool ViewProviderSketch::keyPressed(bool pressed, int key)
+bool ViewProviderSketch::keyPressed(const SoKeyboardEvent &keyEvent)
 {
+    bool pressed = keyEvent.getState() == SoButtonEvent::DOWN ? true : false;
+    int key = keyEvent.getKey();
+    
+    Gui::Command *disableAutoConstraints = Gui::Application::Instance->commandManager().getCommandByName("SketcherDisableAutoConstraints"),
+                 *disableSnapToGrid = Gui::Application::Instance->commandManager().getCommandByName("SketcherDisableSnapToGrid");
+   
+    // Unfortunately, it doesn't seem possible to determine whether the
+    // original Qt keyboard event was due to auto-repeat.  I think it would
+    // be easier to change this class around to use Qt keyboard events, than
+    // it would be to make this work properly with Coin keyboard events. IR
+    if (disableAutoConstraints && disableAutoConstraints->keyEventMatches(keyEvent))
+        signalTempAutoConstraints(pressed);
+    if (disableSnapToGrid && disableSnapToGrid->keyEventMatches(keyEvent))
+        signalTempSnapToGrid(pressed);
+
     switch (key)
     {
     case SoKeyboardEvent::ESCAPE:
@@ -556,6 +573,7 @@ bool ViewProviderSketch::mouseButtonPressed(int Button, bool pressed, const SbVe
                     } else {
                         prvClickTime = SbTime::getTimeOfDay();
                         prvClickPoint = point;
+                        // This is probably redundant considering the one in moveMouse
                         prvCursorPos = cursorPos;
                         newCursorPos = cursorPos;
                         if (!done)
@@ -912,6 +930,16 @@ void ViewProviderSketch::editDoubleClicked(void)
     }
 }
 
+void ViewProviderSketch::updateCursor(void)
+{
+    Gui::MDIView *mdi = Gui::Application::Instance->activeDocument()->getActiveView();
+    Gui::View3DInventorViewer *viewer;
+    viewer = dynamic_cast<Gui::View3DInventor *>(mdi)->getViewer();
+
+    if(Mode != STATUS_SKETCH_UseRubberBand)
+        mouseMove(prvCursorPos, viewer);
+}
+
 bool ViewProviderSketch::mouseMove(const SbVec2s &cursorPos, Gui::View3DInventorViewer *viewer)
 {
     if (!edit)
@@ -938,6 +966,9 @@ bool ViewProviderSketch::mouseMove(const SbVec2s &cursorPos, Gui::View3DInventor
 
         delete pp;
     }
+
+    if(Mode != STATUS_SKETCH_UseRubberBand)
+        prvCursorPos = cursorPos;
 
     switch (Mode) {
         case STATUS_NONE:
@@ -4193,3 +4224,4 @@ bool ViewProviderSketch::onDelete(const std::vector<std::string> &subList)
     // if not in edit delete the whole object
     return true;
 }
+

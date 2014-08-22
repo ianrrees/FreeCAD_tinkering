@@ -276,13 +276,16 @@ void Workbench::setupCustomShortcuts() const
         std::vector<std::pair<std::string,std::string> > items = hGrp->GetASCIIMap();
         for ( std::vector<std::pair<std::string,std::string> >::iterator it = items.begin(); it != items.end(); ++it )
         {
-            Command* cmd = cCmdMgr.getCommandByName(it->first.c_str());
-            if (cmd && cmd->getAction())
+            Command *cmd = cCmdMgr.getCommandByName(it->first.c_str());
+            if ( cmd )
             {
                 // may be UTF-8 encoded
                 QString str = QString::fromUtf8(it->second.c_str());
-                QKeySequence shortcut = str;
-                cmd->getAction()->setShortcut(shortcut);
+
+                if (cmd->getAction())
+                    cmd->getAction()->setShortcut(str);
+                else if (cmd->allowAccelChanges())
+                    cmd->setAccel(str);
             }
         }
     }

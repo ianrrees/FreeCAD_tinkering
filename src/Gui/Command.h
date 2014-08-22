@@ -30,6 +30,8 @@
 #include <string>
 #include <vector>
 
+#include <QString>
+
 #include <Base/Type.h>
 
 class QWidget;
@@ -40,6 +42,8 @@ namespace App
   class Document;
   class DocumentObject;
 }
+
+class SoKeyboardEvent;
 
 namespace Gui {
 
@@ -91,6 +95,17 @@ public:
     virtual const char* className() const = 0;
     //@}
 
+    //! Evaluates whether a keypress event matches the keyboard accelerator
+    /*! Returns true if the passed event matches
+     *  the keyboard accelerator, false otherwise*/
+    virtual bool keyEventMatches(const SoKeyboardEvent &ev) const;
+
+    //! Returns true iff the user should be able to change keyboard accelerators
+    virtual bool allowAccelChanges() const { return getAction() != NULL; }
+
+    //! Returns true iff this command can accept keyboard accelerators including only modifier keys
+    virtual bool allowModifierAccel() const { return false; }
+
     /** @name Methods to get the properties of the command */
     //@{
     virtual const char* getMenuText   () const { return sMenuText;    }
@@ -98,7 +113,8 @@ public:
     virtual const char* getStatusTip  () const { return sStatusTip;   }
     virtual const char* getWhatsThis  () const { return sWhatsThis;   }
     virtual const char* getPixmap     () const { return sPixmap;      }
-    virtual const char* getAccel      () const { return sAccel;       }
+    virtual const char* getDefaultAccel      () const { return sAccel;       }
+    virtual QString getAccel() const { return keyboardAccelerator; }
     //@}
 
     /** @name Methods to set the properties of the command */
@@ -108,7 +124,7 @@ public:
     void setToolTipText(const char*);
     void setStatusTip  (const char*);
     void setPixmap     (const char*);
-    void setAccel      (const char*);
+    void setAccel(QString);
     //@}
 
 protected:
@@ -124,8 +140,10 @@ protected:
     const char* sWhatsThis;
     const char* sStatusTip;
     const char* sPixmap;
+    //! Sets the default keyboard accelerator
     const char* sAccel;
     //@}
+    QString keyboardAccelerator;
 protected:
     Action *_pcAction; /**< The Action item. */
 };
@@ -161,7 +179,9 @@ protected:
     virtual Action * createAction(void);
     /// Applies the menu text, tool and status tip to the passed action object
     void applyCommandData(Action* );
+    ///\TODO: Document me!
     const char* keySequenceToAccel(int) const;
+    ///\TODO: Document me!
     void adjustCameraPosition();
     //@}
 
@@ -297,6 +317,8 @@ protected:
     //@{
     const char* sAppModule;
     const char* sGroup;
+    //! The application-wide name of the command
+    /*! Used for example in CommandManager::getCommandByName */
     const char* sName;
     const char* sHelpUrl;
     int         eType;
@@ -345,7 +367,7 @@ public:
     const char* getToolTipText() const;
     const char* getStatusTip  () const;
     const char* getPixmap     () const;
-    const char* getAccel      () const;
+    const char* getDefaultAccel      () const;
     //@}
 
 protected:
@@ -585,5 +607,6 @@ protected: \
         return view && view->isDerivedFrom(Gui::View3DInventor::getClassTypeId());\
     }\
 };
+
 
 #endif // GUI_COMMAND_H

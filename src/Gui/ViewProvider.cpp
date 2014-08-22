@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (c) 2004 Jürgen Riegel <juergen.riegel@web.de>              *
+ *   Copyright (c) 2004 Jï¿½rgen Riegel <juergen.riegel@web.de>              *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -139,31 +139,25 @@ void ViewProvider::setUpdatesEnabled (bool enable)
     _updateData = enable;
 }
 
-void ViewProvider::eventCallback(void * ud, SoEventCallback * node)
+void ViewProvider::eventCallback(void *ud, SoEventCallback *node)
 {
-    const SoEvent * ev = node->getEvent();
+    const SoEvent *ev = node->getEvent();
     Gui::View3DInventorViewer* viewer = reinterpret_cast<Gui::View3DInventorViewer*>(node->getUserData());
-    ViewProvider *self = reinterpret_cast<ViewProvider*>(ud);
+    ViewProvider *self = static_cast<ViewProvider *>(ud);
     assert(self);
 
     try {
         // Keyboard events
         if (ev->getTypeId().isDerivedFrom(SoKeyboardEvent::getClassTypeId())) {
-            SoKeyboardEvent * ke = (SoKeyboardEvent *)ev;
-            const SbBool press = ke->getState() == SoButtonEvent::DOWN ? TRUE : FALSE;
-            switch (ke->getKey()) {
-            case SoKeyboardEvent::ESCAPE:
-                if (self->keyPressed (press, ke->getKey()))
+            const SoKeyboardEvent *ke = static_cast<const SoKeyboardEvent *>(ev);
+            if(ke->getKey() == SoKeyboardEvent::ESCAPE) {
+                if (self->keyPressed(*ke))
                     node->setHandled();
                 else
                     Gui::Application::Instance->activeDocument()->resetEdit();
-                break;
-            default:
-                // call the virtual method
-                if (self->keyPressed (press, ke->getKey()))
+            } else
+                if(self->keyPressed(*ke))
                     node->setHandled();
-                break;
-            }
         }
         // switching the mouse buttons
         else if (ev->getTypeId().isDerivedFrom(SoMouseButtonEvent::getClassTypeId())) {

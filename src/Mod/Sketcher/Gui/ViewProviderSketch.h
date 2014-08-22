@@ -27,6 +27,7 @@
 #include <Mod/Part/Gui/ViewProvider2DObject.h>
 #include <Inventor/SbImage.h>
 #include <Inventor/SbColor.h>
+#include <Inventor/events/SoKeyboardEvent.h>
 #include <Base/Tools2D.h>
 #include <Gui/Selection.h>
 #include <boost/signals.hpp>
@@ -80,6 +81,7 @@ class DrawSketchHandler;
 class SketcherGuiExport ViewProviderSketch : public PartGui::ViewProvider2DObject, public Gui::SelectionObserver
 {
     Q_DECLARE_TR_FUNCTIONS(SketcherGui::ViewProviderSketch)
+
     /// generates a warning message about constraint conflicts and appends it to the given message
     static QString appendConflictMsg(const std::vector<int> &conflicting);
     /// generates a warning message about redundant constraints and appends it to the given message
@@ -153,7 +155,7 @@ public:
                            const Gui::View3DInventorViewer *viewer,
                            SbLine&) const;
 
-    /// helper to detect preselection
+    //! helper to detect preselection
     bool detectPreselection(const SoPickedPoint *Point,
                             const Gui::View3DInventorViewer *viewer,
                             const SbVec2s &cursorPos);
@@ -169,6 +171,11 @@ public:
 
     /// helper change the color of the sketch according to selection and solver status
     void updateColor(void);
+
+    //! Slot used when the cursor needs to be updated without the mouse moving
+    /*! Handy for example if a keypress disables automatic constraints, to clear the constraint icon. */
+    void updateCursor(void);
+
     /// get the pointer to the sketch document object
     Sketcher::SketchObject *getSketchObject(void) const;
 
@@ -202,7 +209,8 @@ public:
     /// is called when the Provider is in edit and the mouse is moved
     virtual bool mouseMove(const SbVec2s &pos, Gui::View3DInventorViewer *viewer);
     /// is called when the Provider is in edit and a key event ocours. Only ESC ends edit.
-    virtual bool keyPressed(bool pressed, int key);
+    virtual bool keyPressed(const SoKeyboardEvent &keyEvent);
+    
     /// is called when the Provider is in edit and the mouse is clicked
     virtual bool mouseButtonPressed(int Button, bool pressed, const SbVec2s &pos,
                                     const Gui::View3DInventorViewer *viewer);
@@ -221,6 +229,10 @@ public:
     boost::signal<void ()> signalElementsChanged;
     
 
+    /// signals when a special key is pressed, to temporarily disable auto constraints
+    boost::signal<void (bool)> signalTempAutoConstraints;
+    /// signals when a special key is pressed, to temporarily disable snapping to grid
+    boost::signal<void (bool)> signalTempSnapToGrid;
 protected:
     virtual bool setEdit(int ModNum);
     virtual void unsetEdit(int ModNum);
@@ -239,8 +251,10 @@ protected:
 
     /// set up the edition data structure EditData
     void createEditInventorNodes(void);
+
     /// pointer to the edit data structure if the ViewProvider is in edit.
     EditData *edit;
+
     /// build up the visual of the constraints
     void rebuildConstraintsVisual(void);
 
@@ -348,7 +362,7 @@ protected:
 
     static SbTime prvClickTime;
     static SbVec3f prvClickPoint;
-    static SbVec2s prvCursorPos;
+    static SbVec2s prvCursorPos;  //! <Updated with the mouse curosr position (in mouse coordinates) whenever the mouse is moved and we're not in rubberband mode
     static SbVec2s newCursorPos;
 
     float zCross;
@@ -367,7 +381,6 @@ protected:
 };
 
 } // namespace PartGui
-
 
 #endif // SKETCHERGUI_VIEWPROVIDERSKETCH_H
 
