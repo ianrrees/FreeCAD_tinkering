@@ -59,7 +59,7 @@ using namespace Gui::TaskView;
 #define CONTEXT_ITEM(ICONSTR,NAMESTR,CMDSTR,FUNC,ACTSONSELECTION) 						\
 QIcon icon_ ## FUNC( Gui::BitmapFactory().pixmap(ICONSTR) ); 					\
     QAction* constr_ ## FUNC = menu.addAction(icon_ ## FUNC,tr(NAMESTR), this, SLOT(FUNC()), 	\
-        QKeySequence(QString::fromUtf8(Gui::Application::Instance->commandManager().getCommandByName(CMDSTR)->getAccel())));		\
+        QKeySequence(Gui::Application::Instance->commandManager().getCommandByName(CMDSTR)->getAccel()));		\
     if(ACTSONSELECTION) constr_ ## FUNC->setEnabled(!items.isEmpty()); else constr_ ## FUNC->setEnabled(true);
 
 /// Defines the member function corresponding to the CONTEXT_ITEM macro
