@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (c) Jürgen Riegel          (juergen.riegel@web.de) 2007     *
+ *   Copyright (c) Luke Parry             (l.parry@warwick.ac.uk) 2013     *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -32,6 +33,9 @@
 #include "FeatureView.h"
 #include <App/FeaturePython.h>
 
+#include <Base/BoundBox.h>
+#include "GeometryObject.h"
+
 
 namespace Drawing
 {
@@ -41,7 +45,8 @@ namespace Drawing
  */
 class DrawingExport FeatureViewPart : public FeatureView
 {
-    PROPERTY_HEADER(Part::FeatureViewPart);
+//    PROPERTY_HEADER(Part::FeatureViewPart);
+    PROPERTY_HEADER(Drawing::FeatureViewPart);
 
 public:
     /// Constructor
@@ -56,6 +61,24 @@ public:
     App::PropertyFloat  HiddenWidth;
     App::PropertyFloatConstraint  Tolerance;
 
+    App::PropertyVector XAxisDirection;
+
+public:
+    const std::vector<DrawingGeometry::Vertex *> & getVertexGeometry() const;
+    const std::vector<DrawingGeometry::BaseGeom  *> & getEdgeGeometry() const;
+    const std::vector<DrawingGeometry::Face *> & getFaceGeometry() const;
+
+    DrawingGeometry::BaseGeom * getCompleteEdge(int idx) const;
+    DrawingGeometry::Vertex   * getVertex(int idx) const;
+
+    /// Get References for geometric features
+    const std::vector<int> & getVertexReferences() const;
+    const std::vector<int> & getEdgeReferences() const;
+    const std::vector<int> & getFaceReferences() const;
+
+    virtual Base::BoundBox3d getBoundingBox() const;
+
+    short mustExecute() const;
 
     /** @name methods overide Feature */
     //@{
@@ -65,8 +88,17 @@ public:
 
     /// returns the type name of the ViewProvider
     virtual const char* getViewProviderName(void) const {
-        return "DrawingGui::ViewProviderDrawingView";
+//        return "DrawingGui::ViewProviderDrawingView";
+        return "DrawingGui::ViewProviderViewPart";
     }
+
+protected:
+    void calcBoundingBox();
+    void onChanged(const App::Property* prop);
+
+protected:
+    DrawingGeometry::GeometryObject *geometryObject;
+    Base::BoundBox3d bbox;
 
 private:
     static App::PropertyFloatConstraint::Constraints floatRange;

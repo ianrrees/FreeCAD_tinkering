@@ -6,6 +6,7 @@
  *   License, or (at your option) any later version.                       *
  *   for detail see the LICENCE text file.                                 *
  *   Jürgen Riegel 2002                                                    *
+ *   Copyright (c) 2014 Luke Parry <l.parry@warwick.ac.uk>                 *
  *                                                                         *
  ***************************************************************************/
 
@@ -24,26 +25,43 @@
 
 #include <App/PropertyGeo.h>
 
+#include <App/DocumentObject.h>
 #include <Gui/Action.h>
 #include <Gui/Application.h>
 #include <Gui/BitmapFactory.h>
 #include <Gui/Command.h>
 #include <Gui/Control.h>
+#include <Gui/Document.h>
 #include <Gui/Selection.h>
 #include <Gui/MainWindow.h>
 #include <Gui/FileDialog.h>
+#include <Gui/ViewProvider.h>
 
 #include <Mod/Part/App/PartFeature.h>
+# include <Mod/Drawing/App/FeatureViewPart.h>
+# include <Mod/Drawing/App/FeatureOrthoView.h>
+# include <Mod/Drawing/App/FeatureViewOrthographic.h>
+# include <Mod/Drawing/App/FeatureViewDimension.h>
 #include <Mod/Drawing/App/FeaturePage.h>
 
 
 #include "DrawingView.h"
 #include "TaskDialog.h"
-#include "TaskOrthoViews.h"
+//#include "TaskOrthoViews.h"
+# include "TaskOrthographicViews.h"
+# include "ViewProviderPage.h"
 
 using namespace DrawingGui;
 using namespace std;
 
+bool isDrawingPageActive(Gui::Document *doc)
+{
+    if (doc)
+        // checks if a Sketch Viewprovider is in Edit and is in no special mode
+        if (doc->getInEdit() && doc->getInEdit()->isDerivedFrom(DrawingGui::ViewProviderDrawingPage::getClassTypeId()))
+            return true;
+    return false;
+}
 
 //===========================================================================
 // CmdDrawingOpen
@@ -99,15 +117,25 @@ void CmdDrawingNewPage::activated(int iMsg)
     Gui::ActionGroup* pcAction = qobject_cast<Gui::ActionGroup*>(_pcAction);
     QAction* a = pcAction->actions()[iMsg];
 
-    std::string FeatName = getUniqueObjectName("Page");
+//    std::string FeatName = getUniqueObjectName("Page");
+    std::string PageName = getUniqueObjectName("Page");
+    std::string TemplateName = getUniqueObjectName("Template");
 
     QFileInfo tfi(a->property("Template").toString());
     if (tfi.isReadable()) {
-        openCommand("Create page");
-        doCommand(Doc,"App.activeDocument().addObject('Drawing::FeaturePage','%s')",FeatName.c_str());
-        doCommand(Doc,"App.activeDocument().%s.Template = '%s'",FeatName.c_str(), (const char*)tfi.filePath().toUtf8());
-        doCommand(Doc,"App.activeDocument().recompute()");
-        doCommand(Doc,"Gui.activeDocument().getObject('%s').show()",FeatName.c_str());
+        openCommand("Drawing create page");
+        doCommand(Doc,"App.activeDocument().addObject('Drawing::FeaturePage','%s')",PageName.c_str());
+//        doCommand(Doc,"App.activeDocument().%s.Template = '%s'",FeatName.c_str(), (const char*)tfi.filePath().toUtf8());
+//        doCommand(Doc,"App.activeDocument().recompute()");
+
+        // Create the Template Object to attach to the page
+        doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureSVGTemplate','%s')",TemplateName.c_str());
+
+        QString templateFile = a->property("Template").toString();
+        doCommand(Doc,"App.activeDocument().%s.Template = '%s'",TemplateName.c_str(), templateFile.toStdString().c_str());
+
+        doCommand(Doc,"App.activeDocument().%s.Template = App.activeDocument().%s",PageName.c_str(),TemplateName.c_str());
+
         commitCommand();
     }
     else {
@@ -160,6 +188,8 @@ Gui::Action * CmdDrawingNewPage::createAction(void)
             lastId = id;
 
             QFile file(QString::fromAscii(":/icons/actions/drawing-landscape-A0.svg"));
+            
+            // Create an action
             QAction* a = pcAction->addAction(QString());
             if (file.open(QFile::ReadOnly)) {
                 QString s = QString::fromAscii("style=\"font-size:22px\">%1%2</tspan></text>").arg(paper).arg(id);
@@ -285,7 +315,7 @@ void CmdDrawingNewA3Landscape::activated(int iMsg)
     openCommand("Create page");
     doCommand(Doc,"App.activeDocument().addObject('Drawing::FeaturePage','%s')",FeatName.c_str());
     doCommand(Doc,"App.activeDocument().%s.Template = 'A3_Landscape.svg'",FeatName.c_str());
-    doCommand(Doc,"App.activeDocument().recompute()");
+//    doCommand(Doc,"App.activeDocument().recompute()");
     commitCommand();
 }
 
@@ -325,14 +355,14 @@ void CmdDrawingNewView::activated(int iMsg)
         return;
     }
     
-    std::vector<App::DocumentObject*> pages = getSelection().getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     if (pages.empty()) {
-        pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
-        if (pages.empty()){
-            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page found"),
-                QObject::tr("Create a page first."));
-            return;
-        }
+        //pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+        //if (pages.empty()){
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page found"),
+            QObject::tr("Create a page first."));
+        return;
+        //}
     }
 
     const std::vector<App::DocumentObject*> selectedProjections = getSelection().getObjectsOfType(Drawing::FeatureView::getClassTypeId());
@@ -371,10 +401,70 @@ void CmdDrawingNewView::activated(int iMsg)
         doCommand(Doc,"App.activeDocument().%s.Scale = %e",FeatName.c_str(), newScale);
         doCommand(Doc,"App.activeDocument().%s.Rotation = %e",FeatName.c_str(), newRotation);
         doCommand(Doc,"App.activeDocument().%s.addObject(App.activeDocument().%s)",PageName.c_str(),FeatName.c_str());
+//        doCommand(Doc,"App.activeDocument().%s.Direction = (0.0,0.0,1.0)",FeatName.c_str());
+//        doCommand(Doc,"App.activeDocument().%s.X = 10.0",FeatName.c_str());
+//        doCommand(Doc,"App.activeDocument().%s.Y = 10.0",FeatName.c_str());
+//        doCommand(Doc,"App.activeDocument().%s.Scale = 1.0",FeatName.c_str());
+//        doCommand(Doc,"App.activeDocument().%s.addObject(App.activeDocument().%s)",PageName.c_str(),FeatName.c_str());
+        Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
+        page->addView(page->getDocument()->getObject(FeatName.c_str()));
     }
     updateActive();
     commitCommand();
 }
+//===========================================================================
+// Drawing_NewViewSection
+//===========================================================================
+
+DEF_STD_CMD(CmdDrawingNewViewSection);
+
+CmdDrawingNewViewSection::CmdDrawingNewViewSection()
+  : Command("Drawing_NewViewSection")
+{
+    sAppModule      = "Drawing";
+    sGroup          = QT_TR_NOOP("Drawing");
+    sMenuText       = QT_TR_NOOP("Insert section view in drawing");
+    sToolTipText    = QT_TR_NOOP("Insert a new Section View of a Part in the active drawing");
+    sWhatsThis      = "Drawing_NewViewSecton";
+    sStatusTip      = sToolTipText;
+    sPixmap         = "actions/drawing-viewsection";
+}
+
+void CmdDrawingNewViewSection::activated(int iMsg)
+{
+    std::vector<App::DocumentObject*> shapes = getSelection().getObjectsOfType(Part::Feature::getClassTypeId());
+    if (shapes.empty()) {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
+            QObject::tr("Select a Part object."));
+        return;
+    }
+
+    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+    if (pages.empty()){
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page to insert"),
+            QObject::tr("Create a page to insert."));
+        return;
+    }
+
+    std::string PageName = pages.front()->getNameInDocument();
+
+    openCommand("Create view");
+    for (std::vector<App::DocumentObject*>::iterator it = shapes.begin(); it != shapes.end(); ++it) {
+        std::string FeatName = getUniqueObjectName("View");
+        doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewSection','%s')",FeatName.c_str());
+        doCommand(Doc,"App.activeDocument().%s.Source = App.activeDocument().%s",FeatName.c_str(),(*it)->getNameInDocument());
+        doCommand(Doc,"App.activeDocument().%s.Direction = (0.0,0.0,1.0)",FeatName.c_str());
+        doCommand(Doc,"App.activeDocument().%s.X = 10.0",FeatName.c_str());
+        doCommand(Doc,"App.activeDocument().%s.Y = 10.0",FeatName.c_str());
+        doCommand(Doc,"App.activeDocument().%s.Scale = 1.0",FeatName.c_str());
+//         doCommand(Doc,"App.activeDocument().%s.addObject(App.activeDocument().%s)",PageName.c_str(),);
+        Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
+        page->addView(page->getDocument()->getObject(FeatName.c_str()));
+    }
+    updateActive();
+    commitCommand();
+}
+
 
 //===========================================================================
 // Drawing_OrthoView
@@ -396,7 +486,7 @@ CmdDrawingOrthoViews::CmdDrawingOrthoViews()
 
 void CmdDrawingOrthoViews::activated(int iMsg)
 {
-    const std::vector<App::DocumentObject*> shapes = getSelection().getObjectsOfType(Part::Feature::getClassTypeId());
+    std::vector<App::DocumentObject*> shapes = getSelection().getObjectsOfType(Part::Feature::getClassTypeId());
     if (shapes.size() != 1) {
         QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
             QObject::tr("Select exactly one Part object."));
@@ -412,9 +502,37 @@ void CmdDrawingOrthoViews::activated(int iMsg)
         return;
     }
 
-    TaskDlgOrthoViews* dlg = new TaskDlgOrthoViews();
-    dlg->setDocumentName(this->getDocument()->getName());
-    Gui::Control().showDialog(dlg);
+//    Gui::Control().showDialog(new TaskDlgOrthoViews());
+    std::string PageName = pages.front()->getNameInDocument();
+
+    Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
+
+    openCommand("Create Orthographic View");
+    for (std::vector<App::DocumentObject*>::iterator it = shapes.begin(); it != shapes.end(); ++it) {
+        std::string FeatName = getUniqueObjectName("cView");
+        doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewOrthographic','%s')",FeatName.c_str());
+        doCommand(Doc,"App.activeDocument().%s.Source = App.activeDocument().%s",FeatName.c_str(),(*it)->getNameInDocument());
+        doCommand(Doc,"App.activeDocument().%s.X = %f",     FeatName.c_str(), page->getPageWidth() / 2);
+        doCommand(Doc,"App.activeDocument().%s.Y = %f",     FeatName.c_str(), page->getPageHeight() / 2);
+        doCommand(Doc,"App.activeDocument().%s.Scale = 1.0",FeatName.c_str());
+
+
+
+        App::DocumentObject *docObj = getDocument()->getObject(FeatName.c_str());
+        Drawing::FeatureViewOrthographic *viewOrtho = dynamic_cast<Drawing::FeatureViewOrthographic *>(docObj);
+
+        viewOrtho->addOrthoView("Front");
+        page->addView(getDocument()->getObject(FeatName.c_str()));
+
+
+
+        //doCommand(Gui,"Gui.activeDocument().setEdit('%s')", FeatName.c_str());
+    }
+    updateActive();
+    commitCommand();
+
+
+
 }
 
 bool CmdDrawingOrthoViews::isActive(void)
@@ -483,14 +601,15 @@ CmdDrawingAnnotation::CmdDrawingAnnotation()
 void CmdDrawingAnnotation::activated(int iMsg)
 {
 
-    std::vector<App::DocumentObject*> pages = getSelection().getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+//    std::vector<App::DocumentObject*> pages = getSelection().getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     if (pages.empty()) {
-        pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
-        if (pages.empty()){
-            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page found"),
-                QObject::tr("Create a page first."));
-            return;
-        }
+//        pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+//        if (pages.empty()){
+          QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page found"),
+              QObject::tr("Create a page first."));
+          return;
+//        }
     }
     std::string PageName = pages.front()->getNameInDocument();
     std::string FeatName = getUniqueObjectName("Annotation");
@@ -531,14 +650,15 @@ CmdDrawingClip::CmdDrawingClip()
 void CmdDrawingClip::activated(int iMsg)
 {
 
-    std::vector<App::DocumentObject*> pages = getSelection().getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+//    std::vector<App::DocumentObject*> pages = getSelection().getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     if (pages.empty()) {
-        pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
-        if (pages.empty()){
-            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page found"),
-                QObject::tr("Create a page first."));
-            return;
-        }
+//        pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+//        if (pages.empty()){
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page found"),
+            QObject::tr("Create a page first."));
+        return;
+//        }
     }
     std::string PageName = pages.front()->getNameInDocument();
     std::string FeatName = getUniqueObjectName("Clip");
@@ -576,14 +696,15 @@ CmdDrawingSymbol::CmdDrawingSymbol()
 void CmdDrawingSymbol::activated(int iMsg)
 {
 
-    std::vector<App::DocumentObject*> pages = getSelection().getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+//    std::vector<App::DocumentObject*> pages = getSelection().getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     if (pages.empty()) {
-        pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
-        if (pages.empty()){
-            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page found"),
-                QObject::tr("Create a page first."));
-            return;
-        }
+//        pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+//        if (pages.empty()){
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page found"),
+            QObject::tr("Create a page first."));
+        return;
+//        }
     }
     // Reading an image
     QString filename = Gui::FileDialog::getOpenFileName(Gui::getMainWindow(), QObject::tr("Choose an SVG file to open"), QString::null,
@@ -631,7 +752,9 @@ CmdDrawingExportPage::CmdDrawingExportPage()
 
 void CmdDrawingExportPage::activated(int iMsg)
 {
-    unsigned int n = getSelection().countObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+    Base::Console().Error("Need to implemenet CmdDrawingExportPage::activated");
+
+/*    unsigned int n = getSelection().countObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     if (n != 1) {
         QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
             QObject::tr("Select one Page object."));
@@ -654,7 +777,7 @@ void CmdDrawingExportPage::activated(int iMsg)
         doCommand(Doc,"del OutFile,PageFile");
 
         commitCommand();
-    }
+    }*/
 }
 
 bool CmdDrawingExportPage::isActive(void)
@@ -736,10 +859,11 @@ void CreateDrawingCommands(void)
     rcCmdMgr.addCommand(new CmdDrawingNewPage());
     rcCmdMgr.addCommand(new CmdDrawingNewA3Landscape());
     rcCmdMgr.addCommand(new CmdDrawingNewView());
+    rcCmdMgr.addCommand(new CmdDrawingNewViewSection());
     rcCmdMgr.addCommand(new CmdDrawingOrthoViews());
     rcCmdMgr.addCommand(new CmdDrawingOpenBrowserView());
     rcCmdMgr.addCommand(new CmdDrawingAnnotation());
-    rcCmdMgr.addCommand(new CmdDrawingClip());
+//    rcCmdMgr.addCommand(new CmdDrawingClip());
     rcCmdMgr.addCommand(new CmdDrawingSymbol());
     rcCmdMgr.addCommand(new CmdDrawingExportPage());
     rcCmdMgr.addCommand(new CmdDrawingProjectShape());

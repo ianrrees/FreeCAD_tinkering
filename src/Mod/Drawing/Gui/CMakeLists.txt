@@ -12,9 +12,11 @@ include_directories(
     ${COIN3D_INCLUDE_DIRS}
     ${PYTHON_INCLUDE_DIRS}
     ${QT_INCLUDE_DIR}
+    ${QT_USE_QTXML}
     ${OCC_INCLUDE_DIR}
     ${ZLIB_INCLUDE_DIR}
     ${XercesC_INCLUDE_DIRS}
+    ${SOQT_INCLUDE_DIR}
 )
 link_directories(${OCC_LIBRARY_DIR})
 
@@ -25,8 +27,19 @@ set(DrawingGui_LIBS
 
 
 set(DrawingGui_MOC_HDRS
+    CanvasView.h
     DrawingView.h
+    QGraphicsItemTemplate.h
+    QGraphicsItemSVGTemplate.h
+    QGraphicsItemDrawingTemplate.h
+    QGraphicsItemView.h
+    QGraphicsItemViewCollection.h
+    QGraphicsItemViewDimension.h
+    QGraphicsItemViewOrthographic.h
+    QGraphicsItemViewPart.h
+    QGraphicsItemViewSection.h
     TaskOrthoViews.h
+    TaskOrthographicViews.h
     TaskDialog.h
 )
 
@@ -40,6 +53,7 @@ qt4_add_resources(DrawingGui_SRCS Resources/Drawing.qrc)
 
 set(DrawingGui_UIC_SRCS
     TaskOrthoViews.ui
+    TaskOrthographicViews.ui
 )
 
 qt4_wrap_ui(DrawingGui_UIC_HDRS ${DrawingGui_UIC_SRCS})
@@ -49,6 +63,7 @@ SET(DrawingGui_SRCS
     AppDrawingGui.cpp
     AppDrawingGuiPy.cpp
     Command.cpp
+    CommandCreateDims.cpp
     Resources/Drawing.qrc
     PreCompiled.cpp
     PreCompiled.h
@@ -57,18 +72,61 @@ SET(DrawingGui_SRCS
     TaskOrthoViews.ui
     TaskOrthoViews.cpp
     TaskOrthoViews.h
+    TaskOrthographicViews.ui
+    TaskOrthographicViews.cpp
+    TaskOrthographicViews.h
     Workbench.cpp
     Workbench.h
 )
 SET(DrawingGuiView_SRCS
+    CanvasView.cpp
+    CanvasView.h
     DrawingView.cpp
     DrawingView.h
+    QGraphicsItemView.cpp
+    QGraphicsItemView.h
+    QGraphicsItemArrow.cpp
+    QGraphicsItemArrow.h
+    QGraphicsItemEdge.cpp
+    QGraphicsItemEdge.h
+    QGraphicsItemFace.cpp
+    QGraphicsItemFace.h
+    QGraphicsItemSVGTemplate.cpp
+    QGraphicsItemSVGTemplate.h
+    QGraphicsItemVertex.cpp
+    QGraphicsItemVertex.h
+    QGraphicsItemDrawingTemplate.cpp
+    QGraphicsItemDrawingTemplate.h
+    QGraphicsItemTemplate.cpp
+    QGraphicsItemTemplate.h
+    QGraphicsItemViewCollection.cpp
+    QGraphicsItemViewCollection.h
+    QGraphicsItemViewDimension.cpp
+    QGraphicsItemViewDimension.h
+    QGraphicsItemViewOrthographic.cpp
+    QGraphicsItemViewOrthographic.h
+    QGraphicsItemViewPart.cpp
+    QGraphicsItemViewPart.h
+    QGraphicsItemViewSection.cpp
+    QGraphicsItemViewSection.h
 )
 SET(DrawingGuiViewProvider_SRCS
+    ViewProviderOrthoView.cpp
+    ViewProviderOrthoView.h
     ViewProviderPage.cpp
     ViewProviderPage.h
+    ViewProviderTemplate.cpp
+    ViewProviderTemplate.h
     ViewProviderView.cpp
     ViewProviderView.h
+    ViewProviderDimension.cpp
+    ViewProviderDimension.h
+    ViewProviderViewPart.cpp
+    ViewProviderViewPart.h
+    ViewProviderViewOrthographic.cpp
+    ViewProviderViewOrthographic.h
+    ViewProviderViewSection.cpp
+    ViewProviderViewSection.h
 )
 
 SOURCE_GROUP("Mod" FILES ${DrawingGui_SRCS})
@@ -77,6 +135,7 @@ SOURCE_GROUP("ViewProvider" FILES ${DrawingGuiViewProvider_SRCS})
 
 SET(DrawingGuiTaskDlgs_SRCS
     TaskOrthoViews.ui
+    TaskOrthographicViews.ui
 )
 SOURCE_GROUP("TaskDialogs" FILES ${DrawingGuiTaskDlgs_SRCS})
 

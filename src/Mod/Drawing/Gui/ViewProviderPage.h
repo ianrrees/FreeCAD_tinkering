@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (c) 2004 Jürgen Riegel <juergen.riegel@web.de>              *
+ *   Copyright (c) 2012 Luke Parry <l.parry@warwick.ac.uk>                 *
  *                                                                         *
  *   This file is Drawing of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -27,6 +28,7 @@
 #include <QPointer>
 #include <Gui/ViewProviderFeature.h>
 #include <Gui/ViewProviderDocumentObjectGroup.h>
+#include <Gui/Selection.h>
 
 #include "DrawingView.h"
 
@@ -34,10 +36,15 @@ namespace Drawing{
     class FeaturePage;
 }
 
+namespace Gui {     //TODO: Inventor here??
+    class SoFCSelection;
+}
+
 namespace DrawingGui {
 
+class DrawingView;
 
-class DrawingGuiExport ViewProviderDrawingPage : public Gui::ViewProviderDocumentObjectGroup
+class DrawingGuiExport ViewProviderDrawingPage : public Gui::ViewProviderDocumentObjectGroup, public Gui::SelectionObserver
 {
     PROPERTY_HEADER(DrawingGui::ViewProviderDrawingPage);
 
@@ -47,9 +54,9 @@ public:
     /// destructor
     virtual ~ViewProviderDrawingPage();
 
-    App::PropertyFloat         HintScale;
-    App::PropertyFloat         HintOffsetX;
-    App::PropertyFloat         HintOffsetY;
+    //App::PropertyFloat         HintScale;
+    //App::PropertyFloat         HintOffsetX;
+    //App::PropertyFloat         HintOffsetY;
 
     virtual void attach(App::DocumentObject *);
     virtual void setDisplayMode(const char* ModeName);
@@ -61,16 +68,27 @@ public:
     /// Shows the view provider
     virtual void show(void);
 
+    void onSelectionChanged(const Gui::SelectionChanges& msg);
+
+    /// Claim all the views for the page
+    std::vector<App::DocumentObject*> claimChildren(void) const;
+
     /// Is called by the tree if the user double click on the object
     virtual bool doubleClicked(void);
     void setupContextMenu(QMenu*, QObject*, const char*);
-    virtual void updateData(const App::Property*);
     virtual bool onDelete(const std::vector<std::string> &);
+    virtual void onChanged(const App::Property *prop);
+    virtual void updateData(const App::Property* prop);
 
     Drawing::FeaturePage* getPageObject() const;
+    void unsetEdit(int ModNum);
+
+    // Temporary option
+    DrawingView* getDrawingView() { return showDrawingView(); }
 
 protected:
     bool setEdit(int ModNum);
+    bool onDelete(const std::vector<std::string> &subList);
     DrawingView* showDrawingView();
 
 private:

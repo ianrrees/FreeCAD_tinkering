@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (c) Yorik van Havre          (yorik@uncreated.net) 2012     *
+ *   Copyright (c) 2013 Luke Parry <l.parry@warwick.ac.uk>                 *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -47,11 +48,15 @@ PROPERTY_SOURCE(Drawing::FeatureViewAnnotation, Drawing::FeatureView)
 
 FeatureViewAnnotation::FeatureViewAnnotation(void) 
 {
-    static const char *vgroup = "Drawing view";
+    static const char *vgroup = "Drawing annotation";
 
     ADD_PROPERTY_TYPE(Text ,(""),vgroup,App::Prop_None,"The text to be displayed");
-    ADD_PROPERTY_TYPE(Font ,("Sans"),vgroup,App::Prop_None,"The name of the font to use");
+ //   ADD_PROPERTY_TYPE(Font ,("Sans"),vgroup,App::Prop_None,"The name of the font to use");
+    ADD_PROPERTY_TYPE(Font ,("osifont")         ,vgroup,App::Prop_None, "The name of the font to use");
     ADD_PROPERTY_TYPE(TextColor,(0.0f,0.0f,0.0f),vgroup,App::Prop_None,"The color of the text");
+
+    Scale.StatusBits.set(3);
+    ScaleType.StatusBits.set(3);
 }
 
 FeatureViewAnnotation::~FeatureViewAnnotation()
@@ -82,7 +87,7 @@ App::DocumentObjectExecReturn *FeatureViewAnnotation::execute(void)
     result << "</text>" << endl << "</g>" << endl;
 
     // Apply the resulting fragment
-    ViewResult.setValue(result.str().c_str());
+//    ViewResult.setValue(result.str().c_str());
 
     return App::DocumentObject::StdReturn;
 }

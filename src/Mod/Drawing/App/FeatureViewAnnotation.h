@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (c) Yorik van Havre          (yorik@uncreated.net 2012)     *
+ *   Copyright (c) 2013 Luke Parry <l.parry@warwick.ac.uk>                 *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -39,9 +40,9 @@ namespace Drawing
 
 /** Base class of all View Features in the drawing module
  */
-class DrawingExport FeatureViewAnnotation : public FeatureView
+class DrawingExport FeatureViewAnnotation : public Drawing::FeatureView
 {
-    PROPERTY_HEADER(Drawing::FeatureView);
+    PROPERTY_HEADER(Drawing::FeatureViewAnnotation);
 
 public:
     /// Constructor

@@ -78,6 +78,7 @@
 #include <Standard_Failure.hxx>
 
 #include "DrawingExport.h"
+#include <Base/Tools2D.h>
 #include <Base/Tools.h>
 #include <Base/Vector3D.h>
 

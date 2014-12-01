@@ -32,6 +32,8 @@
 #include "FeatureView.h"
 #include <App/FeaturePython.h>
 
+#include <Base/BoundBox.h>
+#include "GeometryObject.h"
 
 namespace Drawing
 {
@@ -64,6 +66,9 @@ public:
 
 protected:
     void onChanged(const App::Property* prop);
+    DrawingGeometry::GeometryObject *geometryObject;
+    Base::BoundBox3d bbox;
+    
 };
 
 typedef App::FeaturePythonT<FeatureViewSymbol> FeatureViewSymbolPython;

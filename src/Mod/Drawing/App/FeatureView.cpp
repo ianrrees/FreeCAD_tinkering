@@ -35,6 +35,8 @@
 #include <Base/Exception.h>
 #include <Base/FileInfo.h>
 
+#include "FeaturePage.h"
+#include "FeatureViewCollection.h"
 #include "FeatureView.h"
 
 using namespace Drawing;
@@ -43,6 +45,11 @@ using namespace Drawing;
 //===========================================================================
 // FeatureView
 //===========================================================================
+
+const char* FeatureView::ScaleTypeEnums[]= {"Document",
+                                            "Automatic",
+                                            "Custom",
+                                             NULL};
 
 PROPERTY_SOURCE(Drawing::FeatureView, App::DocumentObject)
 
@@ -55,20 +62,69 @@ FeatureView::FeatureView(void)
     ADD_PROPERTY_TYPE(Y ,(0),group,App::Prop_None,"Y position of the view on the drawing in modelling units (mm)");
     ADD_PROPERTY_TYPE(Scale ,(1.0),group,App::Prop_None,"Scale factor of the view");
     ADD_PROPERTY_TYPE(Rotation ,(0),group,App::Prop_None,"Rotation of the view in degrees counterclockwise");
+
     // The 'Visible' property is handled by the view provider exclusively. It has the 'Output' flag set to
     // avoid to call the execute() method. The view provider touches the page object, instead.
     App::PropertyType propType = static_cast<App::PropertyType>(App::Prop_Hidden|App::Prop_Output);
     ADD_PROPERTY_TYPE(Visible, (true),group,propType,"Control whether view is visible in page object");
 
-    App::PropertyType type = (App::PropertyType)(App::Prop_Hidden);
-    ADD_PROPERTY_TYPE(ViewResult ,(0),group,type,"Resulting SVG fragment of that view");
+    ScaleType.setEnums(ScaleTypeEnums);
+    ADD_PROPERTY_TYPE(ScaleType,((long)0),group, App::Prop_None, "Scale Type");
+
+//    App::PropertyType type = (App::PropertyType)(App::Prop_Hidden);
+//    ADD_PROPERTY_TYPE(ViewResult ,(0),group,type,"Resulting SVG fragment of that view");
 }
 
 FeatureView::~FeatureView()
 {
 }
 
-App::DocumentObjectExecReturn *FeatureView::recompute(void)
+/// get called by the container when a Property was changed
+void FeatureView::onChanged(const App::Property* prop)
+{
+    if (prop == &X ||
+        prop == &Y ||
+        prop == &ScaleType ||
+        prop == &Rotation) {
+          if (!this->isRestoring()) {
+              FeatureView::execute();
+          }
+    }
+
+    App::DocumentObject::onChanged(prop);
+}
+
+void FeatureView::onDocumentRestored()
+{
+    // Rebuild the view
+    this->execute();
+}
+
+FeaturePage* FeatureView::findParentPage()
+{
+    // Get Feature Page
+    FeaturePage *page = 0;
+    FeatureViewCollection *collection = 0;
+    std::vector<App::DocumentObject*> parent = getInList();
+    for (std::vector<App::DocumentObject*>::iterator it = parent.begin(); it != parent.end(); ++it) {
+        if ((*it)->getTypeId().isDerivedFrom(FeaturePage::getClassTypeId())) {
+            page = dynamic_cast<Drawing::FeaturePage *>(*it);
+        }
+
+        if ((*it)->getTypeId().isDerivedFrom(FeatureViewCollection::getClassTypeId())) {
+            collection = dynamic_cast<Drawing::FeatureViewCollection *>(*it);
+            page = collection->findParentPage();
+        }
+
+        if(page)
+          break; // Found page so leave
+    }
+
+    return page;
+}
+
+
+/*App::DocumentObjectExecReturn *FeatureView::recompute(void)
 {
     try {
         return App::DocumentObject::recompute();
@@ -79,10 +135,22 @@ App::DocumentObjectExecReturn *FeatureView::recompute(void)
         if (ret->Why.empty()) ret->Why = "Unknown OCC exception";
         return ret;
     }
-}
+}*/
 
 App::DocumentObjectExecReturn *FeatureView::execute(void)
 {
+    if(strcmp(ScaleType.getValueAsString(), "Document") == 0) {
+        Scale.StatusBits.set(2, true);
+
+        Drawing::FeaturePage *page = findParentPage();
+        if(page) {
+            if(std::abs(page->Scale.getValue() - Scale.getValue()) > FLT_EPSILON) {
+                Scale.setValue(page->Scale.getValue()); // Recalculate scale from page
+                Scale.touch();
+            }
+        }
+    }
+
     return App::DocumentObject::StdReturn;
 }
 

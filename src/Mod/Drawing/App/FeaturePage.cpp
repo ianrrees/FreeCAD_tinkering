@@ -32,12 +32,15 @@
 #include <Base/Console.h>
 #include <Base/FileInfo.h>
 #include <App/Application.h>
+#include <App/Document.h>
 #include <boost/regex.hpp>
 #include <iostream>
 #include <iterator>
 
 #include "FeaturePage.h"
+#include "FeatureTemplate.h"
 #include "FeatureView.h"
+#include "FeatureViewCollection.h"
 #include "FeatureClip.h"
 
 using namespace Drawing;
@@ -52,13 +55,25 @@ PROPERTY_SOURCE(Drawing::FeaturePage, App::DocumentObjectGroup)
 
 const char *group = "Drawing view";
 
+const char* FeaturePage::OrthoProjectionTypeEnums[]= {"First Angle",
+                                                      "Third Angle",
+                                                      NULL};
+
 FeaturePage::FeaturePage(void) : numChildren(0)
 {
-    static const char *group = "Drawing view";
+    static const char *group = "Page";
 
-    ADD_PROPERTY_TYPE(PageResult ,(0),group,App::Prop_Output,"Resulting SVG document of that page");
-    ADD_PROPERTY_TYPE(Template   ,(""),group,App::Prop_Transient  ,"Template for the page");
-    ADD_PROPERTY_TYPE(EditableTexts,(""),group,App::Prop_None,"Substitution values for the editable strings in the template");
+    ADD_PROPERTY_TYPE(Views    ,(0), group, (App::PropertyType)(App::Prop_None),"Attached Views");
+    ADD_PROPERTY_TYPE(Template ,(0), group, (App::PropertyType)(App::Prop_Transient),"Attached Template");
+
+//    ADD_PROPERTY_TYPE(PageResult ,(0),group,App::Prop_Output,"Resulting SVG document of that page");
+//    ADD_PROPERTY_TYPE(Template   ,(""),group,App::Prop_None  ,"Template for the page");
+//    ADD_PROPERTY_TYPE(EditableTexts,(""),group,App::Prop_None,"Substitution values for the editable strings in the template");
+
+    // Projection Properties
+    OrthoProjectionType.setEnums(OrthoProjectionTypeEnums);
+    ADD_PROPERTY(OrthoProjectionType,((long)0));
+    ADD_PROPERTY_TYPE(Scale ,(1.0)     ,group,App::Prop_None,"Scale factor for Document Views");
 }
 
 FeaturePage::~FeaturePage()
@@ -74,10 +89,95 @@ void FeaturePage::onBeforeChange(const App::Property* prop)
     App::DocumentObjectGroup::onBeforeChange(prop);
 }
 
+short FeaturePage::mustExecute() const
+{
+    // If Tolerance Property is touched
+    if(Scale.isTouched())
+        return 1;
+
+    // Check the value of template if this has been modified
+    App::DocumentObject* tmpl = Template.getValue();
+    if(tmpl && tmpl->isTouched())
+        return 1;
+
+    // Check if within the selection, any Document Object have been touched
+    bool ViewsTouched = false;
+    const std::vector<App::DocumentObject*> &vals = Views.getValues();
+    for(std::vector<App::DocumentObject *>::const_iterator it = vals.begin(); it < vals.end(); ++it) {
+       if((*it)->isTouched()) {
+            return 1;
+        }
+    }
+
+    return (ViewsTouched) ? 1 : App::DocumentObjectGroup::mustExecute();
+}
+bool FeaturePage::hasValidTemplate() const
+{
+    App::DocumentObject *obj = 0;
+    obj = Template.getValue();
+
+    if(obj && obj->isDerivedFrom(Drawing::FeatureTemplate::getClassTypeId())) {
+        Drawing::FeatureTemplate *templ = static_cast<Drawing::FeatureTemplate *>(obj);
+        if(templ->getWidth() > 0. &&
+           templ->getHeight() > 0.) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+double FeaturePage::getPageWidth() const
+{
+    App::DocumentObject *obj = 0;
+    obj = Template.getValue();
+
+    if(obj) {
+        if(obj->isDerivedFrom(Drawing::FeatureTemplate::getClassTypeId()) ) {
+        Drawing::FeatureTemplate *templ = static_cast<Drawing::FeatureTemplate *>(obj);
+        return templ->getWidth();
+        }
+    }
+
+    throw Base::Exception("Template not set for Page");
+
+}
+
+double FeaturePage::getPageHeight() const
+{
+    App::DocumentObject *obj = 0;
+    obj = Template.getValue();
+
+    if(obj) {
+        if(obj->isDerivedFrom(Drawing::FeatureTemplate::getClassTypeId())) {
+            Drawing::FeatureTemplate *templ = static_cast<Drawing::FeatureTemplate *>(obj);
+            return templ->getHeight();
+        }
+    }
+
+    throw Base::Exception("Template not set for Page");
+}
+
+const char * FeaturePage::getPageOrientation() const
+{
+    App::DocumentObject *obj;
+    obj = Template.getValue();
+
+    if(obj) {
+        if(obj->isDerivedFrom(Drawing::FeatureTemplate::getClassTypeId())) {
+          Drawing::FeatureTemplate *templ = static_cast<Drawing::FeatureTemplate *>(obj);
+
+          return templ->Orientation.getValueAsString();
+        }
+    }
+    throw Base::Exception("Template not set for Page");
+}
+
+
 /// get called by the container when a Property was changed
 void FeaturePage::onChanged(const App::Property* prop)
 {
-    if (prop == &PageResult) {
+/*    if (prop == &PageResult) {
         if (this->isRestoring()) {
             // When loading a document the included file
             // doesn't need to exist at this point.
@@ -99,9 +199,15 @@ void FeaturePage::onChanged(const App::Property* prop)
             numChildren = Group.getSize();
             touch();
         }
-    }
-
-    App::DocumentObjectGroup::onChanged(prop);
+    }*/
+    if(prop == &Scale) {
+        // touch all views in the document as they may be dependent on this scale
+      const std::vector<App::DocumentObject*> &vals = Views.getValues();
+      for(std::vector<App::DocumentObject *>::const_iterator it = vals.begin(); it < vals.end(); ++it) {
+          Drawing::FeatureView *view = dynamic_cast<Drawing::FeatureView *>(*it);
+          if(strcmp(view->ScaleType.getValueAsString(), "Document") == 0) {
+              view->Scale.touch();
+          }
 }
 
 void FeaturePage::onDocumentRestored()
@@ -118,125 +224,44 @@ void FeaturePage::onDocumentRestored()
     Template.setValue(path);
 
     this->StatusBits.reset(4); // the 'Restore' flag
+      }
+    }
+    App::DocumentObjectGroup::onChanged(prop);
+    //App::DocumentObject::onChanged(prop);
+}
+
+int FeaturePage::addView(App::DocumentObject *docObj)
+{
+    if(!docObj->isDerivedFrom(Drawing::FeatureView::getClassTypeId()))
+        return -1; //Doc Object must be derived from a Part Feature
+
+    const std::vector<App::DocumentObject *> vals = Views.getValues();
+    std::vector<App::DocumentObject *> newVals(vals);
+    newVals.push_back(docObj);
+    Views.setValues(newVals);
+
+    if(docObj->getTypeId().isDerivedFrom(Drawing::FeatureViewCollection::getClassTypeId())) {
+        // Add child views recursively to the page feature
+        Drawing::FeatureViewCollection *collection = dynamic_cast<Drawing::FeatureViewCollection *>(docObj);
+        const std::vector<App::DocumentObject *> & views = collection->Views.getValues();
+        for(std::vector<App::DocumentObject*>::const_iterator it = views.begin(); it != views.end(); ++it) {
+            //this->addView(*it); // Recursively add child views
+        }
+    }
+
+    Views.touch();
+    return Views.getSize();
 }
 
 App::DocumentObjectExecReturn *FeaturePage::execute(void)
 {
-    std::string temp = Template.getValue();
-    if (temp.empty())
-        return App::DocumentObject::StdReturn;
-
-    Base::FileInfo fi(temp);
-    if (!fi.isReadable()) {
-        // if there is a old absolute template file set use a redirect
-        fi.setFile(App::Application::getResourceDir() + "Mod/Drawing/Templates/" + fi.fileName());
-        // try the redirect
-        if (!fi.isReadable()) {
-            Base::Console().Log("FeaturePage::execute() not able to open %s!\n",Template.getValue());
-            std::string error = std::string("Cannot open file ") + Template.getValue();
-            return new App::DocumentObjectExecReturn(error);
-        }
-    }
-
-    if (std::string(PageResult.getValue()).empty())
-        PageResult.setValue(fi.filePath().c_str());
-
-    // open Template file
-    string line;
-    ifstream file (fi.filePath().c_str());
-
-    // make a temp file for FileIncluded Property
-    string tempName = PageResult.getExchangeTempFile();
-    ostringstream ofile;
-    string tempendl = "--endOfLine--";
-
-    while (!file.eof())
-    {
-        getline (file,line);
-        // check if the marker in the template is found
-        if(line.find("<!-- DrawingContent -->") == string::npos)
-            // if not -  write through
-            ofile << line << tempendl;
-        else
-        {
-            // get through the children and collect all the views
-            const std::vector<App::DocumentObject*> &Grp = Group.getValues();
-            for (std::vector<App::DocumentObject*>::const_iterator It= Grp.begin();It!=Grp.end();++It) {
-                if ( (*It)->getTypeId().isDerivedFrom(Drawing::FeatureView::getClassTypeId()) ) {
-                    Drawing::FeatureView *View = dynamic_cast<Drawing::FeatureView *>(*It);
-                    if (View->Visible.getValue()) {
-                        ofile << View->ViewResult.getValue();
-                        ofile << tempendl << tempendl << tempendl;
-                    }
-                } else if ( (*It)->getTypeId().isDerivedFrom(Drawing::FeatureClip::getClassTypeId()) ) {
-                    Drawing::FeatureClip *Clip = dynamic_cast<Drawing::FeatureClip *>(*It);
-                    if (Clip->Visible.getValue()) {
-                        ofile << Clip->ViewResult.getValue();
-                        ofile << tempendl << tempendl << tempendl;
-                    }
-                } else if ( (*It)->getTypeId().isDerivedFrom(App::DocumentObjectGroup::getClassTypeId()) ) {
-                    // getting children inside subgroups too
-                    App::DocumentObjectGroup *SubGroup = dynamic_cast<App::DocumentObjectGroup *>(*It);
-                    const std::vector<App::DocumentObject*> &SubGrp = SubGroup->Group.getValues();
-                    for (std::vector<App::DocumentObject*>::const_iterator Grit= SubGrp.begin();Grit!=SubGrp.end();++Grit) {
-                        if ( (*Grit)->getTypeId().isDerivedFrom(Drawing::FeatureView::getClassTypeId()) ) {
-                            Drawing::FeatureView *SView = dynamic_cast<Drawing::FeatureView *>(*Grit);
-                            if (SView->Visible.getValue()) {
-                                ofile << SView->ViewResult.getValue();
-                                ofile << tempendl << tempendl << tempendl;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    file.close();
-
-    // checking for freecad editable texts
-    string outfragment(ofile.str());
-    const std::vector<std::string>& editText = EditableTexts.getValues();
-    if (!editText.empty()) {
-        boost::regex e1 ("<text.*?freecad:editable=\"(.*?)\".*?<tspan.*?>(.*?)</tspan>");
-        string::const_iterator begin, end;
-        begin = outfragment.begin();
-        end = outfragment.end();
-        boost::match_results<std::string::const_iterator> what;
-        std::size_t count = 0;
-        std::string newfragment;
-        newfragment.reserve(outfragment.size());
-
-        while (boost::regex_search(begin, end, what, e1)) {
-            if (count < editText.size()) {
-                // change values of editable texts
-                boost::regex e2 ("(<text.*?freecad:editable=\""+what[1].str()+"\".*?<tspan.*?)>(.*?)(</tspan>)");
-                boost::re_detail::string_out_iterator<std::string > out(newfragment);
-                boost::regex_replace(out, begin, what[0].second, e2, "$1>"+editText[count]+"$3");
-            }
-            count++;
-            begin = what[0].second;
-        }
-
-        // now copy the rest
-        newfragment.insert(newfragment.end(), begin, end);
-        outfragment = newfragment;
-    }
-
-    // restoring linebreaks and saving the file
-    boost::regex e3 ("--endOfLine--");
-    string fmt = "\\n";
-    outfragment = boost::regex_replace(outfragment, e3, fmt);
-    ofstream outfinal(tempName.c_str());
-    outfinal << outfragment;
-    outfinal.close();
-
-    PageResult.setValue(tempName.c_str());
-
+    Template.touch();
+    Views.touch();
     return App::DocumentObject::StdReturn;
 }
 
-std::vector<std::string> FeaturePage::getEditableTextsFromTemplate(void) const {
+// now in FeatureSVG Template
+/*std::vector<std::string> FeaturePage::getEditableTextsFromTemplate(void) const {
     //getting editable texts from "freecad:editable" attributes in SVG template
 
     std::vector<string> eds;
@@ -271,4 +296,4 @@ std::vector<std::string> FeaturePage::getEditableTextsFromTemplate(void) const {
         }
     }
     return eds;
-}
+}*/

@@ -45,21 +45,39 @@ public:
     FeaturePage(void);
     virtual ~FeaturePage();
 
-    App::PropertyFileIncluded PageResult;
-    App::PropertyFile Template;
-    App::PropertyStringList EditableTexts;
+//    App::PropertyFileIncluded PageResult; // moved to FeatureSVGTemplate.h
+//    App::PropertyFile Template;           // moved to FeatureSVGTemplate.h
+    App::PropertyLinkList Views;
+    App::PropertyLink Template;
+
+    App::PropertyFloat Scale;
+    App::PropertyEnumeration OrthoProjectionType; // First or Third Angle
+    
+//    App::PropertyStringList EditableTexts; // moved to FeatureSVGTemplate.h
 
     /** @name methods overide Feature */
     //@{
     /// recalculate the Feature
     virtual App::DocumentObjectExecReturn *execute(void);
     //@}
+    
+//App::DocumentObjectExecReturn * recompute(void);
+
+    int addView(App::DocumentObject *docObj);
+
+    short mustExecute() const;
 
     /// returns the type name of the ViewProvider
     virtual const char* getViewProviderName(void) const {
         return "DrawingGui::ViewProviderDrawingPage";
     }
-    virtual std::vector<std::string> getEditableTextsFromTemplate(void) const;
+
+    bool hasValidTemplate() const;
+    double getPageWidth() const;
+    double getPageHeight() const;
+    const char* getPageOrientation() const;
+
+//    virtual std::vector<std::string> getEditableTextsFromTemplate(void) const;
 
 protected:
     void onBeforeChange(const App::Property* prop);
@@ -69,6 +87,7 @@ protected:
 
 private:
     int numChildren;
+    static const char* OrthoProjectionTypeEnums[];
 };
 
 

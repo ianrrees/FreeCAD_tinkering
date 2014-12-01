@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (c) 2004 Jürgen Riegel <juergen.riegel@web.de>              *
+ *   Copyright (c) 2012 Luke Parry <l.parry@warwick.ac.uk>                 *
  *                                                                         *
  *   This file is Drawing of the FreeCAD CAx development system.           *
  *                                                                         *
@@ -27,6 +28,9 @@
 #include <Gui/ViewProviderFeature.h>
 #include <Gui/ViewProviderDocumentObjectGroup.h>
 
+namespace Drawing{
+    class FeatureView;
+}
 
 namespace DrawingGui {
 
@@ -59,6 +63,8 @@ public:
     virtual void startRestoring();
     virtual void finishRestoring();
     //@}
+
+    Drawing::FeatureView* getViewObject() const;
 };
 
 class DrawingGuiExport ViewProviderDrawingClip : public Gui::ViewProviderDocumentObjectGroup

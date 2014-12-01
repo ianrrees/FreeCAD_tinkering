@@ -46,12 +46,14 @@ using namespace std;
 PROPERTY_SOURCE(Drawing::FeatureViewSymbol, Drawing::FeatureView)
 
 
-FeatureViewSymbol::FeatureViewSymbol(void) 
+FeatureViewSymbol::FeatureViewSymbol(void) : geometryObject(0)
 {
     static const char *vgroup = "Drawing view";
 
     ADD_PROPERTY_TYPE(Symbol,(""),vgroup,App::Prop_Hidden,"The SVG code defining this symbol");
     ADD_PROPERTY_TYPE(EditableTexts,(""),vgroup,App::Prop_None,"Substitution values for the editable strings in this symbol");
+
+    geometryObject = new DrawingGeometry::GeometryObject();
 
 }
 
@@ -123,9 +125,11 @@ App::DocumentObjectExecReturn *FeatureViewSymbol::execute(void)
             << "</g>" << endl;
 
     // Apply the resulting fragment
-    ViewResult.setValue(result.str().c_str());
+    // no more ViewResult! Need to xlate SVG to Geometry object???
+    //ViewResult.setValue(result.str().c_str());
 
-    return App::DocumentObject::StdReturn;
+    //return App::DocumentObject::StdReturn;
+    return FeatureView::execute();
 }
 
 // Python Drawing feature ---------------------------------------------------------

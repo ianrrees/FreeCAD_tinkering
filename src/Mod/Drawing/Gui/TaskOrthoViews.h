@@ -33,48 +33,62 @@
 
 #include <Mod/Drawing/App/FeatureViewPart.h>
 
-
-
 class Ui_TaskOrthoViews;
+
+namespace App {
+  class Document;
+  class DocumentObject;
+}
+
 using namespace std;
+
+namespace Drawing {
+  class FeatureViewPart;
+}
 
 namespace DrawingGui {
 
+enum AxoMode{
+  ISOMETRIC = 0,
+  DIMETRIC  = 1,
+  TRIMETRIC = 2
+};
 
-class orthoview
+class Orthoview
 {
 public:
-    orthoview(App::Document * parent, App::DocumentObject * part, App::DocumentObject * page, Base::BoundBox3d * partbox);
-    ~orthoview();
+    Orthoview(App::DocumentObject *part, App::DocumentObject *page, Base::BoundBox3d *partbox);
+    ~Orthoview();
 
-    void    set_data(int r_x, int r_y);
-    void    set_projection(gp_Ax2 cs);
-    void    setPos(float = 0, float = 0);
-    void    setScale(float newscale);
-    float   getScale();
-    void    deleteme();
-    void    hidden(bool);
-    void    smooth(bool);
+public:
+    void    remove();
+    void    setData(const int &r_x, const int &r_y);
+    void    setProjection(const gp_Ax2 &cs);
+    void    setPos(const float &px, const float &py);
+    void    setScale(const float &newScale);
+    float   getScale() const;
+//    void    deleteme();   // ???
+
+    void    showHidden(bool state);
+    void    showSmooth(bool state);
 
 private:
-    void    calcCentre();
+    void    calcCentre(float &x, float &y) const;
 
 public:     // these aren't used by orthoView, but just informational, hence public
     bool    ortho;          // orthonometric?  or axonometric
     bool    auto_scale;     // scale for axonometric has not been manually changed?
     int     rel_x, rel_y;   // relative position of this view
     bool    away, tri;      // binary parameters for axonometric view
-    int     axo;            // 0 / 1 / 2 = iso / di / tri metric
+    AxoMode axo;            // 0 / 1 / 2 = iso / di / tri metric
     gp_Dir  up, right;      // directions prior to rotations (ie, what was used to orientate the projection)
 
 private:
     App::Document *             parent_doc;
-    Drawing::FeatureViewPart *  this_view;
+    Drawing::FeatureViewPart    *view;
 
-    string  myname;
-    float   x, y;                   // 2D projection coords of bbox centre relative to origin
-    float   cx, cy, cz;             // coords of bbox centre in 3D space
-    float   pageX, pageY;           // required coords of centre of bbox projection on page
+    Base::Vector3f centerCoord;    // coords of bbox centre in 3D space
+
     float   scale;                  // scale of projection
     gp_Dir  X_dir, Y_dir, Z_dir;    // directions of projection, X_dir makes x on page, Y_dir is y on page, Z_dir is out of page
 };
@@ -95,15 +109,15 @@ public:
     void    set_projection(int proj);
     void    set_hidden(bool state);
     void    set_smooth(bool state);
-    void    set_Axo(int rel_x, int rel_y, gp_Dir up, gp_Dir right, bool away = false, int axo = 0, bool tri = false);
+    void    set_Axo(int rel_x, int rel_y, gp_Dir up, gp_Dir right, bool away = false, AxoMode = ISOMETRIC, bool tri = false);
     void    set_Axo(int rel_x, int rel_y);
-    void    set_Axo_scale(int rel_x, int rel_y, float axo_scale);
-    void    set_Ortho(int rel_x, int rel_y);
-    int     is_Ortho(int rel_x, int rel_y);
+    void    set_Axo_scale(const int &rel_x, const int &rel_y, const float &axo_scale);
+    void    set_Ortho(const int &rel_x, const int &rel_y);
+    int     is_Ortho(int rel_x, int rel_y) const;
     bool    get_Axo(int rel_x, int rel_y, int & axo, gp_Dir & up, gp_Dir & right, bool & away, bool & tri, float & axo_scale);
     void    auto_dims(bool setting);
     void    set_configs(float configs[5]);
-    void    get_configs(float configs[5]);
+    void    get_configs(float configs[5]) const;
 
 private:
     void    set_orientation(int index);
@@ -115,16 +129,19 @@ private:
     void    set_views();
     void    calc_scale();
     void    process_views();
-    int     index(int rel_x, int rel_y);
+    int     index(int rel_x, int rel_y) const;
+
+    void getPageSize(double &width, double &height) const;
+    void getMarginSize(double &marginX, double &marginY) const;
 
 private:
-    vector<orthoview *>     views;
+    std::vector<Orthoview *>     views;
     Base::BoundBox3d        bbox;
     App::Document *         parent_doc;
     App::DocumentObject *   part;
     App::DocumentObject *   page;
 
-    string  page_name, part_name;
+    std::string page_name, part_name;
 
     int     large[4];                       // arrays containing page size info [margin_x, margin_y, size_x, size_y] = [x1, y1, x2-x1, y2-y1]
     int     small_h[4], small_v[4];         // page size avoiding title block, using maximum horizontal / vertical space

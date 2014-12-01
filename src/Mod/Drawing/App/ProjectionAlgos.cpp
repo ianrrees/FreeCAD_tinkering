@@ -100,7 +100,7 @@ ProjectionAlgos::~ProjectionAlgos()
 {
 }
 
-/*
+
 // no longer used, replaced invertY by adding
 //                << "   transform=\"scale(1,-1)\"" << endl
 // to getSVG(...) below.
@@ -120,8 +120,6 @@ TopoDS_Shape ProjectionAlgos::invertY(const TopoDS_Shape& shape)
     BRepBuilderAPI_Transform mkTrf(shape, mat);
     return mkTrf.Shape();
 }
-*/
-
 
 //added by tanderson. aka blobfish.
 //projection algorithms build a 2d curve(pcurve) but no 3d curve.
@@ -139,11 +137,19 @@ void ProjectionAlgos::execute(void)
     Handle( HLRBRep_Algo ) brep_hlr = new HLRBRep_Algo;
     brep_hlr->Add(Input);
 
-    gp_Ax2 transform(gp_Pnt(0,0,0),gp_Dir(Direction.x,Direction.y,Direction.z));
-    HLRAlgo_Projector projector( transform );
-    brep_hlr->Projector(projector);
-    brep_hlr->Update();
-    brep_hlr->Hide();
+    try {
+        #if defined(__GNUC__) && defined (FC_OS_LINUX)
+        Base::SignalException se;
+        #endif
+        gp_Ax2 transform(gp_Pnt(0,0,0),gp_Dir(Direction.x,Direction.y,Direction.z));
+        HLRAlgo_Projector projector( transform );
+        brep_hlr->Projector(projector);
+        brep_hlr->Update();
+        brep_hlr->Hide();
+    }
+    catch (...) {
+        Standard_Failure::Raise("Fatal error occurred while projecting shape");
+    }
 
     // extracting the result sets:
     HLRBRep_HLRToShape shapes( brep_hlr );
@@ -164,8 +170,10 @@ std::string ProjectionAlgos::getSVG(ExtractionType type, double scale, double to
 {
     std::stringstream result;
     SVGOutput output;
+    float hfactor = 0.5f; // hidden line size factor, was 0.15f / 0.35f;
 
     if (!H.IsNull() && (type & WithHidden)) {
+//        double width = hfactor * scale;
         double width = hiddenscale;
         BRepMesh_IncrementalMesh(H,tolerance);
         result  << "<g"
@@ -182,6 +190,7 @@ std::string ProjectionAlgos::getSVG(ExtractionType type, double scale, double to
                 << "</g>" << endl;
     }
     if (!HO.IsNull() && (type & WithHidden)) {
+//        double width = hfactor * scale;
         double width = hiddenscale;
         BRepMesh_IncrementalMesh(HO,tolerance);
         result  << "<g"
@@ -213,7 +222,7 @@ std::string ProjectionAlgos::getSVG(ExtractionType type, double scale, double to
                 << "</g>" << endl;
     }
     if (!V.IsNull()) {
-        double width = scale;
+       double width = scale;
         BRepMesh_IncrementalMesh(V,tolerance);
         result  << "<g"
                 //<< " id=\"" << ViewName << "\"" << endl
@@ -243,6 +252,7 @@ std::string ProjectionAlgos::getSVG(ExtractionType type, double scale, double to
                 << "</g>" << endl;
     }
     if (!H1.IsNull() && (type & WithSmooth) && (type & WithHidden)) {
+//        double width = hfactor * scale;
         double width = hiddenscale;
         BRepMesh_IncrementalMesh(H1,tolerance);
         result  << "<g"

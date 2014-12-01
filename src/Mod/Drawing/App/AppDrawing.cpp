@@ -18,9 +18,16 @@
 #include <Base/Interpreter.h>
  
 #include "FeaturePage.h"
+#include "FeatureSVGTemplate.h"
+#include "FeatureParametricTemplate.h"
 #include "FeatureView.h"
+#include "FeatureViewCollection.h"
 #include "FeatureViewPart.h"
+#include "FeatureViewSection.h"
 #include "FeatureViewAnnotation.h"
+#include "FeatureViewDimension.h"
+#include "FeatureOrthoView.h"
+#include "FeatureViewOrthographic.h"
 #include "FeatureViewSymbol.h"
 #include "FeatureProjection.h"
 #include "FeatureClip.h"
@@ -29,7 +36,7 @@
 extern struct PyMethodDef Drawing_methods[];
 
 PyDoc_STRVAR(module_drawing_doc,
-"This module is the drawing module.");
+"This module is the Drawing module.");
 
 
 /* Python entry */
@@ -39,6 +46,7 @@ void DrawingExport initDrawing()
     // load dependent module
     try {
         Base::Interpreter().loadModule("Part");
+        Base::Interpreter().loadModule("Measure");
         //Base::Interpreter().loadModule("Mesh");
     }
     catch(const Base::Exception& e) {
@@ -54,15 +62,28 @@ void DrawingExport initDrawing()
     // This function is responsible for adding inherited slots from a type's base class.
  
     Drawing::FeaturePage            ::init();
+    Drawing::FeatureTemplate        ::init();
+    Drawing::FeatureSVGTemplate     ::init();
+    Drawing::FeatureParametricTemplate::init();
     Drawing::FeatureView            ::init();
+    Drawing::FeatureViewCollection  ::init();
     Drawing::FeatureViewPart        ::init();
-    Drawing::PageGroup              ::init();
-    Drawing::FeatureProjection      ::init();
-    Drawing::FeatureViewPartPython  ::init();
-    Drawing::FeatureViewPython      ::init();
+    Drawing::FeatureViewSection     ::init();
     Drawing::FeatureViewAnnotation  ::init();
+    Drawing::FeatureViewDimension   ::init();
+    Drawing::FeatureViewOrthographic::init();
+    Drawing::FeatureOrthoView       ::init();
+    
+//  Drawing::PageGroup              ::init();
+
+    Drawing::FeatureProjection      ::init();
     Drawing::FeatureViewSymbol      ::init();
     Drawing::FeatureClip            ::init();
+ 
+   // Python Types
+    Drawing::FeatureTemplatePython  ::init();
+    Drawing::FeatureViewPython      ::init();
+    Drawing::FeatureViewPartPython  ::init();
 }
 
 } // extern "C"

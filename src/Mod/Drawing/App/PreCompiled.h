@@ -30,9 +30,11 @@
 #ifdef FC_OS_WIN32
 # define DrawingExport  __declspec(dllexport)
 # define PartExport     __declspec(dllimport)
+# define MeasureExport  __declspec(dllimport)
 # define MeshExport     __declspec(dllimport)
 #else // for Linux
 # define DrawingExport
+# define MeasureExport
 # define PartExport 
 # define MeshExport   
 #endif
@@ -105,6 +107,7 @@
 #include <Standard_SStream.hxx>
 #include <Standard_Storable.hxx>
 #include <Standard_Stream.hxx>
+#include <Standard_String.hxx>
 #include <Standard_TooManyUsers.hxx>
 #include <Standard_Transient.hxx>
 #include <Standard_Transient_proto.hxx>

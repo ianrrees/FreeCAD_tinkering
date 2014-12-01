@@ -101,6 +101,7 @@ projectEx(PyObject *self, PyObject *args)
     } PY_CATCH_OCC;
 }
 
+// *** not in MLP Drawing
 static PyObject * 
 projectToSVG(PyObject *self, PyObject *args)
 {
@@ -131,6 +132,7 @@ projectToSVG(PyObject *self, PyObject *args)
     } PY_CATCH_OCC;
 }
 
+// *** not in MLP Drawing
 static PyObject * 
 projectToDXF(PyObject *self, PyObject *args)
 {
@@ -161,6 +163,7 @@ projectToDXF(PyObject *self, PyObject *args)
     } PY_CATCH_OCC;
 }
 
+// *** not in MLP Drawing
 static PyObject * 
 removeSvgTags(PyObject *self, PyObject *args)
 {

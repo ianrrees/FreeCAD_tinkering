@@ -37,6 +37,7 @@ namespace Drawing
 {
 
 
+class FeaturePage;
 /** Base class of all View Features in the drawing module
  */
 class DrawingExport FeatureView : public App::DocumentObject
@@ -48,15 +49,20 @@ public:
     FeatureView(void);
     virtual ~FeatureView();
 
-    App::PropertyFloat X,Y,Scale,Rotation;
-    App::PropertyString ViewResult;
+    App::PropertyFloat X;
+    App::PropertyFloat Y;
+    App::PropertyFloat Scale;
+    App::PropertyEnumeration ScaleType;
+    App::PropertyFloat Rotation;
+//    App::PropertyString ViewResult;
     App::PropertyBool Visible;
 
 
     /** @name methods overide Feature */
     //@{
     /// recalculate the Feature
-    virtual App::DocumentObjectExecReturn *recompute(void);
+//    virtual App::DocumentObjectExecReturn *recompute(void);
+    virtual void onDocumentRestored();
     virtual App::DocumentObjectExecReturn *execute(void);
     //@}
 
@@ -64,6 +70,13 @@ public:
     virtual const char* getViewProviderName(void) const {
         return "DrawingGui::ViewProviderDrawingView";
     }
+    FeaturePage* findParentPage();
+protected:
+    void onChanged(const App::Property* prop);
+    std::string pageFeatName;
+
+private:
+    static const char* ScaleTypeEnums[];
 };
 
 typedef App::FeaturePythonT<FeatureView> FeatureViewPython;

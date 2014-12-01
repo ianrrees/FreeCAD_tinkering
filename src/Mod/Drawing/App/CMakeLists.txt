@@ -6,7 +6,11 @@ endif(MSVC)
 
 include_directories(
     ${CMAKE_BINARY_DIR}
+    ${CMAKE_BINARY_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_BINARY_DIR}
     ${Boost_INCLUDE_DIRS}
+    ${QT_INCLUDE_DIR}
     ${OCC_INCLUDE_DIR}
     ${ZLIB_INCLUDE_DIR}
     ${PYTHON_INCLUDE_DIRS}
@@ -16,25 +20,46 @@ include_directories(
 link_directories(${OCC_LIBRARY_DIR})
 
 set(Drawing_LIBS
+    Measure
     Part
     FreeCADApp
 )
 
+message( DrawingApp generating XML FeatureTemplatePy )
+generate_from_xml(FeatureTemplatePy)
+message( DrawingApp generating XML FeatureParametricTemplatePy )
+generate_from_xml(FeatureParametricTemplatePy)
+message( DrawingApp generating XML Finished )
+
 SET(Features_SRCS
     FeaturePage.cpp
     FeaturePage.h
-    FeatureProjection.cpp
-    FeatureProjection.h
-    FeatureView.cpp
-    FeatureView.h
-    FeatureViewPart.cpp
-    FeatureViewPart.h
-    FeatureViewAnnotation.cpp
-    FeatureViewAnnotation.h
-    FeatureViewSymbol.cpp
-    FeatureViewSymbol.h
     FeatureClip.cpp
     FeatureClip.h
+    FeatureOrthoView.cpp
+    FeatureOrthoView.h
+    FeatureParametricTemplate.cpp
+    FeatureParametricTemplate.h
+    FeatureSVGTemplate.cpp
+    FeatureSVGTemplate.h
+    FeatureTemplate.cpp
+    FeatureTemplate.h
+    FeatureView.cpp
+    FeatureView.h
+    FeatureViewAnnotation.cpp
+    FeatureViewAnnotation.h
+    FeatureViewCollection.cpp
+    FeatureViewCollection.h
+    FeatureViewDimension.cpp
+    FeatureViewDimension.h
+    FeatureViewOrthographic.cpp
+    FeatureViewOrthographic.h
+    FeatureViewPart.cpp
+    FeatureViewPart.h
+    FeatureViewSection.cpp
+    FeatureViewSection.h
+    FeatureViewSymbol.cpp
+    FeatureViewSymbol.h
     PageGroup.cpp
     PageGroup.h
 )
@@ -46,16 +71,34 @@ SET(Drawing_SRCS
     PreCompiled.h
 )
 
+SET(DrawingGeometry_SRCS
+    Geometry.cpp
+    Geometry.h
+    GeometryObject.cpp
+    GeometryObject.h
+)
+
 SET(DrawingAlgos_SRCS
     DrawingExport.cpp
     DrawingExport.h
+    FeatureProjection.cpp
+    FeatureProjection.h
     ProjectionAlgos.cpp
     ProjectionAlgos.h
 )
 
+SET(Python_SRCS
+    FeatureTemplatePy.xml
+    FeatureTemplatePyImp.cpp
+    FeatureParametricTemplatePy.xml
+    FeatureParametricTemplatePyImp.cpp
+)
+
 SOURCE_GROUP("Mod" FILES ${Drawing_SRCS})
 SOURCE_GROUP("Features" FILES ${Features_SRCS})
+SOURCE_GROUP("Geometry" FILES ${DrawingGeometry_SRCS})
 SOURCE_GROUP("Algorithms" FILES ${DrawingAlgos_SRCS})
+SOURCE_GROUP("Python" FILES ${Python_SRCS})
 
 SET(Drawing_Templates
     Templates/A0_Landscape_ISO7200.svg
@@ -84,7 +127,8 @@ if(MSVC)
     #ADD_MSVC_PRECOMPILED_HEADER(Drawing PreCompiled.h PreCompiled.cpp Drawing_CPP_SRCS)
 endif(MSVC)
 
-add_library(Drawing SHARED ${Drawing_SRCS} ${Features_SRCS} ${DrawingAlgos_SRCS})
+add_library(Drawing SHARED ${Drawing_SRCS} ${Features_SRCS} ${DrawingAlgos_SRCS}
+                           ${DrawingGeometry_SRCS} ${Python_SRCS})
 target_link_libraries(Drawing ${Drawing_LIBS})
 
 SET(Drawing_Scripts

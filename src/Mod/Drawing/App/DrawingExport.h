@@ -26,12 +26,78 @@
 
 #include <string>
 #include <TopoDS_Edge.hxx>
+#include <boost/concept_check.hpp>
+# include <QString>
 
 class TopoDS_Shape;
 class BRepAdaptor_Curve;
 
+namespace Base {
+  class Vector2D;
+}
+
+namespace DrawingGeometry
+{
+  class BaseGeom;
+}
+
 namespace Drawing
 {
+  class FeaturePage;
+  class FeatureTemplate;
+  class FeatureView;
+  class FeatureDimension;
+}
+
+namespace Drawing
+{
+class DrawingExport Exporter
+{
+public:
+
+    Exporter();
+    ~Exporter();
+
+    enum ExportMode{
+        EXPORT_SVG,
+        EXPORT_DXF
+    };
+
+    void setPage(Drawing::FeaturePage *page);
+    void setExportType(ExportMode &mode );
+
+    void exportDrawing();
+
+    QString getResult();
+
+protected:
+    ExportMode mode;
+    Drawing::FeaturePage *page;
+    Drawing::Exporter *exporter;
+};
+
+class DrawingExport SVGExporter: public Exporter
+{
+public:
+    SVGExporter();
+    ~SVGExporter();
+
+    std::string exportEdges(const TopoDS_Shape&);
+
+    void run();
+
+protected:
+    void printTemplate(const Drawing::FeatureTemplate *) const;
+    void printDimension(const Drawing::FeatureDimension *) const;
+    void printView(const Drawing::FeatureView *) const;
+
+private:
+    void printCircle(const DrawingGeometry::BaseGeom *, QString &str);
+    void printEllipse(const DrawingGeometry::BaseGeom *, QString &str);
+    void printBSpline(const DrawingGeometry::BaseGeom *, QString &str);
+    void printGeneric(const DrawingGeometry::BaseGeom *, QString &str);
+};
+
 
 class DrawingExport DrawingOutput
 {

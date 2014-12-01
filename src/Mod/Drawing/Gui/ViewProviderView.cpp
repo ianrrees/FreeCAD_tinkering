@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (c) 2004 Jürgen Riegel <juergen.riegel@web.de>              *
+ *   Copyright (c) 2012 Luke Parry <l.parry@warwick.ac.uk>                 *
  *                                                                         *
  *   This file is Drawing of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -126,6 +127,12 @@ void ViewProviderDrawingView::finishRestoring()
 void ViewProviderDrawingView::updateData(const App::Property*)
 {
 }
+
+Drawing::FeatureView* ViewProviderDrawingView::getViewObject() const
+{
+    return dynamic_cast<Drawing::FeatureView*>(pcObject);
+}
+
 
 // ----------------------------------------------------------------------------
 

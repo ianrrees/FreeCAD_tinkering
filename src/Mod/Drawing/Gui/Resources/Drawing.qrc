@@ -1,6 +1,21 @@
 <RCC>
     <qresource> 
+        <file>icons/Dimension.svg</file>
+        <file>icons/Dimension_Angle.svg</file>
+        <file>icons/Dimension_Diameter.svg</file>
+        <file>icons/Dimension_Horizontal.svg</file>
+        <file>icons/Dimension_Length.svg</file>
+        <file>icons/Dimension_Radius.svg</file>
+        <file>icons/Dimension_Vertical.svg</file>
+        <file>icons/OrthoBottom.svg</file>
+        <file>icons/OrthoCollection.svg</file>
+        <file>icons/OrthoFront.svg</file>
+        <file>icons/OrthoLeft.svg</file>
+        <file>icons/OrthoRear.svg</file>
+        <file>icons/OrthoRight.svg</file>
+        <file>icons/OrthoTop.svg</file>
         <file>icons/Page.svg</file>
+        <file>icons/PageTemplate.svg</file>
         <file>icons/Pages.svg</file>
         <file>icons/View.svg</file>
         <file>icons/actions/document-new.png</file>
@@ -20,29 +35,30 @@
         <file>icons/actions/drawing-clip.svg</file>
         <file>icons/actions/drawing-symbol.svg</file>
         <file>icons/actions/drawing-draft-view.svg</file>
+        <file>icons/actions/drawing-viewsection.svg</file>
         <file>translations/Drawing_af.qm</file>
+        <file>translations/Drawing_cs.qm</file>
         <file>translations/Drawing_de.qm</file>
+        <file>translations/Drawing_es-ES.qm</file>
         <file>translations/Drawing_fi.qm</file>
         <file>translations/Drawing_fr.qm</file>
         <file>translations/Drawing_hr.qm</file>
+        <file>translations/Drawing_hu.qm</file>
         <file>translations/Drawing_it.qm</file>
+        <file>translations/Drawing_ja.qm</file>
         <file>translations/Drawing_nl.qm</file>
         <file>translations/Drawing_no.qm</file>
         <file>translations/Drawing_pl.qm</file>
-        <file>translations/Drawing_ru.qm</file>
-        <file>translations/Drawing_uk.qm</file>
-        <file>translations/Drawing_tr.qm</file>
-        <file>translations/Drawing_sv-SE.qm</file>
-        <file>translations/Drawing_zh-TW.qm</file>
         <file>translations/Drawing_pt-BR.qm</file>
-        <file>translations/Drawing_cs.qm</file>
-        <file>translations/Drawing_sk.qm</file>
-        <file>translations/Drawing_es-ES.qm</file>
-        <file>translations/Drawing_zh-CN.qm</file>
-        <file>translations/Drawing_ja.qm</file>
-        <file>translations/Drawing_ro.qm</file>
-        <file>translations/Drawing_hu.qm</file>
         <file>translations/Drawing_pt-PT.qm</file>
+        <file>translations/Drawing_ro.qm</file>
+        <file>translations/Drawing_ru.qm</file>
+        <file>translations/Drawing_sk.qm</file>
+        <file>translations/Drawing_sv-SE.qm</file>
+        <file>translations/Drawing_tr.qm</file>
+        <file>translations/Drawing_uk.qm</file>
+        <file>translations/Drawing_zh-CN.qm</file>
+        <file>translations/Drawing_zh-TW.qm</file>
         <file>translations/Drawing_sr.qm</file>
     </qresource>
 </RCC> 

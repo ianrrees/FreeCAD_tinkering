@@ -61,6 +61,7 @@ open(PyObject *self, PyObject *args)
         if (file.hasExtension("svg") || file.hasExtension("svgz")) {
             QString fileName = QString::fromUtf8(EncodedName.c_str());
             // Displaying the image in a view
+#if 0
             DrawingView* view = new DrawingView(0, Gui::getMainWindow());
             view->load(fileName);
             view->setWindowIcon(Gui::BitmapFactory().pixmap("actions/drawing-landscape"));
@@ -68,6 +69,7 @@ open(PyObject *self, PyObject *args)
             view->setWindowTitle(fi.fileName());
             view->resize( 400, 300 );
             Gui::getMainWindow()->addWindow(view);
+#endif
         }
         else {
             PyErr_SetString(Base::BaseExceptionFreeCADError, "unknown filetype");
@@ -94,6 +96,7 @@ importer(PyObject *self, PyObject *args)
         if (file.hasExtension("svg") || file.hasExtension("svgz")) {
             QString fileName = QString::fromUtf8(EncodedName.c_str());
             // Displaying the image in a view
+#if 0
             DrawingView* view = new DrawingView(0, Gui::getMainWindow());
             view->load(fileName);
             view->setWindowIcon(Gui::BitmapFactory().pixmap("actions/drawing-landscape"));
@@ -101,6 +104,7 @@ importer(PyObject *self, PyObject *args)
             view->setWindowTitle(fi.fileName());
             view->resize( 400, 300 );
             Gui::getMainWindow()->addWindow(view);
+#endif
         } else {
             PyErr_SetString(Base::BaseExceptionFreeCADError, "unknown filetype");
             return NULL;
@@ -136,7 +140,8 @@ exporter(PyObject *self, PyObject *args)
                         return NULL;
                     }
                     if (fi_out.hasExtension("svg")) {
-                        std::string fn = static_cast<Drawing::FeaturePage*>(obj)->PageResult.getValue();
+//                        std::string fn = static_cast<Drawing::FeaturePage*>(obj)->PageResult.getValue();
+                        std::string fn;
                         Base::FileInfo fi_in(fn);
                         Base::ifstream str_in(fi_in, std::ios::in | std::ios::binary);
                         if (!str_in) {

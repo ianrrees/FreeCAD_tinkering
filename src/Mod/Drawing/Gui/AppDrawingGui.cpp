@@ -24,18 +24,28 @@
 #include "PreCompiled.h"
 #ifndef _PreComp_
 # include <Python.h>
+# include <QFontDatabase>
 #endif
 
 #include <Base/Console.h>
 #include <Gui/Application.h>
 #include <Gui/Language/Translator.h>
+
 #include "Workbench.h"
+
 #include "ViewProviderPage.h"
 #include "ViewProviderView.h"
+#include "ViewProviderDimension.h"
+#include "ViewProviderOrthoView.h"
+#include "ViewProviderTemplate.h"
+#include "ViewProviderViewPart.h"
+#include "ViewProviderViewOrthographic.h"
+#include "ViewProviderViewSection.h"
 //#include "resources/qrc_Drawing.cpp"
 
 // use a different name to CreateCommand()
 void CreateDrawingCommands(void);
+void CreateDrawingCommandsDims(void);
 
 void loadDrawingResource()
 {
@@ -62,11 +72,24 @@ void DrawingGuiExport initDrawingGui()
 
     // instantiating the commands
     CreateDrawingCommands();
+    CreateDrawingCommandsDims();
+    
     DrawingGui::Workbench::init();
+
+    //Load the osifont for Drawing View
+    // See https://code.google.com/p/osifont/
+    QFontDatabase fontDB;
+    fontDB.addApplicationFont(QString::fromAscii(":/fonts/osifont.ttf"));
 
     DrawingGui::ViewProviderDrawingPage::init();
     DrawingGui::ViewProviderDrawingView::init();
-    DrawingGui::ViewProviderDrawingClip::init();
+    DrawingGui::ViewProviderTemplate::init();
+    DrawingGui::ViewProviderDimension::init();
+    DrawingGui::ViewProviderViewPart::init();
+    DrawingGui::ViewProviderOrthoView::init();
+    DrawingGui::ViewProviderViewOrthographic::init();
+    DrawingGui::ViewProviderDrawingViewSection::init();
+//    DrawingGui::ViewProviderDrawingClip::init();
 
     // add resources and reloads the translators
     loadDrawingResource();

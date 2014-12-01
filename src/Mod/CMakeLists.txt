@@ -38,6 +38,7 @@ if(BUILD_RAYTRACING)
 endif(BUILD_RAYTRACING)
 
 if(BUILD_DRAWING)
+  add_subdirectory(Measure)
   add_subdirectory(Drawing)
 endif(BUILD_DRAWING)
 
