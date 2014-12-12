@@ -31,6 +31,8 @@ class FeatureViewOrthographic;
 class FeatureViewDimension;
 class FeaturePage;
 class FeatureTemplate;
+class FeatureViewAnnotation;
+class FeatureViewSymbol;
 }
 
 namespace DrawingGui
@@ -58,6 +60,8 @@ public:
     QGraphicsItemView * addViewSection(Drawing::FeatureViewPart *part);
     QGraphicsItemView * addFeatureView(Drawing::FeatureView *view);
     QGraphicsItemView * addFeatureViewCollection(Drawing::FeatureViewCollection *view);
+    QGraphicsItemView * addFeatureViewAnnotation(Drawing::FeatureViewAnnotation *view);
+    QGraphicsItemView * addFeatureViewSymbol(Drawing::FeatureViewSymbol *view);
 
     QGraphicsItemView * findView(App::DocumentObject *obj) const;
     QGraphicsItemView * findParent(QGraphicsItemView *) const;

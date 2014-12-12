@@ -30,6 +30,7 @@
 
 #include <iomanip>
 
+#include <Base/Console.h>
 #include <Base/Exception.h>
 #include <Base/FileInfo.h>
 
@@ -48,12 +49,12 @@ PROPERTY_SOURCE(Drawing::FeatureViewAnnotation, Drawing::FeatureView)
 
 FeatureViewAnnotation::FeatureViewAnnotation(void) 
 {
-    static const char *vgroup = "Drawing annotation";
+    static const char *vgroup = "Drawing view";
 
-    ADD_PROPERTY_TYPE(Text ,(""),vgroup,App::Prop_None,"The text to be displayed");
- //   ADD_PROPERTY_TYPE(Font ,("Sans"),vgroup,App::Prop_None,"The name of the font to use");
+    ADD_PROPERTY_TYPE(Text ,("Default Text"),vgroup,App::Prop_None,"The text to be displayed");
     ADD_PROPERTY_TYPE(Font ,("osifont")         ,vgroup,App::Prop_None, "The name of the font to use");
-    ADD_PROPERTY_TYPE(TextColor,(0.0f,0.0f,0.0f),vgroup,App::Prop_None,"The color of the text");
+    ADD_PROPERTY_TYPE(TextColor,(0.0f,0.0f,0.0f),vgroup,App::Prop_None,"The color of the text");       // TODO: not implemented yet
+    ADD_PROPERTY_TYPE(TextSize,(12),vgroup,App::Prop_None,"The size of the text in points");
 
     Scale.StatusBits.set(3);
     ScaleType.StatusBits.set(3);
@@ -65,30 +66,6 @@ FeatureViewAnnotation::~FeatureViewAnnotation()
 
 App::DocumentObjectExecReturn *FeatureViewAnnotation::execute(void)
 {
-  std::stringstream result,hr,hg,hb;
-    const App::Color& c = TextColor.getValue();
-    hr << hex << setfill('0') << setw(2) << (int)(255.0*c.r);
-    hg << hex << setfill('0') << setw(2) << (int)(255.0*c.g);
-    hb << hex << setfill('0') << setw(2) << (int)(255.0*c.b);
-
-    result  << "<g transform=\"translate(" << X.getValue() << "," << Y.getValue() << ")"
-            << " rotate(" << Rotation.getValue() << ")\">" << endl
-            << "<text id=\"" << Label.getValue() << "\"" << endl
-            << " font-family=\"" << Font.getValue() << "\"" << endl
-            << " font-size=\"" << Scale.getValue() << "\"" << endl
-            << " fill=\"#" << hr.str() << hg.str() << hb.str() << "\">" << endl;
-
-    int index=0;
-    for (std::vector<std::string>::const_iterator it = Text.getValues().begin(); it != Text.getValues().end(); ++it) {
-        result << "<tspan x=\"0\" dy=\"1em\">" << it->c_str() << "</tspan>" << endl;
-        index++;
-    }
-
-    result << "</text>" << endl << "</g>" << endl;
-
-    // Apply the resulting fragment
-//    ViewResult.setValue(result.str().c_str());
-
     return App::DocumentObject::StdReturn;
 }
 
@@ -98,7 +75,7 @@ namespace App {
 /// @cond DOXERR
 PROPERTY_SOURCE_TEMPLATE(Drawing::FeatureViewAnnotationPython, Drawing::FeatureViewAnnotation)
 template<> const char* Drawing::FeatureViewAnnotationPython::getViewProviderName(void) const {
-    return "DrawingGui::ViewProviderDrawingView";
+    return "DrawingGui::ViewProviderAnnotation";
 }
 /// @endcond
 

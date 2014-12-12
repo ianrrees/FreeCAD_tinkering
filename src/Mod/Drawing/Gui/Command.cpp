@@ -26,6 +26,7 @@
 #include <App/PropertyGeo.h>
 
 #include <App/DocumentObject.h>
+#include <Base/Console.h>
 #include <Gui/Action.h>
 #include <Gui/Application.h>
 #include <Gui/BitmapFactory.h>
@@ -589,7 +590,7 @@ DEF_STD_CMD_A(CmdDrawingAnnotation);
 CmdDrawingAnnotation::CmdDrawingAnnotation()
   : Command("Drawing_Annotation")
 {
-    // seting the
+    // setting the Gui eye-candy
     sGroup        = QT_TR_NOOP("Drawing");
     sMenuText     = QT_TR_NOOP("&Annotation");
     sToolTipText  = QT_TR_NOOP("Inserts an Annotation view in the active drawing");
@@ -600,16 +601,11 @@ CmdDrawingAnnotation::CmdDrawingAnnotation()
 
 void CmdDrawingAnnotation::activated(int iMsg)
 {
-
-//    std::vector<App::DocumentObject*> pages = getSelection().getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     if (pages.empty()) {
-//        pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
-//        if (pages.empty()){
           QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page found"),
               QObject::tr("Create a page first."));
           return;
-//        }
     }
     std::string PageName = pages.front()->getNameInDocument();
     std::string FeatName = getUniqueObjectName("Annotation");
@@ -619,6 +615,8 @@ void CmdDrawingAnnotation::activated(int iMsg)
     doCommand(Doc,"App.activeDocument().%s.Y = 10.0",FeatName.c_str());
     doCommand(Doc,"App.activeDocument().%s.Scale = 7.0",FeatName.c_str());
     doCommand(Doc,"App.activeDocument().%s.addObject(App.activeDocument().%s)",PageName.c_str(),FeatName.c_str());
+    Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
+    page->addView(page->getDocument()->getObject(FeatName.c_str()));
     updateActive();
     commitCommand();
 }
@@ -684,7 +682,7 @@ DEF_STD_CMD_A(CmdDrawingSymbol);
 CmdDrawingSymbol::CmdDrawingSymbol()
   : Command("Drawing_Symbol")
 {
-    // seting the
+    // setting the Gui eye-candy
     sGroup        = QT_TR_NOOP("Drawing");
     sMenuText     = QT_TR_NOOP("&Symbol");
     sToolTipText  = QT_TR_NOOP("Inserts a symbol from a svg file in the active drawing");
@@ -695,16 +693,11 @@ CmdDrawingSymbol::CmdDrawingSymbol()
 
 void CmdDrawingSymbol::activated(int iMsg)
 {
-
-//    std::vector<App::DocumentObject*> pages = getSelection().getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     if (pages.empty()) {
-//        pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
-//        if (pages.empty()){
         QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page found"),
             QObject::tr("Create a page first."));
         return;
-//        }
     }
     // Reading an image
     QString filename = Gui::FileDialog::getOpenFileName(Gui::getMainWindow(), QObject::tr("Choose an SVG file to open"), QString::null,
@@ -719,8 +712,12 @@ void CmdDrawingSymbol::activated(int iMsg)
         doCommand(Doc,"svg = f.read()");
         doCommand(Doc,"f.close()");
         doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewSymbol','%s')",FeatName.c_str());
-        doCommand(Doc,"App.activeDocument().%s.Symbol = Drawing.removeSvgTags(svg)",FeatName.c_str());
+        doCommand(Doc,"App.activeDocument().%s.X = 10.0",FeatName.c_str());
+        doCommand(Doc,"App.activeDocument().%s.Y = 10.0",FeatName.c_str());
+        doCommand(Doc,"App.activeDocument().%s.Symbol = svg",FeatName.c_str());
         doCommand(Doc,"App.activeDocument().%s.addObject(App.activeDocument().%s)",PageName.c_str(),FeatName.c_str());
+        Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
+        page->addView(page->getDocument()->getObject(FeatName.c_str()));
         updateActive();
         commitCommand();
     }

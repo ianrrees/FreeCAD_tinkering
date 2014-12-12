@@ -52,6 +52,7 @@ public:
     App::PropertyStringList   Text;
     App::PropertyString       Font;
     App::PropertyColor        TextColor;
+    App::PropertyInteger      TextSize;
 
     /** @name methods overide Feature */
     //@{
@@ -61,7 +62,7 @@ public:
 
     /// returns the type name of the ViewProvider
     virtual const char* getViewProviderName(void) const {
-        return "DrawingGui::ViewProviderDrawingView";
+        return "DrawingGui::ViewProviderAnnotation";
     }
 };
 

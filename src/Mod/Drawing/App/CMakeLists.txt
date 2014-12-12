@@ -25,11 +25,8 @@ set(Drawing_LIBS
     FreeCADApp
 )
 
-message( DrawingApp generating XML FeatureTemplatePy )
 generate_from_xml(FeatureTemplatePy)
-message( DrawingApp generating XML FeatureParametricTemplatePy )
 generate_from_xml(FeatureParametricTemplatePy)
-message( DrawingApp generating XML Finished )
 
 SET(Features_SRCS
     FeaturePage.cpp

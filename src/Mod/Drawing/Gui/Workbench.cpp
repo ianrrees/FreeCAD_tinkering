@@ -63,9 +63,11 @@ Gui::MenuItem* Workbench::setupMenuBar() const
     *part << "Drawing_Open";
     *part << "Drawing_NewPage";
     *part << "Drawing_NewView";
-    *part << "Drawing_NewDimension";
     *part << "Drawing_OrthoViews";
     *part << "Drawing_NewViewSection";
+    *part << "Drawing_Annotation";
+    *part << "Drawing_Symbol";
+    *part << "Drawing_NewDimension";
 
 #if 0
     //*part << "Drawing_NewA3Landscape";
@@ -93,12 +95,14 @@ Gui::ToolBarItem* Workbench::setupToolBars() const
     views->setCommand("Drawing Views");
     *views << "Drawing_NewView"
            << "Drawing_OrthoViews"
-           << "Drawing_NewViewSection";
+           << "Drawing_NewViewSection"
+           << "Drawing_Annotation"
+           << "Drawing_Symbol";
 
     Gui::ToolBarItem *dims = new Gui::ToolBarItem(root);
     dims->setCommand("Drawing Dimensions");
-    *dims << "Drawing_NewDimension"
-          << "Drawing_NewLengthDimension"
+//    *dims << "Drawing_NewDimension"
+    *dims << "Drawing_NewLengthDimension"
           << "Drawing_NewDistanceXDimension"
           << "Drawing_NewDistanceYDimension"
           << "Drawing_NewRadiusDimension"
@@ -136,11 +140,12 @@ Gui::ToolBarItem* Workbench::setupToolBars() const
 
 Gui::ToolBarItem* Workbench::setupCommandBars() const
 {
-    // Part tools
     Gui::ToolBarItem* root = new Gui::ToolBarItem;
-    Gui::ToolBarItem* io = new Gui::ToolBarItem(root);
-    io->setCommand("I/O");
-    *io << "Drawing_Open";
+
+    // Part tools
+//    Gui::ToolBarItem* io = new Gui::ToolBarItem(root);
+//    io->setCommand("I/O");
+//    *io << "Drawing_Open";
 
     Gui::ToolBarItem *pages = new Gui::ToolBarItem(root);
     pages->setCommand("Drawing Pages");
@@ -148,13 +153,13 @@ Gui::ToolBarItem* Workbench::setupCommandBars() const
 
     Gui::ToolBarItem *dims = new Gui::ToolBarItem(root);
     dims->setCommand("Drawing Dimensions");
-    *dims << "Drawing_NewDimension";
-//           << "Drawing_NewLengthDimension"
-//           << "Drawing_NewDistanceXDimension"
-//           << "Drawing_NewDistanceYDimension"
-//           << "Drawing_NewRadiusDimension"
-//           << "Drawing_NewDiameterDimension"
-//           << "Drawing_NewAngleDimension";
+//    *dims << "Drawing_NewDimension";
+    *dims << "Drawing_NewLengthDimension"
+          << "Drawing_NewDistanceXDimension"
+          << "Drawing_NewDistanceYDimension"
+          << "Drawing_NewRadiusDimension"
+          << "Drawing_NewDiameterDimension"
+          << "Drawing_NewAngleDimension";
 
 //     *img << "Drawing_OpenBrowserView";
 //     *img << "Drawing_Annotation";
@@ -165,7 +170,9 @@ Gui::ToolBarItem* Workbench::setupCommandBars() const
     views->setCommand("Views");
     *views << "Drawing_NewView"
            << "Drawing_OrthoViews"
-           << "Drawing_NewViewSection";
+           << "Drawing_NewViewSection"
+           << "Drawing_Annotation"
+           << "Drawing_Symbol";
     return root;
 }
 

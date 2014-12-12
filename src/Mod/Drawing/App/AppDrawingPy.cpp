@@ -101,7 +101,6 @@ projectEx(PyObject *self, PyObject *args)
     } PY_CATCH_OCC;
 }
 
-// *** not in MLP Drawing
 static PyObject * 
 projectToSVG(PyObject *self, PyObject *args)
 {
@@ -132,7 +131,6 @@ projectToSVG(PyObject *self, PyObject *args)
     } PY_CATCH_OCC;
 }
 
-// *** not in MLP Drawing
 static PyObject * 
 projectToDXF(PyObject *self, PyObject *args)
 {
@@ -163,7 +161,6 @@ projectToDXF(PyObject *self, PyObject *args)
     } PY_CATCH_OCC;
 }
 
-// *** not in MLP Drawing
 static PyObject * 
 removeSvgTags(PyObject *self, PyObject *args)
 {
@@ -198,6 +195,7 @@ removeSvgTags(PyObject *self, PyObject *args)
         boost::regex e7 ("--endOfLine--");
         svg = boost::regex_replace(svg, e7, linebreak);
         Py::String result(svg);
+        
         return Py::new_reference_to(result);
     } PY_CATCH_OCC;
 }

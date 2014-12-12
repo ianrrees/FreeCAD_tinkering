@@ -38,6 +38,8 @@ set(DrawingGui_MOC_HDRS
     QGraphicsItemViewOrthographic.h
     QGraphicsItemViewPart.h
     QGraphicsItemViewSection.h
+    QGraphicsItemViewAnnotation.h
+    QGraphicsItemViewSymbol.h
     TaskOrthoViews.h
     TaskOrthographicViews.h
     TaskDialog.h
@@ -109,6 +111,10 @@ SET(DrawingGuiView_SRCS
     QGraphicsItemViewPart.h
     QGraphicsItemViewSection.cpp
     QGraphicsItemViewSection.h
+    QGraphicsItemViewAnnotation.cpp
+    QGraphicsItemViewAnnotation.h
+    QGraphicsItemViewSymbol.cpp
+    QGraphicsItemViewSymbol.h
 )
 SET(DrawingGuiViewProvider_SRCS
     ViewProviderOrthoView.cpp
@@ -127,6 +133,10 @@ SET(DrawingGuiViewProvider_SRCS
     ViewProviderViewOrthographic.h
     ViewProviderViewSection.cpp
     ViewProviderViewSection.h
+    ViewProviderAnnotation.cpp
+    ViewProviderAnnotation.h
+    ViewProviderSymbol.cpp
+    ViewProviderSymbol.h
 )
 
 SOURCE_GROUP("Mod" FILES ${DrawingGui_SRCS})

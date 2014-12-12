@@ -82,6 +82,9 @@
 #include <Mod/Drawing/App/FeatureViewSection.h>
 #include <Mod/Drawing/App/FeatureViewDimension.h>
 #include <Mod/Drawing/App/FeatureTemplate.h>
+#include <Mod/Drawing/App/FeatureViewAnnotation.h>
+#include <Mod/Drawing/App/FeatureViewSymbol.h>
+
 
 #include "QGraphicsItemDrawingTemplate.h"
 #include "QGraphicsItemView.h"
@@ -208,6 +211,12 @@ int DrawingView::attachView(App::DocumentObject *obj)
     } else if(obj->getTypeId().isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId()) ) {
         Drawing::FeatureViewDimension *viewDim = dynamic_cast<Drawing::FeatureViewDimension *>(obj);
         qview = m_view->addViewDimension(viewDim);
+    } else if(obj->getTypeId().isDerivedFrom(Drawing::FeatureViewAnnotation::getClassTypeId()) ) {
+        Drawing::FeatureViewAnnotation *viewDim = dynamic_cast<Drawing::FeatureViewAnnotation *>(obj);
+        qview = m_view->addFeatureViewAnnotation(viewDim);
+    } else if(obj->getTypeId().isDerivedFrom(Drawing::FeatureViewSymbol::getClassTypeId()) ) {
+        Drawing::FeatureViewSymbol *viewSym = dynamic_cast<Drawing::FeatureViewSymbol *>(obj);
+        qview = m_view->addFeatureViewSymbol(viewSym);
     }
 
     if(!qview)

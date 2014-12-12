@@ -32,6 +32,7 @@
 
 #include <Base/Exception.h>
 #include <Base/FileInfo.h>
+#include <Base/Console.h>
 
 #include "FeatureViewSymbol.h"
 
@@ -46,14 +47,15 @@ using namespace std;
 PROPERTY_SOURCE(Drawing::FeatureViewSymbol, Drawing::FeatureView)
 
 
-FeatureViewSymbol::FeatureViewSymbol(void) : geometryObject(0)
+FeatureViewSymbol::FeatureViewSymbol(void)
 {
     static const char *vgroup = "Drawing view";
 
     ADD_PROPERTY_TYPE(Symbol,(""),vgroup,App::Prop_Hidden,"The SVG code defining this symbol");
     ADD_PROPERTY_TYPE(EditableTexts,(""),vgroup,App::Prop_None,"Substitution values for the editable strings in this symbol");
 
-    geometryObject = new DrawingGeometry::GeometryObject();
+    Scale.StatusBits.set(3);
+    ScaleType.StatusBits.set(3);
 
 }
 
@@ -138,7 +140,7 @@ namespace App {
 /// @cond DOXERR
 PROPERTY_SOURCE_TEMPLATE(Drawing::FeatureViewSymbolPython, Drawing::FeatureViewSymbol)
 template<> const char* Drawing::FeatureViewSymbolPython::getViewProviderName(void) const {
-    return "DrawingGui::ViewProviderDrawingView";
+    return "DrawingGui::ViewProviderSymbol";
 }
 /// @endcond
 

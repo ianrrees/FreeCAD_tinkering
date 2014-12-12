@@ -41,6 +41,8 @@
 #include "ViewProviderViewPart.h"
 #include "ViewProviderViewOrthographic.h"
 #include "ViewProviderViewSection.h"
+#include "ViewProviderAnnotation.h"
+#include "ViewProviderSymbol.h"
 //#include "resources/qrc_Drawing.cpp"
 
 // use a different name to CreateCommand()
@@ -90,6 +92,8 @@ void DrawingGuiExport initDrawingGui()
     DrawingGui::ViewProviderViewOrthographic::init();
     DrawingGui::ViewProviderDrawingViewSection::init();
 //    DrawingGui::ViewProviderDrawingClip::init();
+    DrawingGui::ViewProviderAnnotation::init();
+    DrawingGui::ViewProviderSymbol::init();
 
     // add resources and reloads the translators
     loadDrawingResource();

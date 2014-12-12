@@ -41,9 +41,9 @@ namespace Drawing
 
 /** Base class of all View Features in the drawing module
  */
-class DrawingExport FeatureViewSymbol : public FeatureView
+class DrawingExport FeatureViewSymbol : public Drawing::FeatureView
 {
-    PROPERTY_HEADER(Drawing::FeatureView);
+    PROPERTY_HEADER(Drawing::FeatureViewSymbol);
 
 public:
     /// Constructor
@@ -61,12 +61,12 @@ public:
 
     /// returns the type name of the ViewProvider
     virtual const char* getViewProviderName(void) const {
-        return "DrawingGui::ViewProviderDrawingView";
+        return "DrawingGui::ViewProviderSymbol";
     }
 
 protected:
     void onChanged(const App::Property* prop);
-    DrawingGeometry::GeometryObject *geometryObject;
+    //DrawingGeometry::GeometryObject *geometryObject;
     Base::BoundBox3d bbox;
     
 };

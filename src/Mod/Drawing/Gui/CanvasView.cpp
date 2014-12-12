@@ -55,6 +55,8 @@
 #include <Mod/Drawing/App/FeatureViewDimension.h>
 #include <Mod/Drawing/App/FeatureViewOrthographic.h>
 #include <Mod/Drawing/App/FeatureViewPart.h>
+#include <Mod/Drawing/App/FeatureViewAnnotation.h>
+#include <Mod/Drawing/App/FeatureViewSymbol.h>
 
 #include "ViewProviderPage.h"
 
@@ -65,6 +67,9 @@
 #include "QGraphicsItemViewOrthographic.h"
 #include "QGraphicsItemViewPart.h"
 #include "QGraphicsItemViewSection.h"
+#include "QGraphicsItemViewAnnotation.h"
+#include "QGraphicsItemViewSymbol.h"
+
 
 #include "CanvasView.h"
 
@@ -230,7 +235,29 @@ QGraphicsItemView * CanvasView::addFeatureViewCollection(Drawing::FeatureViewCol
     return qview;
 }
 
-// TODO change to annotation object
+// TODO change to (App?) annotation object  ??
+QGraphicsItemView * CanvasView::addFeatureViewAnnotation(Drawing::FeatureViewAnnotation *view)
+{
+    QPoint qp(view->X.getValue(),view->Y.getValue());
+    // This essentially adds a null view feature to ensure view size is consistent
+    QGraphicsItemViewAnnotation *qview = new  QGraphicsItemViewAnnotation(qp, this->scene());
+    qview->setViewFeature(view);
+
+    this->addView(qview);
+    return qview;
+}
+
+QGraphicsItemView * CanvasView::addFeatureViewSymbol(Drawing::FeatureViewSymbol *view)
+{
+    QPoint qp(view->X.getValue(),view->Y.getValue());
+    // This essentially adds a null view feature to ensure view size is consistent
+    QGraphicsItemViewSymbol *qview = new  QGraphicsItemViewSymbol(qp, this->scene());
+    qview->setViewFeature(view);
+
+    this->addView(qview);
+    return qview;
+}
+
 QGraphicsItemView * CanvasView::addViewDimension(Drawing::FeatureViewDimension *dim)
 {
     QGraphicsItemViewDimension *dimGroup = new QGraphicsItemViewDimension(QPoint(0,0), this->scene());
