@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<GenerateModel xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="generateMetaModel_Module.xsd">
+  <PythonExport
+    Father="FeatureTemplatePy"
+    Name="FeatureSVGTemplatePy"
+    Twin="FeatureSVGTemplate"
+    TwinPointer="FeatureSVGTemplate"
+    Include="Mod/Drawing/App/FeatureSVGTemplate.h"
+    Namespace="Drawing"
+    FatherInclude="FeatureTemplatePy.h"
+    FatherNamespace="Drawing">
+    <Documentation>
+      <Author Licence="LGPL" Name="Luke Parry" EMail="l.parry@warwick.ac.uk" />
+      <UserDocu>Feature for creating and manipulating Drawing SVG Templates</UserDocu>
+    </Documentation>
+  </PythonExport>
+</GenerateModel>

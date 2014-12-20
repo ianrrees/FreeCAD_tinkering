@@ -33,6 +33,7 @@
 #include <Base/Console.h>
 #include <Base/Interpreter.h>
 #include <Base/FileInfo.h>
+#include <Base/PyObjectBase.h>
 #include <Base/Quantity.h>
 
 #include <App/Application.h>
@@ -45,7 +46,7 @@
 #include "FeaturePage.h"
 #include "FeatureSVGTemplate.h"
 
-//#include "FeatureSVGTemplatePy.h"
+#include "FeatureSVGTemplatePy.h"  //?? !exists()
 
 using namespace Drawing;
 using namespace std;
@@ -70,7 +71,6 @@ FeatureSVGTemplate::~FeatureSVGTemplate()
 {
 }
 
-#if 0
 PyObject *FeatureSVGTemplate::getPyObject(void)
 {
     if (PythonObject.is(Py::_None())) {
@@ -79,8 +79,6 @@ PyObject *FeatureSVGTemplate::getPyObject(void)
     }
     return Py::new_reference_to(PythonObject);
 }
-
-#endif
 
 unsigned int FeatureSVGTemplate::getMemSize(void) const
 {
@@ -107,7 +105,7 @@ void FeatureSVGTemplate::onChanged(const App::Property* prop)
 
     if (prop == &Template) {
         if (!this->isRestoring()) {
-            //EditableTexts.setValues(getEditableTextsFromTemplate());
+            EditableTexts.setValues(getEditableTextsFromTemplate());
             this->execute();
 
             // Update the parent page if exists
@@ -143,10 +141,6 @@ App::DocumentObjectExecReturn *FeatureSVGTemplate::execute(void)
         }
     }
 
-//     if (std::string(PageResult.getValue()).empty())
-        PageResult.setValue(fi.filePath().c_str());
-
-#if 0
     if (std::string(PageResult.getValue()).empty())
         PageResult.setValue(fi.filePath().c_str());
 
@@ -168,17 +162,16 @@ App::DocumentObjectExecReturn *FeatureSVGTemplate::execute(void)
             ofile << line << tempendl;
         }
 
-        double t0, t1,t2,t3;
+        //double t0, t1,t2,t3;
+        float t0, t1,t2,t3;
         if(line.find("<!-- Title block") != std::string::npos) {
-            sscanf(line.c_str(), "%*s %*s %*s %d %d %d %d", &t0, &t1, &t2, &t3);    //eg "    <!-- Working space 10 10 410 287 -->"
+            sscanf(line.c_str(), "%*s %*s %*s %f %f %f %f", &t0, &t1, &t2, &t3);    //eg "    <!-- Working space 10 10 410 287 -->"
             blockDimensions = QRectF(t0, t1, t2 - t0, t3 - t1);
         }
 
     }
     file.close();
-#endif
 
-#if 0
     // checking for freecad editable texts
     string outfragment(ofile.str());
 
@@ -190,15 +183,15 @@ App::DocumentObjectExecReturn *FeatureSVGTemplate::execute(void)
         boost::match_results<std::string::const_iterator> what;
         int count = 0;
 
-//         while (boost::regex_search(begin, end, what, e1)) {
-//             if (count < EditableTexts.getSize()) {
-//                 // change values of editable texts
-//                 boost::regex e2 ("(<text.*?freecad:editable=\""+what[1].str()+"\".*?<tspan.*?)>(.*?)(</tspan>)");
-//                 //outfragment = boost::regex_replace(outfragment, e2, "$1>"+EditableTexts.getValues()[count]+"$3");
-//             }
-//             count ++;
-//             begin = what[0].second;
-//         }
+         while (boost::regex_search(begin, end, what, e1)) {
+             if (count < EditableTexts.getSize()) {
+                 // change values of editable texts
+                 boost::regex e2 ("(<text.*?freecad:editable=\""+what[1].str()+"\".*?<tspan.*?)>(.*?)(</tspan>)");
+                 outfragment = boost::regex_replace(outfragment, e2, "$1>"+ EditableTexts.getValues()[count] +"$3");
+             }
+             count ++;
+             begin = what[0].second;
+         }
     }
 
 
@@ -212,7 +205,6 @@ App::DocumentObjectExecReturn *FeatureSVGTemplate::execute(void)
 
     PageResult.setValue(tempName.c_str());
 
-#endif
 
     // Calculate the dimensions of the page and store for retrieval
 
@@ -231,7 +223,7 @@ App::DocumentObjectExecReturn *FeatureSVGTemplate::execute(void)
     // Parse the document XML
     QDomElement docElem = doc.documentElement();
 
-        // Obtain the size of the SVG document by reading the document attirbutes
+    // Obtain the size of the SVG document by reading the document attirbutes
     Base::Quantity quantity;
 
     // Obtain the width
@@ -289,7 +281,6 @@ std::vector<std::string> FeatureSVGTemplate::getEditableTextsFromTemplate() cons
     //getting editable texts from "freecad:editable" attributes in SVG template
 
     std::vector<string> eds;
-#if 0
     std::string temp = Template.getValue();
     if (!temp.empty()) {
         Base::FileInfo tfi(temp);
@@ -320,12 +311,9 @@ std::vector<std::string> FeatureSVGTemplate::getEditableTextsFromTemplate() cons
         }
     }
     return eds;
-#endif
 }
 
 // Python Template feature ---------------------------------------------------------
-
-#if 0
 namespace App {
 /// @cond DOXERR
 PROPERTY_SOURCE_TEMPLATE(Drawing::FeatureSVGTemplatePython, Drawing::FeatureSVGTemplate)
@@ -338,4 +326,4 @@ template<> const char* Drawing::FeatureSVGTemplatePython::getViewProviderName(vo
 template class DrawingExport FeaturePythonT<Drawing::FeatureSVGTemplate>;
 }
 
-#endif
+

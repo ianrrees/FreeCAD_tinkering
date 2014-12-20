@@ -66,10 +66,6 @@ FeaturePage::FeaturePage(void) : numChildren(0)
     ADD_PROPERTY_TYPE(Views    ,(0), group, (App::PropertyType)(App::Prop_None),"Attached Views");
     ADD_PROPERTY_TYPE(Template ,(0), group, (App::PropertyType)(App::Prop_Transient),"Attached Template");
 
-//    ADD_PROPERTY_TYPE(PageResult ,(0),group,App::Prop_Output,"Resulting SVG document of that page");
-//    ADD_PROPERTY_TYPE(Template   ,(""),group,App::Prop_None  ,"Template for the page");
-//    ADD_PROPERTY_TYPE(EditableTexts,(""),group,App::Prop_None,"Substitution values for the editable strings in the template");
-
     // Projection Properties
     OrthoProjectionType.setEnums(OrthoProjectionTypeEnums);
     ADD_PROPERTY(OrthoProjectionType,((long)0));
@@ -177,29 +173,13 @@ const char * FeaturePage::getPageOrientation() const
 /// get called by the container when a Property was changed
 void FeaturePage::onChanged(const App::Property* prop)
 {
-/*    if (prop == &PageResult) {
-        if (this->isRestoring()) {
-            // When loading a document the included file
-            // doesn't need to exist at this point.
-            Base::FileInfo fi(PageResult.getValue());
-            if (!fi.exists())
-                return;
-        }
-    } else if (prop == &EditableTexts) {
+    if (prop == &Template) {
         if (!this->isRestoring()) {
-            this->execute();
-            return;
+        //TODO: reload if Template prop changes (ie different Template)
+        Base::Console().Message("TODO: Unimplemented function FeaturePage::onChanged(Template)\n");
         }
-    } else if (prop == &Template) {
-        if (!this->isRestoring()) {
-            EditableTexts.setValues(getEditableTextsFromTemplate());
-        }
-    } else if (prop == &Group) {
-        if (Group.getSize() != numChildren) {
-            numChildren = Group.getSize();
-            touch();
-        }
-    }*/
+    }
+
     if(prop == &Scale) {
         // touch all views in the document as they may be dependent on this scale
       const std::vector<App::DocumentObject*> &vals = Views.getValues();
@@ -225,9 +205,15 @@ void FeaturePage::onDocumentRestored()
 
     this->StatusBits.reset(4); // the 'Restore' flag
       }
+
+/*    if (prop == &Group) {
+        if (Group.getSize() != numChildren) {
+            numChildren = Group.getSize();
+            touch();
+        }
+      }*/
     }
     App::DocumentObjectGroup::onChanged(prop);
-    //App::DocumentObject::onChanged(prop);
 }
 
 int FeaturePage::addView(App::DocumentObject *docObj)
@@ -260,40 +246,3 @@ App::DocumentObjectExecReturn *FeaturePage::execute(void)
     return App::DocumentObject::StdReturn;
 }
 
-// now in FeatureSVG Template
-/*std::vector<std::string> FeaturePage::getEditableTextsFromTemplate(void) const {
-    //getting editable texts from "freecad:editable" attributes in SVG template
-
-    std::vector<string> eds;
-
-    std::string temp = Template.getValue();
-    if (!temp.empty()) {
-        Base::FileInfo tfi(temp);
-        if (!tfi.isReadable()) {
-            // if there is a old absolute template file set use a redirect
-            tfi.setFile(App::Application::getResourceDir() + "Mod/Drawing/Templates/" + tfi.fileName());
-            // try the redirect
-            if (!tfi.isReadable()) {
-                return eds;
-            }
-        }
-        string tline, tfrag;
-        ifstream tfile (tfi.filePath().c_str());
-        while (!tfile.eof()) {
-            getline (tfile,tline);
-            tfrag += tline;
-            tfrag += "--endOfLine--";
-        }
-        tfile.close();
-        boost::regex e ("<text.*?freecad:editable=\"(.*?)\".*?<tspan.*?>(.*?)</tspan>");
-        string::const_iterator tbegin, tend;
-        tbegin = tfrag.begin();
-        tend = tfrag.end();
-        boost::match_results<std::string::const_iterator> twhat;
-        while (boost::regex_search(tbegin, tend, twhat, e)) {
-            eds.push_back(twhat[2]);
-            tbegin = twhat[0].second;
-        }
-    }
-    return eds;
-}*/

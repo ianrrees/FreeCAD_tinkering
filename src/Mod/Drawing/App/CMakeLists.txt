@@ -27,6 +27,7 @@ set(Drawing_LIBS
 
 generate_from_xml(FeatureTemplatePy)
 generate_from_xml(FeatureParametricTemplatePy)
+generate_from_xml(FeatureSVGTemplatePy)
 
 SET(Features_SRCS
     FeaturePage.cpp
@@ -89,6 +90,8 @@ SET(Python_SRCS
     FeatureTemplatePyImp.cpp
     FeatureParametricTemplatePy.xml
     FeatureParametricTemplatePyImp.cpp
+    FeatureSVGTemplatePy.xml
+    FeatureSVGTemplatePyImp.cpp
 )
 
 SOURCE_GROUP("Mod" FILES ${Drawing_SRCS})

@@ -45,15 +45,12 @@ public:
     FeaturePage(void);
     virtual ~FeaturePage();
 
-//    App::PropertyFileIncluded PageResult; // moved to FeatureSVGTemplate.h
-//    App::PropertyFile Template;           // moved to FeatureSVGTemplate.h
     App::PropertyLinkList Views;
     App::PropertyLink Template;
 
     App::PropertyFloat Scale;
     App::PropertyEnumeration OrthoProjectionType; // First or Third Angle
     
-//    App::PropertyStringList EditableTexts; // moved to FeatureSVGTemplate.h
 
     /** @name methods overide Feature */
     //@{
@@ -76,8 +73,6 @@ public:
     double getPageWidth() const;
     double getPageHeight() const;
     const char* getPageOrientation() const;
-
-//    virtual std::vector<std::string> getEditableTextsFromTemplate(void) const;
 
 protected:
     void onBeforeChange(const App::Property* prop);

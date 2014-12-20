@@ -61,7 +61,7 @@ public:
     }
 
     // from base class
-    //virtual PyObject *getPyObject(void);
+    virtual PyObject *getPyObject(void);
     virtual unsigned int getMemSize(void) const;
 
 public:
@@ -75,7 +75,7 @@ protected:
     QRectF blockDimensions;
 };
 
-//typedef App::FeaturePythonT<FeatureSVGTemplate> FeatureSVGTemplatePython;
+typedef App::FeaturePythonT<FeatureSVGTemplate> FeatureSVGTemplatePython;
 
 } //namespace Drawing
 
