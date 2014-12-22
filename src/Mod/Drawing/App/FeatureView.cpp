@@ -34,6 +34,7 @@
 #include <Base/Reader.h>
 #include <Base/Exception.h>
 #include <Base/FileInfo.h>
+#include <Base/Console.h>
 
 #include "FeaturePage.h"
 #include "FeatureViewCollection.h"
@@ -149,8 +150,14 @@ App::DocumentObjectExecReturn *FeatureView::execute(void)
                 Scale.touch();
             }
         }
-    }
+    } else if(strcmp(ScaleType.getValueAsString(), "Custom") == 0) {
+        Scale.StatusBits.set(2, false);
+        //need to ?recompute? ?redraw? to get this to stick.
+        //currently need to lose focus and re-get focus to make Scale editable.
+        //Scale.touch();                     // causes loop
+        //Base::Console().Message("TRACE - FeatureView::execute - Scale.touch()\n");
 
+    }
     return App::DocumentObject::StdReturn;
 }
 

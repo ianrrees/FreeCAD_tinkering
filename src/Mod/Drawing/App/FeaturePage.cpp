@@ -69,7 +69,7 @@ FeaturePage::FeaturePage(void) : numChildren(0)
     // Projection Properties
     OrthoProjectionType.setEnums(OrthoProjectionTypeEnums);
     ADD_PROPERTY(OrthoProjectionType,((long)0));
-    ADD_PROPERTY_TYPE(Scale ,(1.0)     ,group,App::Prop_None,"Scale factor for Document Views");
+    ADD_PROPERTY_TYPE(Scale ,(1.0)     ,group,App::Prop_None,"Scale factor for this Page");
 }
 
 FeaturePage::~FeaturePage()
@@ -96,7 +96,7 @@ short FeaturePage::mustExecute() const
     if(tmpl && tmpl->isTouched())
         return 1;
 
-    // Check if within the selection, any Document Object have been touched
+    // Check if within this Page, any Views have been touched
     bool ViewsTouched = false;
     const std::vector<App::DocumentObject*> &vals = Views.getValues();
     for(std::vector<App::DocumentObject *>::const_iterator it = vals.begin(); it < vals.end(); ++it) {
@@ -181,7 +181,7 @@ void FeaturePage::onChanged(const App::Property* prop)
     }
 
     if(prop == &Scale) {
-        // touch all views in the document as they may be dependent on this scale
+        // touch all views in the Page as they may be dependent on this scale
       const std::vector<App::DocumentObject*> &vals = Views.getValues();
       for(std::vector<App::DocumentObject *>::const_iterator it = vals.begin(); it < vals.end(); ++it) {
           Drawing::FeatureView *view = dynamic_cast<Drawing::FeatureView *>(*it);
