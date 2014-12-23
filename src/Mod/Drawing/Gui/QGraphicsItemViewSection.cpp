@@ -1,7 +1,7 @@
 /***************************************************************************
  *   Copyright (c) 2013 Luke Parry <l.parry@warwick.ac.uk>                 *
  *                                                                         *
- *   This file is part of the FreeCAD CAx development system.           *
+ *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
  *   This library is free software; you can redistribute it and/or         *
  *   modify it under the terms of the GNU Library General Public           *
@@ -10,7 +10,7 @@
  *                                                                         *
  *   This library  is distributed in the hope that it will be useful,      *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU Library General Public License for more details.                  *
  *                                                                         *
  *   You should have received a copy of the GNU Library General Public     *
@@ -68,11 +68,15 @@ void QGraphicsItemViewSection::drawSectionFace()
 
     Drawing::FeatureViewSection *part = dynamic_cast<Drawing::FeatureViewSection *>(this->getViewObject());
 
-    Base::Console().Log("drawing section face");
+    Base::Console().Log("drawing section face\n");
 
     // Get the section face from the feature
     std::vector<DrawingGeometry::Face *> faceGeoms;
     part->getSectionSurface(faceGeoms);
+    if (faceGeoms.empty()) {
+        Base::Console().Message("No Face available. Check Section plane.\n");
+        return;
+    }
 
     // Draw Faces
     std::vector<DrawingGeometry::Face *>::const_iterator fit = faceGeoms.begin();

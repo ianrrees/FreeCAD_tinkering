@@ -68,6 +68,7 @@
 #include <Base/BoundBox.h>
 #include <Base/Exception.h>
 #include <Base/FileInfo.h>
+#include <Base/Console.h>
 
 #include <Mod/Part/App/PartFeature.h>
 #include <Mod/Part/App/Geometry.h>
@@ -227,8 +228,11 @@ gp_Pln FeatureViewSection::getSectionPlane() const
 
 void FeatureViewSection::getSectionSurface(std::vector<DrawingGeometry::Face *> &sectionFace) const {
 
-    if(result.IsNull())
-        throw Base::Exception("Sectional View Result is Empty");
+    if(result.IsNull()){
+        //throw Base::Exception("Sectional View Result is Empty");
+        Base::Console().Log("FeatureViewSection::getSectionSurface - Sectional View Result is Empty\n");
+        return;
+    }
 
     gp_Pln pln = getSectionPlane();
     BRep_Builder builder;
