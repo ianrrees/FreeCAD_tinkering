@@ -101,7 +101,8 @@ short FeatureViewSection::mustExecute() const
 {
     // If Tolerance Property is touched
     if(SectionNormal.isTouched() ||
-       SectionOrigin.isTouched())
+       SectionOrigin.isTouched() ||
+       ShowCutSurface.isTouched())
           return 1;
 
     return Drawing::FeatureViewPart::mustExecute();

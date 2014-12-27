@@ -108,6 +108,7 @@ short FeatureViewPart::mustExecute() const
        XAxisDirection.isTouched() ||
        Source.isTouched() ||
        Scale.isTouched() ||
+       ScaleType.isTouched() ||
        ShowHiddenLines.isTouched())
         return 1;
 
@@ -121,6 +122,7 @@ void FeatureViewPart::onChanged(const App::Property* prop)
         prop == &XAxisDirection ||
         prop == &Source ||
         prop == &Scale ||
+        prop == &ScaleType ||
         prop == &ShowHiddenLines) {
           if (!this->isRestoring()) {
               if(prop->isTouched()) {

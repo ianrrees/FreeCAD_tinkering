@@ -135,6 +135,8 @@ void QGraphicsItemView::setPosition(qreal x, qreal y)
 void QGraphicsItemView::updateView(bool update)
 {
     this->setPosition(this->getViewObject()->X.getValue(), this->getViewObject()->Y.getValue());
+    if (update) 
+        QGraphicsItem::update(boundingRect());
 }
 
 const char * QGraphicsItemView::getViewName() const
