@@ -219,7 +219,7 @@ void FeaturePage::onDocumentRestored()
 int FeaturePage::addView(App::DocumentObject *docObj)
 {
     if(!docObj->isDerivedFrom(Drawing::FeatureView::getClassTypeId()))
-        return -1; //Doc Object must be derived from a Part Feature
+        return -1; //Doc Object must be derived from a Drawing Feature View
 
     const std::vector<App::DocumentObject *> vals = Views.getValues();
     std::vector<App::DocumentObject *> newVals(vals);

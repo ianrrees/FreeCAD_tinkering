@@ -2216,9 +2216,13 @@ def makeDrawingView(obj,page,lwmod=None,tmod=None,otherProjection=None):
         import ArchPanel
         viewobj = ArchPanel.makePanelView(obj,page)
     else:
-        viewobj = FreeCAD.ActiveDocument.addObject("Drawing::FeatureViewPython","View"+obj.Name)
+        viewobj = FreeCAD.ActiveDocument.addObject("Drawing::FeatureViewSymbolPython","View"+obj.Name)
         _DrawingView(viewobj)
-        page.addObject(viewobj)
+        v = page.Views
+        v.append(viewobj)
+        page.Views = v
+        #page.addObject(viewobj)
+        #page.addView(viewobj)
         if (otherProjection):
             if hasattr(otherProjection,"Scale"):
                 viewobj.Scale = otherProjection.Scale
@@ -4487,36 +4491,10 @@ class _DrawingView(_DraftObject):
 
     def execute(self, obj):
         result = ""
-        if hasattr(obj,"Source"):
-            if obj.Source:
-                if hasattr(obj,"LineStyle"):
-                    ls = obj.LineStyle
-                else:
-                    ls = None
-                if hasattr(obj,"LineColor"):
-                    lc = obj.LineColor
-                else:
-                    lc = None
-                if obj.Source.isDerivedFrom("App::DocumentObjectGroup"):
-                    svg = ""
-                    shapes = []
-                    others = []
-                    objs = getGroupContents([obj.Source])
-                    for o in objs:
-                        if o.ViewObject.isVisible():
-                            svg += getSVG(o,obj.Scale,obj.LineWidth,obj.FontSize.Value,obj.FillStyle,obj.Direction,ls,lc)
-                else:
-                    svg = getSVG(obj.Source,obj.Scale,obj.LineWidth,obj.FontSize.Value,obj.FillStyle,obj.Direction,ls,lc)
-                result += '<g id="' + obj.Name + '"'
-                result += ' transform="'
-                result += 'rotate('+str(obj.Rotation)+','+str(obj.X)+','+str(obj.Y)+') '
-                result += 'translate('+str(obj.X)+','+str(obj.Y)+') '
-                result += 'scale('+str(obj.Scale)+','+str(-obj.Scale)+')'
-                result += '">'
-                result += svg
-                result += '</g>'
+#TODO: replace this bit from Master
         obj.ViewResult = result
         
+
     def getDXF(self,obj):
         "returns a DXF fragment"
         result = ""

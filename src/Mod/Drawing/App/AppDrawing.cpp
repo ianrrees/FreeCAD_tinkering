@@ -73,17 +73,18 @@ void DrawingExport initDrawing()
     Drawing::FeatureViewDimension   ::init();
     Drawing::FeatureViewOrthographic::init();
     Drawing::FeatureOrthoView       ::init();
-    
+
 //  Drawing::PageGroup              ::init();
 
     Drawing::FeatureProjection      ::init();
     Drawing::FeatureViewSymbol      ::init();
     Drawing::FeatureClip            ::init();
- 
+
    // Python Types
     Drawing::FeatureTemplatePython  ::init();
     Drawing::FeatureViewPython      ::init();
     Drawing::FeatureViewPartPython  ::init();
+    Drawing::FeatureViewSymbolPython::init();
 }
 
 } // extern "C"

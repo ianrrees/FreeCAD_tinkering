@@ -33,6 +33,11 @@
 #include <boost/regex.hpp>
 
 #include <Mod/Part/App/OCCError.h>
+#include <App/Document.h>
+#include <App/DocumentObjectGroup.h>
+#include "FeaturePage.h"
+#include "FeaturePagePy.h"
+
 
 using namespace Drawing;
 using namespace Part;
@@ -200,7 +205,25 @@ removeSvgTags(PyObject *self, PyObject *args)
     } PY_CATCH_OCC;
 }
 
-
+static PyObject * 
+getFeaturePageByName(PyObject *self, PyObject *args)
+{
+    const char* pageName;
+    if (!PyArg_ParseTuple(args, "s",&pageName))
+        return NULL; 
+    
+    App::Document* doc = App::GetApplication().getActiveDocument();
+    App::DocumentObject* doPage = doc->getObject(pageName);
+    if (doPage) {
+        PY_TRY {
+            Drawing::FeaturePage* fpPage = dynamic_cast<Drawing::FeaturePage*>(doPage);
+            //return PyObject(fpPage);
+            // doPage->getPyObject is a PyObject*
+            //return (doPage->getPyObject());    // still need this to be a FeaturePagePy, not a DocumentObjectPy
+            return 0;
+        } PY_CATCH;
+    }
+}
 
 /* registration table  */
 struct PyMethodDef Drawing_methods[] = {
@@ -214,5 +237,7 @@ struct PyMethodDef Drawing_methods[] = {
      "string = projectToDXF(TopoShape[,App.Vector Direction, string type]) -- Project a shape and return the DXF representation as string."},
    {"removeSvgTags"       ,removeSvgTags      ,METH_VARARGS,
      "string = removeSvgTags(string) -- Removes the opening and closing svg tags and other metatags from a svg code, making it embeddable"},
+   {"getFeaturePageByName"       ,getFeaturePageByName    ,METH_VARARGS,
+     "string = getFeaturePage(string) -- Returns a Drawing::FeaturePage with name = string from ActiveDocument"},
     {NULL, NULL}        /* end of table marker */
 };
