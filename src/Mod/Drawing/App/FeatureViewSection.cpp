@@ -110,7 +110,6 @@ short FeatureViewSection::mustExecute() const
 
 FeatureViewSection::~FeatureViewSection()
 {
-    delete geometryObject;
 }
 
 App::DocumentObjectExecReturn *FeatureViewSection::execute(void)

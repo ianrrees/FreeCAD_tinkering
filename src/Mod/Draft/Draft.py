@@ -2207,22 +2207,20 @@ def makeDrawingView(obj,page,lwmod=None,tmod=None,otherProjection=None):
     '''
     if getType(obj) == "SectionPlane":
         import ArchSectionPlane
-        viewobj = FreeCAD.ActiveDocument.addObject("Drawing::FeatureViewPython","View")
+        viewobj = FreeCAD.ActiveDocument.addObject("Drawing::FeatureViewPython","View")  ## TODO: changes for Drawing2
         page.addObject(viewobj)
         ArchSectionPlane._ArchDrawingView(viewobj)
         viewobj.Source = obj
         viewobj.Label = "View of "+obj.Name
     elif getType(obj) == "Panel":
         import ArchPanel
-        viewobj = ArchPanel.makePanelView(obj,page)
+        viewobj = ArchPanel.makePanelView(obj,page)   ## TODO: changes for Drawing2
     else:
-        viewobj = FreeCAD.ActiveDocument.addObject("Drawing::FeatureViewSymbolPython","View"+obj.Name)
+        viewobj = FreeCAD.ActiveDocument.addObject("Drawing::FeatureViewPartPython","View"+obj.Name)
         _DrawingView(viewobj)
-        v = page.Views
+        v = page.Views        #sb page.addView(viewobj), but can't get page as DrawingView, only DocObjGroup
         v.append(viewobj)
         page.Views = v
-        #page.addObject(viewobj)
-        #page.addView(viewobj)
         if (otherProjection):
             if hasattr(otherProjection,"Scale"):
                 viewobj.Scale = otherProjection.Scale
@@ -4490,6 +4488,7 @@ class _DrawingView(_DraftObject):
         obj.FontSize = 12
 
     def execute(self, obj):
+<<<<<<< HEAD
         result = ""
 #TODO: replace this bit from Master
         obj.ViewResult = result
