@@ -100,6 +100,8 @@ protected:
 
 protected:
   QPen pen;
+  QPen m_pen;
+  QBrush m_brush;
   QRectF bbox;
   bool borderVisible;
 private:

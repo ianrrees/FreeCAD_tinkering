@@ -64,6 +64,7 @@
 
 # include <BRep_Tool.hxx>
 # include <BRepMesh.hxx>
+# include <BRepMesh_IncrementalMesh.hxx>
 # include <BRep_Builder.hxx>
 # include <BRepBuilderAPI_MakeWire.hxx>
 # include <BRepTools_WireExplorer.hxx>
@@ -166,76 +167,19 @@ TopoDS_Shape GeometryObject::invertY(const TopoDS_Shape& shape) const
 
 void GeometryObject::drawFace (const bool visible, const int typ, const int iface, Handle_HLRBRep_Data & DS, TopoDS_Shape& Result) const
 {
+// add all the edges for this face(iface) to Result
     HLRBRep_FaceIterator Itf;
 
     for (Itf.InitEdge(DS->FDataArray().ChangeValue(iface)); Itf.MoreEdge(); Itf.NextEdge()) {
-
-      int ie = Itf.Edge();
-
-      HLRBRep_EdgeData& edf = DS->EDataArray().ChangeValue(ie);
-
-      if (true/*!edf.Used()*/) {
-        bool todraw;
-        if (typ == 1)
-            todraw =  Itf.IsoLine();
-        else if (typ == 2)
-            todraw =  Itf.Internal();
-        else if (typ == 3)
-            todraw =  edf.Rg1Line() &&
-          !edf.RgNLine() && !Itf.OutLine();
-        else if (typ == 4)
-            todraw =  edf.RgNLine() && !Itf.OutLine();
-        else
-            todraw = !(Itf.IsoLine()  || Itf.Internal() || (edf.Rg1Line() && !Itf.OutLine()));
-
-      if (true) {
-          // Draw all the edges in the face
-        double sta,end;
-        float tolsta,tolend;
-
-        BRep_Builder B;
-        TopoDS_Edge E;
-        HLRAlgo_EdgeIterator It;
-
-            for (It.InitVisible(edf.Status()); It.MoreVisible(); It.NextVisible()) {
-                It.Visible(sta,tolsta,end,tolend);
-
-                E = HLRBRep::MakeEdge(edf.Geometry(),sta,end);
-                if (!E.IsNull()) {
-                    B.Add(Result,E);
-                }
-                edf.Used(false);
-            }
-
-            for (It.InitHidden(edf.Status()); It.MoreHidden(); It.NextHidden()) {
-
-                It.Hidden(sta,tolsta,end,tolend);
-                E = HLRBRep::MakeEdge(edf.Geometry(),sta,end);
-                if (!E.IsNull()) {
-                    B.Add(Result,E);
-                }
-                edf.Used(false);
-            }
-
-        } else {
-          if(typ > 4 && (edf.Rg1Line() && !Itf.OutLine())) {
-            int hc = edf.HideCount();
-            if(hc > 0) {
-              edf.Used(true);
-            } else {
-              ++hc;
-              edf.HideCount(hc); //to try with another face
-            }
-          } else {
-            edf.Used(true);
-          }
-        }
-      }
+        int ie = Itf.Edge();
+        HLRBRep_EdgeData& edf = DS->EDataArray().ChangeValue(ie);
+        drawEdge(edf, Result, visible);
     }
 }
 
 void GeometryObject::drawEdge(HLRBRep_EdgeData& ed, TopoDS_Shape& Result, const bool visible) const
 {
+// add (visible) intervals of ed to Result as Edges
     double sta,end;
     float tolsta,tolend;
 
@@ -246,7 +190,6 @@ void GeometryObject::drawEdge(HLRBRep_EdgeData& ed, TopoDS_Shape& Result, const 
     if (visible) {
         for(It.InitVisible(ed.Status()); It.MoreVisible(); It.NextVisible()) {
             It.Visible(sta,tolsta,end,tolend);
-
             E = HLRBRep::MakeEdge(ed.Geometry(),sta,end);
             if (!E.IsNull()) {
                 B.Add(Result,E);
@@ -504,12 +447,15 @@ void GeometryObject::extractFaces(HLRBRep_Algo *myAlgo,
                                   std::vector<DrawingGeometry::Face *> &projFaces,
                                   std::vector<int> &faceRefs) const
 {
+
     if(!myAlgo)
         return;
 
     Handle_HLRBRep_Data DS = myAlgo->DataStructure();
-    if (DS.IsNull())
+    if (DS.IsNull()) {
+        Base::Console().Log("Drawing::GeometryObject::extractFaces - DS is Null\n");
         return;
+    }
 
     DS->Projector().Scaled(true);
 
@@ -521,8 +467,10 @@ void GeometryObject::extractFaces(HLRBRep_Algo *myAlgo,
     if (!S.IsNull()) {
         Standard_Integer v1,v2;
         Standard_Integer index = myAlgo->Index(S);
-        if(index == 0)
+        if(index == 0)  {
+            Base::Console().Log("Drawing::GeometryObject::extractFaces - myAlgo->Index(S) == 0\n");
             return;
+        }
         myAlgo->ShapeBounds(index).Bounds(v1,v2,e1,e2,f1,f2);
     }
 
@@ -849,7 +797,7 @@ bool GeometryObject::isSameCurve(const BRepAdaptor_Curve &c1, const BRepAdaptor_
 void GeometryObject::createWire(const TopoDS_Shape &input, std::vector<DrawingGeometry::Wire *> &wires) const
 {
      if(input.IsNull()) {
-        Base::Console().Log("DEBUG - GeometryObject::createWire input is NULL\n");
+        Base::Console().Log("Drawing::GeometryObject::createWire input is NULL\n");
         return; // There is no OpenCascade Geometry to be calculated
      }
 
@@ -906,7 +854,8 @@ void GeometryObject::createWire(const TopoDS_Shape &input, std::vector<DrawingGe
                     //newWire = mkWire.Wire();
 
 
-                        Base::Console().Log("<%f %f %f>, <%f %f %f> \n", ep.v1.X(),ep.v1.Y(),ep.v1.Z(), ep.v2.X(),ep.v2.Y(),ep.v2.Z());
+                        //Base::Console().Log("DEBUG - GeometryObject::createWire - <%f %f %f>, <%f %f %f> \n",
+                        //                     ep.v1.X(),ep.v1.Y(),ep.v1.Z(), ep.v2.X(),ep.v2.Y(),ep.v2.Z());
 
                         edgeList.erase(pE);
                         break;
@@ -1009,18 +958,24 @@ void GeometryObject::extractGeometry(const TopoDS_Shape &input, const Base::Vect
 //     calculateGeometry(extractCompound(brep_hlr, invertShape, 2, true), Plain);  // Outline
 //     calculateGeometry(extractCompound(brep_hlr, invertShape, 3, true), WithSmooth); // Smooth Edge
 
-     // House Keeping
-     delete brep_hlr;
+    // Extract Faces
+    extractFaces(brep_hlr, transShape, 5, true,WithSmooth,faceGeom,faceReferences);
+
+    // House Keeping
+    delete brep_hlr;
 }
 
 
 int GeometryObject::calculateGeometry(const TopoDS_Shape &input, const ExtractionType extractionType, std::vector<BaseGeom *> &geom) const
 {
-    if(input.IsNull())
+    if(input.IsNull()) {
+        Base::Console().Log("Drawing::GeometryObject::calculateGeometry input is NULL\n");
         return 0; // There is no OpenCascade Geometry to be calculated
+    }
 
     // build a mesh to explore the shape
-    BRepMesh::Mesh(input, this->Tolerance);
+    //BRepMesh::Mesh(input, this->Tolerance);   //OCC has removed BRepMesh::Mesh() as of v6.8.0.oce-0.17-dev
+    BRepMesh_IncrementalMesh(input, this->Tolerance);
 
     int geomsAdded = 0;
 

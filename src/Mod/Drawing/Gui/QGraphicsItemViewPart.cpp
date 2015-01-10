@@ -1,7 +1,7 @@
 /***************************************************************************
  *   Copyright (c) 2013 Luke Parry <l.parry@warwick.ac.uk>                 *
  *                                                                         *
- *   This file is part of the FreeCAD CAx development system.           *
+ *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
  *   This library is free software; you can redistribute it and/or         *
  *   modify it under the terms of the GNU Library General Public           *
@@ -10,7 +10,7 @@
  *                                                                         *
  *   This library  is distributed in the hope that it will be useful,      *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU Library General Public License for more details.                  *
  *                                                                         *
  *   You should have received a copy of the GNU Library General Public     *
@@ -233,7 +233,6 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
 }
 void QGraphicsItemViewPart::updateView(bool update)
 {
-      // Iterate
     if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewPart::getClassTypeId()))
         return;
 
@@ -247,7 +246,7 @@ void QGraphicsItemViewPart::updateView(bool update)
        viewPart->Scale.isTouched() ||
        viewPart->ShowHiddenLines.isTouched()){
 
-        Base::Console().Log("Drawing View Shapes need redrawing %s\n", viewPart->getNameInDocument());
+        Base::Console().Log("Drawing::QGraphicsItemViewPart::updateView - Shapes need redrawing %s\n", viewPart->getNameInDocument());
 
         // Identify what changed to prevent complete redraw
         QList<QGraphicsItem *> items = this->childItems();
@@ -304,7 +303,6 @@ void QGraphicsItemViewPart::draw() {
 
 void QGraphicsItemViewPart::drawViewPart()
 {
-    // Iterate
     if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewPart::getClassTypeId()))
         return;
 
@@ -328,10 +326,10 @@ void QGraphicsItemViewPart::drawViewPart()
         for(std::vector<DrawingGeometry::Wire *>::iterator wire = faceWires.begin(); wire != faceWires.end(); ++wire) {
             QPainterPath wirePath;
             QPointF shapePos;
-            for(std::vector<DrawingGeometry::BaseGeom *>::iterator baseGeom = (*wire)->geoms.begin(); baseGeom != (*wire)->geoms.end(); ++baseGeom) {
-                //Save the start Position
-
-
+            for(std::vector<DrawingGeometry::BaseGeom *>::iterator baseGeom = (*wire)->geoms.begin(); 
+                baseGeom != (*wire)->geoms.end();
+                ++baseGeom) {
+               //Save the start Position
                 QPainterPath edgePath = drawPainterPath(*baseGeom);
 
                 // If the current end point matches the shape end point the new edge path needs reversing
@@ -362,7 +360,6 @@ void QGraphicsItemViewPart::drawViewPart()
             // Hide any edges that are hidden if option is set.
 //             if((*fit)->extractType == DrawingGeometry::WithHidden && !part->ShowHiddenLines.getValue())
 //                 graphicsItem->hide();
-
             this->addToGroup(graphicsItem);
             graphicsItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
         }
@@ -396,7 +393,8 @@ void QGraphicsItemViewPart::drawViewPart()
       item->setStrokeWidth(lineWidth);
 
       QPainterPath path;
-
+//    item->setPen(??);
+//    item->setBrush(??);
       graphicsItem = dynamic_cast<QGraphicsItem *>(item);
 
       switch((*it)->geomType) {
@@ -801,3 +799,4 @@ void QGraphicsItemViewPart::paint(QPainter *painter, const QStyleOptionGraphicsI
 }
 
 #include "moc_QGraphicsItemViewPart.cpp"
+
