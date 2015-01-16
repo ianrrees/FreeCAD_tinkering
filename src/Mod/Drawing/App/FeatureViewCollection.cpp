@@ -60,7 +60,11 @@ int FeatureViewCollection::addView(FeatureView *view)
     Views.setValues(newViews);
 
     this->touch();
-
+//TODO: also have to touch the parent page's views to get repaint??
+    FeaturePage* page = findParentPage();
+    if (page) {
+        page->Views.touch();
+    }
     return Views.getSize();
 }
 
@@ -73,6 +77,7 @@ short FeatureViewCollection::mustExecute() const
    } else
         return Drawing::FeatureView::mustExecute();
 }
+
 int FeatureViewCollection::countChildren()
 {
     //Count the children recursively if needed
@@ -115,8 +120,8 @@ void FeatureViewCollection::onChanged(const App::Property* prop)
             }
         }
     }
-
 }
+
 App::DocumentObjectExecReturn *FeatureViewCollection::execute(void)
 {
     if(strcmp(ScaleType.getValueAsString(), "Document") == 0) {
@@ -151,7 +156,6 @@ App::DocumentObjectExecReturn *FeatureViewCollection::execute(void)
                 view->touch();
             }
         }
-
     }
 
     return FeatureView::execute();

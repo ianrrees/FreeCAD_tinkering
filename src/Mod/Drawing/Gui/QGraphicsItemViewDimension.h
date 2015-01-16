@@ -1,7 +1,7 @@
 /***************************************************************************
  *   Copyright (c) 2013 Luke Parry <l.parry@warwick.ac.uk>                 *
  *                                                                         *
- *   This file is part of the FreeCAD CAx development system.           *
+ *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
  *   This library is free software; you can redistribute it and/or         *
  *   modify it under the terms of the GNU Library General Public           *
@@ -10,7 +10,7 @@
  *                                                                         *
  *   This library  is distributed in the hope that it will be useful,      *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU Library General Public License for more details.                  *
  *                                                                         *
  *   You should have received a copy of the GNU Library General Public     *
@@ -57,10 +57,10 @@ public:
     virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 
 Q_SIGNALS:
-  void dragging();
-  void hover(bool state);
-  void selected(bool state);
-  void dragFinished();
+    void dragging();
+    void hover(bool state);
+    void selected(bool state);
+    void dragFinished();
 
 protected:
     // Preselection events:
@@ -68,16 +68,19 @@ protected:
     void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
     void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
     // Selection detection
-     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+    QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
 protected:
-int reference;
-double posX;
-double posY;
+    int reference;
+    double posX;
+    double posY;
 
 private:
-int strokeWidth;
-QPen m_pen;
+    int strokeWidth;
+    QPen m_pen;
+    QColor m_colNormal;
+    QColor m_colPre;
+    QColor m_colSel;
 };
 
 class DrawingGuiExport QGraphicsItemViewDimension : public QGraphicsItemView
@@ -97,30 +100,33 @@ public:
     virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 
 Q_SIGNALS:
-  void dirty();
+    void dirty();
 
 public Q_SLOTS:
-  void datumLabelDragged(void);
-  void datumLabelDragFinished(void);
-  void select(bool state);
-  void hover(bool state);
-  void updateDim(void);
+    void datumLabelDragged(void);
+    void datumLabelDragFinished(void);
+    void select(bool state);
+    void hover(bool state);
+    void updateDim(void);
 
 protected:
-  void draw();
-  void clearProjectionCache();
+    void draw();
+    void clearProjectionCache();
     // Selection detection
-  virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
 protected:
-  bool hasHover;
-  QGraphicsItem *datumLabel;
-  QGraphicsItem *arrows;
-  QGraphicsItem *centreLines;
+    bool hasHover;
+    QGraphicsItem *datumLabel;
+    QGraphicsItem *arrows;
+    QGraphicsItem *centreLines;
 
-  std::vector<QGraphicsItem *> arw;
-  std::vector<DrawingGeometry::BaseGeom *> projGeom;
-  QPen pen;
+    std::vector<QGraphicsItem *> arw;
+    std::vector<DrawingGeometry::BaseGeom *> projGeom;
+    QPen pen;
+    QColor m_colNormal;
+    QColor m_colPre;
+    QColor m_colSel;
 };
 
 } // namespace DrawingViewGui

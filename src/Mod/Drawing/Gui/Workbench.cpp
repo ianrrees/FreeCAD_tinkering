@@ -57,29 +57,20 @@ Gui::MenuItem* Workbench::setupMenuBar() const
     Gui::MenuItem* root = StdWorkbench::setupMenuBar();
     Gui::MenuItem* item = root->findItem("&Windows");
 
-    Gui::MenuItem* part = new Gui::MenuItem;
-    root->insertItem(item, part);
-    part->setCommand("Drawing");
-    *part << "Drawing_Open";
-    *part << "Drawing_NewPage";
-    *part << "Drawing_NewView";
-    *part << "Drawing_OrthoViews";
-    *part << "Drawing_NewViewSection";
-    *part << "Drawing_Annotation";
-    *part << "Drawing_Symbol";
-    *part << "Drawing_NewDimension";
-
-#if 0
-    //*part << "Drawing_NewA3Landscape";
-    *part << "Drawing_OpenBrowserView";
-    *part << "Drawing_Annotation";
-    *part << "Drawing_Clip";
-    *part << "Drawing_Symbol";
-    *part << "Drawing_DraftView";
-    *part << "Drawing_ExportPage";
-    *part << "Separator";
-    *part << "Drawing_ProjectShape";
-#endif
+    Gui::MenuItem* draw = new Gui::MenuItem;
+    root->insertItem(item, draw);
+    draw->setCommand("Drawing");
+    //*draw << "Drawing_Open";
+    *draw << "Drawing_NewPage";
+    *draw << "Drawing_NewView";
+    *draw << "Drawing_OrthoViews";
+    *draw << "Drawing_NewViewSection";
+    *draw << "Drawing_Annotation";
+    *draw << "Drawing_NewDimension";
+    *draw << "Drawing_ExportPage";
+    *draw << "Drawing_Symbol";
+    *draw << "Separator";
+    *draw << "Drawing_ProjectShape";
 
     return root;
 }
@@ -93,86 +84,61 @@ Gui::ToolBarItem* Workbench::setupToolBars() const
 
     Gui::ToolBarItem *views = new Gui::ToolBarItem(root);
     views->setCommand("Drawing Views");
-    *views << "Drawing_NewView"
-           << "Drawing_OrthoViews"
-           << "Drawing_NewViewSection"
-           << "Drawing_Annotation"
-           << "Drawing_Symbol";
+    *views << "Drawing_NewView";
+    *views << "Drawing_OrthoViews";
+    *views << "Drawing_NewViewSection";
+    *views << "Drawing_Annotation";
 
     Gui::ToolBarItem *dims = new Gui::ToolBarItem(root);
     dims->setCommand("Drawing Dimensions");
 //    *dims << "Drawing_NewDimension"
-    *dims << "Drawing_NewLengthDimension"
-          << "Drawing_NewDistanceXDimension"
-          << "Drawing_NewDistanceYDimension"
-          << "Drawing_NewRadiusDimension"
-          << "Drawing_NewDiameterDimension"
-          << "Drawing_NewAngleDimension";
+    *dims << "Drawing_NewLengthDimension";
+    *dims << "Drawing_NewDistanceXDimension";
+    *dims << "Drawing_NewDistanceYDimension";
+    *dims << "Drawing_NewRadiusDimension";
+    *dims << "Drawing_NewDiameterDimension";
+    *dims << "Drawing_NewAngleDimension";
 
-
-//     *img << "Drawing_OpenBrowserView";
-//     *img << "Drawing_Annotation";
-//     *img << "Drawing_Clip";
-
-#if 0
-    *part << "Drawing_OpenBrowserView";
-    *part << "Drawing_NewViewSection"
-    *part << "Drawing_Annotation";
-    *part << "Drawing_Clip";
-    *part << "Drawing_Symbol";
-    *part << "Drawing_ExportPage";
- 
-    *part << "Drawing_Open";
-    //*part << "Drawing_NewA3Landscape";
-    *part << "Drawing_NewPage";
-    *part << "Drawing_NewView";
-    *part << "Drawing_OrthoViews";
-
-    *part << "Drawing_OpenBrowserView";
-    *part << "Drawing_Annotation";
-    *part << "Drawing_Clip";
-    *part << "Drawing_Symbol";
-    *part << "Drawing_DraftView";
-    *part << "Drawing_ExportPage";
-#endif
+    Gui::ToolBarItem *file = new Gui::ToolBarItem(root);
+    file->setCommand("Drawing File Access");
+    *file << "Drawing_ExportPage";
+    *file << "Drawing_Symbol";
     return root;
 }
 
 Gui::ToolBarItem* Workbench::setupCommandBars() const
 {
     Gui::ToolBarItem* root = new Gui::ToolBarItem;
-
-    // Part tools
-//    Gui::ToolBarItem* io = new Gui::ToolBarItem(root);
-//    io->setCommand("I/O");
-//    *io << "Drawing_Open";
-
     Gui::ToolBarItem *pages = new Gui::ToolBarItem(root);
     pages->setCommand("Drawing Pages");
     *pages << "Drawing_NewPage";
 
+    Gui::ToolBarItem *views = new Gui::ToolBarItem(root);
+    views->setCommand("Views");
+    *views << "Drawing_NewView";
+    *views << "Drawing_OrthoViews";
+    *views << "Drawing_NewViewSection";
+    *views << "Drawing_Annotation";
+
     Gui::ToolBarItem *dims = new Gui::ToolBarItem(root);
     dims->setCommand("Drawing Dimensions");
 //    *dims << "Drawing_NewDimension";
-    *dims << "Drawing_NewLengthDimension"
-          << "Drawing_NewDistanceXDimension"
-          << "Drawing_NewDistanceYDimension"
-          << "Drawing_NewRadiusDimension"
-          << "Drawing_NewDiameterDimension"
-          << "Drawing_NewAngleDimension";
+    *dims << "Drawing_NewLengthDimension";
+    *dims << "Drawing_NewDistanceXDimension";
+    *dims << "Drawing_NewDistanceYDimension";
+    *dims << "Drawing_NewRadiusDimension";
+    *dims << "Drawing_NewDiameterDimension";
+    *dims << "Drawing_NewAngleDimension";
+
+    Gui::ToolBarItem *file = new Gui::ToolBarItem(root);
+    file->setCommand("Drawing File Access");
+    *file << "Drawing_ExportPage";
+    *file << "Drawing_Symbol";
 
 //     *img << "Drawing_OpenBrowserView";
-//     *img << "Drawing_Annotation";
 //     *img << "Drawing_Clip";
 //     *img << "Drawing_DraftView";
 
-    Gui::ToolBarItem *views = new Gui::ToolBarItem(root);
-    views->setCommand("Views");
-    *views << "Drawing_NewView"
-           << "Drawing_OrthoViews"
-           << "Drawing_NewViewSection"
-           << "Drawing_Annotation"
-           << "Drawing_Symbol";
     return root;
 }
 

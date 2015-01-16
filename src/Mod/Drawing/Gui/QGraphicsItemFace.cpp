@@ -33,39 +33,46 @@
 #include <QStyleOptionGraphicsItem>
 #endif
 
+#include <App/Application.h>
+#include <App/Material.h>
 #include <Base/Console.h>
+#include <Base/Parameter.h>
 
 #include "QGraphicsItemView.h"
 #include "QGraphicsItemFace.h"
 
 using namespace DrawingGui;
 
-QGraphicsItemFace::QGraphicsItemFace(int ref, QGraphicsScene *scene  ) : reference(ref)
+QGraphicsItemFace::QGraphicsItemFace(int ref, QGraphicsScene *scene  ) :
+    reference(ref),
+    m_fill(Qt::NoBrush)
+    //m_fill(Qt::CrossPattern)
 {
     if(scene) {
         scene->addItem(this);
     }
     this->setAcceptHoverEvents(true);
+
+    Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
+        .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors");
+    App::Color fcColor = App::Color((uint32_t) hGrp->GetUnsigned("NormalColor", 0x00000000));
+    m_colNormal = fcColor.asQColor();
+    fcColor.setPackedValue(hGrp->GetUnsigned("SelectColor", 0x0000FF00));
+    m_colSel = fcColor.asQColor();
+    fcColor.setPackedValue(hGrp->GetUnsigned("PreSelectColor", 0x00080800));
+    m_colPre = fcColor.asQColor();
+
+    m_brush.setStyle(m_fill);
+    setPrettyNormal();
 }
 
 QVariant QGraphicsItemFace::itemChange(GraphicsItemChange change, const QVariant &value)
 {
     if (change == ItemSelectedHasChanged && scene()) {
-        // value is the new position.
         if(isSelected()) {
-            QPen pen = this->pen();
-            pen.setColor(Qt::blue);
-            QBrush brush = this->brush();
-            brush.setColor(Qt::green);
-            this->setPen(pen);
-            this->setBrush(brush);
+            setPrettySel();
         } else {
-            QPen pen = this->pen();
-            pen.setColor(Qt::gray);
-            this->setPen(pen);
-            QBrush brush = this->brush();
-            brush.setColor(Qt::blue);
-            this->setBrush(brush);
+            setPrettyNormal();
         }
         update();
     }
@@ -74,10 +81,7 @@ QVariant QGraphicsItemFace::itemChange(GraphicsItemChange change, const QVariant
 
 void QGraphicsItemFace::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
-    QPen pen = this->pen();
-    pen.setColor(Qt::blue);
-    pen.setWidthF(2);
-    this->setPen(pen);
+    setPrettyPre();
     update();
 }
 
@@ -86,11 +90,30 @@ void QGraphicsItemFace::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
     QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *> (this->parentItem());
 
     if(!isSelected() && !view->isSelected()) {
-        QPen pen = this->pen();
-        pen.setColor(Qt::black);
-        pen.setWidthF(0.5);
-        this->setPen(pen);
+        setPrettyNormal();
         update();
     }
 }
+
+void QGraphicsItemFace::setPrettyNormal() {
+    m_pen.setColor(m_colNormal);
+    m_brush.setColor(m_colNormal);
+    setPen(m_pen);
+    setBrush(m_brush);
+}
+
+void QGraphicsItemFace::setPrettyPre() {
+    m_pen.setColor(m_colPre);
+    m_brush.setColor(m_colPre);
+    setPen(m_pen);
+    setBrush(m_brush);
+}
+
+void QGraphicsItemFace::setPrettySel() {
+    m_pen.setColor(m_colSel);
+    m_brush.setColor(m_colSel);
+    setPen(m_pen);
+    setBrush(m_brush);
+}
+
 

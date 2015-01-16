@@ -49,7 +49,7 @@ QGraphicsItemSVGTemplate::QGraphicsItemSVGTemplate(QGraphicsScene *scene) : QGra
     m_svgItem->setSharedRenderer(m_svgRender);
 
     m_svgItem->setFlags(QGraphicsItem::ItemClipsToShape);
-    m_svgItem->setCacheMode(QGraphicsItem::DeviceCoordinateCache);
+    m_svgItem->setCacheMode(QGraphicsItem::NoCache);
 
     this->addToGroup(m_svgItem);
 }
@@ -57,9 +57,6 @@ QGraphicsItemSVGTemplate::QGraphicsItemSVGTemplate(QGraphicsScene *scene) : QGra
 QGraphicsItemSVGTemplate::~QGraphicsItemSVGTemplate()
 {
   delete m_svgRender;
-  delete m_svgItem;
-  m_svgRender = 0;
-  m_svgItem   = 0;
 }
 
 QVariant QGraphicsItemSVGTemplate::itemChange(GraphicsItemChange change, const QVariant &value)

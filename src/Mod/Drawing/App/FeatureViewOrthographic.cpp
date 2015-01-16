@@ -61,6 +61,10 @@ FeatureViewOrthographic::FeatureViewOrthographic(void)
     ADD_PROPERTY(ProjectionType,((long)0));
 }
 
+FeatureViewOrthographic::~FeatureViewOrthographic()
+{
+}
+
 short FeatureViewOrthographic::mustExecute() const
 {
     if(Views.isTouched() ||
@@ -139,11 +143,8 @@ double FeatureViewOrthographic::calculateAutomaticScale() const
     return valid_scales[(exponent >= 0)][i] * pow(10, exponent);            //now have the appropriate scale, reapply the *10^b
 }
 
-/// get called by the container when a Property was changed
 void FeatureViewOrthographic::onChanged(const App::Property* prop)
 {
-    Drawing::FeatureViewCollection::onChanged(prop);
-
     if (prop == &ProjectionType ||
         prop == &ScaleType ||
         prop == &Scale && !Scale.StatusBits.test(5)){
@@ -151,11 +152,7 @@ void FeatureViewOrthographic::onChanged(const App::Property* prop)
               this->execute();
           }
     }
-
-}
-
-FeatureViewOrthographic::~FeatureViewOrthographic()
-{
+    Drawing::FeatureViewCollection::onChanged(prop);
 }
 
 App::DocumentObject * FeatureViewOrthographic::getOrthoView(const char *viewProjType) const
@@ -194,7 +191,7 @@ bool FeatureViewOrthographic::hasOrthoView(const char *viewProjType) const
 
 App::DocumentObject * FeatureViewOrthographic::addOrthoView(const char *viewProjType)
 {
-    // Find a more elegant way of validating the type
+    // TODO: Find a more elegant way of validating the type
     if(strcmp(viewProjType, "Front")  == 0 ||
        strcmp(viewProjType, "Left")   == 0 ||
        strcmp(viewProjType, "Right")  == 0 ||
@@ -206,20 +203,19 @@ App::DocumentObject * FeatureViewOrthographic::addOrthoView(const char *viewProj
             throw Base::Exception("The Projection is already used in this group");
         }
 
-        std::string FeatName = this->getDocument()->getUniqueObjectName("OrthoView");
-        App::DocumentObject *docObj = this->getDocument()->addObject("Drawing::FeatureOrthoView",
-                                                                     FeatName.c_str());
+        std::string FeatName = getDocument()->getUniqueObjectName("OrthoView");
+        App::DocumentObject *docObj = getDocument()->addObject("Drawing::FeatureOrthoView",
+                                                               FeatName.c_str());
         Drawing::FeatureOrthoView *view = dynamic_cast<Drawing::FeatureOrthoView *>(docObj);
-        view->Source.setValue(this->Source.getValue());
+        view->Source.setValue(Source.getValue());
         //view->Scale.setValue(this->Scale.getValue());
         view->Type.setValue(viewProjType);
 
         std::string label = viewProjType;
         view->Label.setValue(label);
 
-        this->addView(view);
+        addView(view);         //from FeatureViewCollection
 
-        this->execute();
         return view;
 
     } else if(strcmp(viewProjType, "Top Right")  == 0 ||
@@ -230,7 +226,6 @@ App::DocumentObject * FeatureViewOrthographic::addOrthoView(const char *viewProj
     }
     return 0;
 }
-
 
 int FeatureViewOrthographic::removeOrthoView(const char *viewProjType)
 {
@@ -270,15 +265,113 @@ int FeatureViewOrthographic::removeOrthoView(const char *viewProjType)
     return -1;
 }
 
-void FeatureViewOrthographic::onDocumentRestored()
+bool FeatureViewOrthographic::distributeOrthoViews()
 {
-    this->execute();
+    Drawing::FeatureOrthoView *anchorView =  dynamic_cast<Drawing::FeatureOrthoView *>(this->Anchor.getValue());
+
+    if (!anchorView) {
+        return false;
+    }
+
+    // Determine layout
+    const char* projType;
+    if (this->ProjectionType.isValue("Document")) {
+        projType = this->findParentPage()->OrthoProjectionType.getValueAsString();
+    } else {
+        projType = ProjectionType.getValueAsString();
+    }
+
+    double spacing = 25.; // stick with defualt 10 mm   //TODO: sb property of FeatureViewOrthographic???
+    Base::BoundBox3d abbox = anchorView->getBoundingBox();
+    FeatureOrthoView* oView;
+    std::vector<App::DocumentObject*> views = Views.getValues();
+    for (std::vector<App::DocumentObject*>::const_iterator it = views.begin(); it != views.end(); ++it) {
+        if ((*it)->getTypeId().isDerivedFrom(FeatureOrthoView::getClassTypeId())) {   //TODO: might need Axo too?
+            oView = dynamic_cast<Drawing::FeatureOrthoView *>(*it);
+            if (strcmp(oView->Type.getValueAsString(),
+                       anchorView->Type.getValueAsString()) == 0) {
+                continue;
+            }
+            Base::BoundBox3d obbox = oView->getBoundingBox();         //TODO: this boundingbox is != QGraphics bbox
+            // Position the current FeatureOrthoView
+            // based on: http://course1.winona.edu/kdennehy/ENGR475/Topics/drawingstandardsandconventions.htm
+            // Third Angle:      T
+            //                l  F  R  rr
+            //                   b
+            // First Angle:      b
+            //                R  F  l  rr
+            //                   T
+            if (strcmp(projType, "Third Angle") == 0) {
+                if(strcmp(oView->Type.getValueAsString(), "Left") == 0) {
+                    oView->X.setValue((obbox.LengthX() + abbox.LengthX()) / -2. - spacing);  // curr view to left 
+                } else if(strcmp(oView->Type.getValueAsString(), "Right") == 0) {
+                    oView->X.setValue((obbox.LengthX() + abbox.LengthX()) /  2. + spacing);  // curr view to right
+                    if(this->hasOrthoView("Rear")) {
+                        Drawing::FeatureOrthoView *rearView =  dynamic_cast<Drawing::FeatureOrthoView *>(this->getOrthoView("Rear"));
+                        Base::BoundBox3d rrbbox = rearView->getBoundingBox();
+                        rearView->X.setValue((abbox.LengthX() / 2.) + spacing +
+                                              obbox.LengthX() + spacing +
+                                              (rrbbox.LengthX() / 2.));                           // Rear view 2 spots right
+                    }
+                } else if(strcmp(oView->Type.getValueAsString(), "Top") == 0) {
+                    oView->Y.setValue((obbox.LengthY() + abbox.LengthY()) /  2. + spacing);  // curr view up
+                } else if(strcmp(oView->Type.getValueAsString(), "Bottom") == 0) {
+                    oView->Y.setValue((obbox.LengthY() + abbox.LengthY()) / -2. - spacing);  // curr view down
+                } else if(strcmp(oView->Type.getValueAsString(), "Rear") == 0) {
+                    if(this->hasOrthoView("Right")) {
+                        Drawing::FeatureOrthoView *rightView =  dynamic_cast<Drawing::FeatureOrthoView *>(this->getOrthoView("Right"));
+                        Base::BoundBox3d rtbbox = rightView->getBoundingBox();
+                        oView->X.setValue((abbox.LengthX() / 2.) + spacing +
+                                         rtbbox.LengthX() + spacing +
+                                         (obbox.LengthX() / 2.));                           // curr view 2 spots right
+                    } else {
+                        oView->X.setValue(((obbox.LengthX() + abbox.LengthX()) /  2.) + spacing);  // curr view 1 space to right
+                    }
+                } else {
+                    Base::Console().Error("Error - FeatureViewOrthographic::distributeViews - unknown View Type (3rd): %s\n",
+                                          oView->Type.getValueAsString());
+                    //TODO: break? throw? return?
+                }
+            } else {  // First Angle
+                if(strcmp(oView->Type.getValueAsString(), "Left") == 0) {
+                    oView->X.setValue((obbox.LengthX() + abbox.LengthX()) /  2. + spacing);  // oView view to right
+                    if(this->hasOrthoView("Rear")) {
+                        Drawing::FeatureOrthoView *rearView =  dynamic_cast<Drawing::FeatureOrthoView *>(this->getOrthoView("Rear"));
+                        Base::BoundBox3d rrbbox = rearView->getBoundingBox();
+                        rearView->X.setValue((abbox.LengthX() / 2.) + spacing +
+                                              obbox.LengthX() + spacing +
+                                              (rrbbox.LengthX() / 2.));                           // Rear view 2 spots right
+                    }
+                } else if(strcmp(oView->Type.getValueAsString(), "Right") == 0) {
+                    oView->X.setValue((obbox.LengthX() + abbox.LengthX()) / -2. - spacing);  // oView to left 
+                } else if(strcmp(oView->Type.getValueAsString(), "Top") == 0) {
+                    oView->Y.setValue((obbox.LengthY() + abbox.LengthY()) / -2. - spacing);  // oView down
+                } else if(strcmp(oView->Type.getValueAsString(), "Bottom") == 0) {
+                    oView->Y.setValue((obbox.LengthY() + abbox.LengthY()) /  2. + spacing);  // oView view up
+                } else if(strcmp(oView->Type.getValueAsString(), "Rear") == 0) {
+                    if(this->hasOrthoView("Left")) {
+                        Drawing::FeatureOrthoView *leftView =  dynamic_cast<Drawing::FeatureOrthoView *>(this->getOrthoView("Left"));
+                        Base::BoundBox3d lbbox = leftView->getBoundingBox();
+                        oView->X.setValue((abbox.LengthX() / 2.) + spacing +
+                                         lbbox.LengthX() + spacing +
+                                         (obbox.LengthX() / 2.));                           // oView view 2 spots right
+                    } else {
+                        oView->X.setValue(((obbox.LengthX() + abbox.LengthX()) /  2.) + spacing);  // oView view 1 space to right
+                    }
+                } else {
+                    Base::Console().Error("Error - FeatureViewOrthographic::distributeViews - unknown View Type (1st): %s\n",
+                                          oView->Type.getValueAsString());
+                    //TODO: break? throw? return?
+               }
+            oView->touch();
+            }
+        }
+    }
+    return true;
 }
 
 App::DocumentObjectExecReturn *FeatureViewOrthographic::execute(void)
 {
-    this->touch();
-
     if(strcmp(ScaleType.getValueAsString(), "Automatic") == 0) {
         //Recalculate scale
 
@@ -305,6 +398,16 @@ App::DocumentObjectExecReturn *FeatureViewOrthographic::execute(void)
             }
         }
     }
+    if (Views.getSize()) {
+        distributeOrthoViews();                          // recalculate positions for children
+    }
+    //this->touch();
+
     return FeatureViewCollection::execute();
+}
+
+void FeatureViewOrthographic::onDocumentRestored()
+{
+    this->execute();
 }
 

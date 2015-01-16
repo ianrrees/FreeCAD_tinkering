@@ -71,9 +71,6 @@ FeatureView::FeatureView(void)
 
     ScaleType.setEnums(ScaleTypeEnums);
     ADD_PROPERTY_TYPE(ScaleType,((long)0),group, App::Prop_None, "Scale Type");
-
-//    App::PropertyType type = (App::PropertyType)(App::Prop_Hidden);
-//    ADD_PROPERTY_TYPE(ViewResult ,(0),group,type,"Resulting SVG fragment of that view");
 }
 
 FeatureView::~FeatureView()
@@ -152,11 +149,9 @@ App::DocumentObjectExecReturn *FeatureView::execute(void)
         }
     } else if(strcmp(ScaleType.getValueAsString(), "Custom") == 0) {
         Scale.StatusBits.set(2, false);
-        //need to ?recompute? ?redraw? to get this to stick.
+        //TODO: need to ?recompute? ?redraw? to get this to stick.
         //currently need to lose focus and re-get focus to make Scale editable.
         //Scale.touch();                     // causes loop
-        //Base::Console().Message("TRACE - FeatureView::execute - Scale.touch()\n");
-
     }
     return App::DocumentObject::StdReturn;
 }

@@ -28,6 +28,8 @@
 # include <stdint.h>
 #endif
 
+#include <QColor>
+
 namespace App
 {
 
@@ -48,6 +50,11 @@ public:
      */
     Color(uint32_t rgba)
     { setPackedValue( rgba ); }
+    /**
+     * creates FC Color from Qt QColor
+     */
+    Color(QColor q)
+    { set(q.redF(),q.greenF(),q.blueF()); }
     /** Copy constructor. */
     Color(const Color& c)
       :r(c.r),g(c.g),b(c.b),a(c.a){}
@@ -101,7 +108,14 @@ public:
                 (uint32_t)(b*255.0f + 0.5f) << 8  |
                 (uint32_t)(a*255.0f + 0.5f));
     }
-
+    /**
+    * returns Qt color equivalent to FC color
+    *
+    */
+    QColor asQColor()
+    {
+        return(QColor(int(r*255.0),int(g*255.0),int(b*255.0)));
+    }
     /// color values, public accesible
     float r,g,b,a;
 };

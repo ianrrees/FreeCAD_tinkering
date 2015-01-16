@@ -34,7 +34,10 @@
 # include <QStyleOptionGraphicsItem>
 #endif
 
+#include <App/Application.h>
+#include <App/Material.h>
 #include <Base/Console.h>
+#include <Base/Parameter.h>
 
 #include <qmath.h>
 #include "QGraphicsItemView.h"
@@ -42,7 +45,8 @@
 
 using namespace DrawingGui;
 
-QGraphicsItemEdge::QGraphicsItemEdge(int ref, QGraphicsScene *scene) : reference(ref)
+QGraphicsItemEdge::QGraphicsItemEdge(int ref, QGraphicsScene *scene) :
+    reference(ref)
 {
     if(scene) {
         scene->addItem(this);
@@ -52,7 +56,7 @@ QGraphicsItemEdge::QGraphicsItemEdge(int ref, QGraphicsScene *scene) : reference
     }
 
     // Set Cache Mode for QPainter to reduce drawing required
-    setCacheMode(QGraphicsItem::DeviceCoordinateCache);
+    setCacheMode(QGraphicsItem::NoCache);
 
     strokeWidth = 1.;
     sf = 1.;
@@ -61,13 +65,24 @@ QGraphicsItemEdge::QGraphicsItemEdge(int ref, QGraphicsScene *scene) : reference
     showHidden    = false;
     isHighlighted = false;
 
+    Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
+        .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors");
+    App::Color fcColor = App::Color((uint32_t) hGrp->GetUnsigned("NormalColor", 0x00000000));
+    m_colNormal = fcColor.asQColor();
+    fcColor.setPackedValue(hGrp->GetUnsigned("SelectColor", 0x0000FF00));
+    m_colSel = fcColor.asQColor();
+    fcColor.setPackedValue(hGrp->GetUnsigned("PreSelectColor", 0x00080800));
+    m_colPre = fcColor.asQColor();
+    fcColor.setPackedValue(hGrp->GetUnsigned("HiddenColor", 0x08080800));
+    m_colHid = fcColor.asQColor();
+
     hPen.setStyle(Qt::DashLine);
     vPen.setStyle(Qt::SolidLine);
 
     // In edit mode these should be set cosmetic
     vPen.setCosmetic(isCosmetic);
     hPen.setCosmetic(isCosmetic);
-    hPen.setColor(Qt::gray);
+    setPrettyNormal();
 }
 
 void QGraphicsItemEdge::setVisiblePath(const QPainterPath &path) {
@@ -111,11 +126,9 @@ void QGraphicsItemEdge::setHighlighted(bool state)
 {
     isHighlighted = state;
     if(isHighlighted) {
-        vPen.setColor(Qt::blue);
-        hPen.setColor(Qt::blue);
+        setPrettySel();
     } else {
-        vPen.setColor(Qt::black);
-        hPen.setColor(Qt::gray);
+        setPrettyNormal();
     }
     update();
 }
@@ -123,13 +136,10 @@ void QGraphicsItemEdge::setHighlighted(bool state)
 QVariant QGraphicsItemEdge::itemChange(GraphicsItemChange change, const QVariant &value)
 {
     if (change == ItemSelectedHasChanged && scene()) {
-        // value is the new position.
         if(isSelected()) {
-            vPen.setColor(Qt::blue);
-            hPen.setColor(Qt::blue);
+            setPrettySel();
         } else {
-            vPen.setColor(Qt::black);
-            hPen.setColor(Qt::gray);
+            setPrettyNormal();
         }
         update();
     }
@@ -139,8 +149,7 @@ QVariant QGraphicsItemEdge::itemChange(GraphicsItemChange change, const QVariant
 
 void QGraphicsItemEdge::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
-    vPen.setColor(Qt::blue);
-    hPen.setColor(Qt::blue);
+    setPrettyPre();
     update();
 }
 
@@ -150,8 +159,7 @@ void QGraphicsItemEdge::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
     assert(view != 0);
 
     if(!isSelected() && !isHighlighted) {
-        vPen.setColor(Qt::black);
-        hPen.setColor(Qt::gray);
+        setPrettyNormal();
         update();
     }
 }
@@ -170,7 +178,6 @@ void QGraphicsItemEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem 
     myOption.state &= ~QStyle::State_Selected;
 
     painter->setPen(vPen);
-    painter->setBrush(vBrush);
     painter->drawPath(vPath);
 
     // hacky method to get scale for shape()
@@ -181,3 +188,19 @@ void QGraphicsItemEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem 
         painter->drawPath(hPath);
     }
 }
+
+void QGraphicsItemEdge::setPrettyNormal() {
+    vPen.setColor(m_colNormal);
+    hPen.setColor(m_colHid);
+}
+
+void QGraphicsItemEdge::setPrettyPre() {
+    vPen.setColor(m_colPre);
+    hPen.setColor(m_colPre);
+}
+
+void QGraphicsItemEdge::setPrettySel() {
+    vPen.setColor(m_colSel);
+    hPen.setColor(m_colSel);
+}
+

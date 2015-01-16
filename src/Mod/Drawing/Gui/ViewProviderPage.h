@@ -82,14 +82,13 @@ public:
 
     Drawing::FeaturePage* getPageObject() const;
     void unsetEdit(int ModNum);
-
-    // Temporary option
-    DrawingView* getDrawingView() { return showDrawingView(); }
+    virtual void show(void);
+    DrawingView* getDrawingView();
 
 protected:
     bool setEdit(int ModNum);
     bool onDelete(const std::vector<std::string> &subList);
-    DrawingView* showDrawingView();
+    bool showDrawingView();
 
 private:
     QPointer<DrawingView> view;

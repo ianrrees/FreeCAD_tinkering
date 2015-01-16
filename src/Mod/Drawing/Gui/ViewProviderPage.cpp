@@ -107,6 +107,12 @@ std::vector<std::string> ViewProviderDrawingPage::getDisplayModes(void) const
     return StrList;
 }
 
+void ViewProviderDrawingPage::show(void)
+{
+    showDrawingView();
+}
+
+
 void ViewProviderDrawingPage::onChanged(const App::Property *prop)
 {
   if (prop == &(getPageObject()->Views)) {
@@ -199,17 +205,8 @@ void ViewProviderDrawingPage::unsetEdit(int ModNum)
 }
 bool ViewProviderDrawingPage::doubleClicked(void)
 {
-//    show();
     if (!this->view) {
         showDrawingView();
-        //view->attachPageObject(getPageObject());
-        view->updateDrawing();
-        view->updateTemplate(true);
-        view->viewAll();
-    } else {
-        view->updateDrawing();
-        view->updateTemplate(true);
-    }
     Gui::getMainWindow()->setActiveWindow(this->view);
     Gui::Application::Instance->activeDocument()->setEdit(this);
     return true;
@@ -247,7 +244,8 @@ std::vector<App::DocumentObject*> ViewProviderDrawingPage::claimChildren(void) c
         return tmp;
     }
 }
-DrawingView* ViewProviderDrawingPage::showDrawingView()
+
+bool ViewProviderDrawingPage::showDrawingView()
 {
     if (!view){
         Gui::Document* doc = Gui::Application::Instance->getDocument
@@ -260,12 +258,25 @@ DrawingView* ViewProviderDrawingPage::showDrawingView()
 //        view->onRelabel(doc);
 //        view->setDocumentObject(pcObject->getNameInDocument());
         view->setWindowTitle(QObject::tr("Drawing viewer") + QString::fromAscii("[*]"));
+        view->updateDrawing();
+        view->updateTemplate(true);
         Gui::getMainWindow()->addWindow(view);
         view->viewAll();
+    } else {
+        view->updateDrawing();
+        view->updateTemplate(true);
     }
+    return true;
+}
 
-    // Update the drawing
-    return view;
+DrawingView* ViewProviderDrawingPage::getDrawingView()
+{
+    if (!view) {
+        Base::Console().Log("INFO - ViewProviderDrawingPage::getDrawingView has no view!\n");
+        return 0;
+    } else {
+        return view;
+    }
 }
 
 void ViewProviderDrawingPage::onSelectionChanged(const Gui::SelectionChanges& msg)
@@ -314,13 +325,17 @@ void ViewProviderDrawingPage::onSelectionChanged(const Gui::SelectionChanges& ms
 
 bool ViewProviderDrawingPage::onDelete(const std::vector<std::string> &subList)
 {
-
-    Gui::getMainWindow()->removeWindow(view);
-    Gui::getMainWindow()->activatePreviousWindow();
-
-
+    if (view) {
+        // TODO: if DrawingPage has children, they should be deleted too, since they are useless without the page.
+        //       logic is in the "this object has links are you sure" dialog 
+        Gui::getMainWindow()->removeWindow(view);
+        Gui::getMainWindow()->activatePreviousWindow();
+        view->deleteLater(); // Delete the drawing view;
+    } else {
+        // DrawingView is not displayed yet so don't try to delete it!
+        Base::Console().Log("INFO - ViewProviderDrawingPage::onDelete - Page object deleted when viewer not displayed\n");
+    }
     Gui::Selection().clearSelection();
-    view->deleteLater(); // Delete the drawing view;
 }
 
 Drawing::FeaturePage* ViewProviderDrawingPage::getPageObject() const

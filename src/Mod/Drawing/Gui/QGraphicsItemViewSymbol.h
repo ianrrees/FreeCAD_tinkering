@@ -81,6 +81,9 @@ protected:
     QSvgRenderer *m_svgRender;
     QGraphicsRectItem *m_borderItem;
     QPen m_pen;
+    QColor m_colNormal;
+    QColor m_colSel;
+    QColor m_colPre;
 };
 
 } // namespace DrawingViewGui

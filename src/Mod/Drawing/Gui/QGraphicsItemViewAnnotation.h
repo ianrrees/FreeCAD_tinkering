@@ -73,8 +73,8 @@ protected:
     
 protected:
     QGraphicsTextItem *m_textItem;
-    QColor m_regColor;
-    QColor m_hiColor;
+    QColor m_colNormal;
+    QColor m_colSel;
 };
 
 } // namespace DrawingViewGui

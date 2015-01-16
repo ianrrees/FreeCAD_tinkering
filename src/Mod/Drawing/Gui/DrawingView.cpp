@@ -104,6 +104,9 @@ DrawingView::DrawingView(ViewProviderDrawingPage *pageVp, Gui::Document* doc, QW
   // Setup the Canvas View
     m_view = new CanvasView(pageVp);
 
+//    m_orientation = QPrinter::Landscape;
+//    m_pageSize = QPrinter::A4;
+
     m_backgroundAction = new QAction(tr("&Background"), this);
     m_backgroundAction->setEnabled(false);
     m_backgroundAction->setCheckable(true);
@@ -150,8 +153,6 @@ DrawingView::DrawingView(ViewProviderDrawingPage *pageVp, Gui::Document* doc, QW
             this, SLOT(setRenderer(QAction *)));
 
     setCentralWidget(m_view);
-    //setWindowTitle(tr("SVG Viewer"));
-
 
     // Connect Signals and Slots
     QObject::connect(
@@ -179,13 +180,10 @@ DrawingView::~DrawingView()
   // Safely remove graphicview items that have built up TEMP SOLUTION
   for(QList<QGraphicsItemView*>::iterator it = deleteItems.begin(); it != deleteItems.end(); ++it) {
       (*it)->deleteLater();
-      (*it) = 0;
-
   }
   deleteItems.clear();
 
   delete m_view;
-  m_view = 0;
 }
 
 void DrawingView::attachTemplate(Drawing::FeatureTemplate *obj)
@@ -425,6 +423,12 @@ void DrawingView::selectionChanged()
 void DrawingView::updateTemplate(bool forceUpdate)
 {
     App::DocumentObject *templObj = pageGui->getPageObject()->Template.getValue();
+    // TODO: what if template has been deleted? templObj will be NULL. segfault?
+    if (!templObj) {
+        Base::Console().Log("INFO - DrawingView::updateTemplate - Page: %s has NO template!!\n",pageGui->getPageObject()->getNameInDocument());
+        return;
+    }
+
     if(pageGui->getPageObject()->Template.isTouched() || templObj->isTouched()) {
         // Template is touched so update
 
@@ -450,10 +454,8 @@ void DrawingView::updateDrawing()
     const std::vector<QGraphicsItemView *> &views = m_view->getViews();
     const std::vector<App::DocumentObject*> &grp  = pageGui->getPageObject()->Views.getValues();
 
-
     // Count total number of children
     int groupCount = 0;
-
 
     for(std::vector<App::DocumentObject*>::const_iterator it = grp.begin(); it != grp.end(); ++it) {
         App::DocumentObject *docObj = *it;
@@ -475,13 +477,13 @@ void DrawingView::updateDrawing()
         // Find any additions
         this->findMissingViews(grp, notFnd);
 
-         // Iterate over missing views and add them
+        // Iterate over missing views and add them
         for(std::vector<App::DocumentObject*>::const_iterator it = notFnd.begin(); it != notFnd.end(); ++it) {
             attachView(*it);
         }
 
     } else if(views.size() > groupCount) {
-        // A View Object has been removed
+        // At least 1 Drawing View has no QGraphicsItemView
         std::vector<QGraphicsItemView *>::const_iterator qview = views.begin();
         bool fnd = false;
 
@@ -496,9 +498,8 @@ void DrawingView::updateDrawing()
             if(fnd) {
                 myViews.push_back(*qview);
             } else {
-                Base::Console().Log("number of items before %i\n", m_view->scene()->items().size());
+                // TODO: this may cause segfault?? when qview is deleted later??
                 m_view->scene()->removeItem(*qview);
-                Base::Console().Log("number of items after %i\n", m_view->scene()->items().size());
                 m_view->scene()->sceneRect().adjusted(1,1,1,1);
                 m_view->scene()->sceneRect().adjusted(-1,-1,-1,-1);
                 m_view->scene()->setItemIndexMethod(QGraphicsScene::BspTreeIndex);
@@ -527,9 +528,6 @@ void DrawingView::updateDrawing()
             (*it)->updateView();
         }
     }
-
-//    m_orientation = QPrinter::Landscape;
-//    m_pageSize = QPrinter::A4;
 }
 
 void DrawingView::findMissingViews(const std::vector<App::DocumentObject*> &list, std::vector<App::DocumentObject*> &missing)
@@ -801,7 +799,7 @@ void DrawingView::printPreview()
 // This SHOULD only be temporary
 void DrawingView::saveSVG()
 {
-
+    //TODO: saveSVG is in Command.cpp?
     Drawing::FeaturePage *page = pageGui->getPageObject();
 
     QSvgGenerator svgGen;
@@ -996,141 +994,5 @@ PyObject* DrawingView::getPyObject()
     Py_Return;
 }
 
-//=======================================================================
-
-SvgView::SvgView(QWidget *parent)
-    : QGraphicsView(parent)
-    , m_renderer(Native)
-    , m_svgItem(0)
-    , m_backgroundItem(0)
-    , m_outlineItem(0)
-{
-    setScene(new QGraphicsScene(this));
-    setTransformationAnchor(AnchorUnderMouse);
-    setDragMode(ScrollHandDrag);
-
-    // Prepare background check-board pattern
-    QPixmap tilePixmap(64, 64);
-    tilePixmap.fill(Qt::white);
-    QPainter tilePainter(&tilePixmap);
-    QColor color(220, 220, 220);
-    tilePainter.fillRect(0, 0, 32, 32, color);
-    tilePainter.fillRect(32, 32, 32, 32, color);
-    tilePainter.end();
-
-    setBackgroundBrush(tilePixmap);
-}
-
-void SvgView::drawBackground(QPainter *p, const QRectF &)
-{
-    p->save();
-    p->resetTransform();
-    p->drawTiledPixmap(viewport()->rect(), backgroundBrush().texture());
-    p->restore();
-}
-
-void SvgView::openFile(const QFile &file)
-{
-    if (!file.exists())
-        return;
-
-    QGraphicsScene *s = scene();
-
-    bool drawBackground = (m_backgroundItem ? m_backgroundItem->isVisible() : true);
-    bool drawOutline = (m_outlineItem ? m_outlineItem->isVisible() : false);
-
-    s->clear();
-    resetTransform();
-
-    m_svgItem = new QGraphicsSvgItem(file.fileName());
-    m_svgItem->setFlags(QGraphicsItem::ItemClipsToShape);
-    m_svgItem->setCacheMode(QGraphicsItem::NoCache);
-    m_svgItem->setZValue(0);
-
-    m_backgroundItem = new QGraphicsRectItem(m_svgItem->boundingRect());
-    m_backgroundItem->setBrush(Qt::white);
-    m_backgroundItem->setPen(Qt::NoPen);
-    m_backgroundItem->setVisible(drawBackground);
-    m_backgroundItem->setZValue(-1);
-
-    m_outlineItem = new QGraphicsRectItem(m_svgItem->boundingRect());
-    QPen outline(Qt::black, 2, Qt::DashLine);
-    outline.setCosmetic(true);
-    m_outlineItem->setPen(outline);
-    m_outlineItem->setBrush(Qt::NoBrush);
-    m_outlineItem->setVisible(drawOutline);
-    m_outlineItem->setZValue(1);
-
-    s->addItem(m_backgroundItem);
-    s->addItem(m_svgItem);
-    s->addItem(m_outlineItem);
-
-    s->setSceneRect(m_outlineItem->boundingRect().adjusted(-10, -10, 10, 10));
-}
-
-void SvgView::setRenderer(RendererType type)
-{
-    m_renderer = type;
-
-    if (m_renderer == OpenGL) {
-#ifndef QT_NO_OPENGL
-        setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
-#endif
-    } else {
-        setViewport(new QWidget);
-    }
-}
-
-void SvgView::setHighQualityAntialiasing(bool highQualityAntialiasing)
-{
-#ifndef QT_NO_OPENGL
-    setRenderHint(QPainter::HighQualityAntialiasing, highQualityAntialiasing);
-#else
-    Q_UNUSED(highQualityAntialiasing);
-#endif
-}
-
-void SvgView::setViewBackground(bool enable)
-{
-    if (!m_backgroundItem)
-        return;
-
-    m_backgroundItem->setVisible(enable);
-}
-
-void SvgView::setViewOutline(bool enable)
-{
-    if (!m_outlineItem)
-        return;
-
-    m_outlineItem->setVisible(enable);
-}
-
-void SvgView::paintEvent(QPaintEvent *event)
-{
-    if (m_renderer == Image) {
-        if (m_image.size() != viewport()->size()) {
-            m_image = QImage(viewport()->size(), QImage::Format_ARGB32_Premultiplied);
-        }
-
-        QPainter imagePainter(&m_image);
-        QGraphicsView::render(&imagePainter);
-        imagePainter.end();
-
-        QPainter p(viewport());
-        p.drawImage(0, 0, m_image);
-
-    } else {
-        QGraphicsView::paintEvent(event);
-    }
-}
-
-void SvgView::wheelEvent(QWheelEvent *event)
-{
-    qreal factor = std::pow(1.2, -event->delta() / 240.0);
-    scale(factor, factor);
-    event->accept();
-}
-
-
 #include "moc_DrawingView.cpp"
+

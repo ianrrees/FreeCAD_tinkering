@@ -59,6 +59,7 @@ public:
 
     App::DocumentObject * addOrthoView(const char *viewProjType);
     int  removeOrthoView(const char *viewProjType);
+    bool distributeOrthoViews(void);
 
     short mustExecute() const;
     /** @name methods overide Feature */

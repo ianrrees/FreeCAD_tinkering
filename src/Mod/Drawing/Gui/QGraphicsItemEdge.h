@@ -1,7 +1,7 @@
 /***************************************************************************
  *   Copyright (c) 2013 Luke Parry <l.parry@warwick.ac.uk>                 *
  *                                                                         *
- *   This file is part of the FreeCAD CAx development system.           *
+ *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
  *   This library is free software; you can redistribute it and/or         *
  *   modify it under the terms of the GNU Library General Public           *
@@ -10,7 +10,7 @@
  *                                                                         *
  *   This library  is distributed in the hope that it will be useful,      *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU Library General Public License for more details.                  *
  *                                                                         *
  *   You should have received a copy of the GNU Library General Public     *
@@ -63,6 +63,9 @@ public:
     bool contains(const QPointF &point) const;
     QPainterPath shape() const;
     QRectF boundingRect() const;
+    void setPrettyNormal();
+    void setPrettyPre();
+    void setPrettySel();
     virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 
 protected:
@@ -72,25 +75,31 @@ protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
 protected:
-  int reference;
-  QPainterPath hPath;
-  QPainterPath vPath;
+    int reference;
+    QPainterPath hPath;
+    QPainterPath vPath;
 
-  QBrush hBrush;
-  QBrush vBrush;
-  QPen   vPen;
-  QPen   hPen;
+    QBrush hBrush;
+    QBrush vBrush;
+    QPen   vPen;
+    QPen   hPen;
 
-  float sf;
-  bool isHighlighted;
-  bool isCosmetic;
-  bool showHidden;
+    float sf;
+    bool isHighlighted;
+    bool isCosmetic;
+    bool showHidden;
 
 private:
-float strokeWidth;
-
+    float strokeWidth;
+    QPen m_pen;
+    QBrush m_brush;
+    QColor m_colNormal;
+    QColor m_colPre;
+    QColor m_colSel;
+    QColor m_colHid;
 };
 
 } // namespace DrawingViewGui
 
 #endif // DRAWINGGUI_QGRAPHICSITEMEDGE_H
+

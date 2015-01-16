@@ -120,38 +120,6 @@ private:
     QList<QGraphicsItemView *> deleteItems;
 };
 
-class DrawingGuiExport SvgView : public QGraphicsView
-{
-    Q_OBJECT
-
-public:
-    enum RendererType { Native, OpenGL, Image };
-
-    SvgView(QWidget *parent = 0);
-
-    void openFile(const QFile &file);
-    void setRenderer(RendererType type = Native);
-    void drawBackground(QPainter *p, const QRectF &rect);
-
-public Q_SLOTS:
-    void setHighQualityAntialiasing(bool highQualityAntialiasing);
-    void setViewBackground(bool enable);
-    void setViewOutline(bool enable);
-
-protected:
-    void wheelEvent(QWheelEvent *event);
-    void paintEvent(QPaintEvent *event);
-
-private:
-    RendererType m_renderer;
-
-    QGraphicsItem *m_svgItem;
-    QGraphicsRectItem *m_backgroundItem;
-    QGraphicsRectItem *m_outlineItem;
-
-    QImage m_image;
-};
-
 
 } // namespace DrawingViewGui
 

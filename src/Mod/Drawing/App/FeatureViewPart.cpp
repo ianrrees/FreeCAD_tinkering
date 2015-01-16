@@ -126,13 +126,12 @@ void FeatureViewPart::onChanged(const App::Property* prop)
         prop == &ShowHiddenLines) {
           if (!this->isRestoring()) {
               if(prop->isTouched()) {
-                  FeatureViewPart::execute();
+                  FeatureViewPart::execute();            // TODO: sb this->execute() for derived classes (ex Section) with execute override??
               }
           }
     }
 }
 
-// massive changes to execute()
 App::DocumentObjectExecReturn *FeatureViewPart::execute(void)
 {
     //## Get the Part Link ##/

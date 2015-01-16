@@ -1,7 +1,7 @@
 /***************************************************************************
  *   Copyright (c) 2014 Luke Parry    <l.parry@warwick.ac.uk>              *
  *                                                                         *
- *   This file is part of the FreeCAD CAx development system.           *
+ *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
  *   This library is free software; you can redistribute it and/or         *
  *   modify it under the terms of the GNU Library General Public           *
@@ -10,7 +10,7 @@
  *                                                                         *
  *   This library  is distributed in the hope that it will be useful,      *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU Library General Public License for more details.                  *
  *                                                                         *
  *   You should have received a copy of the GNU Library General Public     *
@@ -67,7 +67,7 @@ ViewProviderOrthoView::~ViewProviderOrthoView()
 void ViewProviderOrthoView::attach(App::DocumentObject *pcFeat)
 {
     // call parent attach method
-    ViewProviderDocumentObject::attach(pcFeat);
+    ViewProviderViewPart::attach(pcFeat);
 }
 
 void ViewProviderOrthoView::setDisplayMode(const char* ModeName)
@@ -86,13 +86,9 @@ std::vector<std::string> ViewProviderOrthoView::getDisplayModes(void) const
 void ViewProviderOrthoView::updateData(const App::Property* prop)
 {
     Gui::ViewProviderDocumentObject::updateData(prop);
-
-
     Drawing::FeatureOrthoView* ortho = getObject();
 
     if(ortho) {
-
-
         // Set the icon pixmap depending on the orientation
         std::string projType = ortho->Type.getValueAsString();
 

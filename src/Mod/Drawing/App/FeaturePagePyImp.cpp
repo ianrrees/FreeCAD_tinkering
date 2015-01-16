@@ -24,7 +24,7 @@ PyObject* FeaturePagePy::addView(PyObject* args)
     PyObject *pcFeatView;
 
     if (!PyArg_ParseTuple(args, "O!", &(Drawing::FeatureViewPy::Type), &pcFeatView)) {     // convert args: Python->C
-        Base::Console().Message("DEBUG: FeaturePagePy::addView - Bad Args\n");
+        Base::Console().Error("Error: FeaturePagePy::addView - Bad Args\n");
         return NULL;                             // NULL triggers exception
     }
 

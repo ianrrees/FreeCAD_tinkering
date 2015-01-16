@@ -28,6 +28,8 @@
         <file>icons/actions/drawing-landscape-new.svg</file>
         <file>icons/actions/drawing-landscape.svg</file>
         <file>icons/actions/drawing-portrait-A4.svg</file>
+        <file>icons/actions/saveSVG.svg</file>
+        <file>icons/actions/drawing-symbol.svg</file>
         <file>icons/actions/drawing-view.svg</file>
         <file>icons/actions/drawing-orthoviews.svg</file>
         <file>icons/actions/drawing-openbrowser.svg</file>

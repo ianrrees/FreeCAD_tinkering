@@ -97,6 +97,10 @@ FeatureViewSection::FeatureViewSection()
     geometryObject = new DrawingGeometry::GeometryObject();
 }
 
+FeatureViewSection::~FeatureViewSection()
+{
+}
+
 short FeatureViewSection::mustExecute() const
 {
     // If Tolerance Property is touched
@@ -106,10 +110,6 @@ short FeatureViewSection::mustExecute() const
           return 1;
 
     return Drawing::FeatureViewPart::mustExecute();
-}
-
-FeatureViewSection::~FeatureViewSection()
-{
 }
 
 App::DocumentObjectExecReturn *FeatureViewSection::execute(void)
@@ -209,13 +209,20 @@ App::DocumentObjectExecReturn *FeatureViewSection::execute(void)
 
     try {
         geometryObject->setTolerance(Tolerance.getValue());
+        geometryObject->setScale(Scale.getValue());
         geometryObject->extractGeometry(result, Direction.getValue(), ShowHiddenLines.getValue(), XAxisDirection.getValue());
-        return App::DocumentObject::StdReturn;
+
+        this->calcBoundingBox();
+        this->touch();
+
+        //return App::DocumentObject::StdReturn;
     }
     catch (Standard_Failure) {
         Handle_Standard_Failure e = Standard_Failure::Caught();
         return new App::DocumentObjectExecReturn(e->GetMessageString());
     }
+    // TODO: touch references? see FeatureViewPart.execute()
+    return FeatureView::execute();
 }
 
 gp_Pln FeatureViewSection::getSectionPlane() const

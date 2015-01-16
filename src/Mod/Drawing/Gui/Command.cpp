@@ -21,10 +21,18 @@
 # include <QRegExp>
 #endif
 
+#include <QStringBuilder>
+
+#include <QGraphicsView>
+#include <QPainter>
+#include <QSvgRenderer>
+#include <QSvgGenerator>
+
 #include <vector>
 
 #include <App/PropertyGeo.h>
 
+#include <App/Document.h>
 #include <App/DocumentObject.h>
 #include <Base/Console.h>
 #include <Gui/Action.h>
@@ -39,18 +47,18 @@
 #include <Gui/ViewProvider.h>
 
 #include <Mod/Part/App/PartFeature.h>
-# include <Mod/Drawing/App/FeatureViewPart.h>
-# include <Mod/Drawing/App/FeatureOrthoView.h>
-# include <Mod/Drawing/App/FeatureViewOrthographic.h>
-# include <Mod/Drawing/App/FeatureViewDimension.h>
+#include <Mod/Drawing/App/FeatureViewPart.h>
+#include <Mod/Drawing/App/FeatureOrthoView.h>
+#include <Mod/Drawing/App/FeatureViewOrthographic.h>
+#include <Mod/Drawing/App/FeatureViewDimension.h>
 #include <Mod/Drawing/App/FeaturePage.h>
+#include <Mod/Drawing/Gui/CanvasView.h>
 
 
 #include "DrawingView.h"
 #include "TaskDialog.h"
-//#include "TaskOrthoViews.h"
-# include "TaskOrthographicViews.h"
-# include "ViewProviderPage.h"
+#include "TaskOrthographicViews.h"
+#include "ViewProviderPage.h"
 
 using namespace DrawingGui;
 using namespace std;
@@ -118,16 +126,15 @@ void CmdDrawingNewPage::activated(int iMsg)
     Gui::ActionGroup* pcAction = qobject_cast<Gui::ActionGroup*>(_pcAction);
     QAction* a = pcAction->actions()[iMsg];
 
-//    std::string FeatName = getUniqueObjectName("Page");
     std::string PageName = getUniqueObjectName("Page");
     std::string TemplateName = getUniqueObjectName("Template");
 
+    //TODO: message doesn't appear until after this method exits.  :(
+    //Gui::getMainWindow()->showMessage(QObject::tr("Please wait. Loading Template file."),2001);
     QFileInfo tfi(a->property("Template").toString());
     if (tfi.isReadable()) {
         openCommand("Drawing create page");
         doCommand(Doc,"App.activeDocument().addObject('Drawing::FeaturePage','%s')",PageName.c_str());
-//        doCommand(Doc,"App.activeDocument().%s.Template = '%s'",FeatName.c_str(), (const char*)tfi.filePath().toUtf8());
-//        doCommand(Doc,"App.activeDocument().recompute()");
 
         // Create the Template Object to attach to the page
         doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureSVGTemplate','%s')",TemplateName.c_str());
@@ -138,6 +145,15 @@ void CmdDrawingNewPage::activated(int iMsg)
         doCommand(Doc,"App.activeDocument().%s.Template = App.activeDocument().%s",PageName.c_str(),TemplateName.c_str());
 
         commitCommand();
+        Drawing::FeaturePage* fp = dynamic_cast<Drawing::FeaturePage*>(getDocument()->getObject(PageName.c_str()));
+        Gui::ViewProvider* vp = Gui::Application::Instance->getDocument(getDocument())->getViewProvider(fp);
+        DrawingGui::ViewProviderDrawingPage* dvp = dynamic_cast<DrawingGui::ViewProviderDrawingPage*>(vp);
+        if (dvp) {
+            dvp->show();
+        }
+        else {
+            Base::Console().Log("INFO - Template: %s for Page: %s NOT Found\n", PageName.c_str(),TemplateName.c_str());
+        }
     }
     else {
         QMessageBox::critical(Gui::getMainWindow(),
@@ -160,6 +176,8 @@ Gui::Action * CmdDrawingNewPage::createAction(void)
 
     std::string path = App::Application::getResourceDir();
     path += "Mod/Drawing/Templates/";
+    //TODO: having size/orientation/id embedded in template file name is rubbish!
+    //      want file chooser and extract info from xml?
     QDir dir(QString::fromUtf8(path.c_str()), QString::fromAscii("*.svg"));
     for (unsigned int i=0; i<dir.count(); i++ ) {
         QRegExp rx(QString::fromAscii("(A|B|C|D|E)(\\d)_(Landscape|Portrait)(_.*\\.|\\.)svg$"));
@@ -295,6 +313,7 @@ bool CmdDrawingNewPage::isActive(void)
 // Drawing_NewA3Landscape
 //===========================================================================
 
+//TODO: check if obsolete
 DEF_STD_CMD_A(CmdDrawingNewA3Landscape);
 
 CmdDrawingNewA3Landscape::CmdDrawingNewA3Landscape()
@@ -479,7 +498,7 @@ CmdDrawingOrthoViews::CmdDrawingOrthoViews()
     sAppModule      = "Drawing";
     sGroup          = QT_TR_NOOP("Drawing");
     sMenuText       = QT_TR_NOOP("Insert orthographic views");
-    sToolTipText    = QT_TR_NOOP("Insert an orthographic projection of a part in the active drawing");
+    sToolTipText    = QT_TR_NOOP("Insert orthographic projections of a part into the active drawing");
     sWhatsThis      = "Drawing_OrthoView";
     sStatusTip      = sToolTipText;
     sPixmap         = "actions/drawing-orthoviews";
@@ -487,6 +506,7 @@ CmdDrawingOrthoViews::CmdDrawingOrthoViews()
 
 void CmdDrawingOrthoViews::activated(int iMsg)
 {
+    // Check that a Part::Feature is in the Selection
     std::vector<App::DocumentObject*> shapes = getSelection().getObjectsOfType(Part::Feature::getClassTypeId());
     if (shapes.size() != 1) {
         QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
@@ -494,46 +514,50 @@ void CmdDrawingOrthoViews::activated(int iMsg)
         return;
     }
 
-    // Check that a page object exists. TaskDlgOrthoViews will then check for a selected page object
-    // and use that, otherwise it will use the first page in the document.
-    const std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
-    if (pages.empty()) {
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page found"),
-            QObject::tr("Create a page first."));
-        return;
+    // Check if a Drawing Page is in the Selection.
+    Drawing::FeaturePage *page;
+    const std::vector<App::DocumentObject*> selPages = getSelection().getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+    if (!selPages.empty()) {
+        page = dynamic_cast<Drawing::FeaturePage *>(selPages.front());
+    } else {
+        // Check that any page object exists in Document 
+        const std::vector<App::DocumentObject*> docPages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+        if (!docPages.empty()) {
+            page = dynamic_cast<Drawing::FeaturePage *>(docPages.front());
+        } else {
+            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No Drawing Page found"),
+                                 QObject::tr("Create a Drawing Page first."));
+            return;
+        }
     }
-
-//    Gui::Control().showDialog(new TaskDlgOrthoViews());
-    std::string PageName = pages.front()->getNameInDocument();
-
-    Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
+// TODO: is there a way to use "Active Page" instead of pages.front? if a second page is in the document, we will always
+//       use page#1 if there isn't a page in the selection.
 
     openCommand("Create Orthographic View");
-    for (std::vector<App::DocumentObject*>::iterator it = shapes.begin(); it != shapes.end(); ++it) {
-        std::string FeatName = getUniqueObjectName("cView");
-        doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewOrthographic','%s')",FeatName.c_str());
-        doCommand(Doc,"App.activeDocument().%s.Source = App.activeDocument().%s",FeatName.c_str(),(*it)->getNameInDocument());
-        doCommand(Doc,"App.activeDocument().%s.X = %f",     FeatName.c_str(), page->getPageWidth() / 2);
-        doCommand(Doc,"App.activeDocument().%s.Y = %f",     FeatName.c_str(), page->getPageHeight() / 2);
-        doCommand(Doc,"App.activeDocument().%s.Scale = 1.0",FeatName.c_str());
+    std::string multiViewName = getUniqueObjectName("cView");
+    std::string SourceName = (*shapes.begin())->getNameInDocument();
+    doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewOrthographic','%s')",multiViewName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.Source = App.activeDocument().%s",multiViewName.c_str(),SourceName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.X = %f",     multiViewName.c_str(), page->getPageWidth() / 2);
+    doCommand(Doc,"App.activeDocument().%s.Y = %f",     multiViewName.c_str(), page->getPageHeight() / 2);
+    doCommand(Doc,"App.activeDocument().%s.Scale = 1.0",multiViewName.c_str());
 
+    App::DocumentObject *docObj = getDocument()->getObject(multiViewName.c_str());
+    Drawing::FeatureViewOrthographic *multiView = dynamic_cast<Drawing::FeatureViewOrthographic *>(docObj);
 
+    // set the anchor
+    App::DocumentObject* anchorView = multiView->addOrthoView("Front");
+    std::string anchorName = anchorView->getNameInDocument();
+    doCommand(Doc,"App.activeDocument().%s.Anchor = App.activeDocument().%s",multiViewName.c_str(),anchorName.c_str());
 
-        App::DocumentObject *docObj = getDocument()->getObject(FeatName.c_str());
-        Drawing::FeatureViewOrthographic *viewOrtho = dynamic_cast<Drawing::FeatureViewOrthographic *>(docObj);
+    // create the rest of the desired views
+    Gui::Control().showDialog(new TaskDlgOrthographicViews(multiView));
 
-        viewOrtho->addOrthoView("Front");
-        page->addView(getDocument()->getObject(FeatName.c_str()));
+    // add the multiView to the page
+    page->addView(getDocument()->getObject(multiViewName.c_str()));
 
-
-
-        //doCommand(Gui,"Gui.activeDocument().setEdit('%s')", FeatName.c_str());
-    }
     updateActive();
     commitCommand();
-
-
-
 }
 
 bool CmdDrawingOrthoViews::isActive(void)
@@ -593,9 +617,9 @@ CmdDrawingAnnotation::CmdDrawingAnnotation()
     // setting the Gui eye-candy
     sGroup        = QT_TR_NOOP("Drawing");
     sMenuText     = QT_TR_NOOP("&Annotation");
-    sToolTipText  = QT_TR_NOOP("Inserts an Annotation view in the active drawing");
+    sToolTipText  = QT_TR_NOOP("Inserts an Annotation in the active drawing");
     sWhatsThis    = "Drawing_Annotation";
-    sStatusTip    = QT_TR_NOOP("Inserts an Annotation view in the active drawing");
+    sStatusTip    = QT_TR_NOOP("Inserts an Annotation in the active drawing");
     sPixmap       = "actions/drawing-annotation";
 }
 
@@ -684,7 +708,7 @@ CmdDrawingSymbol::CmdDrawingSymbol()
 {
     // setting the Gui eye-candy
     sGroup        = QT_TR_NOOP("Drawing");
-    sMenuText     = QT_TR_NOOP("&Symbol");
+    sMenuText     = QT_TR_NOOP("Insert SVG &Symbol");
     sToolTipText  = QT_TR_NOOP("Inserts a symbol from a svg file in the active drawing");
     sWhatsThis    = "Drawing_Symbol";
     sStatusTip    = QT_TR_NOOP("Inserts a symbol from a svg file in the active drawing");
@@ -744,37 +768,69 @@ CmdDrawingExportPage::CmdDrawingExportPage()
     sToolTipText  = QT_TR_NOOP("Export a page to an SVG file");
     sWhatsThis    = "Drawing_ExportPage";
     sStatusTip    = QT_TR_NOOP("Export a page to an SVG file");
-    sPixmap       = "document-save";
+    sPixmap       = "actions/saveSVG";
 }
 
 void CmdDrawingExportPage::activated(int iMsg)
 {
-    Base::Console().Error("Need to implemenet CmdDrawingExportPage::activated");
+    std::vector<App::DocumentObject*> pages = getSelection().getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+    if (pages.empty()) {                                   // no Pages in Selection
+        pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+        if (pages.empty()) {                               // no Pages in Document
+            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No pages found"),
+                                 QObject::tr("Create a drawing page first."));
+            return;
+        }
+    }
 
-/*    unsigned int n = getSelection().countObjectsOfType(Drawing::FeaturePage::getClassTypeId());
-    if (n != 1) {
+    unsigned int n = getSelection().countObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+    if (n != 1) {                                          // too many Pages
         QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
-            QObject::tr("Select one Page object."));
+            QObject::tr("Select only one Page object."));
         return;
     }
 
+    Drawing::FeaturePage* page = dynamic_cast<Drawing::FeaturePage*>(pages.front());
+    QString pageName = QString::fromLocal8Bit(page->getNameInDocument());
+    Gui::MainWindow* mw = Gui::getMainWindow();
+    QGraphicsView* v = mw->findChild<QGraphicsView*>(pageName);
+    if (!v) {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No Drawing View"),
+            QObject::tr("Open Drawing View before attempting export to SVG."));
+        return;
+    }
+
+    // TODO: move all this logic to AppDrawing??
     QStringList filter;
     filter << QString::fromLatin1("%1 (*.svg)").arg(QObject::tr("Scalable Vector Graphic"));
     filter << QString::fromLatin1("%1 (*.*)").arg(QObject::tr("All Files"));
+    QString fn = Gui::FileDialog::getSaveFileName(Gui::getMainWindow(), QObject::tr("Export page as SVG"), 
+                                                  QString(), filter.join(QLatin1String(";;")));
 
-    QString fn = Gui::FileDialog::getSaveFileName(Gui::getMainWindow(), QObject::tr("Export page"), QString(), filter.join(QLatin1String(";;")));
     if (!fn.isEmpty()) {
-        std::vector<Gui::SelectionSingleton::SelObj> Sel = getSelection().getSelection();
-        openCommand("Drawing export page");
-
-        doCommand(Doc,"PageFile = open(App.activeDocument().%s.PageResult,'r')",Sel[0].FeatName);
+        QString docName = QString::fromLocal8Bit(this->getDocument()->getName());
         std::string fname = (const char*)fn.toUtf8();
-        doCommand(Doc,"OutFile = open(unicode(\"%s\",'utf-8'),'w')",fname.c_str());
-        doCommand(Doc,"OutFile.write(PageFile.read())");
-        doCommand(Doc,"del OutFile,PageFile");
-
-        commitCommand();
-    }*/
+        QString viewName = v->objectName();
+        if (pageName == viewName) {
+            QSvgGenerator svgGen;
+            svgGen.setFileName(fn);
+            svgGen.setSize(QSize(page->getPageWidth(), page->getPageHeight()));
+            svgGen.setViewBox(QRect(0, 0, page->getPageWidth(), page->getPageHeight()));
+            svgGen.setTitle(QObject::tr("FreeCAD SVG Export"));
+            svgGen.setDescription(QString::fromLocal8Bit("Drawing page: ") %
+                                  pageName %
+                                  QString::fromLocal8Bit("exported from FreeCAD document: ") %
+                                  docName);
+            QPainter painter( &svgGen );
+            DrawingGui::CanvasView* cv = dynamic_cast<DrawingGui::CanvasView*>(v);
+            //cv->toggleEdit(false);
+            cv->scene()->update();
+            cv->scene()->render( &painter );
+            //cv->toggleEdit(true);
+        }
+    }
+//        openCommand("Drawing export page");
+//        commitCommand();
 }
 
 bool CmdDrawingExportPage::isActive(void)
@@ -852,13 +908,13 @@ void CreateDrawingCommands(void)
 {
     Gui::CommandManager &rcCmdMgr = Gui::Application::Instance->commandManager();
 
-    rcCmdMgr.addCommand(new CmdDrawingOpen());
+//    rcCmdMgr.addCommand(new CmdDrawingOpen());
     rcCmdMgr.addCommand(new CmdDrawingNewPage());
     rcCmdMgr.addCommand(new CmdDrawingNewA3Landscape());
     rcCmdMgr.addCommand(new CmdDrawingNewView());
     rcCmdMgr.addCommand(new CmdDrawingNewViewSection());
     rcCmdMgr.addCommand(new CmdDrawingOrthoViews());
-    rcCmdMgr.addCommand(new CmdDrawingOpenBrowserView());
+//    rcCmdMgr.addCommand(new CmdDrawingOpenBrowserView());
     rcCmdMgr.addCommand(new CmdDrawingAnnotation());
 //    rcCmdMgr.addCommand(new CmdDrawingClip());
     rcCmdMgr.addCommand(new CmdDrawingSymbol());

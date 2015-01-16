@@ -42,7 +42,10 @@
 
 #include <qmath.h>
 
+#include <App/Application.h>
+#include <App/Material.h>
 #include <Base/Console.h>
+#include <Base/Parameter.h>
 
 #include "../App/FeatureViewAnnotation.h"
 #include "QGraphicsItemViewAnnotation.h"
@@ -51,7 +54,7 @@ using namespace DrawingGui;
 
 QGraphicsItemViewAnnotation::QGraphicsItemViewAnnotation(const QPoint &pos, QGraphicsScene *scene) :QGraphicsItemView(pos, scene)
 {
-    this->setCacheMode(QGraphicsItem::DeviceCoordinateCache);
+    this->setCacheMode(QGraphicsItem::NoCache);
     this->setFlag(ItemSendsGeometryChanges, true);
     this->setFlag(ItemIsMovable, true);
     this->setFlag(ItemIsSelectable, true);
@@ -60,14 +63,17 @@ QGraphicsItemViewAnnotation::QGraphicsItemViewAnnotation(const QPoint &pos, QGra
 
     m_textItem = new QGraphicsTextItem();
     this->addToGroup(m_textItem);
-    m_regColor = QColor(0,0,0);                    // black
-    m_hiColor = QColor(0,0,255);                   // blue   sb a preference?
+    Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
+        .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors");
+    App::Color fcColor = App::Color((uint32_t) hGrp->GetUnsigned("NormalColor", 0x00000000));
+    m_colNormal = fcColor.asQColor();
+    fcColor.setPackedValue(hGrp->GetUnsigned("SelectColor", 0x0000FF00));
+    m_colSel = fcColor.asQColor();
 }
 
 QGraphicsItemViewAnnotation::~QGraphicsItemViewAnnotation()
 {
-    this->removeFromGroup(m_textItem);
-    delete(m_textItem);
+    // m_textItem belongs to this group and will be deleted by parent
 }
 
 void QGraphicsItemViewAnnotation::draw()
@@ -100,7 +106,8 @@ void QGraphicsItemViewAnnotation::updateView(bool update)
     m_textItem->setFont(font);
 
     App::Color c = viewAnno->TextColor.getValue();
-    m_regColor.setRgbF(c.r,c.g,c.b,1.0 - c.a);
+    m_colNormal = c.asQColor();
+    m_textItem->setDefaultTextColor(m_colSel);
 
     QString qs = QString::fromUtf8(ss.str().c_str()); 
     m_textItem->setPlainText(qs);
@@ -123,10 +130,10 @@ QVariant QGraphicsItemViewAnnotation::itemChange(GraphicsItemChange change, cons
     if (change == ItemSelectedHasChanged && scene()) {
         if(isSelected()) {
             Q_EMIT selected(true);
-            m_textItem->setDefaultTextColor(m_hiColor);
+            m_textItem->setDefaultTextColor(m_colSel);
         } else {
             Q_EMIT selected(false);
-            m_textItem->setDefaultTextColor(m_regColor);
+            m_textItem->setDefaultTextColor(m_colNormal);
         }
         update();
     } else if(change == ItemPositionHasChanged && scene()) {
@@ -154,7 +161,7 @@ void QGraphicsItemViewAnnotation::updatePos()
 void QGraphicsItemViewAnnotation::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
     Q_EMIT hover(true);
-    m_textItem->setDefaultTextColor(m_hiColor);
+    m_textItem->setDefaultTextColor(m_colSel);
     update();
 }
 
@@ -163,15 +170,14 @@ void QGraphicsItemViewAnnotation::hoverLeaveEvent(QGraphicsSceneHoverEvent *even
     QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *> (this->parentItem());
     //assert(view != 0);                 // this fails sometimes. ==> this has no parent?
     if (!view) {
-        Base::Console().Log("DEBUG - QGraphicsItemViewAnnotation::hoverLeaveEvent view == 0 (no parent?)\n");
-        m_textItem->setDefaultTextColor(m_regColor);
+        m_textItem->setDefaultTextColor(m_colNormal);
         update();
         return;
     }
 
     Q_EMIT hover(false);
     if(!isSelected() && !view->isSelected()) {
-        m_textItem->setDefaultTextColor(m_regColor);
+        m_textItem->setDefaultTextColor(m_colNormal);
         update();
     }
 }
@@ -181,7 +187,7 @@ void QGraphicsItemViewAnnotation::mouseReleaseEvent( QGraphicsSceneMouseEvent * 
     if(scene() && this == scene()->mouseGrabberItem()) {
         Q_EMIT dragFinished();
     }
-    m_textItem->setDefaultTextColor(m_regColor);
+    m_textItem->setDefaultTextColor(m_colNormal);
     QGraphicsItemView::mouseReleaseEvent(event);
     update();
 }

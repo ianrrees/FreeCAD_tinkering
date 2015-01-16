@@ -88,7 +88,10 @@ CanvasView::CanvasView(ViewProviderDrawingPage *vp, QWidget *parent)
 {
     assert(vp);
     pageGui = vp;
+    const char* name = vp->getPageObject()->getNameInDocument();
+    this->setObjectName(QString::fromLocal8Bit(name));
 
+//TODO: isn't this upside down? view as parent of scene??
     setScene(new QGraphicsScene(this));
     //setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
     setCacheMode(QGraphicsView::CacheBackground);
@@ -99,7 +102,7 @@ CanvasView::CanvasView(ViewProviderDrawingPage *vp, QWidget *parent)
     setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
 
     m_backgroundItem = new QGraphicsRectItem();
-    m_backgroundItem->setCacheMode(QGraphicsItem::ItemCoordinateCache);
+    m_backgroundItem->setCacheMode(QGraphicsItem::NoCache);
     m_backgroundItem->setZValue(-999999);
 //     this->scene()->addItem(m_backgroundItem); // TODO IF SEGFAULTS WITH DRAW ENABLE THIS (REDRAWS ARE SLOWER :s)
 
@@ -195,42 +198,24 @@ QGraphicsItemView * CanvasView::addViewSection(Drawing::FeatureViewPart *part)
 }
 
 QGraphicsItemView * CanvasView::addViewOrthographic(Drawing::FeatureViewOrthographic *view) {
-    // This essentially adds a null view feature to ensure view size is consistent
     QGraphicsItemViewCollection *qview = new  QGraphicsItemViewOrthographic(QPoint(0,0), this->scene());
     qview->setViewFeature(view);
-
     this->addView(qview);
-
-    // Add child views
-    std::vector<App::DocumentObject *> childViews = view->Views.getValues();
-
-    for(std::vector<App::DocumentObject *>::iterator it = childViews.begin(); it != childViews.end(); ++it) {
-        App::DocumentObject *obj = *it;
-        if(obj->isDerivedFrom(Drawing::FeatureViewPart::getClassTypeId())) {
-            this->addViewPart(static_cast<Drawing::FeatureViewPart *>(*it));
-        }
-    }
-
     return qview;
-
 }
 
 QGraphicsItemView * CanvasView::addFeatureView(Drawing::FeatureView *view)
 {
-    // This essentially adds a null view feature to ensure view size is consistent
     QGraphicsItemView *qview = new  QGraphicsItemView(QPoint(0,0), this->scene());
     qview->setViewFeature(view);
-
     this->addView(qview);
     return qview;
 }
 
 QGraphicsItemView * CanvasView::addFeatureViewCollection(Drawing::FeatureViewCollection *view)
 {
-    // This essentially adds a null view feature to ensure view size is consistent
     QGraphicsItemViewCollection *qview = new  QGraphicsItemViewCollection(QPoint(0,0), this->scene());
     qview->setViewFeature(view);
-
     this->addView(qview);
     return qview;
 }
@@ -447,6 +432,7 @@ void CanvasView::setViewOutline(bool enable)
 
 void CanvasView::toggleEdit(bool enable)
 {
+// TODO: needs fiddling to handle items that don't inherit QGraphicsItemViewPart: Annotation, Symbol, Templates, Edges, Faces, Vertices,...
     QList<QGraphicsItem *> list = this->scene()->items();
 
     for (QList<QGraphicsItem *>::iterator it = list.begin(); it != list.end(); ++it) {
@@ -466,7 +452,8 @@ void CanvasView::toggleEdit(bool enable)
 
         QGraphicsItem *item = dynamic_cast<QGraphicsItem *>(*it);
         if(item) {
-            item->setCacheMode((enable) ? QGraphicsItem::DeviceCoordinateCache : QGraphicsItem::NoCache);
+            //item->setCacheMode((enable) ? QGraphicsItem::DeviceCoordinateCache : QGraphicsItem::NoCache);
+            item->setCacheMode((enable) ? QGraphicsItem::NoCache : QGraphicsItem::NoCache);
             item->update();
         }
     }

@@ -180,6 +180,12 @@ void FeaturePage::onChanged(const App::Property* prop)
         }
     }
 
+    if (prop == &Views) {
+        if (!this->isRestoring()) {
+            //TODO: reload if Views prop changes (ie adds/deletes)
+            //this->touch();
+        }
+    }
     if(prop == &Scale) {
         // touch all views in the Page as they may be dependent on this scale
       const std::vector<App::DocumentObject*> &vals = Views.getValues();

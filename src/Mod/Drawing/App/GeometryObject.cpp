@@ -851,19 +851,13 @@ void GeometryObject::createWire(const TopoDS_Shape &input, std::vector<DrawingGe
 //                     builder.MakeCompound(comp);
 //                     builder.Add(comp, *pE);
 
-                    //newWire = mkWire.Wire();
-
-
-                        //Base::Console().Log("DEBUG - GeometryObject::createWire - <%f %f %f>, <%f %f %f> \n",
-                        //                     ep.v1.X(),ep.v1.Y(),ep.v1.Z(), ep.v2.X(),ep.v2.Y(),ep.v2.Z());
-
-                        edgeList.erase(pE);
-                        break;
+                       edgeList.erase(pE);
+                       break;
                     }
                 } 
             }
             while (found);
-        } //END if (!edgelist.empty())
+        }
 
         ShapeFix_Wire fix;
         //fix.Load(newWire);

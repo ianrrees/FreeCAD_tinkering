@@ -23,6 +23,7 @@
 #ifndef DRAWINGGUI_QGRAPHICSITEMFACE_H
 #define DRAWINGGUI_QGRAPHICSITEMFACE_H
 
+#include <Qt>
 #include <QGraphicsItem>
 
 QT_BEGIN_NAMESPACE
@@ -49,19 +50,27 @@ public:
 public:
 //      QPainterPath shape() const;
     int getReference() const { return reference; }
+    void setPrettyNormal();
+    void setPrettyPre();
+    void setPrettySel();
 
 protected:
     // Preselection events:
     void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
     void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
     // Selection detection
-     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+    QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
 protected:
-int reference;
+    int reference;
 
 private:
-QPen m_pen;
+    QPen m_pen;
+    QBrush m_brush;
+    QColor m_colNormal;
+    QColor m_colPre;
+    QColor m_colSel;
+    Qt::BrushStyle m_fill;
 };
 
 } // namespace DrawingViewGui

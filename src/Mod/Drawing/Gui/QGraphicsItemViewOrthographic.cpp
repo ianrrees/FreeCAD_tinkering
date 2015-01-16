@@ -1,7 +1,7 @@
 /***************************************************************************
  *   Copyright (c) 2012-2013 Luke Parry <l.parry@warwick.ac.uk>            *
  *                                                                         *
- *   This file is part of the FreeCAD CAx development system.           *
+ *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
  *   This library is free software; you can redistribute it and/or         *
  *   modify it under the terms of the GNU Library General Public           *
@@ -10,7 +10,7 @@
  *                                                                         *
  *   This library  is distributed in the hope that it will be useful,      *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU Library General Public License for more details.                  *
  *                                                                         *
  *   You should have received a copy of the GNU Library General Public     *
@@ -96,7 +96,8 @@ QVariant QGraphicsItemViewOrthographic::itemChange(GraphicsItemChange change, co
         // Child Feature View has been added
 
         // TODO child must be intiailised before adding to containing parent
-         QGraphicsItem *item = value.value<QGraphicsItem*>();
+        // isn't child already created + added in QGIPart()??
+         QGraphicsItem *item = value.value<QGraphicsItem*>();   //item is the child? ie the QGIPart?
 
          QGraphicsItemView *view = 0;
          view = dynamic_cast<QGraphicsItemView *>(item);
@@ -110,8 +111,8 @@ QVariant QGraphicsItemViewOrthographic::itemChange(GraphicsItemChange change, co
                 QString type = QString::fromAscii(orthoView->Type.getValueAsString());
 
                 if(type == QString::fromAscii("Top") ||
-                   type == QString::fromAscii("Bottom") ||
-                   type == QString::fromAscii("Rear")) {
+                   type == QString::fromAscii("Bottom")) {
+//                   type == QString::fromAscii("Rear")) {   // Rear is always the far right in either (1st or 3rd) layout?!
 
                     view->alignTo(origin, QString::fromAscii("Vertical"));
                     
@@ -123,7 +124,7 @@ QVariant QGraphicsItemViewOrthographic::itemChange(GraphicsItemChange change, co
                     App::DocumentObject *obj = this->getViewObject();
                     Drawing::FeatureViewOrthographic *viewOrthographic = dynamic_cast<Drawing::FeatureViewOrthographic *>(obj);
 
-                    viewOrthographic->Anchor.setValue(fView);
+                    viewOrthographic->Anchor.setValue(fView);     //TODO: this is App logic.  Why is it in Gui side??
                     updateView();
 
                 } else {
@@ -174,7 +175,7 @@ void QGraphicsItemViewOrthographic::mouseReleaseEvent(QGraphicsSceneMouseEvent *
         } else if(scene() && qAnchor && (qAnchor == scene()->mouseGrabberItem())) {
             // End of Drag
             double x = this->x();
-            double y = this->getY();
+            double y = this->getY();            // inverts Y 
             Gui::Command::openCommand("Drag Orthographic Collection");
             Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.X = %f", this->getViewObject()->getNameInDocument(), x);
             Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.Y = %f", this->getViewObject()->getNameInDocument(), y);

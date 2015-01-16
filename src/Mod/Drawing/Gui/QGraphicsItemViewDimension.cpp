@@ -1,7 +1,7 @@
 /***************************************************************************
  *   Copyright (c) 2013 Luke Parry <l.parry@warwick.ac.uk>                 *
  *                                                                         *
- *   This file is part of the FreeCAD CAx development system.           *
+ *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
  *   This library is free software; you can redistribute it and/or         *
  *   modify it under the terms of the GNU Library General Public           *
@@ -10,7 +10,7 @@
  *                                                                         *
  *   This library  is distributed in the hope that it will be useful,      *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU Library General Public License for more details.                  *
  *                                                                         *
  *   You should have received a copy of the GNU Library General Public     *
@@ -47,17 +47,20 @@
   # include <QGraphicsTextItem>
 #endif
 
-# include <Base/Console.h>
-# include <Base/Exception.h>
-# include <Gui/Command.h>
+#include <App/Application.h>
+#include <App/Material.h>
+#include <Base/Console.h>
+#include <Base/Exception.h>
+#include <Base/Parameter.h>
+#include <Gui/Command.h>
 
-# include <Mod/Part/App/PartFeature.h>
+#include <Mod/Part/App/PartFeature.h>
 
-# include <Mod/Drawing/App/FeatureViewDimension.h>
-# include <Mod/Drawing/App/FeatureViewPart.h>
+#include <Mod/Drawing/App/FeatureViewDimension.h>
+#include <Mod/Drawing/App/FeatureViewPart.h>
 
-# include "QGraphicsItemViewDimension.h"
-# include "QGraphicsItemArrow.h"
+#include "QGraphicsItemViewDimension.h"
+#include "QGraphicsItemArrow.h"
 
 using namespace DrawingGui;
 
@@ -70,11 +73,21 @@ QGraphicsItemDatumLabel::QGraphicsItemDatumLabel(int ref, QGraphicsScene *scene 
     this->posX = 0;
     this->posY = 0;
 
-    this->setCacheMode(QGraphicsItem::DeviceCoordinateCache);
+    this->setCacheMode(QGraphicsItem::NoCache);
     this->setFlag(ItemSendsGeometryChanges, true);
     this->setFlag(ItemIsMovable, true);
     this->setFlag(ItemIsSelectable, true);
     this->setAcceptHoverEvents(true);
+
+    Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
+        .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors");
+    App::Color fcColor = App::Color((uint32_t) hGrp->GetUnsigned("NormalColor", 0x00000000));
+    m_colNormal = fcColor.asQColor();
+    fcColor.setPackedValue(hGrp->GetUnsigned("SelectColor", 0x0000FF00));
+    m_colSel = fcColor.asQColor();
+    fcColor.setPackedValue(hGrp->GetUnsigned("PreSelectColor", 0x00080800));
+    m_colPre = fcColor.asQColor();
+
 }
 
 QVariant QGraphicsItemDatumLabel::itemChange(GraphicsItemChange change, const QVariant &value)
@@ -83,10 +96,10 @@ QVariant QGraphicsItemDatumLabel::itemChange(GraphicsItemChange change, const QV
         // value is the new position.
         if(isSelected()) {
             Q_EMIT selected(true);
-            this->setDefaultTextColor(Qt::blue);
+            this->setDefaultTextColor(m_colSel);
         } else {
             Q_EMIT selected(false);
-            this->setDefaultTextColor(Qt::black);
+            this->setDefaultTextColor(m_colNormal);
         }
         update();
     } else if(change == ItemPositionHasChanged && scene()) {
@@ -112,7 +125,7 @@ void QGraphicsItemDatumLabel::updatePos()
 void QGraphicsItemDatumLabel::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
     Q_EMIT hover(true);
-    this->setDefaultTextColor(Qt::blue);
+    this->setDefaultTextColor(m_colPre);
     update();
 }
 
@@ -123,7 +136,7 @@ void QGraphicsItemDatumLabel::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 
     Q_EMIT hover(false);
     if(!isSelected() && !view->isSelected()) {
-        this->setDefaultTextColor(Qt::black);
+        this->setDefaultTextColor(m_colNormal);
         update();
     }
 }
@@ -148,7 +161,7 @@ QGraphicsItemViewDimension::QGraphicsItemViewDimension(const QPoint &pos, QGraph
 {
     setHandlesChildEvents(false);
     this->setFlag(QGraphicsItem::ItemIsMovable, false);
-    this->setCacheMode(QGraphicsItem::DeviceCoordinateCache);
+    this->setCacheMode(QGraphicsItem::NoCache);
 
     QGraphicsItemDatumLabel *dlabel = new QGraphicsItemDatumLabel();
     QGraphicsPathItem *arrws        = new QGraphicsPathItem();
@@ -178,7 +191,14 @@ QGraphicsItemViewDimension::QGraphicsItemViewDimension(const QPoint &pos, QGraph
     this->pen.setCosmetic(true);
     this->pen.setWidthF(1.);
 
-
+    Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
+        .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors");
+    App::Color fcColor = App::Color((uint32_t) hGrp->GetUnsigned("NormalColor", 0x00000000));
+    m_colNormal = fcColor.asQColor();
+    fcColor.setPackedValue(hGrp->GetUnsigned("SelectColor", 0x0000FF00));
+    m_colSel = fcColor.asQColor();
+    fcColor.setPackedValue(hGrp->GetUnsigned("PreSelectColor", 0x00080800));
+    m_colPre = fcColor.asQColor();
 
     this->addToGroup(arrows);
     this->addToGroup(datumLabel);
@@ -187,9 +207,7 @@ QGraphicsItemViewDimension::QGraphicsItemViewDimension(const QPoint &pos, QGraph
 
 QGraphicsItemViewDimension::~QGraphicsItemViewDimension()
 {
-    QGraphicsItemDatumLabel *item = static_cast<QGraphicsItemDatumLabel *>(datumLabel);
-    item->deleteLater();
-
+    // datumLabel, arrows, centreLines belong to this group & will be deleted by group
     clearProjectionCache();
 }
 
@@ -347,10 +365,12 @@ void QGraphicsItemViewDimension::draw()
     pen.setStyle(Qt::SolidLine);
 
     // Crude method of determining state [TODO] improve
-    if(this->isSelected() || this->hasHover) {
-        pen.setColor(QColor(Qt::blue));
+    if(this->isSelected()) {
+        pen.setColor(QColor(m_colSel));
+    } else if (this->hasHover) {
+        pen.setColor(QColor(m_colPre));
     } else {
-        pen.setColor(QColor(Qt::black));
+        pen.setColor(QColor(m_colNormal));
     }
 
     QString str = lbl->toPlainText();
@@ -864,7 +884,7 @@ void QGraphicsItemViewDimension::draw()
             clpath.moveTo(centre.x - clDist, centre.y);
             clpath.lineTo(centre.x + clDist, centre.y);
 
-            QPen clPen(QColor(128,128,128));
+            QPen clPen(QColor(128,128,128));  // TODO: centre line preference?
             clines->setPen(clPen);
         }
 
@@ -1097,7 +1117,7 @@ void QGraphicsItemViewDimension::draw()
             clpath.moveTo(p1.x - clDist, p1.y);
             clpath.lineTo(p1.x + clDist, p1.y);
 
-            QPen clPen(QColor(128,128,128));
+            QPen clPen(QColor(128,128,128));  // TODO: centre line preference?
             clines->setPen(clPen);
         }
 

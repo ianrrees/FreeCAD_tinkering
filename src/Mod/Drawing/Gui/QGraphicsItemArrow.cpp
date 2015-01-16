@@ -46,7 +46,7 @@ QGraphicsItemArrow::QGraphicsItemArrow(QGraphicsScene *scene)
     }
 
     // Set Cache Mode
-    setCacheMode(QGraphicsItem::DeviceCoordinateCache);
+    setCacheMode(QGraphicsItem::NoCache);
 
 }
 

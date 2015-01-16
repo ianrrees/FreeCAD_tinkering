@@ -1,7 +1,7 @@
 /***************************************************************************
  *   Copyright (c) 2012-2014 Luke Parry <l.parry@warwick.ac.uk>            *
  *                                                                         *
- *   This file is part of the FreeCAD CAx development system.           *
+ *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
  *   This library is free software; you can redistribute it and/or         *
  *   modify it under the terms of the GNU Library General Public           *
@@ -10,7 +10,7 @@
  *                                                                         *
  *   This library  is distributed in the hope that it will be useful,      *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU Library General Public License for more details.                  *
  *                                                                         *
  *   You should have received a copy of the GNU Library General Public     *
@@ -38,7 +38,7 @@ QGraphicsItemTemplate::QGraphicsItemTemplate(QGraphicsScene *scene) : QGraphicsI
                                                                       pageTemplate(0)
 {
     setHandlesChildEvents(false);
-    setCacheMode(QGraphicsItem::DeviceCoordinateCache);
+    setCacheMode(QGraphicsItem::NoCache);
     setZValue(-1000); //Template is situated in background
 
     scene->addItem(this);

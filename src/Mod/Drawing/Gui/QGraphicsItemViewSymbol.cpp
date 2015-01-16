@@ -42,7 +42,10 @@
 
 #include <qmath.h>
 
+#include <App/Application.h>
+#include <App/Material.h>
 #include <Base/Console.h>
+#include <Base/Parameter.h>
 
 #include "../App/FeatureViewSymbol.h"
 #include "QGraphicsItemViewSymbol.h"
@@ -52,7 +55,7 @@ using namespace DrawingGui;
 QGraphicsItemViewSymbol::QGraphicsItemViewSymbol(const QPoint &pos, QGraphicsScene *scene) :QGraphicsItemView(pos, scene)
 {
     // set flags for QGraphicsItemViewSymbol
-    this->setCacheMode(QGraphicsItem::DeviceCoordinateCache);
+    this->setCacheMode(QGraphicsItem::NoCache);
     this->setFlag(ItemSendsGeometryChanges, true);
     this->setFlag(ItemIsMovable, true);
     this->setFlag(ItemIsSelectable, true);
@@ -64,8 +67,17 @@ QGraphicsItemViewSymbol::QGraphicsItemViewSymbol(const QPoint &pos, QGraphicsSce
     m_svgItem = new QGraphicsSvgItem();
     this->addToGroup(m_svgItem);
     
-    m_pen.setColor(QColor(0,0,255));       //blue for editting.  sb a preference?
+    Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
+        .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors");
+    App::Color fcColor = App::Color((uint32_t) hGrp->GetUnsigned("NormalColor", 0x00000000));
+    m_colNormal = fcColor.asQColor();
+    fcColor.setPackedValue(hGrp->GetUnsigned("SelectColor", 0x0000FF00));
+    m_colSel = fcColor.asQColor();
+    fcColor.setPackedValue(hGrp->GetUnsigned("PreSelectColor", 0x00080800));
+    m_colPre = fcColor.asQColor();
+
     m_pen.setStyle(Qt::DashLine);
+    m_pen.setColor(m_colNormal);
 
     m_borderItem = new QGraphicsRectItem();
     m_borderItem->setPen(m_pen);
@@ -75,11 +87,8 @@ QGraphicsItemViewSymbol::QGraphicsItemViewSymbol(const QPoint &pos, QGraphicsSce
 
 QGraphicsItemViewSymbol::~QGraphicsItemViewSymbol()
 {
-    this->removeFromGroup(m_svgItem);
+    // m_svgItem, m_borderItem belong to this group and will be deleted by Qt 
     delete(m_svgRender);
-    delete(m_svgItem);
-    this->removeFromGroup(m_borderItem);
-    delete(m_borderItem);
 }
 
 void QGraphicsItemViewSymbol::updateView(bool update)
@@ -98,7 +107,6 @@ void QGraphicsItemViewSymbol::updateView(bool update)
     QString qs(QString::fromUtf8(viewSymbol->Symbol.getValue()));
     QByteArray qba;
     qba.append(qs);
-    //Base::Console().Error("QGraphicsItemViewSymbol::updateView - Symbol: %s***\n", qba.data());
     if (!load(&qba)) {
         Base::Console().Error("QGraphicsItemViewSymbol::updateView - Could not load %s.Symbol into renderer\n", viewSymbol->getNameInDocument());
     }
@@ -124,8 +132,12 @@ QVariant QGraphicsItemViewSymbol::itemChange(GraphicsItemChange change, const QV
 {
     if (change == ItemSelectedHasChanged && scene()) {
         if(isSelected()) {
+            m_pen.setColor(m_colSel);
+            m_borderItem->setPen(m_pen);
             Q_EMIT selected(true);
         } else {
+            m_pen.setColor(m_colNormal);
+            m_borderItem->setPen(m_pen);
             Q_EMIT selected(false);
         }
         update();
@@ -154,14 +166,14 @@ void QGraphicsItemViewSymbol::updatePos()
 bool QGraphicsItemViewSymbol::load(QByteArray *svgBytes)
 {
     bool success = m_svgRender->load(*svgBytes);
-    //Base::Console().Error("QGraphicsItemViewSymbol::load - success: %d\n", success);
-    //Base::Console().Error("QGraphicsItemViewSymbol::load - isValid: %d\n", m_svgRender->isValid());
     m_svgItem->setSharedRenderer(m_svgRender);
     return(success);
 }
 
 void QGraphicsItemViewSymbol::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
+    m_pen.setColor(m_colPre);
+    m_borderItem->setPen(m_pen);
     Q_EMIT hover(true);
     update();
 }
@@ -171,6 +183,8 @@ void QGraphicsItemViewSymbol::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
     QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *> (this->parentItem());
     assert(view != 0);
 
+    m_pen.setColor(m_colNormal);
+    m_borderItem->setPen(m_pen);
     Q_EMIT hover(false);
     update();
 }

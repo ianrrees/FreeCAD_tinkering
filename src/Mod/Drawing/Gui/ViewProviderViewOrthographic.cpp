@@ -1,7 +1,7 @@
 /***************************************************************************
  *   Copyright (c) 2013 Luke Parry    <l.parry@warwick.ac.uk>              *
  *                                                                         *
- *   This file is part of the FreeCAD CAx development system.           *
+ *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
  *   This library is free software; you can redistribute it and/or         *
  *   modify it under the terms of the GNU Library General Public           *
@@ -10,7 +10,7 @@
  *                                                                         *
  *   This library  is distributed in the hope that it will be useful,      *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU Library General Public License for more details.                  *
  *                                                                         *
  *   You should have received a copy of the GNU Library General Public     *
@@ -91,6 +91,7 @@ std::vector<std::string> ViewProviderViewOrthographic::getDisplayModes(void) con
 
 void ViewProviderViewOrthographic::updateData(const App::Property* prop)
 {
+    Base::Console().Message("TRACE - ViewProviderViewOrthographic(%s)::updateData(%s)\n",getObject()->getNameInDocument(),prop->getName());
     Gui::ViewProviderDocumentObject::updateData(prop);
 
     if(prop == &(getObject()->Scale) ||
@@ -136,7 +137,7 @@ bool ViewProviderViewOrthographic::setEdit(int ModNum)
     if (orthoDlg)
         Gui::Control().showDialog(orthoDlg);
     else
-        Gui::Control().showDialog(new TaskDlgOrthographicViews(this));
+        Gui::Control().showDialog(new TaskDlgOrthographicViews(this->getObject()));
 
     return true;
 }
@@ -154,7 +155,7 @@ bool ViewProviderViewOrthographic::doubleClicked(void)
 
 std::vector<App::DocumentObject*> ViewProviderViewOrthographic::claimChildren(void) const
 {
-    // Collect any child fields and put this in the CamFeature tree
+    // Collect any child fields
     std::vector<App::DocumentObject*> temp;
     const std::vector<App::DocumentObject *> &views = getObject()->Views.getValues();
     try {
