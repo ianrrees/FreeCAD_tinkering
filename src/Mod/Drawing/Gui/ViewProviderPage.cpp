@@ -122,28 +122,6 @@ void ViewProviderDrawingPage::hide(void)
     }
 }
 
-void ViewProviderDrawingPage::show(void)
-{
-    // showing the drawing page should not affect its children but opens the MDI view
-    // therefore do not call the method of its direct base class
-    ViewProviderDocumentObject::show();
-    if (!this->view) {
-        showDrawingView();
-        this->view->load(QString::fromUtf8(getPageObject()->PageResult.getValue()));
-        view->viewAll();
-    }
-}
-
-void ViewProviderDrawingPage::hide(void)
-{
-    // hiding the drawing page should not affect its children but closes the MDI view
-    // therefore do not call the method of its direct base class
-    ViewProviderDocumentObject::hide();
-    if (view) {
-        view->parentWidget()->deleteLater();
-    }
-}
-
 void ViewProviderDrawingPage::updateData(const App::Property* prop)
 {
     if (prop == &(getPageObject()->Views)) {
@@ -159,7 +137,7 @@ void ViewProviderDrawingPage::updateData(const App::Property* prop)
     Gui::ViewProviderDocumentObjectGroup::updateData(prop);
 }
 
-bool ViewProviderDrawingPage::onDelete(const std::vector<std::string> &subList)
+bool ViewProviderDrawingPage::onDelete(const std::vector<std::string> &items)
 {
     if (view) {
         // TODO: if DrawingPage has children, they should be deleted too, since they are useless without the page.
@@ -172,14 +150,6 @@ bool ViewProviderDrawingPage::onDelete(const std::vector<std::string> &subList)
         Base::Console().Log("INFO - ViewProviderDrawingPage::onDelete - Page object deleted when viewer not displayed\n");
     }
     Gui::Selection().clearSelection();
-}
-
-bool ViewProviderDrawingPage::onDelete(const std::vector<std::string> & items)
-{
-    if (view) {
-        view->parentWidget()->deleteLater();
-    }
-
     return ViewProviderDocumentObjectGroup::onDelete(items);
 }
 
@@ -198,6 +168,7 @@ bool ViewProviderDrawingPage::doubleClicked(void)
 {
     if (!this->view) {
         showDrawingView();
+    }
     Gui::getMainWindow()->setActiveWindow(this->view);
     Gui::Application::Instance->activeDocument()->setEdit(this);
     return true;
@@ -278,7 +249,7 @@ void ViewProviderDrawingPage::unsetEdit(int ModNum)
         view->updateTemplate(true);
     }
 
-    return true;
+    return;
 }
 
 

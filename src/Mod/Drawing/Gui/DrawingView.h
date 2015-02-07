@@ -114,10 +114,7 @@ private:
     std::string m_objectName;
     bool isSlectionBlocked;
     CanvasView *m_view;
-    std::string m_objectName;
 
-    QPrinter::Orientation m_orientation;
-    QPrinter::PageSize m_pageSize;
     QString m_currentPath;
     QPrinter::Orientation m_orientation;
     QPrinter::PageSize m_pageSize;

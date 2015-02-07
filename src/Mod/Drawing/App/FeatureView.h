@@ -52,8 +52,6 @@ public:
     App::PropertyFloat X;
     App::PropertyFloat Y;
     App::PropertyFloat Scale;
-//    App::PropertyString ViewResult;
-    App::PropertyBool Visible;
 
     App::PropertyEnumeration ScaleType;
     App::PropertyFloat Rotation;

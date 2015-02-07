@@ -131,15 +131,6 @@ App::DocumentObjectExecReturn *FeaturePage::execute(void)
     return App::DocumentObject::StdReturn;
 }
 
-void FeaturePage::onBeforeChange(const App::Property* prop)
-{
-    if (prop == &Group) {
-        numChildren = Group.getSize();
-    }
-
-    App::DocumentObjectGroup::onBeforeChange(prop);
-}
-
 short FeaturePage::mustExecute() const
 {
     // If Tolerance Property is touched
