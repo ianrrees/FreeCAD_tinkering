@@ -2216,11 +2216,9 @@ def makeDrawingView(obj,page,lwmod=None,tmod=None,otherProjection=None):
         import ArchPanel
         viewobj = ArchPanel.makePanelView(obj,page)   ## TODO: changes for Drawing2
     else:
-        viewobj = FreeCAD.ActiveDocument.addObject("Drawing::FeatureViewPartPython","View"+obj.Name)
+        viewobj = FreeCAD.ActiveDocument.addObject("Drawing::FeatureViewPython","View"+obj.Name)
         _DrawingView(viewobj)
-        v = page.Views        #sb page.addView(viewobj), but can't get page as DrawingView, only DocObjGroup
-        v.append(viewobj)
-        page.Views = v
+        page.addObject(viewobj)
         if (otherProjection):
             if hasattr(otherProjection,"Scale"):
                 viewobj.Scale = otherProjection.Scale
@@ -4488,11 +4486,36 @@ class _DrawingView(_DraftObject):
         obj.FontSize = 12
 
     def execute(self, obj):
-<<<<<<< HEAD
         result = ""
 #TODO: replace this bit from Master
+        if hasattr(obj,"Source"):
+            if obj.Source:
+                if hasattr(obj,"LineStyle"):
+                    ls = obj.LineStyle
+                else:
+                    ls = None
+                if hasattr(obj,"LineColor"):
+                    lc = obj.LineColor
+                else:
+                    lc = None
+                if obj.Source.isDerivedFrom("App::DocumentObjectGroup"):
+                    svg = ""
+                    shapes = []
+                    others = []
+                    for o in obj.Source.Group:
+                        if o.ViewObject.isVisible():
+                            svg += getSVG(o,obj.Scale,obj.LineWidth,obj.FontSize.Value,obj.FillStyle,obj.Direction,ls,lc)
+                else:
+                    svg = getSVG(obj.Source,obj.Scale,obj.LineWidth,obj.FontSize.Value,obj.FillStyle,obj.Direction,ls,lc)
+                result += '<g id="' + obj.Name + '"'
+                result += ' transform="'
+                result += 'rotate('+str(obj.Rotation)+','+str(obj.X)+','+str(obj.Y)+') '
+                result += 'translate('+str(obj.X)+','+str(obj.Y)+') '
+                result += 'scale('+str(obj.Scale)+','+str(-obj.Scale)+')'
+                result += '">'
+                result += svg
+                result += '</g>'
         obj.ViewResult = result
-        
 
     def getDXF(self,obj):
         "returns a DXF fragment"

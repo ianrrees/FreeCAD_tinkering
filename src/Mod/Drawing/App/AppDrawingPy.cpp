@@ -33,11 +33,6 @@
 #include <boost/regex.hpp>
 
 #include <Mod/Part/App/OCCError.h>
-#include <App/Document.h>
-#include <App/DocumentObjectGroup.h>
-#include "FeaturePage.h"
-#include "FeaturePagePy.h"
-
 
 using namespace Drawing;
 using namespace Part;
@@ -204,7 +199,6 @@ removeSvgTags(PyObject *self, PyObject *args)
         return Py::new_reference_to(result);
     } PY_CATCH_OCC;
 }
-
 
 /* registration table  */
 struct PyMethodDef Drawing_methods[] = {

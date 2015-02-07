@@ -67,8 +67,6 @@ void DrawingExport initDrawing()
     Drawing::FeatureViewPart        ::init();
 //    Drawing::PageGroup              ::init();
     Drawing::FeatureProjection      ::init();
-//    Drawing::FeatureViewPartPython  ::init();
-//    Drawing::FeatureViewPython      ::init();
     Drawing::FeatureViewAnnotation  ::init();
     Drawing::FeatureViewSymbol      ::init();
     Drawing::FeatureClip            ::init();
@@ -81,10 +79,12 @@ void DrawingExport initDrawing()
     Drawing::FeatureSVGTemplate     ::init();
     Drawing::FeatureParametricTemplate::init();
 
+ 
    // Python Types
+    Drawing::FeatureViewPython      ::init();
+    Drawing::FeatureViewPartPython  ::init();
     Drawing::FeatureTemplatePython  ::init();
-//    Drawing::FeatureViewPython      ::init();
-//    Drawing::FeatureViewPartPython  ::init();
+    Drawing::FeatureViewSymbolPython::init();
     Drawing::FeatureViewSymbolPython::init();
 }
 

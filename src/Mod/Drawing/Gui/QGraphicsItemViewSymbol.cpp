@@ -100,17 +100,13 @@ void QGraphicsItemViewSymbol::updateView(bool update)
     Drawing::FeatureViewSymbol *viewSymbol = dynamic_cast<Drawing::FeatureViewSymbol *>(this->getViewObject());
 
     // get Symbol property into SVG item
-    if (strlen(viewSymbol->Symbol.getValue()) == 0) {
-        //Base::Console().Error("QGraphicsItemViewSymbol::updateView - Symbol is empty\n");
-        return;
-    }
     QString qs(QString::fromUtf8(viewSymbol->Symbol.getValue()));
     QByteArray qba;
     qba.append(qs);
     if (!load(&qba)) {
         Base::Console().Error("QGraphicsItemViewSymbol::updateView - Could not load %s.Symbol into renderer\n", viewSymbol->getNameInDocument());
     }
-
+    
     //make the border fit svgItem
     m_borderItem->setRect(m_svgItem->boundingRect());
 

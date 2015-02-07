@@ -27,11 +27,11 @@ set(Drawing_LIBS
 
 generate_from_xml(FeaturePagePy)
 generate_from_xml(FeatureViewPy)
-generate_from_xml(FeatureViewPartPy)
 generate_from_xml(FeatureViewSymbolPy)
 generate_from_xml(FeatureTemplatePy)
 generate_from_xml(FeatureParametricTemplatePy)
 generate_from_xml(FeatureSVGTemplatePy)
+generate_from_xml(FeatureViewSymbolPy)
 
 SET(Features_SRCS
     FeaturePage.cpp
@@ -96,8 +96,6 @@ SET(Python_SRCS
     FeaturePagePyImp.cpp
     FeatureViewPy.xml
     FeatureViewPyImp.cpp
-    FeatureViewPartPy.xml
-    FeatureViewPartPyImp.cpp
     FeatureViewSymbolPy.xml
     FeatureViewSymbolPyImp.cpp
     FeatureTemplatePy.xml
