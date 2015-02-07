@@ -36,8 +36,20 @@ generate_from_xml(FeatureSVGTemplatePy)
 SET(Features_SRCS
     FeaturePage.cpp
     FeaturePage.h
+    FeatureProjection.cpp
+    FeatureProjection.h
+    FeatureView.cpp
+    FeatureView.h
+    FeatureViewPart.cpp
+    FeatureViewPart.h
+    FeatureViewAnnotation.cpp
+    FeatureViewAnnotation.h
+    FeatureViewSymbol.cpp
+    FeatureViewSymbol.h
     FeatureClip.cpp
     FeatureClip.h
+    PageGroup.cpp
+    PageGroup.h
     FeatureOrthoView.cpp
     FeatureOrthoView.h
     FeatureParametricTemplate.cpp
@@ -46,24 +58,14 @@ SET(Features_SRCS
     FeatureSVGTemplate.h
     FeatureTemplate.cpp
     FeatureTemplate.h
-    FeatureView.cpp
-    FeatureView.h
-    FeatureViewAnnotation.cpp
-    FeatureViewAnnotation.h
     FeatureViewCollection.cpp
     FeatureViewCollection.h
     FeatureViewDimension.cpp
     FeatureViewDimension.h
     FeatureViewOrthographic.cpp
     FeatureViewOrthographic.h
-    FeatureViewPart.cpp
-    FeatureViewPart.h
     FeatureViewSection.cpp
     FeatureViewSection.h
-    FeatureViewSymbol.cpp
-    FeatureViewSymbol.h
-    PageGroup.cpp
-    PageGroup.h
 )
 
 SET(Drawing_SRCS
@@ -83,10 +85,10 @@ SET(DrawingGeometry_SRCS
 SET(DrawingAlgos_SRCS
     DrawingExport.cpp
     DrawingExport.h
-    FeatureProjection.cpp
-    FeatureProjection.h
     ProjectionAlgos.cpp
     ProjectionAlgos.h
+    FeatureProjection.cpp
+    FeatureProjection.h
 )
 
 SET(Python_SRCS

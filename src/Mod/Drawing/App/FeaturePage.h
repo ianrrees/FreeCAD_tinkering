@@ -58,16 +58,14 @@ public:
     virtual App::DocumentObjectExecReturn *execute(void);
     //@}
     
-//App::DocumentObjectExecReturn * recompute(void);
-
     int addView(App::DocumentObject *docObj);
-
     short mustExecute() const;
 
     /// returns the type name of the ViewProvider
     virtual const char* getViewProviderName(void) const {
         return "DrawingGui::ViewProviderDrawingPage";
     }
+//App::DocumentObjectExecReturn * recompute(void);
 
     bool hasValidTemplate() const;
     double getPageWidth() const;

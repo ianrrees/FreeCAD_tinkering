@@ -60,9 +60,9 @@ open(PyObject *self, PyObject *args)
         Base::FileInfo file(EncodedName.c_str());
         if (file.hasExtension("svg") || file.hasExtension("svgz")) {
             QString fileName = QString::fromUtf8(EncodedName.c_str());
-            // Displaying the image in a view
 #if 0
-            DrawingView* view = new DrawingView(0, Gui::getMainWindow());
+            // Displaying the image in a view
+            DrawingView* view = new DrawingView(0, 0, Gui::getMainWindow());    //TODO: hack to get a compile
             view->load(fileName);
             view->setWindowIcon(Gui::BitmapFactory().pixmap("actions/drawing-landscape"));
             QFileInfo fi(fileName);
@@ -95,9 +95,10 @@ importer(PyObject *self, PyObject *args)
         Base::FileInfo file(EncodedName.c_str());
         if (file.hasExtension("svg") || file.hasExtension("svgz")) {
             QString fileName = QString::fromUtf8(EncodedName.c_str());
-            // Displaying the image in a view
+
 #if 0
-            DrawingView* view = new DrawingView(0, Gui::getMainWindow());
+            // Displaying the image in a view
+            DrawingView* view = new DrawingView(0, 0, Gui::getMainWindow());    //TODO: hack to get a compile
             view->load(fileName);
             view->setWindowIcon(Gui::BitmapFactory().pixmap("actions/drawing-landscape"));
             QFileInfo fi(fileName);

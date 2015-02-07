@@ -62,28 +62,29 @@ void DrawingExport initDrawing()
     // This function is responsible for adding inherited slots from a type's base class.
  
     Drawing::FeaturePage            ::init();
-    Drawing::FeatureTemplate        ::init();
-    Drawing::FeatureSVGTemplate     ::init();
-    Drawing::FeatureParametricTemplate::init();
     Drawing::FeatureView            ::init();
     Drawing::FeatureViewCollection  ::init();
     Drawing::FeatureViewPart        ::init();
-    Drawing::FeatureViewSection     ::init();
-    Drawing::FeatureViewAnnotation  ::init();
-    Drawing::FeatureViewDimension   ::init();
-    Drawing::FeatureViewOrthographic::init();
-    Drawing::FeatureOrthoView       ::init();
-
-//  Drawing::PageGroup              ::init();
-
+//    Drawing::PageGroup              ::init();
     Drawing::FeatureProjection      ::init();
+//    Drawing::FeatureViewPartPython  ::init();
+//    Drawing::FeatureViewPython      ::init();
+    Drawing::FeatureViewAnnotation  ::init();
     Drawing::FeatureViewSymbol      ::init();
     Drawing::FeatureClip            ::init();
 
+    Drawing::FeatureViewSection     ::init();
+    Drawing::FeatureViewDimension   ::init();
+    Drawing::FeatureViewOrthographic::init();
+    Drawing::FeatureOrthoView       ::init();
+    Drawing::FeatureTemplate        ::init();
+    Drawing::FeatureSVGTemplate     ::init();
+    Drawing::FeatureParametricTemplate::init();
+
    // Python Types
     Drawing::FeatureTemplatePython  ::init();
-    Drawing::FeatureViewPython      ::init();
-    Drawing::FeatureViewPartPython  ::init();
+//    Drawing::FeatureViewPython      ::init();
+//    Drawing::FeatureViewPartPython  ::init();
     Drawing::FeatureViewSymbolPython::init();
 }
 

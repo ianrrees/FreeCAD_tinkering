@@ -38,10 +38,10 @@
 #include <iterator>
 
 #include "FeaturePage.h"
-#include "FeatureTemplate.h"
 #include "FeatureView.h"
-#include "FeatureViewCollection.h"
 #include "FeatureClip.h"
+#include "FeatureTemplate.h"
+#include "FeatureViewCollection.h"
 
 using namespace Drawing;
 using namespace std;
@@ -63,8 +63,10 @@ FeaturePage::FeaturePage(void) : numChildren(0)
 {
     static const char *group = "Page";
 
-    ADD_PROPERTY_TYPE(Views    ,(0), group, (App::PropertyType)(App::Prop_None),"Attached Views");
+//obs    ADD_PROPERTY_TYPE(PageResult ,(0),group,App::Prop_Output,"Resulting SVG document of that page");
     ADD_PROPERTY_TYPE(Template ,(0), group, (App::PropertyType)(App::Prop_Transient),"Attached Template");
+//obs    ADD_PROPERTY_TYPE(EditableTexts,(""),group,App::Prop_None,"Substitution values for the editable strings in the template");
+    ADD_PROPERTY_TYPE(Views    ,(0), group, (App::PropertyType)(App::Prop_None),"Attached Views");
 
     // Projection Properties
     OrthoProjectionType.setEnums(OrthoProjectionTypeEnums);
@@ -74,6 +76,59 @@ FeaturePage::FeaturePage(void) : numChildren(0)
 
 FeaturePage::~FeaturePage()
 {
+}
+
+void FeaturePage::onBeforeChange(const App::Property* prop)
+{
+    if (prop == &Group) {
+        numChildren = Group.getSize();
+    }
+
+    App::DocumentObjectGroup::onBeforeChange(prop);
+}
+
+/// get called by the container when a Property was changed
+void FeaturePage::onChanged(const App::Property* prop)
+{
+    if (prop == &Template) {
+        if (!this->isRestoring()) {
+        //TODO: reload if Template prop changes (ie different Template)
+        Base::Console().Message("TODO: Unimplemented function FeaturePage::onChanged(Template)\n");
+        }
+    }
+
+    if (prop == &Views) {
+        if (!this->isRestoring()) {
+            //TODO: reload if Views prop changes (ie adds/deletes)
+            //this->touch();
+        }
+    }
+
+    if (prop == &Group) {
+        if (Group.getSize() != numChildren) {
+            numChildren = Group.getSize();
+            touch();
+        }
+    }
+
+    if(prop == &Scale) {
+        // touch all views in the Page as they may be dependent on this scale
+      const std::vector<App::DocumentObject*> &vals = Views.getValues();
+      for(std::vector<App::DocumentObject *>::const_iterator it = vals.begin(); it < vals.end(); ++it) {
+          Drawing::FeatureView *view = dynamic_cast<Drawing::FeatureView *>(*it);
+          if(strcmp(view->ScaleType.getValueAsString(), "Document") == 0) {
+              view->Scale.touch();
+          }
+      }
+    }
+    App::DocumentObjectGroup::onChanged(prop);
+}
+
+App::DocumentObjectExecReturn *FeaturePage::execute(void)
+{
+    Template.touch();
+    Views.touch();
+    return App::DocumentObject::StdReturn;
 }
 
 void FeaturePage::onBeforeChange(const App::Property* prop)
@@ -170,30 +225,6 @@ const char * FeaturePage::getPageOrientation() const
 }
 
 
-/// get called by the container when a Property was changed
-void FeaturePage::onChanged(const App::Property* prop)
-{
-    if (prop == &Template) {
-        if (!this->isRestoring()) {
-        //TODO: reload if Template prop changes (ie different Template)
-        Base::Console().Message("TODO: Unimplemented function FeaturePage::onChanged(Template)\n");
-        }
-    }
-
-    if (prop == &Views) {
-        if (!this->isRestoring()) {
-            //TODO: reload if Views prop changes (ie adds/deletes)
-            //this->touch();
-        }
-    }
-    if(prop == &Scale) {
-        // touch all views in the Page as they may be dependent on this scale
-      const std::vector<App::DocumentObject*> &vals = Views.getValues();
-      for(std::vector<App::DocumentObject *>::const_iterator it = vals.begin(); it < vals.end(); ++it) {
-          Drawing::FeatureView *view = dynamic_cast<Drawing::FeatureView *>(*it);
-          if(strcmp(view->ScaleType.getValueAsString(), "Document") == 0) {
-              view->Scale.touch();
-          }
 }
 
 void FeaturePage::onDocumentRestored()
@@ -210,17 +241,6 @@ void FeaturePage::onDocumentRestored()
     Template.setValue(path);
 
     this->StatusBits.reset(4); // the 'Restore' flag
-      }
-
-/*    if (prop == &Group) {
-        if (Group.getSize() != numChildren) {
-            numChildren = Group.getSize();
-            touch();
-        }
-      }*/
-    }
-    App::DocumentObjectGroup::onChanged(prop);
-}
 
 int FeaturePage::addView(App::DocumentObject *docObj)
 {
@@ -245,10 +265,4 @@ int FeaturePage::addView(App::DocumentObject *docObj)
     return Views.getSize();
 }
 
-App::DocumentObjectExecReturn *FeaturePage::execute(void)
-{
-    Template.touch();
-    Views.touch();
-    return App::DocumentObject::StdReturn;
-}
 

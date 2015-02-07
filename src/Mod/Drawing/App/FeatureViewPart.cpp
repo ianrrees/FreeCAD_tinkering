@@ -78,13 +78,11 @@ App::PropertyFloatConstraint::Constraints FeatureViewPart::floatRange = {0.01f,5
 PROPERTY_SOURCE(Drawing::FeatureViewPart, Drawing::FeatureView)
 
 FeatureViewPart::FeatureViewPart(void) : geometryObject(0)
-//FeatureViewPart::FeatureViewPart(void) 
 {
     static const char *group = "Shape view";
     static const char *vgroup = "Drawing view";
 
     ADD_PROPERTY_TYPE(Direction ,(0,0,1.0)    ,group,App::Prop_None,"Projection normal direction");
-    ADD_PROPERTY_TYPE(XAxisDirection ,(0,0,0) ,group,App::Prop_None,"X-Axis direction");
     ADD_PROPERTY_TYPE(Source ,(0),group,App::Prop_None,"Shape to view");
     ADD_PROPERTY_TYPE(ShowHiddenLines ,(false),group,App::Prop_None,"Control the appearance of the dashed hidden lines");
     ADD_PROPERTY_TYPE(ShowSmoothLines ,(false),group,App::Prop_None,"Control the appearance of the smooth lines");
@@ -92,6 +90,7 @@ FeatureViewPart::FeatureViewPart(void) : geometryObject(0)
     ADD_PROPERTY_TYPE(HiddenWidth,(0.15),vgroup,App::Prop_None,"The thickness of the hidden lines, if enabled");
     ADD_PROPERTY_TYPE(Tolerance,(0.05f),vgroup,App::Prop_None,"The tessellation tolerance");
     Tolerance.setConstraints(&floatRange);
+    ADD_PROPERTY_TYPE(XAxisDirection ,(0,0,0) ,group,App::Prop_None,"X-Axis direction");
 
     geometryObject = new DrawingGeometry::GeometryObject();
 }
@@ -101,36 +100,6 @@ FeatureViewPart::~FeatureViewPart()
     delete geometryObject;
 }
 
-short FeatureViewPart::mustExecute() const
-{
-    // If Tolerance Property is touched
-    if(Direction.isTouched() ||
-       XAxisDirection.isTouched() ||
-       Source.isTouched() ||
-       Scale.isTouched() ||
-       ScaleType.isTouched() ||
-       ShowHiddenLines.isTouched())
-        return 1;
-
-}
-
-void FeatureViewPart::onChanged(const App::Property* prop)
-{
-    FeatureView::onChanged(prop);
-
-    if (prop == &Direction ||
-        prop == &XAxisDirection ||
-        prop == &Source ||
-        prop == &Scale ||
-        prop == &ScaleType ||
-        prop == &ShowHiddenLines) {
-          if (!this->isRestoring()) {
-              if(prop->isTouched()) {
-                  FeatureViewPart::execute();            // TODO: sb this->execute() for derived classes (ex Section) with execute override??
-              }
-          }
-    }
-}
 
 App::DocumentObjectExecReturn *FeatureViewPart::execute(void)
 {
@@ -174,6 +143,37 @@ App::DocumentObjectExecReturn *FeatureViewPart::execute(void)
     }
 
     return FeatureView::execute();
+}
+
+short FeatureViewPart::mustExecute() const
+{
+    // If Tolerance Property is touched
+    if(Direction.isTouched() ||
+       XAxisDirection.isTouched() ||
+       Source.isTouched() ||
+       Scale.isTouched() ||
+       ScaleType.isTouched() ||
+       ShowHiddenLines.isTouched())
+        return 1;
+
+}
+
+void FeatureViewPart::onChanged(const App::Property* prop)
+{
+    FeatureView::onChanged(prop);
+
+    if (prop == &Direction ||
+        prop == &XAxisDirection ||
+        prop == &Source ||
+        prop == &Scale ||
+        prop == &ScaleType ||
+        prop == &ShowHiddenLines) {
+          if (!this->isRestoring()) {
+              if(prop->isTouched()) {
+                  FeatureViewPart::execute();            // TODO: sb this->execute() for derived classes (ex Section) with execute override??
+              }
+          }
+    }
 }
 
 const std::vector<DrawingGeometry::Vertex *> & FeatureViewPart::getVertexGeometry() const

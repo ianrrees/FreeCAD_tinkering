@@ -52,6 +52,9 @@ public:
     App::PropertyFloat X;
     App::PropertyFloat Y;
     App::PropertyFloat Scale;
+//    App::PropertyString ViewResult;
+    App::PropertyBool Visible;
+
     App::PropertyEnumeration ScaleType;
     App::PropertyFloat Rotation;
 //    App::PropertyString ViewResult;
@@ -61,16 +64,18 @@ public:
     /** @name methods overide Feature */
     //@{
     /// recalculate the Feature
-//    virtual App::DocumentObjectExecReturn *recompute(void);
-    virtual void onDocumentRestored();
+    virtual App::DocumentObjectExecReturn *recompute(void);
     virtual App::DocumentObjectExecReturn *execute(void);
+    virtual void onDocumentRestored();
     //@}
 
     /// returns the type name of the ViewProvider
     virtual const char* getViewProviderName(void) const {
         return "DrawingGui::ViewProviderDrawingView";
     }
+
     FeaturePage* findParentPage();
+
 protected:
     void onChanged(const App::Property* prop);
     std::string pageFeatName;

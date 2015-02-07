@@ -27,8 +27,10 @@ set(DrawingGui_LIBS
 
 
 set(DrawingGui_MOC_HDRS
-    CanvasView.h
     DrawingView.h
+    TaskOrthoViews.h
+    TaskDialog.h
+    CanvasView.h
     QGraphicsItemTemplate.h
     QGraphicsItemSVGTemplate.h
     QGraphicsItemDrawingTemplate.h
@@ -40,9 +42,7 @@ set(DrawingGui_MOC_HDRS
     QGraphicsItemViewSection.h
     QGraphicsItemViewAnnotation.h
     QGraphicsItemViewSymbol.h
-    TaskOrthoViews.h
     TaskOrthographicViews.h
-    TaskDialog.h
 )
 
 
@@ -74,17 +74,17 @@ SET(DrawingGui_SRCS
     TaskOrthoViews.ui
     TaskOrthoViews.cpp
     TaskOrthoViews.h
+    Workbench.cpp
+    Workbench.h
     TaskOrthographicViews.ui
     TaskOrthographicViews.cpp
     TaskOrthographicViews.h
-    Workbench.cpp
-    Workbench.h
 )
 SET(DrawingGuiView_SRCS
-    CanvasView.cpp
-    CanvasView.h
     DrawingView.cpp
     DrawingView.h
+    CanvasView.cpp
+    CanvasView.h
     QGraphicsItemView.cpp
     QGraphicsItemView.h
     QGraphicsItemArrow.cpp
@@ -117,14 +117,14 @@ SET(DrawingGuiView_SRCS
     QGraphicsItemViewSymbol.h
 )
 SET(DrawingGuiViewProvider_SRCS
-    ViewProviderOrthoView.cpp
-    ViewProviderOrthoView.h
     ViewProviderPage.cpp
     ViewProviderPage.h
-    ViewProviderTemplate.cpp
-    ViewProviderTemplate.h
     ViewProviderView.cpp
     ViewProviderView.h
+    ViewProviderOrthoView.cpp
+    ViewProviderOrthoView.h
+    ViewProviderTemplate.cpp
+    ViewProviderTemplate.h
     ViewProviderDimension.cpp
     ViewProviderDimension.h
     ViewProviderViewPart.cpp

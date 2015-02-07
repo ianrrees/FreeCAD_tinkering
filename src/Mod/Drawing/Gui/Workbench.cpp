@@ -61,14 +61,18 @@ Gui::MenuItem* Workbench::setupMenuBar() const
     root->insertItem(item, draw);
     draw->setCommand("Drawing");
     //*draw << "Drawing_Open";
+    //*part << "Drawing_NewA3Landscape";
     *draw << "Drawing_NewPage";
     *draw << "Drawing_NewView";
     *draw << "Drawing_OrthoViews";
+    //*part << "Drawing_OpenBrowserView";
     *draw << "Drawing_NewViewSection";
     *draw << "Drawing_Annotation";
-    *draw << "Drawing_NewDimension";
-    *draw << "Drawing_ExportPage";
+    //*part << "Drawing_Clip";
     *draw << "Drawing_Symbol";
+    *draw << "Drawing_NewDimension";
+    //*part << "Drawing_DraftView";
+    *draw << "Drawing_ExportPage";
     *draw << "Separator";
     *draw << "Drawing_ProjectShape";
 

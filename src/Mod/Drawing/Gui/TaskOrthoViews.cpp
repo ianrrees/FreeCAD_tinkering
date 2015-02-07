@@ -20,6 +20,8 @@
  *                                                                         *
  ***************************************************************************/
 
+//TODO: TaskOrthoViews is replaced by TaskOrthographicViews?
+
 #include "PreCompiled.h"
 #ifndef _PreComp_
 # include <QMenu>
@@ -32,6 +34,7 @@
 #include <Gui/BitmapFactory.h>
 #include <Gui/Command.h>
 
+#include <Mod/Part/App/PartFeature.h>
 #include <Mod/Drawing/App/FeaturePage.h>
 #include <Mod/Drawing/App/FeatureViewPart.h>
 #include <Mod/Drawing/App/FeatureTemplate.h>

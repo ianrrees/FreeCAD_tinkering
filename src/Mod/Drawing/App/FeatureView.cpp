@@ -36,9 +36,9 @@
 #include <Base/FileInfo.h>
 #include <Base/Console.h>
 
+#include "FeatureView.h"
 #include "FeaturePage.h"
 #include "FeatureViewCollection.h"
-#include "FeatureView.h"
 
 using namespace Drawing;
 
@@ -69,12 +69,50 @@ FeatureView::FeatureView(void)
     App::PropertyType propType = static_cast<App::PropertyType>(App::Prop_Hidden|App::Prop_Output);
     ADD_PROPERTY_TYPE(Visible, (true),group,propType,"Control whether view is visible in page object");
 
+
+//    App::PropertyType type = (App::PropertyType)(App::Prop_Hidden);
+//    ADD_PROPERTY_TYPE(ViewResult ,(0),group,type,"Resulting SVG fragment of that view");
+
     ScaleType.setEnums(ScaleTypeEnums);
     ADD_PROPERTY_TYPE(ScaleType,((long)0),group, App::Prop_None, "Scale Type");
 }
 
 FeatureView::~FeatureView()
 {
+}
+
+App::DocumentObjectExecReturn *FeatureView::recompute(void)
+{
+    try {
+        return App::DocumentObject::recompute();
+    }
+    catch (Standard_Failure) {
+        Handle_Standard_Failure e = Standard_Failure::Caught();
+        App::DocumentObjectExecReturn* ret = new App::DocumentObjectExecReturn(e->GetMessageString());
+        if (ret->Why.empty()) ret->Why = "Unknown OCC exception";
+        return ret;
+    }
+}
+
+App::DocumentObjectExecReturn *FeatureView::execute(void)
+{
+    if(strcmp(ScaleType.getValueAsString(), "Document") == 0) {
+        Scale.StatusBits.set(2, true);
+
+        Drawing::FeaturePage *page = findParentPage();
+        if(page) {
+            if(std::abs(page->Scale.getValue() - Scale.getValue()) > FLT_EPSILON) {
+                Scale.setValue(page->Scale.getValue()); // Recalculate scale from page
+                Scale.touch();
+            }
+        }
+    } else if(strcmp(ScaleType.getValueAsString(), "Custom") == 0) {
+        Scale.StatusBits.set(2, false);
+        //TODO: need to ?recompute? ?redraw? to get this to stick.
+        //currently need to lose focus and re-get focus to make Scale editable.
+        //Scale.touch();                     // causes loop
+    }
+    return App::DocumentObject::StdReturn;
 }
 
 /// get called by the container when a Property was changed
@@ -119,41 +157,6 @@ FeaturePage* FeatureView::findParentPage()
     }
 
     return page;
-}
-
-
-/*App::DocumentObjectExecReturn *FeatureView::recompute(void)
-{
-    try {
-        return App::DocumentObject::recompute();
-    }
-    catch (Standard_Failure) {
-        Handle_Standard_Failure e = Standard_Failure::Caught();
-        App::DocumentObjectExecReturn* ret = new App::DocumentObjectExecReturn(e->GetMessageString());
-        if (ret->Why.empty()) ret->Why = "Unknown OCC exception";
-        return ret;
-    }
-}*/
-
-App::DocumentObjectExecReturn *FeatureView::execute(void)
-{
-    if(strcmp(ScaleType.getValueAsString(), "Document") == 0) {
-        Scale.StatusBits.set(2, true);
-
-        Drawing::FeaturePage *page = findParentPage();
-        if(page) {
-            if(std::abs(page->Scale.getValue() - Scale.getValue()) > FLT_EPSILON) {
-                Scale.setValue(page->Scale.getValue()); // Recalculate scale from page
-                Scale.touch();
-            }
-        }
-    } else if(strcmp(ScaleType.getValueAsString(), "Custom") == 0) {
-        Scale.StatusBits.set(2, false);
-        //TODO: need to ?recompute? ?redraw? to get this to stick.
-        //currently need to lose focus and re-get focus to make Scale editable.
-        //Scale.touch();                     // causes loop
-    }
-    return App::DocumentObject::StdReturn;
 }
 
 

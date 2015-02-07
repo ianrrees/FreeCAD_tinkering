@@ -570,6 +570,19 @@ void DXFOutput::printEllipse(const BRepAdaptor_Curve& c, int id, std::ostream& o
     double r1 = ellp.MajorRadius();
     double r2 = ellp.MinorRadius();
     double dp = ellp.Axis().Direction().Dot(gp_Vec(0,0,1));
+ 
+#if 0
+    double f = c.FirstParameter();
+    double l = c.LastParameter();
+    gp_Pnt s = c.Value(f);
+    gp_Pnt m = c.Value((l+f)/2.0);
+    gp_Pnt e = c.Value(l);
+
+    gp_Vec v1(m,s);
+    gp_Vec v2(m,e);
+    gp_Vec v3(0,0,1);
+    double a = v3.DotCross(v1,v2);
+#endif
 
     // a full ellipse
    /* if (s.SquareDistance(e) < 0.001) {
@@ -670,8 +683,7 @@ void DXFOutput::printBSpline(const BRepAdaptor_Curve& c, int id, std::ostream& o
         TColgp_Array1OfPnt poles(1,spline->NbPoles());
         spline->Poles(poles);
 
-
-        str << 0 << endl
+      	str << 0 << endl
             << "SPLINE" << endl
             << 8 << endl // Group code for layer name
             << "sheet_layer" << endl // Layer name
@@ -698,6 +710,155 @@ void DXFOutput::printBSpline(const BRepAdaptor_Curve& c, int id, std::ostream& o
                 str << 41 << endl << spline->Weight(i) << endl;
             }
         }
+
+#if 0
+        for (Standard_Integer i=1; i<=arcs; i++) {
+            Handle_Geom_BezierCurve bezier = crt.Arc(i);
+            Standard_Integer poles = bezier->NbPoles();
+			//Standard_Integer poles = bspline->NbPoles();
+			//gp_Pnt p1 = bspline->Pole(1);
+
+            if (bezier->Degree() == 3) {
+                if (poles != 4)
+                    Standard_Failure::Raise("do it the generic way");
+                gp_Pnt p1 = bezier->Pole(1);
+                gp_Pnt p2 = bezier->Pole(2);
+                gp_Pnt p3 = bezier->Pole(3);
+                gp_Pnt p4 = bezier->Pole(4);
+                if (i == 1) {
+                    str 
+						<< 10 << endl
+						<< p1.X() << endl
+						<< 20 << endl
+						<< p1.Y() << endl
+						<< 30 << endl
+						<< 0 << endl
+						
+						<< 10 << endl
+                        << p2.X() << endl
+						<< 20 << endl
+						<< p2.Y() << endl
+						<< 30 << endl
+						<< 0 << endl
+						
+						<< 10 << endl
+                        << p3.X() << endl
+						<< 20 << endl
+						<< p3.Y() << endl
+						<< 30 << endl
+						<< 0 << endl
+						
+						<< 10 << endl
+                        << p4.X() << endl
+						<< 20 << endl
+						<< p4.Y() << endl
+						<< 30 << endl
+						<< 0 << endl
+
+						<< 12 << endl
+						<< p1.X() << endl
+						<< 22 << endl
+						<< p1.Y() << endl
+						<< 32 << endl
+						<< 0 << endl
+
+						<< 13 << endl
+						<< p4.X() << endl
+						<< 23 << endl
+						<< p4.Y() << endl
+						<< 33 << endl
+						<< 0 << endl;
+                }
+                else {
+                    str 
+						<< 10 << endl
+                        << p3.X() << endl
+						<< 20 << endl
+						<< p3.Y() << endl
+						<< 30 << endl
+						<< 0 << endl
+						
+						<< 10 << endl
+                        << p4.X() << endl
+						<< 20 << endl
+						<< p4.Y() << endl
+						<< 30 << endl
+						<< 0 << endl
+
+						<< 12 << endl
+						<< p3.X() << endl
+						<< 22 << endl
+						<< p3.Y() << endl
+						<< 32 << endl
+						<< 0 << endl
+
+						<< 13 << endl
+						<< p4.X() << endl
+						<< 23 << endl
+						<< p4.Y() << endl
+						<< 33 << endl
+						<< 0 << endl;
+
+                }
+            }
+            else if (bezier->Degree() == 2) {
+                if (poles != 3)
+                    Standard_Failure::Raise("do it the generic way");
+                gp_Pnt p1 = bezier->Pole(1);
+                gp_Pnt p2 = bezier->Pole(2);
+                gp_Pnt p3 = bezier->Pole(3);
+                if (i == 1) {
+                    str 
+						<< 10 << endl
+						<< p1.X() << endl
+						<< 20 << endl
+						<< p1.Y() << endl
+						<< 30 << endl
+						<< 0 << endl
+						
+						<< 10 << endl
+                        << p2.X() << endl
+						<< 20 << endl
+						<< p2.Y() << endl
+						<< 30 << endl
+						<< 0 << endl
+						
+						<< 10 << endl
+                        << p3.X() << endl
+						<< 20 << endl
+						<< p3.Y() << endl
+						<< 30 << endl
+						<< 0 << endl
+
+						<< 12 << endl
+						<< p1.X() << endl
+						<< 22 << endl
+						<< p1.Y() << endl
+						<< 32 << endl
+						<< 0 << endl
+
+						<< 13 << endl
+						<< p3.X() << endl
+						<< 23 << endl
+						<< p3.Y() << endl
+						<< 33 << endl
+						<< 0 << endl;
+                }
+                else {
+                    str 
+						<< 10 << endl
+                        << p3.X() << endl
+						<< 20 << endl
+						<< p3.Y() << endl
+						<< 30 << endl
+						<< 0 << endl;
+                }
+            }
+            else {
+                Standard_Failure::Raise("do it the generic way");
+            }
+        }
+#endif
 
         //str << "\" />";
         out << str.str();

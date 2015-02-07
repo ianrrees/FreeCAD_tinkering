@@ -82,12 +82,10 @@ public:
 
     Drawing::FeaturePage* getPageObject() const;
     void unsetEdit(int ModNum);
-    virtual void show(void);
     DrawingView* getDrawingView();
 
 protected:
     bool setEdit(int ModNum);
-    bool onDelete(const std::vector<std::string> &subList);
     bool showDrawingView();
 
 private:

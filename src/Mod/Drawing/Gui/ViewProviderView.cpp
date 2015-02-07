@@ -133,7 +133,6 @@ Drawing::FeatureView* ViewProviderDrawingView::getViewObject() const
     return dynamic_cast<Drawing::FeatureView*>(pcObject);
 }
 
-
 // ----------------------------------------------------------------------------
 
 PROPERTY_SOURCE(DrawingGui::ViewProviderDrawingClip, Gui::ViewProviderDocumentObjectGroup)

@@ -47,11 +47,11 @@
 #include <Gui/ViewProvider.h>
 
 #include <Mod/Part/App/PartFeature.h>
+#include <Mod/Drawing/App/FeaturePage.h>
 #include <Mod/Drawing/App/FeatureViewPart.h>
 #include <Mod/Drawing/App/FeatureOrthoView.h>
 #include <Mod/Drawing/App/FeatureViewOrthographic.h>
 #include <Mod/Drawing/App/FeatureViewDimension.h>
-#include <Mod/Drawing/App/FeaturePage.h>
 #include <Mod/Drawing/Gui/CanvasView.h>
 
 
@@ -129,8 +129,6 @@ void CmdDrawingNewPage::activated(int iMsg)
     std::string PageName = getUniqueObjectName("Page");
     std::string TemplateName = getUniqueObjectName("Template");
 
-    //TODO: message doesn't appear until after this method exits.  :(
-    //Gui::getMainWindow()->showMessage(QObject::tr("Please wait. Loading Template file."),2001);
     QFileInfo tfi(a->property("Template").toString());
     if (tfi.isReadable()) {
         openCommand("Drawing create page");
@@ -176,11 +174,12 @@ Gui::Action * CmdDrawingNewPage::createAction(void)
 
     std::string path = App::Application::getResourceDir();
     path += "Mod/Drawing/Templates/";
-    //TODO: having size/orientation/id embedded in template file name is rubbish!
-    //      want file chooser and extract info from xml?
+    //TODO: having size/orientation/id embedded in template file name is odd
+    //      want file chooser and extract info from xml? or??
     QDir dir(QString::fromUtf8(path.c_str()), QString::fromAscii("*.svg"));
     for (unsigned int i=0; i<dir.count(); i++ ) {
         QRegExp rx(QString::fromAscii("(A|B|C|D|E)(\\d)_(Landscape|Portrait)(_.*\\.|\\.)svg$"));
+ //       QRegExp rx(QString::fromAscii("(A|B|C|D|E)(\\d)_(Landscape|Portrait).svg"));
         if (rx.indexIn(dir[i]) > -1) {
             QString paper = rx.cap(1);
             int id = rx.cap(2).toInt();
@@ -375,6 +374,7 @@ void CmdDrawingNewView::activated(int iMsg)
         return;
     }
     
+//    std::vector<App::DocumentObject*> pages = getSelection().getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     if (pages.empty()) {
         //pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
@@ -421,11 +421,6 @@ void CmdDrawingNewView::activated(int iMsg)
         doCommand(Doc,"App.activeDocument().%s.Scale = %e",FeatName.c_str(), newScale);
         doCommand(Doc,"App.activeDocument().%s.Rotation = %e",FeatName.c_str(), newRotation);
         doCommand(Doc,"App.activeDocument().%s.addObject(App.activeDocument().%s)",PageName.c_str(),FeatName.c_str());
-//        doCommand(Doc,"App.activeDocument().%s.Direction = (0.0,0.0,1.0)",FeatName.c_str());
-//        doCommand(Doc,"App.activeDocument().%s.X = 10.0",FeatName.c_str());
-//        doCommand(Doc,"App.activeDocument().%s.Y = 10.0",FeatName.c_str());
-//        doCommand(Doc,"App.activeDocument().%s.Scale = 1.0",FeatName.c_str());
-//        doCommand(Doc,"App.activeDocument().%s.addObject(App.activeDocument().%s)",PageName.c_str(),FeatName.c_str());
         Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
         page->addView(page->getDocument()->getObject(FeatName.c_str()));
     }
@@ -625,6 +620,7 @@ CmdDrawingAnnotation::CmdDrawingAnnotation()
 
 void CmdDrawingAnnotation::activated(int iMsg)
 {
+//    std::vector<App::DocumentObject*> pages = getSelection().getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     if (pages.empty()) {
           QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page found"),
@@ -717,6 +713,7 @@ CmdDrawingSymbol::CmdDrawingSymbol()
 
 void CmdDrawingSymbol::activated(int iMsg)
 {
+//    std::vector<App::DocumentObject*> pages = getSelection().getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     if (pages.empty()) {
         QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page found"),
@@ -901,8 +898,6 @@ bool CmdDrawingDraftView::isActive(void)
 {
     return (getActiveGuiDocument() ? true : false);
 }
-
-
 
 void CreateDrawingCommands(void)
 {

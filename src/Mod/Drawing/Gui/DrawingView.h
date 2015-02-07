@@ -26,6 +26,7 @@
 
 #include <Gui/MDIView.h>
 #include <Gui/Selection.h>
+
 #include <QGraphicsView>
 #include <QPrinter>
 
@@ -61,9 +62,10 @@ public:
     virtual ~DrawingView();
 
 public Q_SLOTS:
-    void attachTemplate(Drawing::FeatureTemplate *obj);
+    //void load(const QString &path = QString());
     void setRenderer(QAction *action);
     void viewAll();
+    void attachTemplate(Drawing::FeatureTemplate *obj);
     void saveSVG(); // TEMPORARY
     void selectionChanged();
     void preSelectionChanged(const QPoint &pos);
@@ -76,6 +78,7 @@ public:
 
     bool onMsg(const char* pMsg,const char** ppReturn);
     bool onHasMsg(const char* pMsg) const;
+    void onRelabel(Gui::Document *pDoc);
     void print();
     void printPdf();
     void printPreview();
@@ -111,10 +114,13 @@ private:
     std::string m_objectName;
     bool isSlectionBlocked;
     CanvasView *m_view;
+    std::string m_objectName;
 
     QPrinter::Orientation m_orientation;
     QPrinter::PageSize m_pageSize;
     QString m_currentPath;
+    QPrinter::Orientation m_orientation;
+    QPrinter::PageSize m_pageSize;
     ViewProviderDrawingPage *pageGui;
 
     QList<QGraphicsItemView *> deleteItems;

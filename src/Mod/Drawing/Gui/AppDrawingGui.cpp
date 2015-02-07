@@ -85,6 +85,8 @@ void DrawingGuiExport initDrawingGui()
 
     DrawingGui::ViewProviderDrawingPage::init();
     DrawingGui::ViewProviderDrawingView::init();
+//    DrawingGui::ViewProviderDrawingClip::init();
+
     DrawingGui::ViewProviderTemplate::init();
     DrawingGui::ViewProviderDimension::init();
     DrawingGui::ViewProviderViewPart::init();

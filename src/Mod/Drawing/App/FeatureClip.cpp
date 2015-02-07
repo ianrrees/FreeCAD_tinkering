@@ -98,20 +98,18 @@ App::DocumentObjectExecReturn *FeatureClip::execute(void)
     // create clipped group
     svg << "<g clip-path=\"url(#" << Label.getValue() << ")\">" << endl;
 
-/*
     // get through the children and collect all the views
     const std::vector<App::DocumentObject*> &Grp = Group.getValues();
     for (std::vector<App::DocumentObject*>::const_iterator It= Grp.begin();It!=Grp.end();++It) {
         if ((*It)->getTypeId().isDerivedFrom(Drawing::FeatureView::getClassTypeId())) {
             Drawing::FeatureView *View = dynamic_cast<Drawing::FeatureView *>(*It);
-            svg << View->ViewResult.getValue() << endl;
+            //svg << View->ViewResult.getValue() << endl;
         }
     }
-*/
 
     // closing clipped group
     svg << "</g>" << endl;
 
-    ViewResult.setValue(svg.str().c_str());
+    //ViewResult.setValue(svg.str().c_str());
     return App::DocumentObject::StdReturn;
 }
