@@ -91,7 +91,6 @@ std::vector<std::string> ViewProviderViewOrthographic::getDisplayModes(void) con
 
 void ViewProviderViewOrthographic::updateData(const App::Property* prop)
 {
-    Base::Console().Message("TRACE - ViewProviderViewOrthographic(%s)::updateData(%s)\n",getObject()->getNameInDocument(),prop->getName());
     Gui::ViewProviderDocumentObject::updateData(prop);
 
     if(prop == &(getObject()->Scale) ||
