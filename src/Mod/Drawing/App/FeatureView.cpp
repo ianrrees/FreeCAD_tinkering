@@ -112,7 +112,7 @@ App::DocumentObjectExecReturn *FeatureView::execute(void)
         //currently need to lose focus and re-get focus to make Scale editable.
         //Scale.touch();                     // causes loop
     }
-    return App::DocumentObject::StdReturn;
+    return App::DocumentObject::execute();
 }
 
 /// get called by the container when a Property was changed

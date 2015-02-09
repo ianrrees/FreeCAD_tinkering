@@ -74,7 +74,7 @@ void QGraphicsItemViewSection::drawSectionFace()
     std::vector<DrawingGeometry::Face *> faceGeoms;
     part->getSectionSurface(faceGeoms);
     if (faceGeoms.empty()) {
-        Base::Console().Message("No Face available. Check Section plane.\n");
+        Base::Console().Log("INFO - QGraphicsItemViewSection::drawSectionFace - No Face available. Check Section plane.\n");
         return;
     }
 
