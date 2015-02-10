@@ -781,53 +781,35 @@ void CmdDrawingExportPage::activated(int iMsg)
     }
 
     unsigned int n = getSelection().countObjectsOfType(Drawing::FeaturePage::getClassTypeId());
-    if (n != 1) {                                          // too many Pages
+    if (n > 1) {                                          // too many Pages
         QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
             QObject::tr("Select only one Page object."));
         return;
     }
 
     Drawing::FeaturePage* page = dynamic_cast<Drawing::FeaturePage*>(pages.front());
-    QString pageName = QString::fromLocal8Bit(page->getNameInDocument());
-    Gui::MainWindow* mw = Gui::getMainWindow();
-    QGraphicsView* v = mw->findChild<QGraphicsView*>(pageName);
-    if (!v) {
+
+    Gui::Document* activeGui = Gui::Application::Instance->getDocument(page->getDocument());
+    Gui::ViewProvider* vp = activeGui->getViewProvider(page);
+    ViewProviderDrawingPage* dvp = dynamic_cast<ViewProviderDrawingPage*>(vp);
+
+    if (dvp  && dvp->getDrawingView()) {
+        QStringList filter;
+    filter << QString::fromLatin1("%1 (*.svg)").arg(QObject::tr("Scalable Vector Graphic"));
+    filter << QString::fromLatin1("%1 (*.*)").arg(QObject::tr("All Files"));
+        QString fn = Gui::FileDialog::getSaveFileName(Gui::getMainWindow(), QObject::tr("Export page as SVG"),
+                                                      QString(), filter.join(QLatin1String(";;")));
+        if (!fn.isEmpty()) {
+            dvp->getDrawingView()->saveSVG(fn.toUtf8().constData());
+        } else {
+            return;
+        }
+    } else {
         QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No Drawing View"),
             QObject::tr("Open Drawing View before attempting export to SVG."));
         return;
     }
 
-    // TODO: move all this logic to AppDrawing??
-    QStringList filter;
-    filter << QString::fromLatin1("%1 (*.svg)").arg(QObject::tr("Scalable Vector Graphic"));
-    filter << QString::fromLatin1("%1 (*.*)").arg(QObject::tr("All Files"));
-    QString fn = Gui::FileDialog::getSaveFileName(Gui::getMainWindow(), QObject::tr("Export page as SVG"), 
-                                                  QString(), filter.join(QLatin1String(";;")));
-
-    if (!fn.isEmpty()) {
-        QString docName = QString::fromLocal8Bit(this->getDocument()->getName());
-        std::string fname = (const char*)fn.toUtf8();
-        QString viewName = v->objectName();
-        if (pageName == viewName) {
-            QSvgGenerator svgGen;
-            svgGen.setFileName(fn);
-            svgGen.setSize(QSize(page->getPageWidth(), page->getPageHeight()));
-            svgGen.setViewBox(QRect(0, 0, page->getPageWidth(), page->getPageHeight()));
-            svgGen.setTitle(QObject::tr("FreeCAD SVG Export"));
-            svgGen.setDescription(QString::fromLocal8Bit("Drawing page: ") %
-                                  pageName %
-                                  QString::fromLocal8Bit("exported from FreeCAD document: ") %
-                                  docName);
-            QPainter painter( &svgGen );
-            DrawingGui::CanvasView* cv = dynamic_cast<DrawingGui::CanvasView*>(v);
-            //cv->toggleEdit(false);
-            cv->scene()->update();
-            cv->scene()->render( &painter );
-            //cv->toggleEdit(true);
-        }
-    }
-//        openCommand("Drawing export page");
-//        commitCommand();
 }
 
 bool CmdDrawingExportPage::isActive(void)

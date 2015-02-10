@@ -1024,35 +1024,36 @@ void DrawingView::onSelectionChanged(const Gui::SelectionChanges& msg)
     }
 }
 
-// This SHOULD only be temporary   // why?  seems like a perfectly good place to put it!!
-void DrawingView::saveSVG()
+void DrawingView::saveSVG(std::string fileName)
 {
-    //TODO: saveSVG is in Command.cpp?
-    Drawing::FeaturePage *page = pageGui->getPageObject();
-
-    QSvgGenerator svgGen;
-
-    QStringList filter;
-    filter << QObject::tr("SVG(*.svg)");
-    filter << QObject::tr("All Files (*.*)");
-
-    QString fn = Gui::FileDialog::getSaveFileName(Gui::getMainWindow(), QObject::tr("Export page"), QString(), filter.join(QLatin1String(";;")));
+    QString fn = QString::fromStdString(fileName);
     if (fn.isEmpty()) {
-      Base::Console().Error("Cannot export SVG");
+//      Base::Console().Error("Cannot export SVG to file: %s\n",fileName.c_str());
       return;
     }
 
+    Drawing::FeaturePage *page = pageGui->getPageObject();
+    const QString docName = QString::fromUtf8(page->getDocument()->getName());
+    const QString pageName = QString::fromUtf8(page->getNameInDocument());
+    QString svgDescription = tr("Drawing page: ") +
+                             pageName +
+                             tr(" exported from FreeCAD document: ") +
+                             docName;
+
     int width  =  page->getPageWidth();
     int height =  page->getPageHeight();
+    QSvgGenerator svgGen;
     svgGen.setFileName(fn);
     svgGen.setSize(QSize((int) page->getPageWidth(), (int)page->getPageHeight()));
     svgGen.setViewBox(QRect(0, 0, page->getPageWidth(), page->getPageHeight()));
-    svgGen.setResolution(1. / 0.039370);
+    svgGen.setResolution(1. / 0.039370);    // =25.4000508  mm/inch??  docs say this is DPI 
+    svgGen.setTitle(QObject::tr("FreeCAD SVG Export"));
+    svgGen.setDescription(svgDescription);
 
     bool block = this->blockConnection(true); // avoid to be notified by itself
     Gui::Selection().clearSelection();
 
-    this->m_view->toggleEdit(false);
+    this->m_view->toggleEdit(false);             //fiddle cache, cosmetic lines, vertices, etc
     this->m_view->scene()->update();
 
     Gui::Selection().clearSelection();
@@ -1061,7 +1062,7 @@ void DrawingView::saveSVG()
     p.begin(&svgGen);
     this->m_view->scene()->render(&p);
     p.end();
-    // Reset
+
     this->m_view->toggleEdit(true);
 }
 

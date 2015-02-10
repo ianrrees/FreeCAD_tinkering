@@ -66,7 +66,7 @@ public Q_SLOTS:
     void setRenderer(QAction *action);
     void viewAll();
     void attachTemplate(Drawing::FeatureTemplate *obj);
-    void saveSVG(); // TEMPORARY
+    void saveSVG(std::string);
     void selectionChanged();
     void preSelectionChanged(const QPoint &pos);
     void updateDrawing();
