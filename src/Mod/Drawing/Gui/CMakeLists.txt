@@ -28,7 +28,6 @@ set(DrawingGui_LIBS
 
 set(DrawingGui_MOC_HDRS
     DrawingView.h
-    TaskOrthoViews.h
     TaskDialog.h
     CanvasView.h
     QGraphicsItemTemplate.h
@@ -54,7 +53,6 @@ SOURCE_GROUP("Moc" FILES ${DrawingGui_MOC_SRCS})
 qt4_add_resources(DrawingGui_SRCS Resources/Drawing.qrc)
 
 set(DrawingGui_UIC_SRCS
-    TaskOrthoViews.ui
     TaskOrthographicViews.ui
 )
 
@@ -71,9 +69,6 @@ SET(DrawingGui_SRCS
     PreCompiled.h
     TaskDialog.cpp
     TaskDialog.h
-    TaskOrthoViews.ui
-    TaskOrthoViews.cpp
-    TaskOrthoViews.h
     Workbench.cpp
     Workbench.h
     TaskOrthographicViews.ui
@@ -137,6 +132,8 @@ SET(DrawingGuiViewProvider_SRCS
     ViewProviderAnnotation.h
     ViewProviderSymbol.cpp
     ViewProviderSymbol.h
+    ViewProviderClip.cpp
+    ViewProviderClip.h
 )
 
 SOURCE_GROUP("Mod" FILES ${DrawingGui_SRCS})
@@ -144,7 +141,6 @@ SOURCE_GROUP("SVG-View" FILES ${DrawingGuiView_SRCS})
 SOURCE_GROUP("ViewProvider" FILES ${DrawingGuiViewProvider_SRCS})
 
 SET(DrawingGuiTaskDlgs_SRCS
-    TaskOrthoViews.ui
     TaskOrthographicViews.ui
 )
 SOURCE_GROUP("TaskDialogs" FILES ${DrawingGuiTaskDlgs_SRCS})

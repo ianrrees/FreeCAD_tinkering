@@ -67,36 +67,6 @@ public:
     Drawing::FeatureView* getViewObject() const;
 };
 
-class DrawingGuiExport ViewProviderDrawingClip : public Gui::ViewProviderDocumentObjectGroup
-{
-    PROPERTY_HEADER(DrawingGui::ViewProviderDrawingClip);
-
-public:
-    /// constructor
-    ViewProviderDrawingClip();
-    /// destructor
-    virtual ~ViewProviderDrawingClip();
-
-
-    virtual void attach(App::DocumentObject *);
-    virtual void setDisplayMode(const char* ModeName);
-    virtual bool useNewSelectionModel(void) const {return false;}
-    /// returns a list of all possible modes
-    virtual std::vector<std::string> getDisplayModes(void) const;
-    virtual void updateData(const App::Property*);
-    /// Hide the object in the view
-    virtual void hide(void);
-    /// Show the object in the view
-    virtual void show(void);
-    virtual bool isShow(void) const;
-
-    /** @name Restoring view provider from document load */
-    //@{
-    virtual void startRestoring();
-    virtual void finishRestoring();
-    //@}
-};
-
 } // namespace DrawingGui
 
 
