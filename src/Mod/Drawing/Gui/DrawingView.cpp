@@ -1024,11 +1024,14 @@ void DrawingView::onSelectionChanged(const Gui::SelectionChanges& msg)
     }
 }
 
-void DrawingView::saveSVG(std::string fileName)
+void DrawingView::saveSVG()
 {
-    QString fn = QString::fromStdString(fileName);
+    QStringList filter;
+    filter << QObject::tr("SVG (*.svg)");
+    filter << QObject::tr("All Files (*.*)");
+    QString fn = Gui::FileDialog::getSaveFileName(Gui::getMainWindow(), QObject::tr("Export page as SVG"),
+                                                  QString(), filter.join(QLatin1String(";;")));
     if (fn.isEmpty()) {
-//      Base::Console().Error("Cannot export SVG to file: %s\n",fileName.c_str());
       return;
     }
 

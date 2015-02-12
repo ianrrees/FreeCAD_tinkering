@@ -794,16 +794,7 @@ void CmdDrawingExportPage::activated(int iMsg)
     ViewProviderDrawingPage* dvp = dynamic_cast<ViewProviderDrawingPage*>(vp);
 
     if (dvp  && dvp->getDrawingView()) {
-        QStringList filter;
-    filter << QString::fromLatin1("%1 (*.svg)").arg(QObject::tr("Scalable Vector Graphic"));
-    filter << QString::fromLatin1("%1 (*.*)").arg(QObject::tr("All Files"));
-        QString fn = Gui::FileDialog::getSaveFileName(Gui::getMainWindow(), QObject::tr("Export page as SVG"),
-                                                      QString(), filter.join(QLatin1String(";;")));
-        if (!fn.isEmpty()) {
-            dvp->getDrawingView()->saveSVG(fn.toUtf8().constData());
-        } else {
-            return;
-        }
+        dvp->getDrawingView()->saveSVG();
     } else {
         QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No Drawing View"),
             QObject::tr("Open Drawing View before attempting export to SVG."));
