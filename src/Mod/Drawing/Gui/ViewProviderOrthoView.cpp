@@ -111,8 +111,8 @@ void ViewProviderOrthoView::updateData(const App::Property* prop)
 
 void ViewProviderOrthoView::setupContextMenu(QMenu* menu, QObject* receiver, const char* member)
 {
-    QAction* act;
-    act = menu->addAction(QObject::tr("Show drawing"), receiver, member);
+    //QAction* act;
+    //act = menu->addAction(QObject::tr("Show drawing"), receiver, member);
 }
 
 bool ViewProviderOrthoView::setEdit(int ModNum)

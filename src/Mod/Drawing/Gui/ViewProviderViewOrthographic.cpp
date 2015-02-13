@@ -114,8 +114,8 @@ void ViewProviderViewOrthographic::updateData(const App::Property* prop)
 
 void ViewProviderViewOrthographic::setupContextMenu(QMenu* menu, QObject* receiver, const char* member)
 {
-    QAction* act;
-    act = menu->addAction(QObject::tr("Show drawing"), receiver, member);
+    //QAction* act;
+    //act = menu->addAction(QObject::tr("Show drawing"), receiver, member);
 }
 
 bool ViewProviderViewOrthographic::setEdit(int ModNum)
