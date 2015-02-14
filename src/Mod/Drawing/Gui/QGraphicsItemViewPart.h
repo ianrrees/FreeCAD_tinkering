@@ -105,7 +105,7 @@ protected:
     QColor m_colPre;
     QColor m_colSel;
     QColor m_colHid;
-    QRectF bbox;
+    //QRectF bbox;
     bool borderVisible;
 private:
     QList<QGraphicsItem *> deleteItems;

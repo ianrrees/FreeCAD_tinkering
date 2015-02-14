@@ -106,14 +106,9 @@ QVariant QGraphicsItemViewPart::itemChange(GraphicsItemChange change, const QVar
         }
         update();
     } else if(change == ItemSceneChange && scene()) {
-        // if item has been removed from scene we need to update bounding box to not draw anything
-
-            // NOTE:  Temporary solution to prevent segfaulting in PaintDraw event
-           borderVisible = false;
+           // NOTE:  Temporary solution to prevent segfaulting in PaintDraw event ????
+           borderVisible = false;         //why???
            this->tidy();
-//         prepareGeometryChange();
-//         bbox.setHeight(0.);
-//         bbox.setWidth(0.);
     }
     return QGraphicsItemView::itemChange(change, value);
 }
@@ -242,43 +237,27 @@ void QGraphicsItemViewPart::updateView(bool update)
        viewPart->Tolerance.isTouched() ||
        viewPart->Scale.isTouched() ||
        viewPart->ShowHiddenLines.isTouched()){
-
-        Base::Console().Log("Drawing::QGraphicsItemViewPart::updateView - Shapes need redrawing %s\n", viewPart->getNameInDocument());
-
-        // Identify what changed to prevent complete redraw
+        //Base::Console().Log("Drawing::QGraphicsItemViewPart::updateView - Shapes need redrawing %s\n", viewPart->getNameInDocument());
+        // Remove all existing QGIxxxx to force boundingRect recalc
         QList<QGraphicsItem *> items = this->childItems();
-        QList<QGraphicsItem *> bboxItems = items;
-
-        bbox.setSize(QSizeF(0,0));
+        //QList<QGraphicsItem *> bboxItems = items;
         for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); ++it) {
-            // Rebuild bounding box on every deletion - unfortunatly necessary
-            QRectF tmpBox;
-            for(QList<QGraphicsItem *>::iterator qit = bboxItems.begin(); qit!= bboxItems.end(); ++qit) {
-                if(*qit)
-                    tmpBox |=  this->transform().mapRect((*qit)->boundingRect());
-            }
-
-            // Declare the bounding box will change and set to new one without element
             prepareGeometryChange();
-            bbox = tmpBox;
-
             if(dynamic_cast<QGraphicsItemEdge *> (*it) ||
               dynamic_cast<QGraphicsItemFace *>(*it) ||
               dynamic_cast<QGraphicsItemVertex *>(*it)) {
-                this->scene()->removeItem(*it);
-                deleteItems.append(*it); // We store these and delete till later to prevent rendering crash ISSUE
+                removeFromGroup(*it);
+                this->scene()->removeItem(*it);                        // hide and reparent QGIxxxx to this
+                deleteItems.append(*it);                               // We store these and delete till later to prevent rendering crash ISSUE
             }
-            bboxItems.removeFirst();
+            //bboxItems.removeFirst();
         }
-
-        // Redraw the part
-        draw();
+        draw();                                                        // Redraw the part with all new QGIxxxx
     } else if(viewPart->LineWidth.isTouched()) {
-        Base::Console().Log("Drawing::QGraphicsItemViewPart::updateView - line width touched \n");
+        //Base::Console().Log("Drawing::QGraphicsItemViewPart::updateView - line width touched \n");
         QList<QGraphicsItem *> items = this->childItems();
         for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); ++it) {
             QGraphicsItemEdge *edge = dynamic_cast<QGraphicsItemEdge *>(*it);
-
             float lineWidth = viewPart->LineWidth.getValue() * lineScaleFactor;
             if(edge)
                 edge->setStrokeWidth(lineWidth);
@@ -286,7 +265,6 @@ void QGraphicsItemViewPart::updateView(bool update)
     }
 
     QGraphicsItemView::updateView(update);
-
 }
 
 void QGraphicsItemViewPart::draw() {
@@ -301,8 +279,6 @@ void QGraphicsItemViewPart::drawViewPart()
     Drawing::FeatureViewPart *part = dynamic_cast<Drawing::FeatureViewPart *>(this->getViewObject());
 
     float lineWidth = part->LineWidth.getValue() * lineScaleFactor;
-
-    QRectF box;
 
     // Draw Faces
     QGraphicsItem *graphicsItem = 0;
@@ -352,7 +328,6 @@ void QGraphicsItemViewPart::drawViewPart()
         }
     } 
 
-
     // Draw Edges
     graphicsItem = 0;
     const std::vector<DrawingGeometry::BaseGeom *> &geoms = part->getEdgeGeometry();
@@ -360,15 +335,12 @@ void QGraphicsItemViewPart::drawViewPart()
     std::vector<DrawingGeometry::BaseGeom *>::const_iterator it = geoms.begin();
 
     // Draw Edges
-    // iterate through all the geometries
     for(int i = 0 ; it != geoms.end(); ++it, i++) {
        // Attempt to find if a previous edge exists
       QGraphicsItemEdge *item = this->findRefEdge(refs.at(i));
-
       if(!item) {
           item = new QGraphicsItemEdge(refs.at(i));
-
-          // Edges and Vertexs must be transformed to the ViewPart's coordinate system
+          // Edge must be transformed to the ViewPart's coordinate system
           item->moveBy(this->x(), this->y());
           QPointF posRef(0.,0.);
           QPointF mapPos = item->mapToItem(this, posRef);
@@ -391,12 +363,7 @@ void QGraphicsItemViewPart::drawViewPart()
               vPath.addPath(path);
               item->setVisiblePath(vPath);
           }
-
-          box |=  this->transform().mapRect(graphicsItem->boundingRect());
-          prepareGeometryChange();
-
-          bbox = box;
-
+          prepareGeometryChange();                                     // necessary?? adding elements seems to be handled automagically
           this->addToGroup(graphicsItem);
           // Don't allow selection for any edges with no references
           if(refs.at(i) > 0) {
@@ -404,24 +371,20 @@ void QGraphicsItemViewPart::drawViewPart()
           }
       }
     }
-
     graphicsItem = 0;
 
     // Draw Vertexs:
     const std::vector<DrawingGeometry::Vertex *> &verts = part->getVertexGeometry();
     const std::vector<int> &vertRefs                    = part->getVertexReferences();
-
     std::vector<DrawingGeometry::Vertex *>::const_iterator vert = verts.begin();
+    QBrush vertBrush(QBrush(QColor(0,0,0,255)));  //TODO: vertex colour sb param
 
-    QBrush vertBrush(QBrush(QColor(0,0,0,255)));
-
-     // iterate through all the geometries
     for(int i = 0 ; vert != verts.end(); ++vert, i++) {
           DrawingGeometry::Vertex *myVertex = *vert;
           QGraphicsItemVertex *item = new QGraphicsItemVertex(vertRefs.at(i));
           QPainterPath path;
           //item->setBrush(vertBrush);
-          path.addEllipse(-3 ,-3, 6, 6);     //TODO: these should change size with the view, or when viewpart is selected?
+          path.addEllipse(-3 ,-3, 6, 6);     //TODO: too big? sb attribute of QGIVertex?
 
           QPointF posRef(0.,0.);
           QPointF mapPos = item->mapToItem(this, posRef);
@@ -431,9 +394,6 @@ void QGraphicsItemViewPart::drawViewPart()
           item->moveBy(-mapPos.x(), -mapPos.y());
           if(vertRefs.at(i) > 0)
               item->setFlag(QGraphicsItem::ItemIsSelectable, true);
-
-          // Edges and Vertexs must be transformed to the ViewPart's coordinate system
-          //item->moveBy(this->x(), this->y());
           this->addToGroup(item);
     }
 }
@@ -579,12 +539,11 @@ void QGraphicsItemViewPart::toggleCache(bool state)
 {
   QList<QGraphicsItem *> items = this->childItems();
     for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); it++) {
-        //(*it)->setCacheMode((state)? DeviceCoordinateCache : NoCache);
+        //(*it)->setCacheMode((state)? DeviceCoordinateCache : NoCache);        //TODO: fiddle cache settings if req'd for performance
         (*it)->setCacheMode((state)? NoCache : NoCache);
         (*it)->update();
     }
 }
-
 
 void QGraphicsItemViewPart::toggleCosmeticLines(bool state)
 {
@@ -658,7 +617,7 @@ void QGraphicsItemViewPart::drawBorder(QPainter *painter)
   // Draw Label
   QString name = QString::fromAscii(this->getViewObject()->Label.getValue());
 
-  QFont font;
+  QFont font;                                                          //TODO: font sb param
   font.setFamily(QString::fromAscii("osifont")); // Set to generic sans-serif font
   font.setPointSize(5.f);
   painter->setFont(font);
