@@ -68,9 +68,8 @@ void QGraphicsItemView::alignTo(QGraphicsItem *item, const QString &alignment)
 
 QVariant QGraphicsItemView::itemChange(GraphicsItemChange change, const QVariant &value)
 {
+    //TODO: should have ItemPositionHasChanged in itemChange too?
     if(change == ItemPositionChange && scene()) {
-        // value is the new position.
-
         QPointF newPos = value.toPointF();
 
         if(this->locked){
@@ -96,14 +95,11 @@ QVariant QGraphicsItemView::itemChange(GraphicsItemChange change, const QVariant
 
 void QGraphicsItemView::mousePressEvent(QGraphicsSceneMouseEvent * event)
 {
-  QGraphicsItem *item = this->parentItem();
-
-
-  if(this->locked) {
-      event->ignore();
-  } else {
+    if(this->locked) {
+        event->ignore();
+    } else {
       QGraphicsItem::mousePressEvent(event);
-  }
+    }
 }
 
 void QGraphicsItemView::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
@@ -113,16 +109,15 @@ void QGraphicsItemView::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
 
 void QGraphicsItemView::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 {
-    if(scene() && this == scene()->mouseGrabberItem() && !this->locked) {
-
+    if(!this->locked) {
         double x = this->x(),
                y = this->getY();
-
+        //TODO: doCommand vs viewobject.X.setValue
         Gui::Command::openCommand("Drag View");
         Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.X = %f", this->getViewObject()->getNameInDocument(), x);
         Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.Y = %f", this->getViewObject()->getNameInDocument(), y);
         Gui::Command::commitCommand();
-        //Gui::Command::updateActive();
+        Gui::Command::updateActive();
     }
     QGraphicsItem::mouseReleaseEvent(event);
 }

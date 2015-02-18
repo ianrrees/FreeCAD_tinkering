@@ -52,23 +52,31 @@
 
 using namespace DrawingGui;
 
-QGraphicsItemViewAnnotation::QGraphicsItemViewAnnotation(const QPoint &pos, QGraphicsScene *scene) :QGraphicsItemView(pos, scene)
+QGraphicsItemViewAnnotation::QGraphicsItemViewAnnotation(const QPoint &pos, QGraphicsScene *scene) 
+                            :QGraphicsItemView(pos, scene),
+                            borderVisible(true)
 {
-    this->setCacheMode(QGraphicsItem::NoCache);
-    this->setFlag(ItemSendsGeometryChanges, true);
-    this->setFlag(ItemIsMovable, true);
-    this->setFlag(ItemIsSelectable, true);
-    this->setAcceptHoverEvents(true);
+    setCacheMode(QGraphicsItem::NoCache);
+    setAcceptHoverEvents(true);
+    setFlag(QGraphicsItem::ItemIsMovable, true);
+    setFlag(QGraphicsItem::ItemIsSelectable, true);
+    //setHandlesChildEvents(true);    // Qt says this is now obsolete!! (also doesn't work!!)
+    setFiltersChildEvents(true);      // this doesn't work either???
     this->setPos(pos);
 
     m_textItem = new QGraphicsTextItem();
     this->addToGroup(m_textItem);
+
     Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
         .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors");
     App::Color fcColor = App::Color((uint32_t) hGrp->GetUnsigned("NormalColor", 0x00000000));
     m_colNormal = fcColor.asQColor();
     fcColor.setPackedValue(hGrp->GetUnsigned("SelectColor", 0x0000FF00));
     m_colSel = fcColor.asQColor();
+    fcColor.setPackedValue(hGrp->GetUnsigned("PreSelectColor", 0x00080800));
+    m_colPre = fcColor.asQColor();
+
+    m_colCurrent = m_colNormal;
 }
 
 QGraphicsItemViewAnnotation::~QGraphicsItemViewAnnotation()
@@ -76,15 +84,43 @@ QGraphicsItemViewAnnotation::~QGraphicsItemViewAnnotation()
     // m_textItem belongs to this group and will be deleted by parent
 }
 
+QVariant QGraphicsItemViewAnnotation::itemChange(GraphicsItemChange change, const QVariant &value)
+{
+    if (change == ItemSelectedHasChanged && scene()) {
+        if(isSelected()) {
+            m_colCurrent = m_colSel;
+        } else {
+            m_colCurrent = m_colNormal;
+        }
+        update();
+    }
+
+    return QGraphicsItemView::itemChange(change, value);
+}
+
+void QGraphicsItemViewAnnotation::setViewAnnoFeature(Drawing::FeatureViewAnnotation *obj)
+{
+    // called from CanvasView. (once)
+    if(obj == 0)
+        return;
+
+    this->setViewFeature(static_cast<Drawing::FeatureView *>(obj));
+    this->draw();
+
+    // Set the QGraphicsItemGroup Properties based on the FeatureView
+    float x = obj->X.getValue();
+    float y = obj->Y.getValue();
+
+    this->setPos(x, y);
+    Q_EMIT dirty();
+}
+
 void QGraphicsItemViewAnnotation::draw()
 {
+    drawAnnotation();
 }
 
 void QGraphicsItemViewAnnotation::drawAnnotation()
-{
-}
-
-void QGraphicsItemViewAnnotation::updateView(bool update)
 {
     // nothing to display
     if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewAnnotation::getClassTypeId()))
@@ -93,11 +129,15 @@ void QGraphicsItemViewAnnotation::updateView(bool update)
     // get Feature corresponding to this View
     Drawing::FeatureViewAnnotation *viewAnno = dynamic_cast<Drawing::FeatureViewAnnotation *>(this->getViewObject());
 
-    // get the Property values
+    // get the Text values
     const std::vector<std::string>& annoText = viewAnno->Text.getValues();
     std::stringstream ss;
     for(std::vector<std::string>::const_iterator it = annoText.begin(); it != annoText.end(); ++it) {
-        ss << *it << "\n";
+        if (it == annoText.begin()) {
+            ss << *it;
+        } else {
+            ss << "\n" << *it ;
+        }
     }
  
     QFont font;
@@ -106,90 +146,122 @@ void QGraphicsItemViewAnnotation::updateView(bool update)
     m_textItem->setFont(font);
 
     App::Color c = viewAnno->TextColor.getValue();
-    m_colNormal = c.asQColor();
-    m_textItem->setDefaultTextColor(m_colSel);
+    m_textItem->setDefaultTextColor(c.asQColor());
 
+    this->prepareGeometryChange();
     QString qs = QString::fromUtf8(ss.str().c_str()); 
     m_textItem->setPlainText(qs);
     m_textItem->adjustSize();
-
-    if(update) {
-        QGraphicsItemView::updateView(true);
-    } else {
-        QGraphicsItemView::updateView();
-    }
 }
 
-void QGraphicsItemViewAnnotation::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+void QGraphicsItemViewAnnotation::updateView(bool update)
 {
-    QGraphicsItemView::paint(painter, option, widget);
-}
+    // nothing to display
+    if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewAnnotation::getClassTypeId()))
+        return;
 
-QVariant QGraphicsItemViewAnnotation::itemChange(GraphicsItemChange change, const QVariant &value)
-{
-    if (change == ItemSelectedHasChanged && scene()) {
-        if(isSelected()) {
-            Q_EMIT selected(true);
-            m_textItem->setDefaultTextColor(m_colSel);
-        } else {
-            Q_EMIT selected(false);
-            m_textItem->setDefaultTextColor(m_colNormal);
-        }
-        update();
-    } else if(change == ItemPositionHasChanged && scene()) {
-        updatePos();
-        Q_EMIT dragging();
-    }
+    //QGraphicsItemView::updateView(update);                             // update pos() with Feature X,Y
 
-    return QGraphicsItemView::itemChange(change, value);
-}
-
-void QGraphicsItemViewAnnotation::setPosition(const double &x, const double &y)
-{
-    // Set the actual QT Coordinates by setting at qt origin rathern than bbox center
-    this->setPos(x -  this->boundingRect().width() / 2., y - this->boundingRect().height() / 2.);
-}
-
-void QGraphicsItemViewAnnotation::updatePos()
-{
-    // update Feature's X,Y after dragging
+    // get Feature corresponding to this View
     Drawing::FeatureViewAnnotation *viewAnno = dynamic_cast<Drawing::FeatureViewAnnotation *>(this->getViewObject());
-    viewAnno->X.setValue(this->x());
-    viewAnno->Y.setValue(-1.0 * this->y());
+
+    if(update ||
+       viewAnno->isTouched() ||
+       viewAnno->Text.isTouched() ||
+       viewAnno->Font.isTouched() ||
+       viewAnno->TextColor.isTouched() ||
+       viewAnno->TextSize.isTouched() ) {
+        draw();
+    }
+
+    QGraphicsItemView::updateView(update);
+}
+
+void QGraphicsItemViewAnnotation::toggleCache(bool state)
+{
+    this->setCacheMode((state)? NoCache : NoCache);
 }
 
 void QGraphicsItemViewAnnotation::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
-    Q_EMIT hover(true);
-    m_textItem->setDefaultTextColor(m_colSel);
+    // TODO don't like this but only solution at the minute
+    if (isSelected()) {
+        return;
+    } else {
+        if(this->shape().contains(event->pos())) {                     // TODO don't like this for determining preselect
+            m_colCurrent = m_colPre;
+        }
+    }
     update();
 }
 
 void QGraphicsItemViewAnnotation::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 {
-    QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *> (this->parentItem());
-    //assert(view != 0);                 // this fails sometimes. ==> this has no parent?
-    if (!view) {
-        m_textItem->setDefaultTextColor(m_colNormal);
-        update();
-        return;
+    if(!isSelected()) {
+        m_colCurrent = m_colNormal;
+    } else {
+        m_colCurrent = m_colSel;
     }
-
-    Q_EMIT hover(false);
-    if(!isSelected() && !view->isSelected()) {
-        m_textItem->setDefaultTextColor(m_colNormal);
-        update();
-    }
-}
-
-void QGraphicsItemViewAnnotation::mouseReleaseEvent( QGraphicsSceneMouseEvent * event)
-{
-    if(scene() && this == scene()->mouseGrabberItem()) {
-        Q_EMIT dragFinished();
-    }
-    m_textItem->setDefaultTextColor(m_colNormal);
-    QGraphicsItemView::mouseReleaseEvent(event);
     update();
 }
 
+QPainterPath QGraphicsItemViewAnnotation::shape() const {
+    QPainterPath path;
+    QRectF box = this->boundingRect().adjusted(2.,2.,-2.,-2.);
+    path.addRect(box);
+    QPainterPathStroker stroker;
+    stroker.setWidth(5.f);
+    return stroker.createStroke(path);
+}
+
+QRectF QGraphicsItemViewAnnotation::boundingRect() const
+{
+    return m_textItem->boundingRect().adjusted(-3.,-3.,3.,3.);     // bigger than QGraphicsTextItem
+}
+
+void QGraphicsItemViewAnnotation::drawBorder(QPainter *painter)
+{
+  // Save the current painter state and restore at end
+  painter->save();
+
+  // Make a rectangle smaller than the bounding box as a border and draw dashed line for selection
+  QRectF box = this->boundingRect().adjusted(2.,2.,-2.,-2.);
+
+  QPen myPen;
+  myPen.setStyle(Qt::DashLine);
+  myPen.setWidth(0.3);
+  myPen.setColor(m_colCurrent);
+  painter->setPen(myPen);
+
+  // Draw Label
+  QString name = QString::fromAscii(this->getViewObject()->Label.getValue());
+
+  QFont font;                                                          //TODO: font sb param
+  font.setFamily(QString::fromAscii("osifont")); // Set to generic sans-serif font
+  font.setPointSize(5.f);
+  painter->setFont(font);
+  QFontMetrics fm(font);
+
+  QPointF pos = box.center();
+  pos.setY(box.bottom());
+  pos.setX(pos.x() - fm.width(name) / 2.);
+
+  painter->drawText(pos, name);
+  painter->drawRect(box);
+
+  painter->restore();
+}
+
+void QGraphicsItemViewAnnotation::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+{
+    QStyleOptionGraphicsItem myOption(*option);
+    myOption.state &= ~QStyle::State_Selected;
+
+    if(borderVisible){
+         this->drawBorder(painter);
+    }
+    QGraphicsItemView::paint(painter, option, widget);
+}
+
 #include "moc_QGraphicsItemViewAnnotation.cpp"
+

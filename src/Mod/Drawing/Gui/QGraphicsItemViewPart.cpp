@@ -83,7 +83,7 @@ QGraphicsItemViewPart::~QGraphicsItemViewPart()
 QVariant QGraphicsItemViewPart::itemChange(GraphicsItemChange change, const QVariant &value)
 {
     if (change == ItemSelectedHasChanged && scene()) {
-        QColor color;
+        QColor color = m_colNormal;   //TODO: fix edge/vertex colour
         if(isSelected()) {
             pen.setColor(m_colSel);
 
@@ -123,6 +123,7 @@ void QGraphicsItemViewPart::tidy()
 
 void QGraphicsItemViewPart::setViewPartFeature(Drawing::FeatureViewPart *obj)
 {
+    // called from CanvasView
     if(obj == 0)
         return;
 
@@ -240,7 +241,6 @@ void QGraphicsItemViewPart::updateView(bool update)
         //Base::Console().Log("Drawing::QGraphicsItemViewPart::updateView - Shapes need redrawing %s\n", viewPart->getNameInDocument());
         // Remove all existing QGIxxxx to force boundingRect recalc
         QList<QGraphicsItem *> items = this->childItems();
-        //QList<QGraphicsItem *> bboxItems = items;
         for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); ++it) {
             prepareGeometryChange();
             if(dynamic_cast<QGraphicsItemEdge *> (*it) ||
@@ -250,7 +250,6 @@ void QGraphicsItemViewPart::updateView(bool update)
                 this->scene()->removeItem(*it);                        // hide and reparent QGIxxxx to this
                 deleteItems.append(*it);                               // We store these and delete till later to prevent rendering crash ISSUE
             }
-            //bboxItems.removeFirst();
         }
         draw();                                                        // Redraw the part with all new QGIxxxx
     } else if(viewPart->LineWidth.isTouched()) {
@@ -572,9 +571,12 @@ void QGraphicsItemViewPart::toggleVertices(bool state)
 
 void QGraphicsItemViewPart::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
-    // TODO don't like this but only solution at the minute
-    if(this->shape().contains(event->pos())) {
-        pen.setColor(m_colPre);
+    if (isSelected()) {
+        return;
+    } else {
+        if(this->shape().contains(event->pos())) {                     // TODO don't like this for determining preselect
+            pen.setColor(m_colPre);
+        }
     }
     update();
 }
@@ -583,8 +585,10 @@ void QGraphicsItemViewPart::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 {
     if(!isSelected()) {
         pen.setColor(m_colNormal);
-        update();
+    } else {
+        pen.setColor(m_colSel);
     }
+    update();
 }
 
 QPainterPath QGraphicsItemViewPart::shape() const {

@@ -46,13 +46,17 @@ public:
     explicit QGraphicsItemViewAnnotation(const QPoint &position, QGraphicsScene *scene);
     ~QGraphicsItemViewAnnotation();
 
-    virtual void draw();
-    void updateView(bool update = false);
-    void updatePos();
     enum {Type = QGraphicsItem::UserType + 120};      //120??
     int type() const { return Type;}
 
-    void setPosition(const double &x, const double &y);
+    virtual void draw();
+    void updateView(bool update = false);
+    void setViewAnnoFeature(Drawing::FeatureViewAnnotation *obj);
+    void toggleCache(bool state);
+    void toggleBorder(bool state = true) { this->borderVisible = state; }
+    virtual QPainterPath  shape () const;
+    virtual QRectF boundingRect() const;
+    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 
 Q_SIGNALS:
     void dragging();
@@ -62,19 +66,21 @@ Q_SIGNALS:
 
 protected:
     void drawAnnotation();
-    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
+    void drawBorder(QPainter *painter);
 
     // Preselection events:
-    void mouseReleaseEvent( QGraphicsSceneMouseEvent * event);
     void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
     void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
     // Selection detection
-     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
-    
+    QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+
 protected:
     QGraphicsTextItem *m_textItem;
+    QColor m_colCurrent;
     QColor m_colNormal;
     QColor m_colSel;
+    QColor m_colPre;
+    bool borderVisible;
 };
 
 } // namespace DrawingViewGui
