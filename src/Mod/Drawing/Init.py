@@ -1,4 +1,4 @@
-# FreeCAD init script of the Image module
+# FreeCAD init script of the Drawing module
 # (c) 2001 Juergen Riegel
 
 #***************************************************************************

@@ -223,10 +223,11 @@ QGraphicsItemView * CanvasView::addFeatureViewCollection(Drawing::FeatureViewCol
 // TODO change to (App?) annotation object  ??
 QGraphicsItemView * CanvasView::addFeatureViewAnnotation(Drawing::FeatureViewAnnotation *view)
 {
-    QPoint qp(view->X.getValue(),view->Y.getValue());
+    //QPoint qp(view->X.getValue(),view->Y.getValue());
     // This essentially adds a null view feature to ensure view size is consistent
-    QGraphicsItemViewAnnotation *qview = new  QGraphicsItemViewAnnotation(qp, this->scene());
-    qview->setViewFeature(view);
+    //QGraphicsItemViewAnnotation *qview = new  QGraphicsItemViewAnnotation(qp, this->scene());
+    QGraphicsItemViewAnnotation *qview = new  QGraphicsItemViewAnnotation(QPoint(0,0), this->scene());
+    qview->setViewAnnoFeature(view);
 
     this->addView(qview);
     return qview;

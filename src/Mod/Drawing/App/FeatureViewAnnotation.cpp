@@ -53,7 +53,7 @@ FeatureViewAnnotation::FeatureViewAnnotation(void)
 
     ADD_PROPERTY_TYPE(Text ,("Default Text"),vgroup,App::Prop_None,"The text to be displayed");
     ADD_PROPERTY_TYPE(Font ,("osifont")         ,vgroup,App::Prop_None, "The name of the font to use");
-    ADD_PROPERTY_TYPE(TextColor,(0.0f,0.0f,0.0f),vgroup,App::Prop_None,"The color of the text");       // TODO: not implemented yet
+    ADD_PROPERTY_TYPE(TextColor,(0.0f,0.0f,0.0f),vgroup,App::Prop_None,"The color of the text");
 
     ADD_PROPERTY_TYPE(TextSize,(12),vgroup,App::Prop_None,"The size of the text in points");
     

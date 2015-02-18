@@ -69,10 +69,6 @@ FeatureView::FeatureView(void)
     App::PropertyType propType = static_cast<App::PropertyType>(App::Prop_Hidden|App::Prop_Output);
     ADD_PROPERTY_TYPE(Visible, (true),group,propType,"Control whether view is visible in page object");
 
-
-//    App::PropertyType type = (App::PropertyType)(App::Prop_Hidden);
-//    ADD_PROPERTY_TYPE(ViewResult ,(0),group,type,"Resulting SVG fragment of that view");
-
     ScaleType.setEnums(ScaleTypeEnums);
     ADD_PROPERTY_TYPE(ScaleType,((long)0),group, App::Prop_None, "Scale Type");
 }
@@ -108,7 +104,7 @@ App::DocumentObjectExecReturn *FeatureView::execute(void)
         }
     } else if(strcmp(ScaleType.getValueAsString(), "Custom") == 0) {
         Scale.StatusBits.set(2, false);
-        //TODO: need to ?recompute? ?redraw? to get this to stick.
+        //TODO: need to ?recompute? ?redraw? to get this to stick.  Mantis #1941
         //currently need to lose focus and re-get focus to make Scale editable.
         //Scale.touch();                     // causes loop
     }
