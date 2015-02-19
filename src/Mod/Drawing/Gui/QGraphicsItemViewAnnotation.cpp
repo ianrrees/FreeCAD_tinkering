@@ -24,14 +24,11 @@
 #include "PreCompiled.h"
 #ifndef _PreComp_
 #include <cmath>
-#include <QAction>
-#include <QApplication>
-#include <QContextMenuEvent>
 #include <QGraphicsScene>
-#include <QMenu>
 #include <QMouseEvent>
 #include <QGraphicsSceneHoverEvent>
 #include <QGraphicsItem>
+#include <QStyleOptionGraphicsItem>
 #include <QGraphicsTextItem>
 #include <QPainterPathStroker>
 #include <QPainter>
@@ -60,12 +57,12 @@ QGraphicsItemViewAnnotation::QGraphicsItemViewAnnotation(const QPoint &pos, QGra
     setAcceptHoverEvents(true);
     setFlag(QGraphicsItem::ItemIsMovable, true);
     setFlag(QGraphicsItem::ItemIsSelectable, true);
-    //setHandlesChildEvents(true);    // Qt says this is now obsolete!! (also doesn't work!!)
-    setFiltersChildEvents(true);      // this doesn't work either???
+    setFiltersChildEvents(true);
     this->setPos(pos);
 
     m_textItem = new QGraphicsTextItem();
     this->addToGroup(m_textItem);
+    m_textItem->setPos(0.,0.);
 
     Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
         .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors");
@@ -81,7 +78,7 @@ QGraphicsItemViewAnnotation::QGraphicsItemViewAnnotation(const QPoint &pos, QGra
 
 QGraphicsItemViewAnnotation::~QGraphicsItemViewAnnotation()
 {
-    // m_textItem belongs to this group and will be deleted by parent
+    // m_textItem belongs to this group and will be deleted by Qt
 }
 
 QVariant QGraphicsItemViewAnnotation::itemChange(GraphicsItemChange change, const QVariant &value)
@@ -107,12 +104,34 @@ void QGraphicsItemViewAnnotation::setViewAnnoFeature(Drawing::FeatureViewAnnotat
     this->setViewFeature(static_cast<Drawing::FeatureView *>(obj));
     this->draw();
 
-    // Set the QGraphicsItemGroup Properties based on the FeatureView
+    // Set the QGraphicsItemGroup initial position based on the FeatureView
     float x = obj->X.getValue();
     float y = obj->Y.getValue();
 
     this->setPos(x, y);
     Q_EMIT dirty();
+}
+
+void QGraphicsItemViewAnnotation::updateView(bool update)
+{
+    // nothing to display
+    if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewAnnotation::getClassTypeId()))
+        return;
+
+    // get Feature corresponding to this View
+    Drawing::FeatureViewAnnotation *viewAnno = dynamic_cast<Drawing::FeatureViewAnnotation *>(this->getViewObject());
+
+    if (update ||
+        viewAnno->isTouched() ||
+        viewAnno->Text.isTouched() ||
+        viewAnno->Font.isTouched() ||
+        viewAnno->TextColor.isTouched() ||
+        viewAnno->TextSize.isTouched() ) {
+
+        draw();
+    }
+
+    QGraphicsItemView::updateView(update);
 }
 
 void QGraphicsItemViewAnnotation::draw()
@@ -152,29 +171,6 @@ void QGraphicsItemViewAnnotation::drawAnnotation()
     QString qs = QString::fromUtf8(ss.str().c_str()); 
     m_textItem->setPlainText(qs);
     m_textItem->adjustSize();
-}
-
-void QGraphicsItemViewAnnotation::updateView(bool update)
-{
-    // nothing to display
-    if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewAnnotation::getClassTypeId()))
-        return;
-
-    //QGraphicsItemView::updateView(update);                             // update pos() with Feature X,Y
-
-    // get Feature corresponding to this View
-    Drawing::FeatureViewAnnotation *viewAnno = dynamic_cast<Drawing::FeatureViewAnnotation *>(this->getViewObject());
-
-    if(update ||
-       viewAnno->isTouched() ||
-       viewAnno->Text.isTouched() ||
-       viewAnno->Font.isTouched() ||
-       viewAnno->TextColor.isTouched() ||
-       viewAnno->TextSize.isTouched() ) {
-        draw();
-    }
-
-    QGraphicsItemView::updateView(update);
 }
 
 void QGraphicsItemViewAnnotation::toggleCache(bool state)
@@ -221,35 +217,35 @@ QRectF QGraphicsItemViewAnnotation::boundingRect() const
 
 void QGraphicsItemViewAnnotation::drawBorder(QPainter *painter)
 {
-  // Save the current painter state and restore at end
-  painter->save();
+    // Save the current painter state and restore at end
+    painter->save();
 
-  // Make a rectangle smaller than the bounding box as a border and draw dashed line for selection
-  QRectF box = this->boundingRect().adjusted(2.,2.,-2.,-2.);
+    // Make a rectangle smaller than the bounding box as a border and draw dashed line for selection
+    QRectF box = this->boundingRect().adjusted(2.,2.,-2.,-2.);
 
-  QPen myPen;
-  myPen.setStyle(Qt::DashLine);
-  myPen.setWidth(0.3);
-  myPen.setColor(m_colCurrent);
-  painter->setPen(myPen);
+    QPen myPen;
+    myPen.setStyle(Qt::DashLine);
+    myPen.setWidth(0.3);
+    myPen.setColor(m_colCurrent);
+    painter->setPen(myPen);
 
-  // Draw Label
-  QString name = QString::fromAscii(this->getViewObject()->Label.getValue());
+    // Draw Label
+    QString name = QString::fromUtf8(this->getViewObject()->Label.getValue());
 
-  QFont font;                                                          //TODO: font sb param
-  font.setFamily(QString::fromAscii("osifont")); // Set to generic sans-serif font
-  font.setPointSize(5.f);
-  painter->setFont(font);
-  QFontMetrics fm(font);
+    QFont font;                                                          //TODO: font sb param
+    font.setFamily(QString::fromAscii("osifont")); // Set to generic sans-serif font
+    font.setPointSize(5.f);
+    painter->setFont(font);
+    QFontMetrics fm(font);
 
-  QPointF pos = box.center();
-  pos.setY(box.bottom());
-  pos.setX(pos.x() - fm.width(name) / 2.);
+    QPointF pos = box.center();
+    pos.setY(box.bottom());
+    pos.setX(pos.x() - fm.width(name) / 2.);
 
-  painter->drawText(pos, name);
-  painter->drawRect(box);
+    painter->drawText(pos, name);
+    painter->drawRect(box);
 
-  painter->restore();
+    painter->restore();
 }
 
 void QGraphicsItemViewAnnotation::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)

@@ -26,7 +26,6 @@
 
 #include <QObject>
 #include <QPainter>
-#include <QStyleOptionGraphicsItem>
 
 #include "QGraphicsItemView.h"
 
@@ -59,10 +58,8 @@ public:
     virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 
 Q_SIGNALS:
-    void dragging();
     void hover(bool state);
     void selected(bool state);
-    void dragFinished();
 
 protected:
     void drawAnnotation();

@@ -32,6 +32,7 @@
 #include <QMouseEvent>
 #include <QGraphicsSceneHoverEvent>
 #include <QGraphicsItem>
+#include <QStyleOptionGraphicsItem>
 #include <QGraphicsTextItem>
 #include <QPainterPathStroker>
 #include <QPainter>
@@ -54,18 +55,17 @@ using namespace DrawingGui;
 
 QGraphicsItemViewSymbol::QGraphicsItemViewSymbol(const QPoint &pos, QGraphicsScene *scene) :QGraphicsItemView(pos, scene)
 {
-    // set flags for QGraphicsItemViewSymbol
-    this->setCacheMode(QGraphicsItem::NoCache);
-    this->setFlag(ItemSendsGeometryChanges, true);
+    setCacheMode(QGraphicsItem::NoCache);
+    this->setAcceptHoverEvents(true);
     this->setFlag(ItemIsMovable, true);
     this->setFlag(ItemIsSelectable, true);
-    this->setAcceptHoverEvents(true);
     this->setPos(pos);
 
     m_svgRender = new QSvgRenderer();
 
     m_svgItem = new QGraphicsSvgItem();
     this->addToGroup(m_svgItem);
+    m_svgItem->setPos(0.,0.);
     
     Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
         .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors");
@@ -75,20 +75,48 @@ QGraphicsItemViewSymbol::QGraphicsItemViewSymbol(const QPoint &pos, QGraphicsSce
     m_colSel = fcColor.asQColor();
     fcColor.setPackedValue(hGrp->GetUnsigned("PreSelectColor", 0x00080800));
     m_colPre = fcColor.asQColor();
-
-    m_pen.setStyle(Qt::DashLine);
-    m_pen.setColor(m_colNormal);
-
-    m_borderItem = new QGraphicsRectItem();
-    m_borderItem->setPen(m_pen);
-    m_borderItem->setVisible(false);
-    this->addToGroup(m_borderItem);
 }
 
 QGraphicsItemViewSymbol::~QGraphicsItemViewSymbol()
 {
-    // m_svgItem, m_borderItem belong to this group and will be deleted by Qt 
+    // m_svgItem belongs to this group and will be deleted by Qt 
     delete(m_svgRender);
+}
+
+QVariant QGraphicsItemViewSymbol::itemChange(GraphicsItemChange change, const QVariant &value)
+{
+    if (change == ItemSelectedHasChanged && scene()) {
+        if(isSelected()) {
+            m_colCurrent = m_colSel;
+            //Q_EMIT selected(true);
+        } else {
+            m_colCurrent = m_colNormal;
+            //Q_EMIT selected(false);
+        }
+        update();
+//    } else if(change == ItemPositionHasChanged && scene()) {
+//        updatePos();
+//        Q_EMIT dragging();
+    }
+
+    return QGraphicsItemView::itemChange(change, value);
+}
+
+void QGraphicsItemViewSymbol::setViewSymbolFeature(Drawing::FeatureViewSymbol *obj)
+{
+    // called from CanvasView. (once)
+    if(obj == 0)
+        return;
+
+    this->setViewFeature(static_cast<Drawing::FeatureView *>(obj));
+    this->draw();
+
+    // Set the QGraphicsItemGroup Properties based on the FeatureView
+    float x = obj->X.getValue();
+    float y = obj->Y.getValue();
+
+    this->setPos(x, y);
+    //Q_EMIT dirty();
 }
 
 void QGraphicsItemViewSymbol::updateView(bool update)
@@ -99,64 +127,126 @@ void QGraphicsItemViewSymbol::updateView(bool update)
     // get Feature corresponding to this View
     Drawing::FeatureViewSymbol *viewSymbol = dynamic_cast<Drawing::FeatureViewSymbol *>(this->getViewObject());
 
-    // get Symbol property into SVG item
+    if (update ||
+        viewSymbol->isTouched() ||
+        viewSymbol->Symbol.isTouched()) {
+
+        draw();
+    }
+
+    QGraphicsItemView::updateView(update);
+}
+
+void QGraphicsItemViewSymbol::draw()
+{
+    drawSvg();
+}
+
+void QGraphicsItemViewSymbol::drawSvg()
+{
+    // nothing to display
+    if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewSymbol::getClassTypeId()))
+        return;
+
+    // get Feature corresponding to this View
+    Drawing::FeatureViewSymbol *viewSymbol = dynamic_cast<Drawing::FeatureViewSymbol *>(this->getViewObject());
+
+    // get file from Symbol property into SVG item
     QString qs(QString::fromUtf8(viewSymbol->Symbol.getValue()));
     QByteArray qba;
     qba.append(qs);
     if (!load(&qba)) {
-        Base::Console().Error("QGraphicsItemViewSymbol::updateView - Could not load %s.Symbol into renderer\n", viewSymbol->getNameInDocument());
+        Base::Console().Error("QGraphicsItemViewSymbol::drawSvg - Could not load %s.Symbol into renderer\n", viewSymbol->getNameInDocument());
     }
-    
-    //make the border fit svgItem
-    m_borderItem->setRect(m_svgItem->boundingRect());
+}
 
-    if(update) {
-        QGraphicsItemView::updateView(true);
-    } else {
-        QGraphicsItemView::updateView();
-    }
-}
-void QGraphicsItemViewSymbol::draw()
+void QGraphicsItemViewSymbol::toggleCache(bool state)
 {
+    this->setCacheMode((state)? NoCache : NoCache);
 }
+
+void QGraphicsItemViewSymbol::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
+{
+    // TODO don't like this but only solution at the minute
+    if (isSelected()) {
+        return;
+    } else {
+        if(this->shape().contains(event->pos())) {                     // TODO don't like this for determining preselect
+            m_colCurrent = m_colPre;
+        }
+    }
+    //Q_EMIT hover(true);
+    update();
+}
+
+void QGraphicsItemViewSymbol::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
+{
+    if(!isSelected()) {
+        m_colCurrent = m_colNormal;
+    } else {
+        m_colCurrent = m_colSel;
+    }
+    //Q_EMIT hover(false);
+    update();
+}
+
+QPainterPath  QGraphicsItemViewSymbol::shape () const
+{
+    QPainterPath path;
+    QRectF box = this->boundingRect().adjusted(2.,2.,-2.,-2.);
+    path.addRect(box);
+    QPainterPathStroker stroker;
+    stroker.setWidth(5.f);
+    return stroker.createStroke(path);
+}
+
+QRectF QGraphicsItemViewSymbol::boundingRect() const
+{
+    return m_svgItem->boundingRect().adjusted(-3.,-3.,3.,3.);     // bigger than QGraphicsSvgItem
+}
+
+void QGraphicsItemViewSymbol::drawBorder(QPainter *painter)
+{
+    // Save the current painter state and restore at end
+    painter->save();
+
+    // Make a rectangle smaller than the bounding box as a border and draw dashed line for selection
+    QRectF box = this->boundingRect().adjusted(2.,2.,-2.,-2.);
+
+    QPen myPen;
+    myPen.setStyle(Qt::DashLine);
+    myPen.setWidth(0.3);
+    myPen.setColor(m_colCurrent);
+    painter->setPen(myPen);
+
+    // Draw Label
+    QString name = QString::fromUtf8(this->getViewObject()->Label.getValue());
+
+    QFont font;                                                          //TODO: font sb param
+    font.setFamily(QString::fromAscii("osifont")); // Set to generic sans-serif font
+    font.setPointSize(5.f);
+    painter->setFont(font);
+    QFontMetrics fm(font);
+
+    QPointF pos = box.center();
+    pos.setY(box.bottom());
+    pos.setX(pos.x() - fm.width(name) / 2.);
+
+    painter->drawText(pos, name);
+    painter->drawRect(box);
+
+    painter->restore();
+}
+
 void QGraphicsItemViewSymbol::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
-    QGraphicsItemView::paint(painter, option, widget);
-}
+    QStyleOptionGraphicsItem myOption(*option);
+    myOption.state &= ~QStyle::State_Selected;
 
-QVariant QGraphicsItemViewSymbol::itemChange(GraphicsItemChange change, const QVariant &value)
-{
-    if (change == ItemSelectedHasChanged && scene()) {
-        if(isSelected()) {
-            m_pen.setColor(m_colSel);
-            m_borderItem->setPen(m_pen);
-            Q_EMIT selected(true);
-        } else {
-            m_pen.setColor(m_colNormal);
-            m_borderItem->setPen(m_pen);
-            Q_EMIT selected(false);
-        }
-        update();
-    } else if(change == ItemPositionHasChanged && scene()) {
-        updatePos();
-        Q_EMIT dragging();
+    if(borderVisible){
+         this->drawBorder(painter);
     }
-
-    return QGraphicsItemView::itemChange(change, value);
-}
-
-void QGraphicsItemViewSymbol::setPosition(const double &x, const double &y)
-{
-    // Set the actual QT Coordinates by setting at qt origin rathern than bbox center
-    this->setPos(x -  this->boundingRect().width() / 2., y - this->boundingRect().height() / 2.);
-}
-
-void QGraphicsItemViewSymbol::updatePos()
-{
-    // update Feature's X,Y properties
-    Drawing::FeatureViewSymbol *viewSymbol = dynamic_cast<Drawing::FeatureViewSymbol *>(this->getViewObject());
-    viewSymbol->X.setValue(this->x());
-    viewSymbol->Y.setValue(-1.0 * this->y());
+    QGraphicsItemView::paint(painter, option, widget);
 }
 
 bool QGraphicsItemViewSymbol::load(QByteArray *svgBytes)
@@ -166,40 +256,5 @@ bool QGraphicsItemViewSymbol::load(QByteArray *svgBytes)
     return(success);
 }
 
-void QGraphicsItemViewSymbol::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
-{
-    m_pen.setColor(m_colPre);
-    m_borderItem->setPen(m_pen);
-    Q_EMIT hover(true);
-    update();
-}
-
-void QGraphicsItemViewSymbol::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
-{
-    QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *> (this->parentItem());
-    assert(view != 0);
-
-    m_pen.setColor(m_colNormal);
-    m_borderItem->setPen(m_pen);
-    Q_EMIT hover(false);
-    update();
-}
-
-void QGraphicsItemViewSymbol::mousePressEvent( QGraphicsSceneMouseEvent * event)
-{
-    m_borderItem->setVisible(true);
-    QGraphicsItemView::mousePressEvent(event);
-    update();
-}
-
-void QGraphicsItemViewSymbol::mouseReleaseEvent( QGraphicsSceneMouseEvent * event)
-{
-    if(scene() && this == scene()->mouseGrabberItem()) {
-        Q_EMIT dragFinished();
-    }
-    m_borderItem->setVisible(false);
-    QGraphicsItemView::mouseReleaseEvent(event);
-    update();
-}
-
 #include "moc_QGraphicsItemViewSymbol.cpp"
+

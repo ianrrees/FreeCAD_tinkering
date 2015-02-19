@@ -20,12 +20,8 @@
  *                                                                         *
  ***************************************************************************/
 
- 
-
-
 #ifndef _FeatureViewSymbol_h_
 #define _FeatureViewSymbol_h_
-
 
 #include <App/DocumentObject.h>
 #include <App/PropertyLinks.h>
@@ -33,14 +29,11 @@
 #include <App/FeaturePython.h>
 
 #include <Base/BoundBox.h>
-#include "GeometryObject.h"
 
 namespace Drawing
 {
 
 
-/** Base class of all View Features in the drawing module
- */
 class DrawingExport FeatureViewSymbol : public Drawing::FeatureView
 {
     PROPERTY_HEADER(Drawing::FeatureViewSymbol);
@@ -66,9 +59,7 @@ public:
 
 protected:
     void onChanged(const App::Property* prop);
-    //DrawingGeometry::GeometryObject *geometryObject;
     Base::BoundBox3d bbox;
-    
 };
 
 typedef App::FeaturePythonT<FeatureViewSymbol> FeatureViewSymbolPython;

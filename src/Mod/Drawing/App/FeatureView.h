@@ -20,24 +20,18 @@
  *                                                                         *
  ***************************************************************************/
 
- 
-
-
 #ifndef _FeatureView_h_
 #define _FeatureView_h_
 
-
 #include <App/DocumentObject.h>
 #include <App/PropertyStandard.h>
-#include <App/PropertyGeo.h>
 #include <App/FeaturePython.h>
-
 
 namespace Drawing
 {
 
-
 class FeaturePage;
+
 /** Base class of all View Features in the drawing module
  */
 class DrawingExport FeatureView : public App::DocumentObject
@@ -55,9 +49,7 @@ public:
 
     App::PropertyEnumeration ScaleType;
     App::PropertyFloat Rotation;
-//    App::PropertyString ViewResult;
     App::PropertyBool Visible;
-
 
     /** @name methods overide Feature */
     //@{
@@ -85,7 +77,5 @@ private:
 typedef App::FeaturePythonT<FeatureView> FeatureViewPython;
 
 } //namespace Drawing
-
-
 
 #endif

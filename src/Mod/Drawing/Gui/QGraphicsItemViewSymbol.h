@@ -26,7 +26,6 @@
 
 #include <QObject>
 #include <QPainter>
-#include <QStyleOptionGraphicsItem>
 #include <QString>
 #include <QByteArray>
 #include <QSvgRenderer>
@@ -46,31 +45,31 @@ class DrawingGuiExport QGraphicsItemViewSymbol : public QGraphicsItemView
     Q_OBJECT
 
 public:
-
     explicit QGraphicsItemViewSymbol(const QPoint &position, QGraphicsScene *scene);
     ~QGraphicsItemViewSymbol();
 
-    virtual void draw();
-    void updateView(bool update = false);
-    void updatePos();
     enum {Type = QGraphicsItem::UserType + 121};      //121??
     int type() const { return Type;}
 
-    void setPosition(const double &x, const double &y);
+    virtual void draw();
+    void updateView(bool update = false);
+    void setViewSymbolFeature(Drawing::FeatureViewSymbol *obj);
+    void toggleCache(bool state);
+    void toggleBorder(bool state = true) { this->borderVisible = state; }
+    virtual QPainterPath  shape () const;
+    virtual QRectF boundingRect() const;
+    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 
 Q_SIGNALS:
-    void dragging();
     void hover(bool state);
     void selected(bool state);
-    void dragFinished();
 
 protected:
     bool load(QByteArray *svgString);
-    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
+    void drawSvg();
+    void drawBorder(QPainter *painter);
 
     // Preselection events:
-    void mousePressEvent( QGraphicsSceneMouseEvent * event);
-    void mouseReleaseEvent( QGraphicsSceneMouseEvent * event);
     void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
     void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
     // Selection detection
@@ -79,11 +78,11 @@ protected:
 protected:
     QGraphicsSvgItem *m_svgItem;
     QSvgRenderer *m_svgRender;
-    QGraphicsRectItem *m_borderItem;
-    QPen m_pen;
+    QColor m_colCurrent;
     QColor m_colNormal;
     QColor m_colSel;
     QColor m_colPre;
+    bool borderVisible;
 };
 
 } // namespace DrawingViewGui
