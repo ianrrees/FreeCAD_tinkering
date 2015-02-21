@@ -50,8 +50,7 @@
 using namespace DrawingGui;
 
 QGraphicsItemViewAnnotation::QGraphicsItemViewAnnotation(const QPoint &pos, QGraphicsScene *scene) 
-                            :QGraphicsItemView(pos, scene),
-                            borderVisible(true)
+                            :QGraphicsItemView(pos, scene)
 {
     setCacheMode(QGraphicsItem::NoCache);
     setAcceptHoverEvents(true);

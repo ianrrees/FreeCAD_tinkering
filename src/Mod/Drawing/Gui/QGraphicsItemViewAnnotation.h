@@ -52,7 +52,7 @@ public:
     void updateView(bool update = false);
     void setViewAnnoFeature(Drawing::FeatureViewAnnotation *obj);
     void toggleCache(bool state);
-    void toggleBorder(bool state = true) { this->borderVisible = state; }
+    //void toggleBorder(bool state = true) { this->borderVisible = state; }
     virtual QPainterPath  shape () const;
     virtual QRectF boundingRect() const;
     virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
@@ -77,7 +77,7 @@ protected:
     QColor m_colNormal;
     QColor m_colSel;
     QColor m_colPre;
-    bool borderVisible;
+    //bool borderVisible;
 };
 
 } // namespace DrawingViewGui

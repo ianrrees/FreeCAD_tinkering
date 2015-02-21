@@ -62,7 +62,6 @@ public:
     void toggleCache(bool state);
     void toggleCosmeticLines(bool state);
     void toggleVertices(bool state);
-    void toggleBorder(bool state = true) { this->borderVisible = state; }
 
     virtual void updateView(bool update = false);
     virtual void draw();
@@ -105,8 +104,7 @@ protected:
     QColor m_colPre;
     QColor m_colSel;
     QColor m_colHid;
-    //QRectF bbox;
-    bool borderVisible;
+
 private:
     QList<QGraphicsItem *> deleteItems;
 };

@@ -447,6 +447,8 @@ void CanvasView::toggleEdit(bool enable)
                 viewPart->toggleVertices(enable);
                 viewPart->toggleBorder(enable);
                 setViewBackground(enable);
+            } else {
+                itemView->toggleBorder(enable); 
             }
             //itemView->updateView(true);
         }

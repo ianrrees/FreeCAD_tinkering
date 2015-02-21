@@ -53,6 +53,7 @@ public:
     const char * getViewName() const;
     void setViewFeature(Drawing::FeatureView *obj);
     void setLocked(bool state = true) { this->locked = true; }
+    virtual void toggleBorder(bool state = true) { this->borderVisible = state; }
 
     /// Methods to ensure that Y-Coordinates are orientated correctly.
     void setPosition(qreal x, qreal y);
@@ -76,6 +77,7 @@ protected:
 
   QHash<QString, QGraphicsItem *> alignHash;
   bool locked;
+  bool borderVisible;
 
 };
 

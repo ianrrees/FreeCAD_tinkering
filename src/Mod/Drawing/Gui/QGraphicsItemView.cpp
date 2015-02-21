@@ -45,7 +45,8 @@ using namespace DrawingGui;
 
 QGraphicsItemView::QGraphicsItemView(const QPoint &pos, QGraphicsScene *scene)
     :QGraphicsItemGroup(),
-     locked(false)
+     locked(false),
+     borderVisible(true)
 {
     this->setFlags(QGraphicsItem::ItemIsSelectable);
     this->setFlag(QGraphicsItem::ItemSendsScenePositionChanges, true);

@@ -77,7 +77,9 @@ QGraphicsItemEdge::QGraphicsItemEdge(int ref, QGraphicsScene *scene) :
     m_colHid = fcColor.asQColor();
 
     hPen.setStyle(Qt::DashLine);
+    hPen.setCapStyle(Qt::RoundCap);
     vPen.setStyle(Qt::SolidLine);
+    vPen.setCapStyle(Qt::RoundCap);
 
     // In edit mode these should be set cosmetic
     vPen.setCosmetic(isCosmetic);

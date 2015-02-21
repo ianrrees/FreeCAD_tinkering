@@ -51,10 +51,13 @@ using namespace DrawingGui;
 const float lineScaleFactor = 3.;
 
 QGraphicsItemViewPart::QGraphicsItemViewPart(const QPoint &pos, QGraphicsScene *scene)
-                :QGraphicsItemView(pos, scene),
-                 borderVisible(true)
+                :QGraphicsItemView(pos, scene)
 {
     setHandlesChildEvents(false);
+    setCacheMode(QGraphicsItem::NoCache);
+    setAcceptHoverEvents(true);
+    setFlag(QGraphicsItem::ItemIsMovable, true);
+
     Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
         .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors");
     App::Color fcColor = App::Color((uint32_t) hGrp->GetUnsigned("NormalColor", 0x00000000));
@@ -66,10 +69,6 @@ QGraphicsItemViewPart::QGraphicsItemViewPart(const QPoint &pos, QGraphicsScene *
     fcColor.setPackedValue(hGrp->GetUnsigned("HiddenColor", 0x08080800));
     m_colHid = fcColor.asQColor();
     pen.setColor(m_colNormal);
-
-    //setCacheMode(QGraphicsItem::NoCache);
-    setAcceptHoverEvents(true);
-    setFlag(QGraphicsItem::ItemIsMovable, true);
 }
 
 QGraphicsItemViewPart::~QGraphicsItemViewPart()
@@ -238,7 +237,6 @@ void QGraphicsItemViewPart::updateView(bool update)
        viewPart->Tolerance.isTouched() ||
        viewPart->Scale.isTouched() ||
        viewPart->ShowHiddenLines.isTouched()){
-        //Base::Console().Log("Drawing::QGraphicsItemViewPart::updateView - Shapes need redrawing %s\n", viewPart->getNameInDocument());
         // Remove all existing QGIxxxx to force boundingRect recalc
         QList<QGraphicsItem *> items = this->childItems();
         for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); ++it) {
@@ -383,7 +381,7 @@ void QGraphicsItemViewPart::drawViewPart()
           QGraphicsItemVertex *item = new QGraphicsItemVertex(vertRefs.at(i));
           QPainterPath path;
           //item->setBrush(vertBrush);
-          path.addEllipse(-3 ,-3, 6, 6);     //TODO: too big? sb attribute of QGIVertex?
+          path.addEllipse(-2 ,-2, 4, 4);     //TODO: too big? sb attribute of QGIVertex?
 
           QPointF posRef(0.,0.);
           QPointF mapPos = item->mapToItem(this, posRef);
@@ -607,34 +605,34 @@ QRectF QGraphicsItemViewPart::boundingRect() const
 
 void QGraphicsItemViewPart::drawBorder(QPainter *painter)
 {
-  // Save the current painter state and restore at end
-  painter->save();
+    // Save the current painter state and restore at end
+    painter->save();
 
-  // Make a rectangle smaller than the bounding box as a border and draw dashed line for selection
-  QRectF box = this->boundingRect().adjusted(2.,2.,-2.,-2.);
+    // Make a rectangle smaller than the bounding box as a border and draw dashed line for selection
+    QRectF box = this->boundingRect().adjusted(2.,2.,-2.,-2.);
 
-  QPen myPen = pen;
-  myPen.setStyle(Qt::DashLine);
-  myPen.setWidth(0.3);
-  painter->setPen(myPen);
+    QPen myPen = pen;
+    myPen.setStyle(Qt::DashLine);
+    myPen.setWidth(0.3);
+    painter->setPen(myPen);
 
-  // Draw Label
-  QString name = QString::fromAscii(this->getViewObject()->Label.getValue());
+    // Draw Label
+    QString name = QString::fromUtf8(this->getViewObject()->Label.getValue());
 
-  QFont font;                                                          //TODO: font sb param
-  font.setFamily(QString::fromAscii("osifont")); // Set to generic sans-serif font
-  font.setPointSize(5.f);
-  painter->setFont(font);
-  QFontMetrics fm(font);
+    QFont font;                                                          //TODO: font sb param
+    font.setFamily(QString::fromAscii("osifont")); // Set to generic sans-serif font
+    font.setPointSize(5.f);
+    painter->setFont(font);
+    QFontMetrics fm(font);
 
-  QPointF pos = box.center();
-  pos.setY(box.bottom());
-  pos.setX(pos.x() - fm.width(name) / 2.);
+    QPointF pos = box.center();
+    pos.setY(box.bottom());
+    pos.setX(pos.x() - fm.width(name) / 2.);
 
-  painter->drawText(pos, name);
-  painter->drawRect(box);
+    painter->drawText(pos, name);
+    painter->drawRect(box);
 
-  painter->restore();
+    painter->restore();
 }
 
 void QGraphicsItemViewPart::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
