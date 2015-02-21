@@ -218,6 +218,8 @@ void DrawingView::findPrinterSettings(const QString& fileName)
     pageSizes[QPrinter::B7] = QString::fromLatin1("B7");
     pageSizes[QPrinter::B8] = QString::fromLatin1("B8");
     pageSizes[QPrinter::B9] = QString::fromLatin1("B9");
+    pageSizes[QPrinter::Letter] = QString::fromLatin1("Letter");
+    pageSizes[QPrinter::Legal] = QString::fromLatin1("Legal");
     for (QMap<QPrinter::PageSize, QString>::iterator it = pageSizes.begin(); it != pageSizes.end(); ++it) {
         if (fileName.startsWith(it.value(), Qt::CaseInsensitive)) {
             m_pageSize = it.key();
@@ -791,6 +793,10 @@ void DrawingView::printPdf()
     item->setData(Qt::UserRole, QVariant(QPrinter::A4));
     item = new QListWidgetItem(tr("A5"), listWidget);
     item->setData(Qt::UserRole, QVariant(QPrinter::A5));
+    item = new QListWidgetItem(tr("Letter"), listWidget);
+    item->setData(Qt::UserRole, QVariant(QPrinter::Letter));
+    item = new QListWidgetItem(tr("Legal"), listWidget);
+    item->setData(Qt::UserRole, QVariant(QPrinter::Legal));
     //listWidget->item(4)->setSelected(true); // by default A4
     int index = 4; // by default A4
     for (int i=0; i<listWidget->count(); i++) {
@@ -919,6 +925,7 @@ void DrawingView::print(QPrinter* printer)
     this->m_view->toggleEdit(true);
 }
 
+//QPrinter::PageSize is obsolete. Use QPrinter::PaperSize instead.
 QPrinter::PageSize DrawingView::getPageSize(int w, int h) const
 {
     static const float paperSizes[][2] = {
