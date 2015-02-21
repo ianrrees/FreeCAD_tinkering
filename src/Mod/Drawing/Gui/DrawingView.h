@@ -62,33 +62,32 @@ public:
     virtual ~DrawingView();
 
 public Q_SLOTS:
-    //void load(const QString &path = QString());
     void setRenderer(QAction *action);
     void viewAll();
-    void attachTemplate(Drawing::FeatureTemplate *obj);
     void saveSVG(void);
     void selectionChanged();
-    void preSelectionChanged(const QPoint &pos);
-    void updateDrawing();
-    void updateTemplate(bool force = false);
 
 public:
    /// Observer message from the Selection
     void onSelectionChanged(const Gui::SelectionChanges& msg);
+    void preSelectionChanged(const QPoint &pos);
+    void selectFeature(App::DocumentObject *obj, bool state);
+    void clearSelection();
+    void blockSelection(bool isBlocked);
+
+    void attachTemplate(Drawing::FeatureTemplate *obj);
+    void updateTemplate(bool force = false);
+    void updateDrawing(bool force = false);
 
     bool onMsg(const char* pMsg,const char** ppReturn);
     bool onHasMsg(const char* pMsg) const;
     void onRelabel(Gui::Document *pDoc);
+
     void print();
+    void print(QPrinter* printer);
     void printPdf();
     void printPreview();
 
-    void selectFeature(App::DocumentObject *obj, bool state);
-    void clearSelection();
-
-    void blockSelection(bool isBlocked);
-
-    void print(QPrinter* printer);
     void setDocumentObject(const std::string&);
     PyObject* getPyObject();
 

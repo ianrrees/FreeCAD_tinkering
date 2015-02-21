@@ -310,7 +310,6 @@ void ViewProviderDrawingPage::onSelectionChanged(const Gui::SelectionChanges& ms
             }
         }
     }
-
 }
 
 void ViewProviderDrawingPage::onChanged(const App::Property *prop)
@@ -326,6 +325,14 @@ void ViewProviderDrawingPage::onChanged(const App::Property *prop)
     }
 
     Gui::ViewProviderDocumentObjectGroup::onChanged(prop);
+}
+
+void ViewProviderDrawingPage::finishRestoring()
+{
+    if (view) {
+        view->updateDrawing(true);
+    }
+    Gui::ViewProviderDocumentObject::finishRestoring();
 }
 
 

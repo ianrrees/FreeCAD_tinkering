@@ -79,6 +79,7 @@ public:
     virtual bool onDelete(const std::vector<std::string> &);
     virtual void onChanged(const App::Property *prop);
     virtual void updateData(const App::Property* prop);
+    virtual void finishRestoring();
 
     Drawing::FeaturePage* getPageObject() const;
     void unsetEdit(int ModNum);

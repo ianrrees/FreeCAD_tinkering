@@ -105,9 +105,6 @@ DrawingView::DrawingView(ViewProviderDrawingPage *pageVp, Gui::Document* doc, QW
   // Setup the Canvas View
     m_view = new CanvasView(pageVp);
 
-//    m_orientation = QPrinter::Landscape;
-//    m_pageSize = QPrinter::A4;
-
     m_backgroundAction = new QAction(tr("&Background"), this);
     m_backgroundAction->setEnabled(false);
     m_backgroundAction->setCheckable(true);
@@ -121,7 +118,7 @@ DrawingView::DrawingView(ViewProviderDrawingPage *pageVp, Gui::Document* doc, QW
     m_outlineAction->setEnabled(false);
     m_outlineAction->setCheckable(true);
     m_outlineAction->setChecked(false);
-    connect(m_outlineAction, SIGNAL(toggled(bool)), m_view, SLOT(setViewOutline(bool)));
+    connect(m_outlineAction, SIGNAL(toggled(bool)), m_view, SLOT(setViewOutline(bool)));    //in CanvasView
 
     m_nativeAction = new QAction(tr("&Native"), this);
     m_nativeAction->setCheckable(true);
@@ -190,35 +187,6 @@ DrawingView::~DrawingView()
 
   delete m_view;
 }
-
-#if 0  //TODO: load is no longer used?
-void DrawingView::load (const QString & fileName)
-{
-    if (!fileName.isEmpty()) {
-        QFile file(fileName);
-        if (!file.exists()) {
-            QMessageBox::critical(this, tr("Open SVG File"),
-                           tr("Could not open file '%1'.").arg(fileName));
-
-            m_outlineAction->setEnabled(false);
-            m_backgroundAction->setEnabled(false);
-            return;
-        }
-
-        m_view->openFile(file);
-
-        if (!fileName.startsWith(QLatin1String(":/"))) {
-            m_currentPath = fileName;
-            //setWindowTitle(tr("%1 - SVG Viewer").arg(m_currentPath));
-        }
-
-        m_outlineAction->setEnabled(true);
-        m_backgroundAction->setEnabled(true);
-
-        findPrinterSettings(QFileInfo(fileName).baseName());
-    }
-}
-#endif
 
 void DrawingView::findPrinterSettings(const QString& fileName)
 {
@@ -558,7 +526,7 @@ void DrawingView::updateTemplate(bool forceUpdate)
     // m_view->setPageFeature(pageFeature); redundant
 }
 
-void DrawingView::updateDrawing()
+void DrawingView::updateDrawing(bool forceUpdate)
 {
     // We cannot guarantee if the number of views have changed so check the number
     const std::vector<QGraphicsItemView *> &views = m_view->getViews();
@@ -634,8 +602,9 @@ void DrawingView::updateDrawing()
     // Updated all the views
     const std::vector<QGraphicsItemView *> &upviews = m_view->getViews();
     for(std::vector<QGraphicsItemView *>::const_iterator it = upviews.begin(); it != upviews.end(); ++it) {
-        if((*it)->getViewObject()->isTouched()) {
-            (*it)->updateView();
+        if((*it)->getViewObject()->isTouched() ||
+           forceUpdate) {
+            (*it)->updateView(forceUpdate);
         }
     }
 }
@@ -936,19 +905,18 @@ void DrawingView::print(QPrinter* printer)
         rect = printer->pageRect();
 #endif
 
-//    bool block = this->blockConnection(true); // avoid to be notified by itself
-//    Gui::Selection().clearSelection();
+    bool block = this->blockConnection(true); // avoid to be notified by itself
+    Gui::Selection().clearSelection();
 
-//    this->m_view->toggleEdit(false);
+    this->m_view->toggleEdit(false);
+    this->m_view->scene()->update();
 
-//    Gui::Selection().clearSelection();
-//    p.begin(printer);
+    Gui::Selection().clearSelection();
 
     this->m_view->scene()->render(&p, rect);
 
-    p.end();
-//    // Reset
-//    this->m_view->toggleEdit(true);
+    // Reset
+    this->m_view->toggleEdit(true);
 }
 
 QPrinter::PageSize DrawingView::getPageSize(int w, int h) const
