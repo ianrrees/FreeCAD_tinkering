@@ -160,7 +160,7 @@ void QGraphicsItemViewAnnotation::drawAnnotation()
  
     QFont font;
     font.setFamily(QString::fromUtf8(viewAnno->Font.getValue()));
-    font.setPointSize(viewAnno->TextSize.getValue());
+    font.setPointSizeF(viewAnno->TextSize.getValue()/2.835);           // convert mm <--> points
     m_textItem->setFont(font);
 
     App::Color c = viewAnno->TextColor.getValue();
