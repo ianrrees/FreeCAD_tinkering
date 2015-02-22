@@ -420,7 +420,7 @@ void CmdDrawingNewView::activated(int iMsg)
         doCommand(Doc,"App.activeDocument().%s.Y = %e",FeatName.c_str(), newY);
         doCommand(Doc,"App.activeDocument().%s.Scale = %e",FeatName.c_str(), newScale);
         doCommand(Doc,"App.activeDocument().%s.Rotation = %e",FeatName.c_str(), newRotation);
-        doCommand(Doc,"App.activeDocument().%s.addObject(App.activeDocument().%s)",PageName.c_str(),FeatName.c_str());
+        //doCommand(Doc,"App.activeDocument().%s.addObject(App.activeDocument().%s)",PageName.c_str(),FeatName.c_str());
         Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
         page->addView(page->getDocument()->getObject(FeatName.c_str()));
     }
