@@ -244,6 +244,8 @@ void QGraphicsItemViewPart::updateView(bool update)
             if(dynamic_cast<QGraphicsItemEdge *> (*it) ||
               dynamic_cast<QGraphicsItemFace *>(*it) ||
               dynamic_cast<QGraphicsItemVertex *>(*it)) {
+                Base::Console().Log("TRACE - QGraphicsItemViewPart::updateView(%d) - removing QGIxxxx(%d) from %s**\n",
+                                        update,(*it)->type(),this->viewName.c_str());
                 removeFromGroup(*it);
                 this->scene()->removeItem(*it);                        // hide and reparent QGIxxxx to this
                 deleteItems.append(*it);                               // We store these and delete till later to prevent rendering crash ISSUE
