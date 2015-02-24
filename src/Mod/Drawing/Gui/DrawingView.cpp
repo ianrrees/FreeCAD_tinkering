@@ -530,78 +530,61 @@ void DrawingView::updateTemplate(bool forceUpdate)
 
 void DrawingView::updateDrawing(bool forceUpdate)
 {
-    // We cannot guarantee if the number of views have changed so check the number
-    const std::vector<QGraphicsItemView *> &views = m_view->getViews();
-    const std::vector<App::DocumentObject*> &grp  = pageGui->getPageObject()->Views.getValues();
+    // We cannot guarantee if the number of graphical representations (QGIVxxxx) have changed so check the number
+    // Why? 
+    const std::vector<QGraphicsItemView *> &graphicsList = m_view->getViews();
+    const std::vector<App::DocumentObject*> &pageChildren  = pageGui->getPageObject()->Views.getValues();
 
-    // Count total number of children
-    int groupCount = 0;
-
-    for(std::vector<App::DocumentObject*>::const_iterator it = grp.begin(); it != grp.end(); ++it) {
+    // Count total # DocumentObjects in Page 
+    int docObjCount = 0;
+    for(std::vector<App::DocumentObject*>::const_iterator it = pageChildren.begin(); it != pageChildren.end(); ++it) {
         App::DocumentObject *docObj = *it;
         if(docObj->getTypeId().isDerivedFrom(Drawing::FeatureViewCollection::getClassTypeId())) {
             Drawing::FeatureViewCollection *collection = dynamic_cast<Drawing::FeatureViewCollection *>(docObj);
-            groupCount += collection->countChildren(); // Include self
+            docObjCount += collection->countChildren(); // Include self
         }
-
-        groupCount += 1;
+        docObjCount += 1;
     }
 
-    if(views.size() < groupCount) {
-        // An  view object has been added so update graphicsviews
-        std::vector<App::DocumentObject*> notFnd;
-        // Iterate through to find any views that are missing
-        std::vector<QGraphicsItemView *>::const_iterator qview = views.begin();
-
+    if(graphicsList.size() < docObjCount) {
+        // there are more DocumentObjects than graphical representations (QGIVxxxx's)
+        // Find which DocumentObjects have no graphical representation (QGIVxxxx)
+        // Iterate over DocumentObjects without graphical representations and create the QGIVxxxx
         // TODO think of a better algorithm to deal with any changes to views list
-        // Find any additions
-        this->findMissingViews(grp, notFnd);
-
-        // Iterate over missing views and add them
+        std::vector<App::DocumentObject*> notFnd;
+        this->findMissingViews(pageChildren, notFnd);
         for(std::vector<App::DocumentObject*>::const_iterator it = notFnd.begin(); it != notFnd.end(); ++it) {
             attachView(*it);
         }
-
-    } else if(views.size() > groupCount) {
-        // At least 1 Drawing View has no QGraphicsItemView
-        std::vector<QGraphicsItemView *>::const_iterator qview = views.begin();
+    } else if(graphicsList.size() > docObjCount) {
+        // There are more graphical representations (QGIVxxxx) than DocumentObjects
+        // Remove the orphans
+        std::vector<QGraphicsItemView *>::const_iterator itGraphics = graphicsList.begin();
+        std::vector<QGraphicsItemView *> newGraphicsList;
         bool fnd = false;
-
-        // Updated QItemView List
-        std::vector<QGraphicsItemView *> myViews;
-
-        // Remove any orphans
-        while(qview != views.end()) {
-             // we cannot guarantee  (*qview)->getViewObject() is safe
-            fnd = this->orphanExists((*qview)->getViewName(), grp);
-
+        while(itGraphics != graphicsList.end()) {
+            fnd = this->orphanExists((*itGraphics)->getViewName(), pageChildren);
             if(fnd) {
-                myViews.push_back(*qview);
+                newGraphicsList.push_back(*itGraphics);
             } else {
-                // TODO: this may cause segfault?? when qview is deleted later??
-                m_view->scene()->removeItem(*qview);
-                m_view->scene()->sceneRect().adjusted(1,1,1,1);
-                m_view->scene()->sceneRect().adjusted(-1,-1,-1,-1);
-                m_view->scene()->setItemIndexMethod(QGraphicsScene::BspTreeIndex);
-
-                deleteItems.append(*qview); // delete in the destructor when completly safe. TEMP SOLUTION
-                //(*qview)->deleteLater();
-
-//                 QGraphicsItemViewPart *part = 0;
-//                 part = dynamic_cast<QGraphicsItemViewPart *>(*qview);
-//                 if(part) {
-//                   part->tidy();
-//                 }
-                //*qview = 0;
+                if (m_view->scene() == (*itGraphics)->scene()) {
+                    Base::Console().Log("TRACE - DrawingView::updateDrawing - removing itGraphics: %s **\n",(*itGraphics)->getViewName());
+                    // TODO: this may cause segfault when *itGraphics is deleted later??
+                    m_view->scene()->removeItem(*itGraphics);
+                } else {   // this "shouldn't" happen, but it does
+                    Base::Console().Log("ERROR - DrawingView::updateDrawing - %s already removed from QGraphicsScene\n",
+                                        (*itGraphics)->getViewName());
+                }
+                deleteItems.append(*itGraphics); // delete in the destructor when completly safe. TEMP SOLUTION
             }
-            qview++;
+            itGraphics++;
         }
 
-        // Update the canvas view list of QGraphicsItemViews
-        m_view->setViews(myViews);
+        // Update the CanvasView (QGraphicsView) list of QGIVxxxx
+        m_view->setViews(newGraphicsList);
     }
 
-    // Updated all the views
+    // Update all the QGIVxxxx
     const std::vector<QGraphicsItemView *> &upviews = m_view->getViews();
     for(std::vector<QGraphicsItemView *>::const_iterator it = upviews.begin(); it != upviews.end(); ++it) {
         if((*it)->getViewObject()->isTouched() ||
