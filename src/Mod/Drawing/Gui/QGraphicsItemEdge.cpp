@@ -50,12 +50,14 @@ QGraphicsItemEdge::QGraphicsItemEdge(int ref, QGraphicsScene *scene) :
 {
     if(scene) {
         scene->addItem(this);
-    }
-    if(ref > 0) {
-        this->setAcceptHoverEvents(true);
+    } else {
+        Base::Console().Log("PROBLEM? - QGraphicsItemEdge(%d) has NO scene\n",ref);
     }
 
-    // Set Cache Mode for QPainter to reduce drawing required
+    if (ref > 0) {
+        setAcceptHoverEvents(true);
+    }
+
     setCacheMode(QGraphicsItem::NoCache);
 
     strokeWidth = 1.;

@@ -82,7 +82,7 @@ QGraphicsItemViewPart::~QGraphicsItemViewPart()
 QVariant QGraphicsItemViewPart::itemChange(GraphicsItemChange change, const QVariant &value)
 {
     if (change == ItemSelectedHasChanged && scene()) {
-        QColor color = m_colNormal;   //TODO: fix edge/vertex colour
+        QColor color = m_colNormal;
         if(isSelected()) {
             pen.setColor(m_colSel);
 
@@ -106,7 +106,7 @@ QVariant QGraphicsItemViewPart::itemChange(GraphicsItemChange change, const QVar
         update();
     } else if(change == ItemSceneChange && scene()) {
            // NOTE:  Temporary solution to prevent segfaulting in PaintDraw event ????
-           borderVisible = false;         //why???
+           borderVisible = false;
            this->tidy();
     }
     return QGraphicsItemView::itemChange(change, value);
@@ -127,13 +127,13 @@ void QGraphicsItemViewPart::setViewPartFeature(Drawing::FeatureViewPart *obj)
         return;
 
     this->setViewFeature(static_cast<Drawing::FeatureView *>(obj));
-    this->draw();
 
-    // Set the QGraphicsItemGroup Properties based on the FeatureView
+    // Set the QGraphicsItemGroup position based on the FeatureView
     float x = obj->X.getValue();
     float y = obj->Y.getValue();
-
     this->setPos(x, y);
+
+    this->draw();
     Q_EMIT dirty();
 }
 
@@ -237,23 +237,20 @@ void QGraphicsItemViewPart::updateView(bool update)
        viewPart->Tolerance.isTouched() ||
        viewPart->Scale.isTouched() ||
        viewPart->ShowHiddenLines.isTouched()){
-        // Remove all existing QGIxxxx to force boundingRect recalc
+        // Remove all existing graphical representations (QGIxxxx)
+        prepareGeometryChange();
         QList<QGraphicsItem *> items = this->childItems();
         for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); ++it) {
-            prepareGeometryChange();
             if(dynamic_cast<QGraphicsItemEdge *> (*it) ||
               dynamic_cast<QGraphicsItemFace *>(*it) ||
               dynamic_cast<QGraphicsItemVertex *>(*it)) {
-                Base::Console().Log("TRACE - QGraphicsItemViewPart::updateView(%d) - removing QGIxxxx(%d) from %s**\n",
-                                        update,(*it)->type(),this->viewName.c_str());
                 removeFromGroup(*it);
-                this->scene()->removeItem(*it);                        // hide and reparent QGIxxxx to this
+                this->scene()->removeItem(*it);
                 deleteItems.append(*it);                               // We store these and delete till later to prevent rendering crash ISSUE
             }
         }
-        draw();                                                        // Redraw the part with all new QGIxxxx
+        draw();
     } else if(viewPart->LineWidth.isTouched()) {
-        //Base::Console().Log("Drawing::QGraphicsItemViewPart::updateView - line width touched \n");
         QList<QGraphicsItem *> items = this->childItems();
         for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); ++it) {
             QGraphicsItemEdge *edge = dynamic_cast<QGraphicsItemEdge *>(*it);
@@ -279,6 +276,9 @@ void QGraphicsItemViewPart::drawViewPart()
 
     float lineWidth = part->LineWidth.getValue() * lineScaleFactor;
 
+    prepareGeometryChange();
+
+#if 0
     // Draw Faces
     QGraphicsItem *graphicsItem = 0;
     const std::vector<DrawingGeometry::Face *> &faceGeoms = part->getFaceGeometry();
@@ -326,19 +326,18 @@ void QGraphicsItemViewPart::drawViewPart()
             graphicsItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
         }
     } 
+#endif
 
     // Draw Edges
-    graphicsItem = 0;
+//    graphicsItem = 0;
     const std::vector<DrawingGeometry::BaseGeom *> &geoms = part->getEdgeGeometry();
     const std::vector<int> &refs = part->getEdgeReferences();
     std::vector<DrawingGeometry::BaseGeom *>::const_iterator it = geoms.begin();
-
-    // Draw Edges
     for(int i = 0 ; it != geoms.end(); ++it, i++) {
-       // Attempt to find if a previous edge exists
+       // Did we already draw this edge?
       QGraphicsItemEdge *item = this->findRefEdge(refs.at(i));
       if(!item) {
-          item = new QGraphicsItemEdge(refs.at(i));
+          item = new QGraphicsItemEdge(refs.at(i),scene());
           // Edge must be transformed to the ViewPart's coordinate system
           item->moveBy(this->x(), this->y());
           QPointF posRef(0.,0.);
@@ -350,9 +349,9 @@ void QGraphicsItemViewPart::drawViewPart()
       }
       item->setStrokeWidth(lineWidth);
 
-      graphicsItem = dynamic_cast<QGraphicsItem *>(item);
+//      graphicsItem = dynamic_cast<QGraphicsItem *>(item);
       QPainterPath path = drawPainterPath(*it);
-      if(graphicsItem) {
+//      if(graphicsItem) {
           if((*it)->extractType == DrawingGeometry::WithHidden) {
               QPainterPath hPath  = item->getHiddenPath();
               hPath.addPath(path);
@@ -362,25 +361,22 @@ void QGraphicsItemViewPart::drawViewPart()
               vPath.addPath(path);
               item->setVisiblePath(vPath);
           }
-          prepareGeometryChange();                                     // necessary?? adding elements seems to be handled automagically
-          this->addToGroup(graphicsItem);
-          // Don't allow selection for any edges with no references
+         this->addToGroup(item);
+          // Don't allow selection for any edges with no references  (TODO: bug in App/GeometryObject? why no edge reference?)
           if(refs.at(i) > 0) {
-              graphicsItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
+              item->setFlag(QGraphicsItem::ItemIsSelectable, true);
           }
-      }
+//      }
     }
-    graphicsItem = 0;
 
     // Draw Vertexs:
     const std::vector<DrawingGeometry::Vertex *> &verts = part->getVertexGeometry();
     const std::vector<int> &vertRefs                    = part->getVertexReferences();
     std::vector<DrawingGeometry::Vertex *>::const_iterator vert = verts.begin();
-    QBrush vertBrush(QBrush(QColor(0,0,0,255)));  //TODO: vertex colour sb param
 
     for(int i = 0 ; vert != verts.end(); ++vert, i++) {
           DrawingGeometry::Vertex *myVertex = *vert;
-          QGraphicsItemVertex *item = new QGraphicsItemVertex(vertRefs.at(i));
+          QGraphicsItemVertex *item = new QGraphicsItemVertex(vertRefs.at(i),scene());
           QPainterPath path;
           //item->setBrush(vertBrush);
           path.addEllipse(-2 ,-2, 4, 4);     //TODO: too big? sb attribute of QGIVertex?

@@ -48,11 +48,11 @@ QGraphicsItemVertex::QGraphicsItemVertex(int ref, QGraphicsScene *scene  ) :
 {
     if(scene) {
         scene->addItem(this);
+    } else {
+        Base::Console().Log("PROBLEM? - QGraphicsItemVertex(%d) has NO scene\n",ref);
     }
 
-    // Set Cache Mode
     setCacheMode(QGraphicsItem::NoCache);
-
     setFlag(ItemIgnoresTransformations);
     setAcceptHoverEvents(true);
 

@@ -50,6 +50,8 @@ QGraphicsItemFace::QGraphicsItemFace(int ref, QGraphicsScene *scene  ) :
 {
     if(scene) {
         scene->addItem(this);
+    } else {
+        Base::Console().Log("PROBLEM? - QGraphicsItemFace(%d) has NO scene\n",ref);
     }
     this->setAcceptHoverEvents(true);
 
