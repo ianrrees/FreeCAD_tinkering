@@ -67,7 +67,7 @@ CmdDrawingNewDimension::CmdDrawingNewDimension()
     sAppModule      = "Drawing";
     sGroup          = QT_TR_NOOP("Drawing");
     sMenuText       = QT_TR_NOOP("Insert a dimension into the drawing");
-    sToolTipText    = QT_TR_NOOP("Insert a new dimension feature into the drawing object");
+    sToolTipText    = QT_TR_NOOP("Insert a new dimension feature into the drawing");
     sWhatsThis      = "Drawing_NewDimension";
     sStatusTip      = sToolTipText;
     sPixmap         = "actions/drawing-annotation";
@@ -85,8 +85,8 @@ void CmdDrawingNewDimension::activated(int iMsg)
     Drawing::FeatureViewPart * Obj = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
 
     if(!Obj) {
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong sized selection"),
-                                                    QObject::tr("Incorrect selection"));
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No Feature View"),
+                                                    QObject::tr("No FeatureView associated with this selection"));
         return;
     }
 
@@ -95,16 +95,16 @@ void CmdDrawingNewDimension::activated(int iMsg)
     // get the needed lists and objects
     const std::vector<std::string> &SubNames = selection[0].getSubNames();
 
-    if (SubNames.size() != 1 && SubNames.size() != 2){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong sized selection"),
-                                                   QObject::tr("Incorrect selection"));
+    if (SubNames.size() > 2){
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
+                                                   QObject::tr("Too many edges/vertices selected"));
         return;
     }
 
     std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     if (pages.empty()){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page to insert"),
-                                                   QObject::tr("Create a page to insert."));
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No Drawing Page"),
+                                                   QObject::tr("Create a page first."));
         return;
     }
     Drawing::FeatureViewDimension *dim = 0;
@@ -119,7 +119,7 @@ void CmdDrawingNewDimension::activated(int iMsg)
     if (SubNames.size() == 1) {
         // Selected edge constraint
         if (SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge") {
-            int GeoId = std::atoi(SubNames[0].substr(4,4000).c_str());
+            int GeoId = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
 
             QScopedPointer<DrawingGeometry::BaseGeom> geom(Obj->getCompleteEdge(GeoId));
 
@@ -152,8 +152,8 @@ void CmdDrawingNewDimension::activated(int iMsg)
     } else if(SubNames.size() == 2) {
         if (SubNames[0].size() > 6 && SubNames[0].substr(0,6) == "Vertex" &&
             SubNames[1].size() > 6 && SubNames[1].substr(0,6) == "Vertex") {
-            int GeoId1 = std::atoi(SubNames[0].substr(6,4000).c_str());
-            int GeoId2 = std::atoi(SubNames[1].substr(6,4000).c_str());
+            int GeoId1 = std::atoi(SubNames[0].substr(6,std::string::npos).c_str());
+            int GeoId2 = std::atoi(SubNames[1].substr(6,std::string::npos).c_str());
 
             dimType = "Distance";
             doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
@@ -170,8 +170,8 @@ void CmdDrawingNewDimension::activated(int iMsg)
 
         } else if(SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge" &&
                   SubNames[1].size() > 4 && SubNames[1].substr(0,4) == "Edge") {
-            int GeoId1 = std::atoi(SubNames[0].substr(4,4000).c_str());
-            int GeoId2 = std::atoi(SubNames[1].substr(4,4000).c_str());
+            int GeoId1 = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
+            int GeoId2 = std::atoi(SubNames[1].substr(4,std::string::npos).c_str());
 
             // Project the edges
             Drawing::FeatureViewPart *viewPart = dynamic_cast<Drawing::FeatureViewPart * >(Obj);
@@ -198,7 +198,7 @@ void CmdDrawingNewDimension::activated(int iMsg)
                 // Cross product
                 double xprod = fabs(lin1.fX * lin2.fY - lin1.fY * lin2.fX);
 
-                Base::Console().Log("xprod: %f\n", xprod);
+                //Base::Console().Log("xprod: %f\n", xprod);
                 if(xprod < FLT_EPSILON) {
                     if(fabs(lin1.fX) < FLT_EPSILON && fabs(lin2.fX) < FLT_EPSILON)
                         dimType = "DistanceX";
@@ -214,7 +214,7 @@ void CmdDrawingNewDimension::activated(int iMsg)
             } else {
                 // Only support straight line edges
                 QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                           QObject::tr("Please provide a valid selection: Only straight line edges can be currently used"));
+                                                           QObject::tr("Only straight line edges can be currently supported"));
                 abortCommand();
                 return;
             }
@@ -233,8 +233,8 @@ void CmdDrawingNewDimension::activated(int iMsg)
 
         } else {
 
-            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Please provide a valid selection"),
-                                                       QObject::tr("Incorrect selection"));
+            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
+                                                       QObject::tr("Selection is not an Edge"));
             abortCommand();
             return;
         }
@@ -306,29 +306,29 @@ void CmdDrawingNewRadiusDimension::activated(int iMsg)
         return;
     }
 
-    Drawing::FeatureViewPart * Obj = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
+    Drawing::FeatureViewPart * obj = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
 
-    if(!Obj) {
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong sized selection"),
-                             QObject::tr("Incorrect selection"));
+    if(!obj) {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
+                             QObject::tr("No Drawing Feature View for this selection"));
                              return;
     }
 
-    App::DocumentObject *docObj = Obj->Source.getValue();
+    App::DocumentObject *docObj = obj->Source.getValue();
 
     // get the needed lists and objects
     const std::vector<std::string> &SubNames = selection[0].getSubNames();
 
-    if (SubNames.size() != 1 && SubNames.size() != 2){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong sized selection"),
-            QObject::tr("Incorrect selection"));
+    if (SubNames.size() > 1){
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
+            QObject::tr("Too many items selected"));
         return;
     }
 
     std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     if (pages.empty()){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page to insert"),
-                                                   QObject::tr("Create a page to insert."));
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No Drawing Page"),
+                                                   QObject::tr("Create a page first."));
         return;
     }
 
@@ -338,46 +338,37 @@ void CmdDrawingNewRadiusDimension::activated(int iMsg)
 
     std::string dimType;
 
-    openCommand("Create Dimension");
+    openCommand("Create Radius Dimension");
+
     doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewDimension','%s')",FeatName.c_str());
 
-    if (SubNames.size() == 1) {
-        // Selected edge constraint
-        if (SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge") {
-            int GeoId = std::atoi(SubNames[0].substr(4,4000).c_str());
+    // Get geometry of selected edge
+    QScopedPointer<DrawingGeometry::BaseGeom> geom;
+    if (SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge") {
+        int GeoId = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
+        geom.reset(obj->getCompleteEdge(GeoId));
+    } else {
+        Base::Console().Error("Error - CmdDrawingNewRadiusDimension - Can't resolve selected edge - Dim: %s View: %s Source: %s Edge: %s**\n",
+                            obj->getNameInDocument(),FeatName.c_str(),docObj->getNameInDocument(),SubNames[0].c_str());
+    }
 
-            QScopedPointer<DrawingGeometry::BaseGeom> geom(Obj->getCompleteEdge(GeoId));
-            dimType = "Distance";
-
-            if(geom->geomType == DrawingGeometry::CIRCLE ||
-               geom->geomType == DrawingGeometry::ARCOFCIRCLE ||
-               geom->geomType == DrawingGeometry::ELLIPSE ||
-               geom->geomType == DrawingGeometry::ARCOFELLIPSE ) {
-                // Radius Constraint
-                dimType = "Radius";
-            }
-
-            if(geom->geomType == DrawingGeometry::CIRCLE ||
-               geom->geomType == DrawingGeometry::ELLIPSE ) {
-                // Add center lines automatically for full circles
-                doCommand(Doc,"App.activeDocument().%s.CentreLines = True", FeatName.c_str());
-            }
-
-            doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
-                                                               ,dimType.c_str());
-
-            dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getDocument()->getObject(FeatName.c_str()));
-            dim->References.setValue(Obj, SubNames[0].c_str());
-        } else {
-            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                       QObject::tr("Edge selected was not of a circlar type"));
-            abortCommand();
-            return;
+    if(geom->geomType == DrawingGeometry::CIRCLE ||
+       geom->geomType == DrawingGeometry::ARCOFCIRCLE ||
+       geom->geomType == DrawingGeometry::ELLIPSE ||
+       geom->geomType == DrawingGeometry::ARCOFELLIPSE ) {
+        dimType = "Radius";
+        if(geom->geomType == DrawingGeometry::CIRCLE ||
+           geom->geomType == DrawingGeometry::ELLIPSE ) {
+            // Add center lines automatically for full circles
+            doCommand(Doc,"App.activeDocument().%s.CentreLines = True", FeatName.c_str());
         }
-
+        doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
+                                                           ,dimType.c_str());
+        dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getDocument()->getObject(FeatName.c_str()));
+        dim->References.setValue(obj, SubNames[0].c_str());
     } else {
         QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                   QObject::tr("Please provide a valid selection"));
+                                                  QObject::tr("Edge selected was not of a circular type"));
         abortCommand();
         return;
     }
@@ -388,7 +379,7 @@ void CmdDrawingNewRadiusDimension::activated(int iMsg)
                                                           ,contentStr.toStdString().c_str());
 
     // Check if the part is an orthographic view;
-    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(Obj);
+    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(obj);
 
     if(orthoView) {
         // Set the dimension to projected type
@@ -401,7 +392,6 @@ void CmdDrawingNewRadiusDimension::activated(int iMsg)
 //     Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(dimObj);
 
 //     doCommand(Doc,"App.activeDocument().%s.References = %s",FeatName.c_str(), support.c_str());
-
 
     Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
     page->addView(page->getDocument()->getObject(FeatName.c_str()));
@@ -475,7 +465,7 @@ void CmdDrawingNewDiameterDimension::activated(int iMsg)
     if (SubNames.size() == 1) {
         // Selected edge constraint
         if (SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge") {
-            int GeoId = std::atoi(SubNames[0].substr(4,4000).c_str());
+            int GeoId = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
 
             QScopedPointer<DrawingGeometry::BaseGeom> geom(Obj->getCompleteEdge(GeoId));
 
@@ -604,7 +594,7 @@ void CmdDrawingNewLengthDimension::activated(int iMsg)
     if (SubNames.size() == 1) {
         // Selected edge constraint
         if (SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge") {
-            int GeoId = std::atoi(SubNames[0].substr(4,4000).c_str());
+            int GeoId = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
 
             QScopedPointer<DrawingGeometry::BaseGeom> geom(Obj->getCompleteEdge(GeoId));
 
@@ -664,8 +654,8 @@ void CmdDrawingNewLengthDimension::activated(int iMsg)
 
         } else if(SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge" &&
                   SubNames[1].size() > 4 && SubNames[1].substr(0,4) == "Edge") {
-            int GeoId1 = std::atoi(SubNames[0].substr(4,4000).c_str());
-            int GeoId2 = std::atoi(SubNames[1].substr(4,4000).c_str());
+            int GeoId1 = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
+            int GeoId2 = std::atoi(SubNames[1].substr(4,std::string::npos).c_str());
 
             // Project the edges
             Drawing::FeatureViewPart *viewPart = dynamic_cast<Drawing::FeatureViewPart * >(Obj);
@@ -815,7 +805,7 @@ void CmdDrawingNewDistanceXDimension::activated(int iMsg)
     if (SubNames.size() == 1) {
         // Selected edge constraint
         if (SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge") {
-            int GeoId = std::atoi(SubNames[0].substr(4,4000).c_str());
+            int GeoId = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
 
             QScopedPointer<DrawingGeometry::BaseGeom> geom(Obj->getCompleteEdge(GeoId));
 
@@ -883,8 +873,8 @@ void CmdDrawingNewDistanceXDimension::activated(int iMsg)
 
         } else if(SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge" &&
                   SubNames[1].size() > 4 && SubNames[1].substr(0,4) == "Edge") {
-            int GeoId1 = std::atoi(SubNames[0].substr(4,4000).c_str());
-            int GeoId2 = std::atoi(SubNames[1].substr(4,4000).c_str());
+            int GeoId1 = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
+            int GeoId2 = std::atoi(SubNames[1].substr(4,std::string::npos).c_str());
 
             // Project the edges
             Drawing::FeatureViewPart *viewPart = dynamic_cast<Drawing::FeatureViewPart * >(Obj);
@@ -1055,7 +1045,7 @@ void CmdDrawingNewDistanceYDimension::activated(int iMsg)
     if (SubNames.size() == 1) {
         // Selected edge constraint
         if (SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge") {
-            int GeoId = std::atoi(SubNames[0].substr(4,4000).c_str());
+            int GeoId = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
 
             QScopedPointer<DrawingGeometry::BaseGeom> geom(Obj->getCompleteEdge(GeoId));
 
@@ -1123,8 +1113,8 @@ void CmdDrawingNewDistanceYDimension::activated(int iMsg)
 
         } else if(SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge" &&
                   SubNames[1].size() > 4 && SubNames[1].substr(0,4) == "Edge") {
-            int GeoId1 = std::atoi(SubNames[0].substr(4,4000).c_str());
-            int GeoId2 = std::atoi(SubNames[1].substr(4,4000).c_str());
+            int GeoId1 = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
+            int GeoId2 = std::atoi(SubNames[1].substr(4,std::string::npos).c_str());
 
             // Project the edges
             Drawing::FeatureViewPart *viewPart = dynamic_cast<Drawing::FeatureViewPart * >(Obj);
@@ -1295,8 +1285,8 @@ void CmdDrawingNewAngleDimension::activated(int iMsg)
     if(SubNames.size() == 2) {
         if(SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge" &&
                   SubNames[1].size() > 4 && SubNames[1].substr(0,4) == "Edge") {
-            int GeoId1 = std::atoi(SubNames[0].substr(4,4000).c_str());
-            int GeoId2 = std::atoi(SubNames[1].substr(4,4000).c_str());
+            int GeoId1 = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
+            int GeoId2 = std::atoi(SubNames[1].substr(4,std::string::npos).c_str());
 
             // Project the edges
             Drawing::FeatureViewPart *viewPart = dynamic_cast<Drawing::FeatureViewPart * >(Obj);
