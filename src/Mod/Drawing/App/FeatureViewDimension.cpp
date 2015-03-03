@@ -62,7 +62,7 @@ FeatureViewDimension::FeatureViewDimension(void)
 {
     ADD_PROPERTY_TYPE(References,(0,0),"Dimension",(App::PropertyType)(App::Prop_None),"Dimension Supporting References");
     ADD_PROPERTY_TYPE(Precision,(2)   ,"Dimension",(App::PropertyType)(App::Prop_None),"Dimension Precision");
-    ADD_PROPERTY_TYPE(Fontsize,(7)    ,"Dimension",(App::PropertyType)(App::Prop_None),"Dimension Font Size");
+    ADD_PROPERTY_TYPE(Fontsize,(14)    ,"Dimension",(App::PropertyType)(App::Prop_None),"Dimension Font Size");
     ADD_PROPERTY_TYPE(CentreLines,(0) ,"Dimension",(App::PropertyType)(App::Prop_None),"Dimension Center Lines");
     ADD_PROPERTY_TYPE(ProjDirection ,(0.,0.,1.0), "Dimension",App::Prop_None,"Projection normal direction");
     ADD_PROPERTY_TYPE(Content,("%value") ,"Dimension",(App::PropertyType)(App::Prop_None),"Datum Label Content");
@@ -177,34 +177,34 @@ std::string  FeatureViewDimension::getContent() const
 
 double FeatureViewDimension::getValue() const
 {
-    const char *projType = Type.getValueAsString();
+    const char *dimType = Type.getValueAsString();
     if(strcmp(ProjectionType.getValueAsString(), "True") == 0) {
         // True Values
-        if(strcmp(projType, "Distance") == 0) {
+        if(strcmp(dimType, "Distance") == 0) {
             return measurement->length();
-        } else if(strcmp(projType, "DistanceX") == 0){
+        } else if(strcmp(dimType, "DistanceX") == 0){
             Base::Vector3d delta = measurement->delta();
             return delta.x;
-        } else if(strcmp(projType, "DistanceY") == 0){
+        } else if(strcmp(dimType, "DistanceY") == 0){
             Base::Vector3d delta = measurement->delta();
             return delta.y;
-        } else if(strcmp(projType, "DistanceZ") == 0){
+        } else if(strcmp(dimType, "DistanceZ") == 0){
             Base::Vector3d delta = measurement->delta();
             return delta.z;
-        } else if(strcmp(projType, "Radius") == 0){
+        } else if(strcmp(dimType, "Radius") == 0){
             return measurement->radius();
-        } else if(strcmp(projType, "Diameter") == 0){
+        } else if(strcmp(dimType, "Diameter") == 0){
             return measurement->radius() * 2.0;
-        } else if(strcmp(projType, "Angle") == 0){
+        } else if(strcmp(dimType, "Angle") == 0){
             throw Base::Exception("Cannot measure the true angle");
         }
         throw Base::Exception("Dimension Value couldn't be calculated");
     } else {
         // Projected Values
-        if(strcmp(projType, "Distance") == 0 ||
-            strcmp(projType, "DistanceX") == 0 ||
-            strcmp(projType, "DistanceY") == 0 ||
-            strcmp(projType, "DistanceZ") == 0) {
+        if(strcmp(dimType, "Distance") == 0 ||
+            strcmp(dimType, "DistanceX") == 0 ||
+            strcmp(dimType, "DistanceY") == 0 ||
+            strcmp(dimType, "DistanceZ") == 0) {
 
             Base::Vector3d delta   = measurement->delta();
             Base::Vector3d projDir = ProjDirection.getValue();
@@ -229,20 +229,20 @@ double FeatureViewDimension::getValue() const
             //Base::Console().Log("proj <%f %f %f>", delta.x, delta.y, delta.z);
             //Base::Console().Log("yaxis <%f %f %f>", yaxis.x, yaxis.y, yaxis.z);
             //Base::Console().Log("proj <%f %f %f>", projDim.x, projDim.y, projDim.z);
-            if(strcmp(projType, "Distance") == 0) {
+            if(strcmp(dimType, "Distance") == 0) {
                 return projDim.Length();
-            } else if(strcmp(projType, "DistanceX") == 0) {
+            } else if(strcmp(dimType, "DistanceX") == 0) {
                 return x;
-            } else if(strcmp(projType, "DistanceY") == 0) {
+            } else if(strcmp(dimType, "DistanceY") == 0) {
                 return y;
-            } else if(strcmp(projType, "DistanceZ") == 0) {
+            } else if(strcmp(dimType, "DistanceZ") == 0) {
                 throw Base::Exception("Cannot use z direction for projection type");
             }
-        } else if(strcmp(projType, "Radius") == 0){
+        } else if(strcmp(dimType, "Radius") == 0){
             return measurement->radius(); // Can only use true value
-        } else if(strcmp(projType, "Diameter") == 0){
+        } else if(strcmp(dimType, "Diameter") == 0){
             return measurement->radius() * 2.0; // Can only use true value
-        } else if(strcmp(projType, "Angle") == 0){
+        } else if(strcmp(dimType, "Angle") == 0){
 
             // Must project lines to 2D so cannot use measurement framework this time
             //Relcalculate the measurement based on references stored.
