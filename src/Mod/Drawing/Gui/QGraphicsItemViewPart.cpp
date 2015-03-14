@@ -48,7 +48,8 @@
 
 using namespace DrawingGui;
 
-const float lineScaleFactor = 3.;
+const float lineScaleFactor = 1.;                                      //temp fiddle for devel
+const float vertexScaleFactor = 2.;                                    //temp fiddle for devel
 
 QGraphicsItemViewPart::QGraphicsItemViewPart(const QPoint &pos, QGraphicsScene *scene)
                 :QGraphicsItemView(pos, scene)
@@ -60,19 +61,13 @@ QGraphicsItemViewPart::QGraphicsItemViewPart(const QPoint &pos, QGraphicsScene *
 
     Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
         .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors");
-    App::Color fcColor = App::Color((uint32_t) hGrp->GetUnsigned("NormalColor", 0x00000000));
-    m_colNormal = fcColor.asQColor();
-    fcColor.setPackedValue(hGrp->GetUnsigned("SelectColor", 0x0000FF00));
-    m_colSel = fcColor.asQColor();
-    fcColor.setPackedValue(hGrp->GetUnsigned("PreSelectColor", 0x00080800));
-    m_colPre = fcColor.asQColor();
-    fcColor.setPackedValue(hGrp->GetUnsigned("HiddenColor", 0x08080800));
+    App::Color fcColor = App::Color((uint32_t) hGrp->GetUnsigned("HiddenColor", 0x08080800));
     m_colHid = fcColor.asQColor();
-    pen.setColor(m_colNormal);
 }
 
 QGraphicsItemViewPart::~QGraphicsItemViewPart()
 {
+    tidy();
     // TODO: Identify what changed to prevent complete redraw
     //QList<QGraphicsItem *> items = this->childItems();
     //QList<QGraphicsItem *> bboxItems = items;
@@ -82,31 +77,27 @@ QGraphicsItemViewPart::~QGraphicsItemViewPart()
 QVariant QGraphicsItemViewPart::itemChange(GraphicsItemChange change, const QVariant &value)
 {
     if (change == ItemSelectedHasChanged && scene()) {
-        QColor color = m_colNormal;
-        if(isSelected()) {
-            pen.setColor(m_colSel);
-
-        } else {
-            pen.setColor(m_colNormal);
-        }
-
+//        if(isSelected()) {
+//            m_pen.setColor(m_colSel);
+//        } else {
+//            m_pen.setColor(m_colNormal);
+//        }
         QList<QGraphicsItem *> items = this->childItems();
         for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); ++it) {
-
             QGraphicsItemEdge *edge = dynamic_cast<QGraphicsItemEdge *>(*it);
             QGraphicsItemVertex *vert = dynamic_cast<QGraphicsItemVertex *>(*it);
             if(edge) {
                 edge->setHighlighted(isSelected());
             } else if(vert){
-                QBrush brush = vert->brush();
-                brush.setColor(color);
-                vert->setBrush(brush);
+                vert->setHighlighted(isSelected());
             }
         }
-        update();
+//        update();
     } else if(change == ItemSceneChange && scene()) {
+           // we only use 1 scene, so the item's scene is 0x00 or our scene. does this get issued by removeFromScene??
+           Base::Console().Message("TRACE - QGraphicsItemViewPart::itemChange - ItemSceneChange - 0x%08x\n",scene());
            // NOTE:  Temporary solution to prevent segfaulting in PaintDraw event ????
-           borderVisible = false;
+           //borderVisible = false;
            this->tidy();
     }
     return QGraphicsItemView::itemChange(change, value);
@@ -123,18 +114,7 @@ void QGraphicsItemViewPart::tidy()
 void QGraphicsItemViewPart::setViewPartFeature(Drawing::FeatureViewPart *obj)
 {
     // called from CanvasView
-    if(obj == 0)
-        return;
-
-    this->setViewFeature(static_cast<Drawing::FeatureView *>(obj));
-
-    // Set the QGraphicsItemGroup position based on the FeatureView
-    float x = obj->X.getValue();
-    float y = obj->Y.getValue();
-    this->setPos(x, y);
-
-    this->draw();
-    Q_EMIT dirty();
+    setViewFeature(static_cast<Drawing::FeatureView *>(obj));
 }
 
 QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *baseGeom) const
@@ -250,13 +230,16 @@ void QGraphicsItemViewPart::updateView(bool update)
             }
         }
         draw();
-    } else if(viewPart->LineWidth.isTouched()) {
+    } else if(viewPart->LineWidth.isTouched() ||
+              viewPart->HiddenWidth.isTouched()) {
         QList<QGraphicsItem *> items = this->childItems();
         for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); ++it) {
             QGraphicsItemEdge *edge = dynamic_cast<QGraphicsItemEdge *>(*it);
-            float lineWidth = viewPart->LineWidth.getValue() * lineScaleFactor;
-            if(edge)
-                edge->setStrokeWidth(lineWidth);
+            if(edge  && edge->getHiddenEdge()) {
+                edge->setStrokeWidth(viewPart->HiddenWidth.getValue() * lineScaleFactor);
+            } else {
+                edge->setStrokeWidth(viewPart->LineWidth.getValue() * lineScaleFactor);
+            }
         }
     }
 
@@ -275,9 +258,11 @@ void QGraphicsItemViewPart::drawViewPart()
     Drawing::FeatureViewPart *part = dynamic_cast<Drawing::FeatureViewPart *>(this->getViewObject());
 
     float lineWidth = part->LineWidth.getValue() * lineScaleFactor;
+    float lineWidthHid = part->HiddenWidth.getValue() * lineScaleFactor;
 
     prepareGeometryChange();
 
+//TODO: QGraphicsItemFace disabled temporarily
 #if 0
     // Draw Faces
     QGraphicsItem *graphicsItem = 0;
@@ -333,40 +318,40 @@ void QGraphicsItemViewPart::drawViewPart()
     const std::vector<DrawingGeometry::BaseGeom *> &geoms = part->getEdgeGeometry();
     const std::vector<int> &refs = part->getEdgeReferences();
     std::vector<DrawingGeometry::BaseGeom *>::const_iterator it = geoms.begin();
+    Base::Console().Message("TRACE - QGraphicsItemViewPart::drawViewPart - %d geoms, %d refs\n",geoms.size(),refs.size());
+    QGraphicsItemEdge* item;
     for(int i = 0 ; it != geoms.end(); ++it, i++) {
-       // Did we already draw this edge?
-      QGraphicsItemEdge *item = this->findRefEdge(refs.at(i));
-      if(!item) {
-          item = new QGraphicsItemEdge(refs.at(i),scene());
-          // Edge must be transformed to the ViewPart's coordinate system
-          item->moveBy(this->x(), this->y());
-          QPointF posRef(0.,0.);
-          QPointF mapPos = item->mapToItem(this, posRef);
-          item->moveBy(-mapPos.x(), -mapPos.y());
-          if(part->ShowHiddenLines.getValue()) {
-              item->setShowHidden(true);
-        }
-      }
-      item->setStrokeWidth(lineWidth);
-
-//      graphicsItem = dynamic_cast<QGraphicsItem *>(item);
-      QPainterPath path = drawPainterPath(*it);
-//      if(graphicsItem) {
-          if((*it)->extractType == DrawingGeometry::WithHidden) {
-              QPainterPath hPath  = item->getHiddenPath();
-              hPath.addPath(path);
-              item->setHiddenPath(hPath);
-          } else {
-              QPainterPath vPath  = item->getVisiblePath();
-              vPath.addPath(path);
-              item->setVisiblePath(vPath);
-          }
-         this->addToGroup(item);
-          // Don't allow selection for any edges with no references  (TODO: bug in App/GeometryObject? why no edge reference?)
-          if(refs.at(i) > 0) {
-              item->setFlag(QGraphicsItem::ItemIsSelectable, true);
-          }
-//      }
+        //for every geometry in the projection
+        //if the geometry is Plain, create a graphical representation
+        //if the geometry is WithHidden and the FeatureView ShowHiddenLines property is true, create a graphical representation
+        //if the geometry is WithSmooth(??) and the FeatureView ShowSmoothLines property is true, create a graphical representation
+        Base::Console().Message("TRACE - QGraphicsItemViewPart::drawViewPart - geom: %d extract: %d hidden: %d smooth: %d\n",
+                                i,(*it)->extractType,part->ShowHiddenLines.getValue(),part->ShowSmoothLines.getValue());
+        //TODO: investigate if an Edge can be both Hidden and Smooth???
+        if(((*it)->extractType == DrawingGeometry::Plain)  ||
+          (((*it)->extractType == DrawingGeometry::WithHidden) && part->ShowHiddenLines.getValue()) ||
+          ((*it)->extractType == DrawingGeometry::WithSmooth)) {
+//          (((*it)->extractType == DrawingGeometry::WithSmooth) && part->ShowSmoothLines.getValue())) {
+            item = new QGraphicsItemEdge(refs.at(i));
+            item->setStrokeWidth(lineWidth);
+            if((*it)->extractType == DrawingGeometry::WithHidden) {
+                item->setStrokeWidth(lineWidthHid);
+                item->setHiddenEdge(true);
+            } else if((*it)->extractType == DrawingGeometry::WithSmooth) {
+                item->setSmoothEdge(true);
+            }
+            QPainterPath path = drawPainterPath(*it);
+            item->setPath(path);
+            if(refs.at(i) > 0) {
+                item->setFlag(QGraphicsItem::ItemIsSelectable, true);  //TODO: bug in App/GeometryObject? why no edge reference?
+                item->setAcceptHoverEvents(true);                      //TODO: verify that edge w/o ref is ineligible for selecting
+            }
+            item->moveBy(x(), y());
+            QPointF posRef(0.,0.);
+            QPointF mapPos = item->mapToItem(this, posRef);
+            item->moveBy(-mapPos.x(), -mapPos.y());
+            addToGroup(item);
+         }
     }
 
     // Draw Vertexs:
@@ -375,21 +360,16 @@ void QGraphicsItemViewPart::drawViewPart()
     std::vector<DrawingGeometry::Vertex *>::const_iterator vert = verts.begin();
 
     for(int i = 0 ; vert != verts.end(); ++vert, i++) {
-          DrawingGeometry::Vertex *myVertex = *vert;
-          QGraphicsItemVertex *item = new QGraphicsItemVertex(vertRefs.at(i),scene());
-          QPainterPath path;
-          //item->setBrush(vertBrush);
-          path.addEllipse(-2 ,-2, 4, 4);     //TODO: too big? sb attribute of QGIVertex?
-
+          QGraphicsItemVertex *item = new QGraphicsItemVertex(vertRefs.at(i));
           QPointF posRef(0.,0.);
           QPointF mapPos = item->mapToItem(this, posRef);
-
-          item->setPath(path);
-          item->setPos(myVertex->pnt.fX, myVertex->pnt.fY);
+          item->setPos((*vert)->pnt.fX, (*vert)->pnt.fY);
           item->moveBy(-mapPos.x(), -mapPos.y());
+          item->setRadius(lineWidth * vertexScaleFactor);
           if(vertRefs.at(i) > 0)
               item->setFlag(QGraphicsItem::ItemIsSelectable, true);
-          this->addToGroup(item);
+              item->setAcceptHoverEvents(true);                      //TODO: verify that vertex w/o ref is ineligible for selecting
+          addToGroup(item);
     }
 }
 
@@ -565,28 +545,6 @@ void QGraphicsItemViewPart::toggleVertices(bool state)
     }
 }
 
-void QGraphicsItemViewPart::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
-{
-    if (isSelected()) {
-        return;
-    } else {
-        if(this->shape().contains(event->pos())) {                     // TODO don't like this for determining preselect
-            pen.setColor(m_colPre);
-        }
-    }
-    update();
-}
-
-void QGraphicsItemViewPart::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
-{
-    if(!isSelected()) {
-        pen.setColor(m_colNormal);
-    } else {
-        pen.setColor(m_colSel);
-    }
-    update();
-}
-
 QPainterPath QGraphicsItemViewPart::shape() const {
     QPainterPath path;
     QRectF box = this->boundingRect().adjusted(2.,2.,-2.,-2.);
@@ -598,50 +556,8 @@ QPainterPath QGraphicsItemViewPart::shape() const {
 
 QRectF QGraphicsItemViewPart::boundingRect() const
 {
-    return QGraphicsItemView::boundingRect().adjusted(-5.,-5.,5.,5.);
-}
-
-void QGraphicsItemViewPart::drawBorder(QPainter *painter)
-{
-    // Save the current painter state and restore at end
-    painter->save();
-
-    // Make a rectangle smaller than the bounding box as a border and draw dashed line for selection
-    QRectF box = this->boundingRect().adjusted(2.,2.,-2.,-2.);
-
-    QPen myPen = pen;
-    myPen.setStyle(Qt::DashLine);
-    myPen.setWidth(0.3);
-    painter->setPen(myPen);
-
-    // Draw Label
-    QString name = QString::fromUtf8(this->getViewObject()->Label.getValue());
-
-    QFont font;                                                          //TODO: font sb param
-    font.setFamily(QString::fromAscii("osifont")); // Set to generic sans-serif font
-    font.setPointSize(5.f);
-    painter->setFont(font);
-    QFontMetrics fm(font);
-
-    QPointF pos = box.center();
-    pos.setY(box.bottom());
-    pos.setX(pos.x() - fm.width(name) / 2.);
-
-    painter->drawText(pos, name);
-    painter->drawRect(box);
-
-    painter->restore();
-}
-
-void QGraphicsItemViewPart::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
-{
-    QStyleOptionGraphicsItem myOption(*option);
-    myOption.state &= ~QStyle::State_Selected;
-
-    if(borderVisible){
-         this->drawBorder(painter);
-    }
-    QGraphicsItemView::paint(painter, &myOption, widget);
+//    return QGraphicsItemView::boundingRect().adjusted(-5.,-5.,5.,5.);
+    return childrenBoundingRect().adjusted(-2.,-2.,2.,6.);             //just a bit bigger than the children need
 }
 
 #include "moc_QGraphicsItemViewPart.cpp"

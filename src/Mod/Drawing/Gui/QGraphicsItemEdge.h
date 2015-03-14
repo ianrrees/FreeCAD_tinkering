@@ -40,59 +40,45 @@ namespace DrawingGui
 class DrawingGuiExport QGraphicsItemEdge : public QGraphicsPathItem
 {
 public:
-    explicit QGraphicsItemEdge(int ref = -1, QGraphicsScene *scene = 0 );
+    explicit QGraphicsItemEdge(int ref = -1);
     ~QGraphicsItemEdge() {}
 
     enum {Type = QGraphicsItem::UserType + 103};
 
     int type() const { return Type;}
-
-    void setHighlighted(bool state);
-    void setShowHidden(bool state) {showHidden = state; update(); }
-    void setCosmetic(bool state);
+    QRectF boundingRect() const;
+    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 
     int getReference() const { return reference; }
-    QPainterPath getHiddenPath() { return hPath; }
-    QPainterPath getVisiblePath() { return vPath; }
 
-    void setStrokeWidth(float width) { strokeWidth = width; vPen.setWidthF(width); hPen.setWidthF(width * 0.3); update(); }
-    void setHiddenPath(const QPainterPath &path);
-    void setVisiblePath(const QPainterPath &path);
-
-public:
-    bool contains(const QPointF &point) const;
-    QPainterPath shape() const;
-    QRectF boundingRect() const;
+    void setHighlighted(bool state);
+    void setCosmetic(bool state);
+    void setStrokeWidth(float width);
     void setPrettyNormal();
     void setPrettyPre();
     void setPrettySel();
-    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
+    void setHiddenEdge(bool b);
+    bool getHiddenEdge() { return(isHiddenEdge); }
+    void setSmoothEdge(bool b) { isSmoothEdge = b; }
+    bool getSmoothEdge() { return(isSmoothEdge); }
 
 protected:
     void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
     void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
-    // Selection detection
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
-protected:
-    int reference;
-    QPainterPath hPath;
-    QPainterPath vPath;
+    int reference;                                                     //index of edge in FeatureView Source. may not exist(-1).
 
-    QBrush hBrush;
-    QBrush vBrush;
-    QPen   vPen;
-    QPen   hPen;
-
-    float sf;
     bool isHighlighted;
     bool isCosmetic;
-    bool showHidden;
+    bool isHiddenEdge;
+    bool isSmoothEdge;
 
 private:
     float strokeWidth;
+    float strokeScale;
     QPen m_pen;
-    QBrush m_brush;
+    QColor m_colCurrent;
     QColor m_colNormal;
     QColor m_colPre;
     QColor m_colSel;

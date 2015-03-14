@@ -73,7 +73,6 @@ Q_SIGNALS:
 public:
     virtual QPainterPath  shape () const;
     virtual QRectF boundingRect() const;
-    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 
 protected:
     QGraphicsItemEdge * findRefEdge(int i);
@@ -89,20 +88,12 @@ protected:
                                      double curx, double cury) const;
 
     void drawViewPart();
-    void drawBorder(QPainter *painter);
 
     // Selection detection
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
-    void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
-    void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
 
 protected:
-    QPen pen;
-    QPen m_pen;
-    QBrush m_brush;
-    QColor m_colNormal;
-    QColor m_colPre;
-    QColor m_colSel;
+    //QPen pen;
     QColor m_colHid;
 
 private:

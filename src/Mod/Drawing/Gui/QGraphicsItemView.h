@@ -52,33 +52,49 @@ public:
 
     const char * getViewName() const;
     void setViewFeature(Drawing::FeatureView *obj);
-    void setLocked(bool state = true) { this->locked = true; }
+    Drawing::FeatureView * getViewObject() const;
+
     virtual void toggleBorder(bool state = true) { this->borderVisible = state; }
+    virtual void drawBorder(QPainter *painter);
 
     /// Methods to ensure that Y-Coordinates are orientated correctly.
     void setPosition(qreal x, qreal y);
     inline qreal getY() { return this->y() * -1; }
 
     void alignTo(QGraphicsItem *, const QString &alignment);
-    Drawing::FeatureView * getViewObject() const;
+    void setLocked(bool state = true) { this->locked = true; }
+
+    virtual void toggleCache(bool state);
     virtual void updateView(bool update = false);
+    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
+
     virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent * event);
 
 Q_SIGNALS:
-  void dirty();
+    void dirty();
 
 protected:
-  virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
-  virtual void mouseMoveEvent(QGraphicsSceneMouseEvent * event );
-  void mousePressEvent(QGraphicsSceneMouseEvent * event);
+    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+    // Mouse handling
+    virtual void mouseMoveEvent(QGraphicsSceneMouseEvent * event );
+    virtual void mousePressEvent(QGraphicsSceneMouseEvent * event);
+    // Preselection events:
+    virtual void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
+    virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
 
-  Drawing::FeatureView *viewObj;
-  std::string viewName;
+    Drawing::FeatureView *viewObj;
+    std::string viewName;
 
-  QHash<QString, QGraphicsItem *> alignHash;
-  bool locked;
-  bool borderVisible;
+    QHash<QString, QGraphicsItem *> alignHash;
+    bool locked;
+    bool borderVisible;
 
+    QPen m_pen;
+    QBrush m_brush;
+    QColor m_colCurrent;
+    QColor m_colNormal;
+    QColor m_colPre;
+    QColor m_colSel;
 };
 
 } // namespace DrawingViewGui

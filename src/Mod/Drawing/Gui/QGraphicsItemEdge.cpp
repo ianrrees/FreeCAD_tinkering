@@ -22,16 +22,12 @@
 
 #include "PreCompiled.h"
 #ifndef _PreComp_
-# include <assert.h>
-# include <QApplication>
-# include <QContextMenuEvent>
-# include <QGraphicsScene>
-# include <QGraphicsSceneHoverEvent>
-# include <QMenu>
-# include <QMouseEvent>
-# include <QPainter>
-# include <QPainterPathStroker>
-# include <QStyleOptionGraphicsItem>
+#include <assert.h>
+#include <QGraphicsScene>
+#include <QGraphicsSceneHoverEvent>
+#include <QMouseEvent>
+#include <QPainter>
+#include <QStyleOptionGraphicsItem>
 #endif
 
 #include <App/Application.h>
@@ -45,27 +41,18 @@
 
 using namespace DrawingGui;
 
-QGraphicsItemEdge::QGraphicsItemEdge(int ref, QGraphicsScene *scene) :
+QGraphicsItemEdge::QGraphicsItemEdge(int ref) :
     reference(ref)
 {
-    if(scene) {
-        scene->addItem(this);
-    } else {
-        Base::Console().Log("PROBLEM? - QGraphicsItemEdge(%d) has NO scene\n",ref);
-    }
-
-    if (ref > 0) {
-        setAcceptHoverEvents(true);
-    }
-
     setCacheMode(QGraphicsItem::NoCache);
 
     strokeWidth = 1.;
-    sf = 1.;
 
-    isCosmetic    = true;
-    showHidden    = false;
+    isCosmetic    = false;
     isHighlighted = false;
+    //TODO: investigate if an Edge can be both Hidden and Smooth???
+    isHiddenEdge = false;
+    isSmoothEdge = false;
 
     Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
         .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors");
@@ -78,63 +65,16 @@ QGraphicsItemEdge::QGraphicsItemEdge(int ref, QGraphicsScene *scene) :
     fcColor.setPackedValue(hGrp->GetUnsigned("HiddenColor", 0x08080800));
     m_colHid = fcColor.asQColor();
 
-    hPen.setStyle(Qt::DashLine);
-    hPen.setCapStyle(Qt::RoundCap);
-    vPen.setStyle(Qt::SolidLine);
-    vPen.setCapStyle(Qt::RoundCap);
+    m_pen.setStyle(Qt::SolidLine);
+    m_pen.setCapStyle(Qt::RoundCap);
 
-    // In edit mode these should be set cosmetic
-    vPen.setCosmetic(isCosmetic);
-    hPen.setCosmetic(isCosmetic);
+    m_pen.setCosmetic(isCosmetic);
     setPrettyNormal();
-}
-
-void QGraphicsItemEdge::setVisiblePath(const QPainterPath &path) {
-    prepareGeometryChange();
-    this->vPath = path;
-    update();
-}
-
-void QGraphicsItemEdge::setHiddenPath(const QPainterPath &path) {
-    prepareGeometryChange();
-    this->hPath = path;
-    update();
 }
 
 QRectF QGraphicsItemEdge::boundingRect() const
 {
-    return shape().controlPointRect();
-}
-
-bool QGraphicsItemEdge::contains(const QPointF &point) const
-{
-    return shape().contains(point);
-}
-
-QPainterPath QGraphicsItemEdge::shape() const
-{
-    QPainterPathStroker stroker;
-    stroker.setWidth(strokeWidth / sf);
-
-    // Combine paths
-    QPainterPath p;
-    p.addPath(vPath);
-
-    if(showHidden)
-        p.addPath(hPath);
-
-    return stroker.createStroke(p);
-}
-
-void QGraphicsItemEdge::setHighlighted(bool state)
-{
-    isHighlighted = state;
-    if(isHighlighted) {
-        setPrettySel();
-    } else {
-        setPrettyNormal();
-    }
-    update();
+    return shape().controlPointRect().adjusted(-2.,-2.,2.,2.);         //a bit bigger than the controlPointRect - for ease of selecting?
 }
 
 QVariant QGraphicsItemEdge::itemChange(GraphicsItemChange change, const QVariant &value)
@@ -145,66 +85,76 @@ QVariant QGraphicsItemEdge::itemChange(GraphicsItemChange change, const QVariant
         } else {
             setPrettyNormal();
         }
-        update();
     }
-
     return QGraphicsItem::itemChange(change, value);
 }
 
 void QGraphicsItemEdge::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
     setPrettyPre();
-    update();
 }
 
 void QGraphicsItemEdge::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 {
-    QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *> (this->parentItem());
+    QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *> (this->parentItem());    //this is temp for debug??
     assert(view != 0);
 
     if(!isSelected() && !isHighlighted) {
         setPrettyNormal();
-        update();
     }
 }
 
 void QGraphicsItemEdge::setCosmetic(bool state)
 {
-    isCosmetic = state;
-    vPen.setCosmetic(isCosmetic);
-    hPen.setCosmetic(isCosmetic);
+    m_pen.setCosmetic(state);
     update();
 }
 
-void QGraphicsItemEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+void QGraphicsItemEdge::setHighlighted(bool b)
 {
-    QStyleOptionGraphicsItem myOption(*option);
-    myOption.state &= ~QStyle::State_Selected;
-
-    painter->setPen(vPen);
-    painter->drawPath(vPath);
-
-    // hacky method to get scale for shape()
-    this->sf = painter->worldTransform().m11();
-    if(showHidden) {
-        painter->setPen(hPen);
-        painter->setBrush(hBrush);
-        painter->drawPath(hPath);
+    isHighlighted = b;
+    if(isHighlighted) {
+        setPrettySel();
+    } else {
+        setPrettyNormal();
     }
 }
 
 void QGraphicsItemEdge::setPrettyNormal() {
-    vPen.setColor(m_colNormal);
-    hPen.setColor(m_colHid);
+    if (isHiddenEdge) {
+        m_colCurrent = m_colHid;
+    } else {
+        m_colCurrent = m_colNormal;
+    }
+    update();
 }
 
 void QGraphicsItemEdge::setPrettyPre() {
-    vPen.setColor(m_colPre);
-    hPen.setColor(m_colPre);
+    m_colCurrent = m_colPre;
+    update();
 }
 
 void QGraphicsItemEdge::setPrettySel() {
-    vPen.setColor(m_colSel);
-    hPen.setColor(m_colSel);
+    m_colCurrent = m_colSel;
+    update();
+}
+
+void QGraphicsItemEdge::setStrokeWidth(float width) {
+    strokeWidth = width;
+    update();
+}
+
+void QGraphicsItemEdge::setHiddenEdge(bool b) {
+    isHiddenEdge = b;
+    if (b) m_colCurrent = m_colHid;
+    update();
+    //TODO: need some fiddling here so hidden edges don't get selected?? is it ok to select a hidden edge?
+}
+
+void QGraphicsItemEdge::paint ( QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget) {
+    m_pen.setWidthF(strokeWidth);
+    m_pen.setColor(m_colCurrent);
+    setPen(m_pen);
+    QGraphicsPathItem::paint (painter, option, widget);
 }
 

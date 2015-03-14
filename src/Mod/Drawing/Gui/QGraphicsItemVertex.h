@@ -37,43 +37,46 @@ class BaseGeom;
 namespace DrawingGui
 {
 
-class DrawingGuiExport QGraphicsItemVertex : public QGraphicsPathItem
+class DrawingGuiExport QGraphicsItemVertex : public QGraphicsEllipseItem
 {
 public:
-    explicit QGraphicsItemVertex(int ref = -1, QGraphicsScene *scene = 0 );
+    explicit QGraphicsItemVertex(int ref = -1);
     ~QGraphicsItemVertex() {}
 
     enum {Type = QGraphicsItem::UserType + 105};
     int type() const { return Type;}
+    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 
     int getReference() const { return reference; }
-    void setStrokeWidth(int width) { this->strokeWidth = width; }
+    
+    float getRadius() { return m_radius; }
+    void setRadius(float r) { m_radius = r; }
+    Qt::BrushStyle getFill() { return m_fill; }
+    void setFill(Qt::BrushStyle f) { m_fill = f; }
 
-public:
+    void setHighlighted(bool isHighlighted);
     void setPrettyNormal();
     void setPrettyPre();
     void setPrettySel();
-    QPainterPath shape() const;
-    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 
 protected:
-    // Preselection events:
     void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
     void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
-    // Selection detection
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
-protected:
-    int reference;
+    int reference;                                                     //index of vertex in FeatureView Source. may not exist(-1).
+
+    bool isHighlighted;
 
 private:
-    int strokeWidth;
     QPen m_pen;
     QBrush m_brush;
+    QColor m_colCurrent;
     QColor m_colNormal;
     QColor m_colPre;
     QColor m_colSel;
     Qt::BrushStyle m_fill;
+    float m_radius;
 };
 
 } // namespace DrawingViewGui

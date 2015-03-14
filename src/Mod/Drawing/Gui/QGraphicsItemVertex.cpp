@@ -24,12 +24,10 @@
 #ifndef _PreComp_
 #include <assert.h>
 #include <QGraphicsScene>
-#include <QMenu>
-#include <QMouseEvent>
 #include <QGraphicsSceneHoverEvent>
-#include <QStyleOptionGraphicsItem>
-#include <QPainterPathStroker>
+#include <QMouseEvent>
 #include <QPainter>
+#include <QStyleOptionGraphicsItem>
 #endif
 
 #include <App/Application.h>
@@ -42,19 +40,12 @@
 
 using namespace DrawingGui;
 
-QGraphicsItemVertex::QGraphicsItemVertex(int ref, QGraphicsScene *scene  ) : 
+QGraphicsItemVertex::QGraphicsItemVertex(int ref) : 
     reference(ref),
+    m_radius(2),
     m_fill(Qt::SolidPattern)
 {
-    if(scene) {
-        scene->addItem(this);
-    } else {
-        Base::Console().Log("PROBLEM? - QGraphicsItemVertex(%d) has NO scene\n",ref);
-    }
-
     setCacheMode(QGraphicsItem::NoCache);
-    setFlag(ItemIgnoresTransformations);
-    setAcceptHoverEvents(true);
 
     Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
         .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors");
@@ -69,21 +60,14 @@ QGraphicsItemVertex::QGraphicsItemVertex(int ref, QGraphicsScene *scene  ) :
     setPrettyNormal();
 }
 
-QPainterPath QGraphicsItemVertex::shape() const
-{
-    return this->path();
-}
-
 QVariant QGraphicsItemVertex::itemChange(GraphicsItemChange change, const QVariant &value)
 {
     if (change == ItemSelectedHasChanged && scene()) {
-        // value is the new position.
         if(isSelected()) {
             setPrettySel();
         } else {
             setPrettyNormal();
         }
-        update();
     }
     return QGraphicsItem::itemChange(change, value);
 }
@@ -91,7 +75,6 @@ QVariant QGraphicsItemVertex::itemChange(GraphicsItemChange change, const QVaria
 void QGraphicsItemVertex::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
     setPrettyPre();
-    update();
 }
 
 void QGraphicsItemVertex::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
@@ -99,37 +82,46 @@ void QGraphicsItemVertex::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
     QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *> (this->parentItem());
     assert(view != 0);
 
-    if(!isSelected() && !view->isSelected()) {
+    if(!isSelected() && !isHighlighted) {
         setPrettyNormal();
-        update();
     }
+}
+
+void QGraphicsItemVertex::setHighlighted(bool b)
+{
+    isHighlighted = b;
+    if(isHighlighted) {
+        setPrettySel();
+    } else {
+        setPrettyNormal();
+    }
+    update();
+}
+
+void QGraphicsItemVertex::setPrettyNormal() {
+    m_colCurrent = m_colNormal;
+    update();
+}
+
+void QGraphicsItemVertex::setPrettyPre() {
+    m_colCurrent = m_colPre;
+    update();
+}
+
+void QGraphicsItemVertex::setPrettySel() {
+    m_colCurrent = m_colSel;
+    update();
 }
 
 void QGraphicsItemVertex::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
-    QStyleOptionGraphicsItem myOption(*option);
-    myOption.state &= ~QStyle::State_Selected;
-    QGraphicsPathItem::paint(painter, &myOption, widget);
+    m_pen.setColor(m_colCurrent);
+    setPen(m_pen);
+    m_brush.setColor(m_colCurrent);
+    m_brush.setStyle(m_fill);
+    setBrush(m_brush);
+    setRect(-m_radius,-m_radius,2.*m_radius,2.*m_radius);
+    QGraphicsEllipseItem::paint (painter, option, widget);
 }
 
-void QGraphicsItemVertex::setPrettyNormal() {
-    m_pen.setColor(m_colNormal);
-    m_brush.setColor(m_colNormal);
-    setPen(m_pen);
-    setBrush(m_brush);
-}
-
-void QGraphicsItemVertex::setPrettyPre() {
-    m_pen.setColor(m_colPre);
-    m_brush.setColor(m_colPre);
-    setPen(m_pen);
-    setBrush(m_brush);
-}
-
-void QGraphicsItemVertex::setPrettySel() {
-    m_pen.setColor(m_colSel);
-    m_brush.setColor(m_colSel);
-    setPen(m_pen);
-    setBrush(m_brush);
-}
 
