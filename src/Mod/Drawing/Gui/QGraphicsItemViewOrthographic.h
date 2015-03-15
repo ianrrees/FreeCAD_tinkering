@@ -56,22 +56,24 @@ public:
     void alignTo(QGraphicsItemViewOrthographic *, const QString &alignment);
 
     virtual void updateView(bool update = false);
+    virtual void drawBorder(QPainter *painter);
 
 Q_SIGNALS:
-  void dirty();
+    void dirty();
 
 protected:
-  virtual bool sceneEventFilter(QGraphicsItem * watched, QEvent *event);
-  virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
-  virtual void mousePressEvent(QGraphicsSceneMouseEvent * event);
-  virtual void mouseMoveEvent(QGraphicsSceneMouseEvent * event);
-  virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent * event);
-  QGraphicsItemView * getAnchorQItem() const;
+    virtual bool sceneEventFilter(QGraphicsItem * watched, QEvent *event);
+    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+    // Mouse handling
+    virtual void mouseMoveEvent(QGraphicsSceneMouseEvent * event );
+    virtual void mousePressEvent(QGraphicsSceneMouseEvent * event);
+    virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent * event);
+    QGraphicsItemView * getAnchorQItem() const;
 
 private:
-  QGraphicsRectItem * m_backgroundItem;
-  QGraphicsItem *origin;
-  QPoint mousePos;
+    QGraphicsRectItem * m_backgroundItem;
+    QGraphicsItem *origin;
+    QPoint mousePos;
 };
 
 } // namespace DrawingViewGui

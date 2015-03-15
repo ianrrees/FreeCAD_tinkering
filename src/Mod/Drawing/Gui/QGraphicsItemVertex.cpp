@@ -115,13 +115,16 @@ void QGraphicsItemVertex::setPrettySel() {
 
 void QGraphicsItemVertex::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
+    QStyleOptionGraphicsItem myOption(*option);
+    myOption.state &= ~QStyle::State_Selected;
+
     m_pen.setColor(m_colCurrent);
     setPen(m_pen);
     m_brush.setColor(m_colCurrent);
     m_brush.setStyle(m_fill);
     setBrush(m_brush);
     setRect(-m_radius,-m_radius,2.*m_radius,2.*m_radius);
-    QGraphicsEllipseItem::paint (painter, option, widget);
+    QGraphicsEllipseItem::paint (painter, &myOption, widget);
 }
 
 

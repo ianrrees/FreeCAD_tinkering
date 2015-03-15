@@ -68,20 +68,11 @@ QGraphicsItemViewPart::QGraphicsItemViewPart(const QPoint &pos, QGraphicsScene *
 QGraphicsItemViewPart::~QGraphicsItemViewPart()
 {
     tidy();
-    // TODO: Identify what changed to prevent complete redraw
-    //QList<QGraphicsItem *> items = this->childItems();
-    //QList<QGraphicsItem *> bboxItems = items;
-    //bbox.setSize(QSizeF(0.,0.));
 }
 
 QVariant QGraphicsItemViewPart::itemChange(GraphicsItemChange change, const QVariant &value)
 {
     if (change == ItemSelectedHasChanged && scene()) {
-//        if(isSelected()) {
-//            m_pen.setColor(m_colSel);
-//        } else {
-//            m_pen.setColor(m_colNormal);
-//        }
         QList<QGraphicsItem *> items = this->childItems();
         for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); ++it) {
             QGraphicsItemEdge *edge = dynamic_cast<QGraphicsItemEdge *>(*it);
@@ -92,12 +83,9 @@ QVariant QGraphicsItemViewPart::itemChange(GraphicsItemChange change, const QVar
                 vert->setHighlighted(isSelected());
             }
         }
-//        update();
     } else if(change == ItemSceneChange && scene()) {
            // we only use 1 scene, so the item's scene is 0x00 or our scene. does this get issued by removeFromScene??
            Base::Console().Message("TRACE - QGraphicsItemViewPart::itemChange - ItemSceneChange - 0x%08x\n",scene());
-           // NOTE:  Temporary solution to prevent segfaulting in PaintDraw event ????
-           //borderVisible = false;
            this->tidy();
     }
     return QGraphicsItemView::itemChange(change, value);
@@ -262,7 +250,7 @@ void QGraphicsItemViewPart::drawViewPart()
 
     prepareGeometryChange();
 
-//TODO: QGraphicsItemFace disabled temporarily
+//TODO: QGraphicsItemFace disabled temporarily to ease selection of edges/vertices during devel. 
 #if 0
     // Draw Faces
     QGraphicsItem *graphicsItem = 0;
@@ -314,19 +302,11 @@ void QGraphicsItemViewPart::drawViewPart()
 #endif
 
     // Draw Edges
-//    graphicsItem = 0;
     const std::vector<DrawingGeometry::BaseGeom *> &geoms = part->getEdgeGeometry();
     const std::vector<int> &refs = part->getEdgeReferences();
     std::vector<DrawingGeometry::BaseGeom *>::const_iterator it = geoms.begin();
-    Base::Console().Message("TRACE - QGraphicsItemViewPart::drawViewPart - %d geoms, %d refs\n",geoms.size(),refs.size());
     QGraphicsItemEdge* item;
     for(int i = 0 ; it != geoms.end(); ++it, i++) {
-        //for every geometry in the projection
-        //if the geometry is Plain, create a graphical representation
-        //if the geometry is WithHidden and the FeatureView ShowHiddenLines property is true, create a graphical representation
-        //if the geometry is WithSmooth(??) and the FeatureView ShowSmoothLines property is true, create a graphical representation
-        Base::Console().Message("TRACE - QGraphicsItemViewPart::drawViewPart - geom: %d extract: %d hidden: %d smooth: %d\n",
-                                i,(*it)->extractType,part->ShowHiddenLines.getValue(),part->ShowSmoothLines.getValue());
         //TODO: investigate if an Edge can be both Hidden and Smooth???
         if(((*it)->extractType == DrawingGeometry::Plain)  ||
           (((*it)->extractType == DrawingGeometry::WithHidden) && part->ShowHiddenLines.getValue()) ||
@@ -545,18 +525,8 @@ void QGraphicsItemViewPart::toggleVertices(bool state)
     }
 }
 
-QPainterPath QGraphicsItemViewPart::shape() const {
-    QPainterPath path;
-    QRectF box = this->boundingRect().adjusted(2.,2.,-2.,-2.);
-    path.addRect(box);
-    QPainterPathStroker stroker;
-    stroker.setWidth(5.f);
-    return stroker.createStroke(path);
-}
-
 QRectF QGraphicsItemViewPart::boundingRect() const
 {
-//    return QGraphicsItemView::boundingRect().adjusted(-5.,-5.,5.,5.);
     return childrenBoundingRect().adjusted(-2.,-2.,2.,6.);             //just a bit bigger than the children need
 }
 

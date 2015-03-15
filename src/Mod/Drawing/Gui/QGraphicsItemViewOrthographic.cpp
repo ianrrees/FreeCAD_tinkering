@@ -64,11 +64,12 @@ QGraphicsItemViewOrthographic::QGraphicsItemViewOrthographic(const QPoint &pos, 
 
 QGraphicsItemViewOrthographic::~QGraphicsItemViewOrthographic()
 {
-
+//TODO: if the QGIVO is deleted, should we clean up any remaining QGIVParts??
 }
 
 bool QGraphicsItemViewOrthographic::sceneEventFilter(QGraphicsItem * watched, QEvent *event)
 {
+// i want to handle events before the child item that would ordinarily receive them
     if(event->type() == QEvent::GraphicsSceneMousePress ||
        event->type() == QEvent::GraphicsSceneMouseMove  ||
        event->type() == QEvent::GraphicsSceneMouseRelease) {
@@ -92,49 +93,29 @@ bool QGraphicsItemViewOrthographic::sceneEventFilter(QGraphicsItem * watched, QE
 QVariant QGraphicsItemViewOrthographic::itemChange(GraphicsItemChange change, const QVariant &value)
 {
     if(change == ItemChildAddedChange && scene()) {
-
-        // Child Feature View has been added
-
-        // TODO child must be intiailised before adding to containing parent
-        // isn't child already created + added in QGIPart()??
-         QGraphicsItem *item = value.value<QGraphicsItem*>();   //item is the child? ie the QGIPart?
-
-         QGraphicsItemView *view = 0;
-         view = dynamic_cast<QGraphicsItemView *>(item);
-
-         if(view) {
-
-            Drawing::FeatureView *fView = view->getViewObject();
+         QGraphicsItem *childItem = value.value<QGraphicsItem*>();
+         QGraphicsItemView* gView = dynamic_cast<QGraphicsItemView *>(childItem);
+         if(gView) {
+            Drawing::FeatureView *fView = gView->getViewObject();
             if(fView->getTypeId().isDerivedFrom(Drawing::FeatureOrthoView::getClassTypeId())) {
-
                 Drawing::FeatureOrthoView *orthoView = static_cast<Drawing::FeatureOrthoView *>(fView);
                 QString type = QString::fromAscii(orthoView->Type.getValueAsString());
-
                 if(type == QString::fromAscii("Top") ||
                    type == QString::fromAscii("Bottom")) {
-//                   type == QString::fromAscii("Rear")) {   // Rear is always the far right in either (1st or 3rd) layout?!
-
-                    view->alignTo(origin, QString::fromAscii("Vertical"));
-                    
+                    gView->alignTo(origin, QString::fromAscii("Vertical"));
                 } else if(type == QString::fromAscii("Front")) {
-
-                    view->setLocked(true);
-                    this->installSceneEventFilter(view); // Install an event filter
-                    // Get FeatureViewOrthohraphic object
-                    App::DocumentObject *obj = this->getViewObject();
-                    Drawing::FeatureViewOrthographic *viewOrthographic = dynamic_cast<Drawing::FeatureViewOrthographic *>(obj);
-
-                    viewOrthographic->Anchor.setValue(fView);     //TODO: this is App logic.  Why is it in Gui side??
+                    gView->setLocked(true);
+                    installSceneEventFilter(gView);
+                    App::DocumentObject *docObj = getViewObject();
+                    Drawing::FeatureViewOrthographic *viewOrthographic = dynamic_cast<Drawing::FeatureViewOrthographic *>(docObj);
+                    viewOrthographic->Anchor.setValue(fView);
                     updateView();
-
                 } else {
-                    view->alignTo(origin, QString::fromAscii("Horizontal"));
+                    gView->alignTo(origin, QString::fromAscii("Horizontal"));
                 }
             }
-
          }
     }
-
     return QGraphicsItemView::itemChange(change, value);
 }
 
@@ -156,7 +137,7 @@ void QGraphicsItemViewOrthographic::mouseMoveEvent(QGraphicsSceneMouseEvent * ev
 {
     QGraphicsItemView *qAnchor = this->getAnchorQItem();
     if(scene() && qAnchor && (qAnchor == scene()->mouseGrabberItem())) {
-        if((mousePos-event->screenPos()).manhattanLength() > 5) {
+        if((mousePos - event->screenPos()).manhattanLength() > 5) {    //if the mouse has moved more than 5, process the mouse event
             QGraphicsItemViewCollection::mouseMoveEvent(event);
         }
 
@@ -213,6 +194,11 @@ void QGraphicsItemViewOrthographic::updateView(bool update)
 {
     m_backgroundItem->setRect(this->boundingRect());
     return QGraphicsItemViewCollection::updateView(update);
+}
+
+void QGraphicsItemViewOrthographic::drawBorder(QPainter *painter)
+{
+//QGraphicsItemViewOrthographic does not have a border!
 }
 
 #include "moc_QGraphicsItemViewOrthographic.cpp"

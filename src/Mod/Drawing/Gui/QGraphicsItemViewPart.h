@@ -25,7 +25,6 @@
 
 #include <QObject>
 #include <QPainter>
-#include <QStyleOptionGraphicsItem>
 
 #include "QGraphicsItemView.h"
 #include "QGraphicsItemFace.h"
@@ -52,48 +51,40 @@ public:
     explicit QGraphicsItemViewPart(const QPoint &position, QGraphicsScene *scene);
     ~QGraphicsItemViewPart();
 
-    void tidy();
-
     enum {Type = QGraphicsItem::UserType + 102};
     int type() const { return Type;}
 
-    void setViewPartFeature(Drawing::FeatureViewPart *obj);
 
     void toggleCache(bool state);
     void toggleCosmeticLines(bool state);
     void toggleVertices(bool state);
-
+    void setViewPartFeature(Drawing::FeatureViewPart *obj);
     virtual void updateView(bool update = false);
+    void tidy();
+
     virtual void draw();
+    virtual QRectF boundingRect() const;
 
 Q_SIGNALS:
     void selected(bool state);
     void dirty();
 
-public:
-    virtual QPainterPath  shape () const;
-    virtual QRectF boundingRect() const;
-
 protected:
     QGraphicsItemEdge * findRefEdge(int i);
     QGraphicsItemVertex * findRefVertex(int idx);
 
-    QPainterPath drawPainterPath(DrawingGeometry::BaseGeom *baseGeom) const;
-
-    // Helper methods for drawing arc segments
     void pathArcSegment(QPainterPath &path,double xc, double yc, double th0, double th1,double rx, double ry, double xAxisRotation) const;
     void pathArc(QPainterPath &path, double rx, double ry, double x_axis_rotation,
                                      bool large_arc_flag, bool sweep_flag,
                                      double x, double y,
                                      double curx, double cury) const;
 
+    QPainterPath drawPainterPath(DrawingGeometry::BaseGeom *baseGeom) const;
     void drawViewPart();
 
-    // Selection detection
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
 protected:
-    //QPen pen;
     QColor m_colHid;
 
 private:

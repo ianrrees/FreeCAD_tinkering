@@ -114,11 +114,9 @@ QVariant QGraphicsItemView::itemChange(GraphicsItemChange change, const QVariant
 
     if (change == ItemSelectedHasChanged && scene()) {
         if(isSelected()) {
-        m_colCurrent = m_colSel;
-        //m_pen.setColor(m_colSel);
+            m_colCurrent = m_colSel;
         } else {
             m_colCurrent = m_colNormal;
-            //m_pen.setColor(m_colNormal);
         }
     }
 
@@ -144,14 +142,8 @@ void QGraphicsItemView::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
     if(!this->locked) {
         double x = this->x(),
                y = this->getY();
-        //TODO: doCommand vs viewobject.X.setValue don't need undo/redo for mouse move
         getViewObject()->X.setValue(x);
         getViewObject()->Y.setValue(y);
-        //Gui::Command::openCommand("Drag View");
-        //Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.X = %f", this->getViewObject()->getNameInDocument(), x);
-        //Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.Y = %f", this->getViewObject()->getNameInDocument(), y);
-        //Gui::Command::commitCommand();
-        //Gui::Command::updateActive();
     }
     QGraphicsItem::mouseReleaseEvent(event);
 }
@@ -160,15 +152,11 @@ void QGraphicsItemView::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
     // TODO don't like this but only solution at the minute
     if (isSelected()) {
-        //Base::Console().Message("TRACE - QGraphicsItemView::hoverEnterEvent - is Selected\n");
         m_colCurrent = m_colSel;
         return;
     } else {
-        //Base::Console().Message("TRACE - QGraphicsItemView::hoverEnterEvent - is NOT Selected\n");
         m_colCurrent = m_colPre;
         if(this->shape().contains(event->pos())) {                     // TODO don't like this for determining preselect
-            //Base::Console().Message("TRACE - QGraphicsItemView::hoverEnterEvent - shape contains event pos (%f,%f)\n",
-            //                        event->pos().x(),event->pos().y());
             m_colCurrent = m_colPre;
         }
     }
@@ -230,11 +218,6 @@ void QGraphicsItemView::toggleCache(bool state)
 
 void QGraphicsItemView::drawBorder(QPainter *painter)
 {
-    //Base::Console().Message("TRACE - QGraphicsItemView::drawBorder - %s, borderVisible: %d\n",
-    //                        getViewObject()->Label.getValue(),borderVisible);
-    //return;
-    
-    // Save the current painter state and restore at end
     painter->save();
 
     // Make a rectangle smaller than the bounding box as a border and draw dashed line for selection
@@ -266,15 +249,23 @@ void QGraphicsItemView::drawBorder(QPainter *painter)
 
 void QGraphicsItemView::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
-    //QStyleOptionGraphicsItem myOption(*option);
-    //myOption.state &= ~QStyle::State_Selected;
+    QStyleOptionGraphicsItem myOption(*option);
+    myOption.state &= ~QStyle::State_Selected;
     m_pen.setColor(m_colCurrent);
 
     if(borderVisible){
          this->drawBorder(painter);
     }
-    QGraphicsItemGroup::paint(painter, option, widget);
+    QGraphicsItemGroup::paint(painter, &myOption, widget);
 }
 
+QPainterPath QGraphicsItemView::shape() const {
+    QPainterPath path;
+    QRectF box = this->boundingRect().adjusted(2.,2.,-2.,-2.);
+    path.addRect(box);
+    QPainterPathStroker stroker;
+    stroker.setWidth(5.f);
+    return stroker.createStroke(path);
+}
 
 #include "moc_QGraphicsItemView.cpp"

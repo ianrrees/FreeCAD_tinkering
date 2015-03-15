@@ -152,9 +152,12 @@ void QGraphicsItemEdge::setHiddenEdge(bool b) {
 }
 
 void QGraphicsItemEdge::paint ( QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget) {
+    QStyleOptionGraphicsItem myOption(*option);
+    myOption.state &= ~QStyle::State_Selected;
+
     m_pen.setWidthF(strokeWidth);
     m_pen.setColor(m_colCurrent);
     setPen(m_pen);
-    QGraphicsPathItem::paint (painter, option, widget);
+    QGraphicsPathItem::paint (painter, &myOption, widget);
 }
 

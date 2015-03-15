@@ -48,14 +48,11 @@ public:
     enum {Type = QGraphicsItem::UserType + 120};      //120??
     int type() const { return Type;}
 
-    virtual void draw();
     void updateView(bool update = false);
     void setViewAnnoFeature(Drawing::FeatureViewAnnotation *obj);
-    void toggleCache(bool state);
-    //void toggleBorder(bool state = true) { this->borderVisible = state; }
-    virtual QPainterPath  shape () const;
+
+    virtual void draw();
     virtual QRectF boundingRect() const;
-    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 
 Q_SIGNALS:
     void hover(bool state);
@@ -63,21 +60,13 @@ Q_SIGNALS:
 
 protected:
     void drawAnnotation();
-    void drawBorder(QPainter *painter);
-
-    // Preselection events:
-    void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
-    void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
-    // Selection detection
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
 protected:
     QGraphicsTextItem *m_textItem;
-    QColor m_colCurrent;
     QColor m_colNormal;
     QColor m_colSel;
     QColor m_colPre;
-    //bool borderVisible;
 };
 
 } // namespace DrawingViewGui

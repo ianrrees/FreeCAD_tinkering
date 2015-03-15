@@ -72,20 +72,6 @@ void QGraphicsItemArrow::setHighlighted(bool state)
 
 QVariant QGraphicsItemArrow::itemChange(GraphicsItemChange change, const QVariant &value)
 {
-//     if (change == ItemSelectedHasChanged && scene()) {
-//         // value is the new position.
-//         if(isSelected()) {
-    //             QBrush brush = this->bru
-//     this->setScale(10);sh();
-//             brush.setColor(Qt::blue);
-//             this->setBrush(brush);
-//         } else {
-//             QBrush brush = this->brush();
-//             brush.setColor(Qt::black);
-//             this->setBrush(brush);
-//         }
-//         update();
-//     }
     return QGraphicsPathItem::itemChange(change, value);
 }
 
