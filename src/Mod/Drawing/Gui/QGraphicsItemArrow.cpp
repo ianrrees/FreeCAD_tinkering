@@ -82,10 +82,10 @@ void QGraphicsItemArrow::flip(bool state) {
 void QGraphicsItemArrow::draw() {
     // the center is the end point on a dimension
     QPainterPath path;
-    QPen pen(QColor(Qt::black));
+    QPen pen(Qt::black);
     pen.setWidth(1);
 
-    QBrush brush(QColor(Qt::black));
+    QBrush brush(Qt::black);
     //this->setPen(pen);
     this->setBrush(brush);
 

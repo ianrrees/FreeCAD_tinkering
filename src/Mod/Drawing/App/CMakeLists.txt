@@ -141,7 +141,7 @@ endif(MSVC)
 
 add_library(Drawing SHARED ${Drawing_SRCS} ${Features_SRCS} ${DrawingAlgos_SRCS}
                            ${DrawingGeometry_SRCS} ${Python_SRCS})
-target_link_libraries(Drawing ${Drawing_LIBS})
+target_link_libraries(Drawing ${Drawing_LIBS};${QT_QTXML_LIBRARY})
 
 SET(Drawing_Scripts
     Init.py
