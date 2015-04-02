@@ -128,17 +128,7 @@ App::DocumentObjectExecReturn *FeatureViewDimension::execute(void)
         XAxisDirection.setValue(viewPart->XAxisDirection.getValue());
         App::DocumentObject *docObj = viewPart->Source.getValue();
 
-        if((*subEl).substr(0,4) == "Edge") {
-            int idx = std::atoi((*subEl).substr(4,4000).c_str());
-            char buff[100];
-            sprintf(buff, "Edge%i", idx);
-            measurement->addReference(docObj, buff);
-        } else if((*subEl).substr(0,6) == "Vertex") {
-            int idx = std::atoi((*subEl).substr(6,4000).c_str());
-            char buff[100];
-            sprintf(buff, "Vertex%i", idx);
-            measurement->addReference(docObj, buff);
-        }
+        measurement->addReference(docObj,(*subEl).c_str());
     }
 
     return App::DocumentObject::StdReturn;
@@ -165,7 +155,7 @@ std::string  FeatureViewDimension::getContent() const
 
         s.prepend(QString::fromAscii("%"));
         if(*it == QString::fromAscii("value")){
-            double val = std::abs(getValue()); // Return only the absolute value of the dimension
+            double val = std::abs(getDimValue()); // Return only the absolute value of the dimension
             str.replace(s, QString::number(val, 'f', Precision.getValue()) );
         } else {
             str.replace(s, QString::fromAscii("")); // Replace with empty statement
@@ -175,7 +165,7 @@ std::string  FeatureViewDimension::getContent() const
     return str.toStdString();
 }
 
-double FeatureViewDimension::getValue() const
+double FeatureViewDimension::getDimValue() const
 {
     const char *dimType = Type.getValueAsString();
     if(strcmp(ProjectionType.getValueAsString(), "True") == 0) {
@@ -196,9 +186,9 @@ double FeatureViewDimension::getValue() const
         } else if(strcmp(dimType, "Diameter") == 0){
             return measurement->radius() * 2.0;
         } else if(strcmp(dimType, "Angle") == 0){
-            throw Base::Exception("Cannot measure the true angle");
+            return measurement->angle();
         }
-        throw Base::Exception("Dimension Value couldn't be calculated");
+        throw Base::Exception("Unknown Dimension Type");
     } else {
         // Projected Values
         if(strcmp(dimType, "Distance") == 0 ||

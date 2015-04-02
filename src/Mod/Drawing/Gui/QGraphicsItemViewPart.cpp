@@ -84,8 +84,6 @@ QVariant QGraphicsItemViewPart::itemChange(GraphicsItemChange change, const QVar
             }
         }
     } else if(change == ItemSceneChange && scene()) {
-           // we only use 1 scene, so the item's scene is 0x00 or our scene. does this get issued by removeFromScene??
-           Base::Console().Message("TRACE - QGraphicsItemViewPart::itemChange - ItemSceneChange - 0x%08x\n",scene());
            this->tidy();
     }
     return QGraphicsItemView::itemChange(change, value);
@@ -189,12 +187,22 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
         default:
           break;
       }
-      return path;
+
+    double rot = getViewObject()->Rotation.getValue();
+    if (rot) {
+        QTransform t; 
+        t.rotate(-rot);
+        path = t.map(path);
+    }
+
+    return path;
 }
 void QGraphicsItemViewPart::updateView(bool update)
 {
     if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewPart::getClassTypeId()))
         return;
+
+    QGraphicsItemView::updateView(update);
 
     Drawing::FeatureViewPart *viewPart = dynamic_cast<Drawing::FeatureViewPart *>(this->getViewObject());
 
@@ -213,7 +221,7 @@ void QGraphicsItemViewPart::updateView(bool update)
               dynamic_cast<QGraphicsItemFace *>(*it) ||
               dynamic_cast<QGraphicsItemVertex *>(*it)) {
                 removeFromGroup(*it);
-                this->scene()->removeItem(*it);
+                scene()->removeItem(*it);
                 deleteItems.append(*it);                               // We store these and delete till later to prevent rendering crash ISSUE
             }
         }
@@ -231,16 +239,16 @@ void QGraphicsItemViewPart::updateView(bool update)
         }
     }
 
-    QGraphicsItemView::updateView(update);
+    //QGraphicsItemView::updateView(update);
 }
 
 void QGraphicsItemViewPart::draw() {
-    this->drawViewPart();
+    drawViewPart();
 }
 
 void QGraphicsItemViewPart::drawViewPart()
 {
-    if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewPart::getClassTypeId()))
+    if(getViewObject() == 0 || !getViewObject()->isDerivedFrom(Drawing::FeatureViewPart::getClassTypeId()))
         return;
 
     Drawing::FeatureViewPart *part = dynamic_cast<Drawing::FeatureViewPart *>(this->getViewObject());
@@ -313,6 +321,7 @@ void QGraphicsItemViewPart::drawViewPart()
           ((*it)->extractType == DrawingGeometry::WithSmooth)) {
 //          (((*it)->extractType == DrawingGeometry::WithSmooth) && part->ShowSmoothLines.getValue())) {
             item = new QGraphicsItemEdge(refs.at(i));
+            addToGroup(item);
             item->setStrokeWidth(lineWidth);
             if((*it)->extractType == DrawingGeometry::WithHidden) {
                 item->setStrokeWidth(lineWidthHid);
@@ -320,17 +329,13 @@ void QGraphicsItemViewPart::drawViewPart()
             } else if((*it)->extractType == DrawingGeometry::WithSmooth) {
                 item->setSmoothEdge(true);
             }
-            QPainterPath path = drawPainterPath(*it);
+            QPointF tCenter = mapToScene(0.,0.);
+            QPainterPath path = drawPainterPath(*it).translated(tCenter);
             item->setPath(path);
             if(refs.at(i) > 0) {
                 item->setFlag(QGraphicsItem::ItemIsSelectable, true);  //TODO: bug in App/GeometryObject? why no edge reference?
                 item->setAcceptHoverEvents(true);                      //TODO: verify that edge w/o ref is ineligible for selecting
             }
-            item->moveBy(x(), y());
-            QPointF posRef(0.,0.);
-            QPointF mapPos = item->mapToItem(this, posRef);
-            item->moveBy(-mapPos.x(), -mapPos.y());
-            addToGroup(item);
          }
     }
 
@@ -340,17 +345,15 @@ void QGraphicsItemViewPart::drawViewPart()
     std::vector<DrawingGeometry::Vertex *>::const_iterator vert = verts.begin();
 
     for(int i = 0 ; vert != verts.end(); ++vert, i++) {
-          QGraphicsItemVertex *item = new QGraphicsItemVertex(vertRefs.at(i));
-          QPointF posRef(0.,0.);
-          QPointF mapPos = item->mapToItem(this, posRef);
-          item->setPos((*vert)->pnt.fX, (*vert)->pnt.fY);
-          item->moveBy(-mapPos.x(), -mapPos.y());
-          item->setRadius(lineWidth * vertexScaleFactor);
-          if(vertRefs.at(i) > 0)
-              item->setFlag(QGraphicsItem::ItemIsSelectable, true);
-              item->setAcceptHoverEvents(true);                      //TODO: verify that vertex w/o ref is ineligible for selecting
-          addToGroup(item);
-    }
+        QGraphicsItemVertex *item = new QGraphicsItemVertex(vertRefs.at(i));
+        addToGroup(item);
+        item->setPos((*vert)->pnt.fX, (*vert)->pnt.fY);                //this is in ViewPart coords
+        item->setRadius(lineWidth * vertexScaleFactor);
+        if(vertRefs.at(i) > 0) {
+            item->setFlag(QGraphicsItem::ItemIsSelectable, true);
+            item->setAcceptHoverEvents(true);                      //TODO: verify that vertex w/o ref is ineligible for selecting
+        }
+     }
 }
 
 void QGraphicsItemViewPart::pathArc(QPainterPath &path, double rx, double ry, double x_axis_rotation,

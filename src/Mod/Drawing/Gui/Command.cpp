@@ -45,6 +45,7 @@
 #include <Gui/MainWindow.h>
 #include <Gui/FileDialog.h>
 #include <Gui/ViewProvider.h>
+#include <Gui/WaitCursor.h>
 
 #include <Mod/Part/App/PartFeature.h>
 #include <Mod/Drawing/App/FeaturePage.h>
@@ -131,6 +132,7 @@ void CmdDrawingNewPage::activated(int iMsg)
 
     QFileInfo tfi(a->property("Template").toString());
     if (tfi.isReadable()) {
+        Gui::WaitCursor wc;
         openCommand("Drawing create page");
         doCommand(Doc,"App.activeDocument().addObject('Drawing::FeaturePage','%s')",PageName.c_str());
 
@@ -138,8 +140,8 @@ void CmdDrawingNewPage::activated(int iMsg)
         doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureSVGTemplate','%s')",TemplateName.c_str());
 
         QString templateFile = a->property("Template").toString();
+        //TODO: why is "Template" property set twice?
         doCommand(Doc,"App.activeDocument().%s.Template = '%s'",TemplateName.c_str(), templateFile.toStdString().c_str());
-
         doCommand(Doc,"App.activeDocument().%s.Template = App.activeDocument().%s",PageName.c_str(),TemplateName.c_str());
 
         commitCommand();
@@ -385,6 +387,7 @@ void CmdDrawingNewView::activated(int iMsg)
         //}
     }
 
+    Gui::WaitCursor wc;
     const std::vector<App::DocumentObject*> selectedProjections = getSelection().getObjectsOfType(Drawing::FeatureView::getClassTypeId());
     float newX = 10.0;
     float newY = 10.0;

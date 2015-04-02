@@ -96,6 +96,7 @@ protected:
     QColor m_colNormal;
     QColor m_colPre;
     QColor m_colSel;
+    QFont m_font;
 };
 
 } // namespace DrawingViewGui

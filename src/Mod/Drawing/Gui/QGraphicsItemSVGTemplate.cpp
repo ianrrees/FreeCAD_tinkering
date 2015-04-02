@@ -1,7 +1,7 @@
 /***************************************************************************
  *   Copyright (c) 2012-2014 Luke Parry <l.parry@warwick.ac.uk>            *
  *                                                                         *
- *   This file is part of the FreeCAD CAx development system.           *
+ *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
  *   This library is free software; you can redistribute it and/or         *
  *   modify it under the terms of the GNU Library General Public           *
@@ -10,7 +10,7 @@
  *                                                                         *
  *   This library  is distributed in the hope that it will be useful,      *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU Library General Public License for more details.                  *
  *                                                                         *
  *   You should have received a copy of the GNU Library General Public     *
@@ -30,7 +30,10 @@
 #include <boost/regex.hpp>
 #endif
 
+#include <App/Application.h>
+#include <Base/Console.h>
 #include <Base/Exception.h>
+#include <Base/Parameter.h>
 #include <Gui/Command.h>
 
 #include <Mod/Drawing/App/Geometry.h>
@@ -139,8 +142,11 @@ void QGraphicsItemSVGTemplate::load (const QString & fileName)
             double y = yStr.toDouble();
             int fontSize = fStr.toInt();
 
+            Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
+                .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing");
+            std::string fontName = hGrp->GetASCII("LabelFont", "osifont");
             QFont font;
-            font.setFamily(QString::fromAscii("osifont"));
+            font.setFamily(QString::fromStdString(fontName));
             font.setPixelSize(fontSize);
 
             QGraphicsTextItem *item = new QGraphicsTextItem();
@@ -182,7 +188,7 @@ void QGraphicsItemSVGTemplate::draw()
 
     Drawing::FeatureSVGTemplate *tmplte = getSVGTemplate();
     if(!tmplte)
-        throw Base::Exception("Template Feuature not set for QGraphicsItemSVGTemplate");
+        throw Base::Exception("Template Feature not set for QGraphicsItemSVGTemplate");
 
     this->load(QString::fromUtf8(tmplte->PageResult.getValue()));
 

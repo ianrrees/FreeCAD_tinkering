@@ -1251,8 +1251,8 @@ void CmdDrawingNewAngleDimension::activated(int iMsg)
     Drawing::FeatureViewPart * Obj = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
 
     if(!Obj) {
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong sized selection"),
-                             QObject::tr("Incorrect selection"));
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
+                             QObject::tr("No object in selection"));
                              return;
     }
 
@@ -1262,15 +1262,15 @@ void CmdDrawingNewAngleDimension::activated(int iMsg)
     const std::vector<std::string> &SubNames = selection[0].getSubNames();
 
     if (SubNames.size() != 1 && SubNames.size() != 2){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong sized selection"),
-            QObject::tr("Incorrect selection"));
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
+            QObject::tr("Select only 1 or 2 objects"));
         return;
     }
 
     std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     if (pages.empty()){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page to insert"),
-            QObject::tr("Create a page to insert."));
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No Drawing Page"),
+            QObject::tr("Create a page first."));
         return;
     }
     Drawing::FeatureViewDimension *dim = 0;
@@ -1299,8 +1299,8 @@ void CmdDrawingNewAngleDimension::activated(int iMsg)
                 DrawingGeometry::Generic *gen2 = static_cast<DrawingGeometry::Generic *>(ed2.data());
                 if(gen1->points.size() > 2 || gen2->points.size() > 2) {
                     // Only support straight line edges
-                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Please select only straight line edges"),
-                                                               QObject::tr("Incorrect selection"));
+                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
+                                                               QObject::tr("Selected object has too many points"));
                     abortCommand();
                     return;
                 }
@@ -1309,8 +1309,8 @@ void CmdDrawingNewAngleDimension::activated(int iMsg)
 
             } else {
                 // Only support straight line edges
-                QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Please provide a valid selection: Only straight line edges are allowed"),
-                                                           QObject::tr("Incorrect selection"));
+                QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
+                                                           QObject::tr("At least 1 selected object is not a straight line"));
                 abortCommand();
                 return;
             }
@@ -1327,19 +1327,19 @@ void CmdDrawingNewAngleDimension::activated(int iMsg)
             std::vector<std::string> subs;
             subs.push_back(SubNames[0]);
             subs.push_back(SubNames[1]);
-            dim->References.setValues(objs, subs);
+            dim->References.setValues(objs, subs);                     //TODO: does References cause Dimension to become child of ViewPart?
 
         } else {
-
-            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Please select two edges"),
-            QObject::tr("Incorrect selection"));
+            //at least 1 object in selection is not an "Edge"
+            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
+                                 QObject::tr("Please select two edges"));
             abortCommand();
             return;
         }
     } else {
-
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Please select atleast two references"),
-        QObject::tr("Incorrect selection"));
+        //too many objects in selection
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
+                             QObject::tr("Too many objects selected"));
         abortCommand();
         return;
     }
@@ -1351,6 +1351,8 @@ void CmdDrawingNewAngleDimension::activated(int iMsg)
     doCommand(Doc,"App.activeDocument().%s.Content = '%s'",FeatName.c_str()
                                                           ,contentStr.toStdString().c_str());
 
+    //TODO: "True" angles are not supported. see FeatureViewDimension.cpp::getDimvalue()
+#if 0
     // Check if the part is an orthographic view;
     Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(Obj);
     if(orthoView) {
@@ -1360,14 +1362,16 @@ void CmdDrawingNewAngleDimension::activated(int iMsg)
     }
 
     dim->execute();
-//     App::DocumentObject *dimObj = this->getDocument()->addObject("Drawing::FeatureViewDimension", getUniqueObjectName("Dimension").c_str());
-//     Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(dimObj);
+#endif
+    doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
+    //dim->ProjectionType.StatusBits.set(2); // Set the projection type to read only
+    dim->execute();
 
-//     doCommand(Doc,"App.activeDocument().%s.References = %s",FeatName.c_str(), support.c_str());
-
-
+    //TODO: dimension sb child of FeatureView, not Page?
     Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
     page->addView(page->getDocument()->getObject(FeatName.c_str()));
+
+
 
     commitCommand();
 }

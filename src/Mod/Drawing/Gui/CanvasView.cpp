@@ -91,7 +91,6 @@ CanvasView::CanvasView(ViewProviderDrawingPage *vp, QWidget *parent)
     const char* name = vp->getPageObject()->getNameInDocument();
     this->setObjectName(QString::fromLocal8Bit(name));
 
-//TODO: isn't this upside down? view as parent of scene??
     setScene(new QGraphicsScene(this));
     //setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
     setCacheMode(QGraphicsView::CacheBackground);

@@ -568,8 +568,6 @@ void DrawingView::updateDrawing(bool forceUpdate)
                 newGraphicsList.push_back(*itGraphics);
             } else {
                 if (m_view->scene() == (*itGraphics)->scene()) {
-                    Base::Console().Log("TRACE - DrawingView::updateDrawing - removing itGraphics: %s **\n",(*itGraphics)->getViewName());
-                    // TODO: this may cause segfault when *itGraphics is deleted later??
                     m_view->scene()->removeItem(*itGraphics);
                 } else {   // this "shouldn't" happen, but it does
                     Base::Console().Log("ERROR - DrawingView::updateDrawing - %s already removed from QGraphicsScene\n",

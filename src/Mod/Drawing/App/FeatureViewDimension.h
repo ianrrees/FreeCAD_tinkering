@@ -73,7 +73,7 @@ public:
     }
 
     virtual std::string getContent() const;
-    virtual double getValue() const;
+    virtual double getDimValue() const;
 
 protected:
     void onChanged(const App::Property* prop);

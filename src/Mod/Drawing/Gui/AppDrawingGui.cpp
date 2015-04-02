@@ -78,6 +78,7 @@ void DrawingGuiExport initDrawingGui()
     
     DrawingGui::Workbench::init();
 
+    //TODO: is this platform independent?? should osifont be added by installer?
     //Load the osifont for Drawing View
     // See https://code.google.com/p/osifont/
     QFontDatabase fontDB;
@@ -85,7 +86,6 @@ void DrawingGuiExport initDrawingGui()
 
     DrawingGui::ViewProviderDrawingPage::init();
     DrawingGui::ViewProviderDrawingView::init();
-//    DrawingGui::ViewProviderDrawingClip::init();
 
     DrawingGui::ViewProviderTemplate::init();
     DrawingGui::ViewProviderDimension::init();

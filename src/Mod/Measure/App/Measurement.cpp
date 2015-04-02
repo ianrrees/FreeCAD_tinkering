@@ -53,6 +53,9 @@
 #include "Measurement.h"
 #include "MeasurementPy.h"
 
+#ifndef M_PI
+    #define M_PI    3.14159265358979323846 /* pi */
+#endif
 using namespace Measure;
 using namespace Base;
 using namespace Part;
@@ -288,7 +291,7 @@ double Measurement::angle(const Base::Vector3d &param) const
         throw Base::Exception("No references provided");
 
     if(measureType == Edges) {
-        // Only case that is supported is angle to angle
+        // Only case that is supported is edge to edge
         if(numRefs == 2) {
             const std::vector<App::DocumentObject*> &objects = References.getValues();
             const std::vector<std::string> &subElements = References.getSubValues();
@@ -306,34 +309,19 @@ double Measurement::angle(const Base::Vector3d &param) const
                 gp_Pnt pnt2 = curve1.Value(curve1.LastParameter());
                 gp_Dir dir1 = curve1.Line().Direction();
                 gp_Dir dir2 = curve2.Line().Direction();
-
-                throw Base::Exception("Not implemented yet");
-//                 // Find point of intersection (TODO use a simplified algorithm for 3D lines) determinant
-//                 GeomAPI_ExtremaCurveCurve intersector(curve1, curve2);
-//                 if(intersector.Distance() < Precision::Confusion()) {
-//                     // Lines do intersect
-//                     gp_Pnt p1, p2;
-//                     intersector.NearestPoints(p1, p2);
-//
-//                 }
-
-
-                if(param.Length() > FLT_EPSILON) {
-
-                    // Calculate which sector to use
-                }
-//                 gp_Pnt P1S = curve1.Value(curve1.FirstParameter());
-//                 gp_Pnt P1E = curve1.Value(curve1.LastParameter());
-//
-//                 gp_Pnt P2S = curve2.Value(curve2.FirstParameter());
-//                 gp_Pnt P2E = curve2.Value(curve2.LastParameter());
-                /*
-                gp_XYZ diff = P2.XYZ() - P1.XYZ();*/
-//                 return angle * 180  / M_PI;
+                
+                gp_Lin l1 = gp_Lin(pnt1,dir1);
+                gp_Lin l2 = gp_Lin(pnt2,dir2);
+                Standard_Real aRad = l1.Angle(l2);
+                return aRad * 180  / M_PI;
+            } else {
+                throw Base::Exception("Objects must both be lines");
             }
+        } else {
+            throw Base::Exception("Can not compute angle. Too many references");
         }
     }
-    throw Base::Exception("Invalid References Provided");
+    throw Base::Exception("References are not Edges");
 }
 
 double Measurement::radius() const

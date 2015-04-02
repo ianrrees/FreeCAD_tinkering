@@ -35,6 +35,7 @@
 #include <QPainterPathStroker>
 #include <QStyleOptionGraphicsItem>
 #include <QTextOption>
+#include <QTransform>
 #include <strstream>
 #endif
 
@@ -58,6 +59,7 @@ QGraphicsItemView::QGraphicsItemView(const QPoint &pos, QGraphicsScene *scene)
 {
     setFlag(QGraphicsItem::ItemIsSelectable,true);
     setFlag(QGraphicsItem::ItemSendsScenePositionChanges, true);
+    setFlag(QGraphicsItem::ItemSendsGeometryChanges,true); 
     setAcceptHoverEvents(true);
     setPos(pos);
 
@@ -72,6 +74,11 @@ QGraphicsItemView::QGraphicsItemView(const QPoint &pos, QGraphicsScene *scene)
 
     m_colCurrent = m_colNormal;
     m_pen.setColor(m_colCurrent);
+
+    hGrp = App::GetApplication().GetUserParameter().GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing");
+    std::string fontName = hGrp->GetASCII("LabelFont", "osifont");
+    m_font.setFamily(QString::fromStdString(fontName));
+    m_font.setPointSize(5.f);
 
     //Add object to scene
     scene->addItem(this);
@@ -139,7 +146,7 @@ void QGraphicsItemView::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
 
 void QGraphicsItemView::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 {
-    if(!this->locked) {
+    if(!this->locked && isSelected()) {
         double x = this->x(),
                y = this->getY();
         getViewObject()->X.setValue(x);
@@ -180,9 +187,24 @@ void QGraphicsItemView::setPosition(qreal x, qreal y)
 
 void QGraphicsItemView::updateView(bool update)
 {
-    this->setPosition(this->getViewObject()->X.getValue(), this->getViewObject()->Y.getValue());
-    if (update) 
-        QGraphicsItem::update(boundingRect());
+    if (update ||
+        getViewObject()->X.isTouched() ||
+        getViewObject()->Y.isTouched()) {
+        double featX = getViewObject()->X.getValue();
+        double featY = getViewObject()->Y.getValue();
+        setPosition(featX,featY);
+    }
+
+    if (update ||
+        getViewObject()->Rotation.isTouched()) {
+        //NOTE: QPainterPaths have to be rotated individually. This transform handles everything else.
+        double rot = getViewObject()->Rotation.getValue();
+        QPointF centre = boundingRect().center();
+        setTransform(QTransform().translate(centre.x(), centre.y()).rotate(-rot).translate(-centre.x(), -centre.y()));
+    }
+
+    if (update)
+        QGraphicsItem::update();
 }
 
 const char * QGraphicsItemView::getViewName() const
@@ -203,10 +225,10 @@ void QGraphicsItemView::setViewFeature(Drawing::FeatureView *obj)
     viewObj = obj;
     viewName = obj->getNameInDocument();
 
-    // Set the QGraphicsItemGroup position based on the FeatureView
+    // Set the QGraphicsItemGroup initial position based on the FeatureView
     float x = obj->X.getValue();
     float y = obj->Y.getValue();
-    setPos(x, y);
+    setPosition(x, y);
 
     Q_EMIT dirty();
 }
@@ -228,15 +250,9 @@ void QGraphicsItemView::drawBorder(QPainter *painter)
     myPen.setWidth(0.3);
     painter->setPen(myPen);
 
-    // Draw Label
     QString name = QString::fromUtf8(this->getViewObject()->Label.getValue());
-
-    QFont font;                                                          //TODO: font sb param
-    font.setFamily(QString::fromAscii("osifont")); // Set to generic sans-serif font
-    font.setPointSize(5.f);
-    painter->setFont(font);
-    QFontMetrics fm(font);
-
+    painter->setFont(m_font);
+    QFontMetrics fm(m_font);
     QPointF pos = box.center();
     pos.setY(box.bottom());
     pos.setX(pos.x() - fm.width(name) / 2.);
