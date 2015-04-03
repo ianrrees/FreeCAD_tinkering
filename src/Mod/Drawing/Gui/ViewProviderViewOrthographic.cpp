@@ -101,18 +101,8 @@ void ViewProviderViewOrthographic::updateData(const App::Property* prop)
         Gui::TaskView::TaskDialog *dlg = Gui::Control().activeDialog();
         TaskDlgOrthographicViews *orthoDlg = qobject_cast<TaskDlgOrthographicViews *>(dlg);
 
-        if(orthoDlg) {
-            if(strcmp(prop->getName(), "Scale") == 0 &&
-               strcmp(getObject()->ScaleType.getValueAsString(), "Automatic") == 0) {
-                const App::PropertyFloat *propFlt = dynamic_cast<const App::PropertyFloat *>(prop);
-                if(propFlt) {
-                    orthoDlg->scaleAutoChanged(propFlt->getValue());
-                }
-            }
-        }
-
-        // TODO: I think this can go away - seems obsolete?  getOrthographicView never returns anything but 0
-        if (orthoDlg && orthoDlg->getOrthographicView() == this) {
+        if (orthoDlg && 
+            orthoDlg->getOrthographicView() == dynamic_cast<const ViewProviderViewOrthographic *>(getObject()) ) {
             orthoDlg->update();
         }
     } 

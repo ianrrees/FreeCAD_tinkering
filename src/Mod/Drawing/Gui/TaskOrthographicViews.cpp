@@ -218,12 +218,14 @@ void TaskOrthographicViews::updateTask()
 
 void TaskOrthographicViews::setFractionalScale(double newScale)
 {
+    blockUpdate = true;
     int num, den;
 
     nearestFraction(newScale, num, den, 10);
 
     ui->scaleNum->setText(QString::number(num));
     ui->scaleDenom->setText(QString::number(den));
+    blockUpdate = false;
 }
 
 void TaskOrthographicViews::scaleManuallyChanged(const QString & text)
@@ -232,11 +234,6 @@ void TaskOrthographicViews::scaleManuallyChanged(const QString & text)
     if(blockUpdate)
         return;
 
-    // If we were in Automatic or Document, switch to Custom
-    if(strcmp(multiView->ScaleType.getValueAsString(), "Automatic") == 0 ||
-       strcmp(multiView->ScaleType.getValueAsString(), "Document") == 0) {
-        ui->cmbScaleType->setCurrentIndex(ui->cmbScaleType->findText(QString::fromLatin1("Custom")));
-    }
 
 
     bool ok1, ok2;
@@ -246,11 +243,24 @@ void TaskOrthographicViews::scaleManuallyChanged(const QString & text)
 
     double scale = (double) a / (double) b;
     if (ok1 && ok2) {
+        // If we were not in Custom, switch to Custom in two steps
+        bool switchToCustom = (strcmp(multiView->ScaleType.getValueAsString(), "Custom") != 0);
+        if(switchToCustom) {
+            // First, send out command to put us into custom scale
+            scaleTypeChanged(ui->cmbScaleType->findText(QString::fromLatin1("Custom")));
+            switchToCustom = true;
+        }
+
         Gui::Command::openCommand("Update custom scale");
         Gui::Command::doCommand(Gui::Command::Doc, "App.activeDocument().%s.Scale = %f", multiView->getNameInDocument()
                                                                                          , scale);
         Gui::Command::commitCommand();
         Gui::Command::updateActive();
+
+        if(switchToCustom) {
+            // Second, update the GUI
+            ui->cmbScaleType->setCurrentIndex(ui->cmbScaleType->findText(QString::fromLatin1("Custom")));
+        }
     }
 }
 
@@ -263,20 +273,14 @@ void TaskOrthographicViews::changeEvent(QEvent *e)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 TaskDlgOrthographicViews::TaskDlgOrthographicViews(Drawing::FeatureViewOrthographic* featView) : TaskDialog(), 
-                                                                                                 multiView(featView),
-                                                                                                 orthographicView(0)
+                                                                                                 multiView(featView)
 {
+    orthographicView = dynamic_cast<const ViewProviderViewOrthographic *>(featView);
     widget  = new TaskOrthographicViews(featView);
     taskbox = new Gui::TaskView::TaskBox(Gui::BitmapFactory().pixmap("actions/drawing-orthoviews"),
                                          widget->windowTitle(), true, 0);
     taskbox->groupLayout()->addWidget(widget);
     Content.push_back(taskbox);
-}
-
-void TaskDlgOrthographicViews::scaleAutoChanged(double newScale)
-{
-    if(widget)
-        widget->setFractionalScale(newScale);
 }
 
 TaskDlgOrthographicViews::~TaskDlgOrthographicViews()

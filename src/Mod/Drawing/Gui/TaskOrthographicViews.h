@@ -98,11 +98,8 @@ public:
     TaskDlgOrthographicViews(Drawing::FeatureViewOrthographic* featView);
     ~TaskDlgOrthographicViews();
 
-    ViewProviderViewOrthographic * getOrthographicView() const { return orthographicView; }
+    const ViewProviderViewOrthographic * getOrthographicView() const { return orthographicView; }
     Drawing::FeatureViewOrthographic * getMultiView() const { return multiView; }
-
-    /// Called to notify the GUI that the scale has changed
-    void scaleAutoChanged(double newScale);
 public:
     /// is called the TaskView when the dialog is opened
     virtual void open();
@@ -120,7 +117,7 @@ public:
     void update();
 
 protected:
-    ViewProviderViewOrthographic *orthographicView;  // obs??
+    const ViewProviderViewOrthographic *orthographicView;
     Drawing::FeatureViewOrthographic *multiView;
     
 private:
