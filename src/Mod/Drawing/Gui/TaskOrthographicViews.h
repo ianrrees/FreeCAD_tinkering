@@ -64,15 +64,16 @@ public:
     ~TaskOrthographicViews();
 
 public:
-     void updateTask();
-     void nearestFraction(const double &val, int &a, int &b, const long &maxDenom) const;
+    void updateTask();
+    void nearestFraction(const double &val, int &a, int &b, const long &maxDenom) const;
+    /// Sets the numerator and denominator widgets to match newScale
+    void setFractionalScale(double newScale);
 
 protected Q_SLOTS:
     void viewToggled(bool toggle);
     void projectionTypeChanged(int index);
     void scaleTypeChanged(int index);
-    void scaleChanged(const QString & text);
-
+    void scaleManuallyChanged(const QString & text);
 
 protected:
     void changeEvent(QEvent * e);
@@ -100,6 +101,8 @@ public:
     ViewProviderViewOrthographic * getOrthographicView() const { return orthographicView; }
     Drawing::FeatureViewOrthographic * getMultiView() const { return multiView; }
 
+    /// Called to notify the GUI that the scale has changed
+    void scaleAutoChanged(double newScale);
 public:
     /// is called the TaskView when the dialog is opened
     virtual void open();

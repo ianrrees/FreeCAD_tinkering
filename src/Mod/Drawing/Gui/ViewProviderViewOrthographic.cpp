@@ -92,7 +92,7 @@ std::vector<std::string> ViewProviderViewOrthographic::getDisplayModes(void) con
 void ViewProviderViewOrthographic::updateData(const App::Property* prop)
 {
     Gui::ViewProviderDocumentObject::updateData(prop);
-
+ 
     if(prop == &(getObject()->Scale) ||
        prop == &(getObject()->ScaleType) ||
        prop == &(getObject()->Views) ||
@@ -101,10 +101,18 @@ void ViewProviderViewOrthographic::updateData(const App::Property* prop)
         Gui::TaskView::TaskDialog *dlg = Gui::Control().activeDialog();
         TaskDlgOrthographicViews *orthoDlg = qobject_cast<TaskDlgOrthographicViews *>(dlg);
 
-        if (orthoDlg && orthoDlg->getOrthographicView() != this)
-            orthoDlg = 0;
-
         if(orthoDlg) {
+            if(strcmp(prop->getName(), "Scale") == 0 &&
+               strcmp(getObject()->ScaleType.getValueAsString(), "Automatic") == 0) {
+                const App::PropertyFloat *propFlt = dynamic_cast<const App::PropertyFloat *>(prop);
+                if(propFlt) {
+                    orthoDlg->scaleAutoChanged(propFlt->getValue());
+                }
+            }
+        }
+
+        // TODO: I think this can go away - seems obsolete?  getOrthographicView never returns anything but 0
+        if (orthoDlg && orthoDlg->getOrthographicView() == this) {
             orthoDlg->update();
         }
     } 

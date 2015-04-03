@@ -56,23 +56,10 @@ TaskOrthographicViews::TaskOrthographicViews(Drawing::FeatureViewOrthographic* f
 
     blockUpdate = true;
 
-    int a,b;
-    double scale = multiView->Scale.getValue();
+    setFractionalScale(multiView->Scale.getValue());
 
-    nearestFraction(scale, a,b,10);
-
-    //nearestFraction(scale, a, b, 10);
-    ui->scaleNum->setText(QString::number(a));
-    ui->scaleDenom->setText(QString::number(b));
     ui->cmbScaleType->setCurrentIndex(multiView->ScaleType.getValue());
     
-
-    if(strcmp(multiView->ScaleType.getValueAsString(), "Automatic") == 0 ||
-       strcmp(multiView->ScaleType.getValueAsString(), "Document") == 0) {
-        ui->scaleNum->setDisabled(true);
-        ui->scaleDenom->setDisabled(true);
-    }
-
     // Initially toggle checkboxes if needed
     if(multiView->hasOrthoView("Left")) {
         ui->chkOrthoLeft->setCheckState(Qt::Checked);
@@ -110,8 +97,8 @@ TaskOrthographicViews::TaskOrthographicViews(Drawing::FeatureViewOrthographic* f
 
     // Slot for Scale Type
     connect(ui->cmbScaleType, SIGNAL(currentIndexChanged(int)), this, SLOT(scaleTypeChanged(int)));
-    connect(ui->scaleNum,     SIGNAL(textEdited(const QString &)), this, SLOT(scaleChanged(const QString &)));
-    connect(ui->scaleDenom,   SIGNAL(textEdited(const QString &)), this, SLOT(scaleChanged(const QString &)));
+    connect(ui->scaleNum,     SIGNAL(textEdited(const QString &)), this, SLOT(scaleManuallyChanged(const QString &)));
+    connect(ui->scaleDenom,   SIGNAL(textEdited(const QString &)), this, SLOT(scaleManuallyChanged(const QString &)));
 
     // Slot for Projection Type (layout)
     connect(ui->projection, SIGNAL(currentIndexChanged(int)), this, SLOT(projectionTypeChanged(int)));
@@ -134,6 +121,7 @@ void TaskOrthographicViews::viewToggled(bool toggle)
         multiView->removeOrthoView(viewName.toLatin1());
     }
 
+    /// Called to notify the GUI that the scale has changed
     Gui::Command::commitCommand();
     Gui::Command::updateActive();
 }
@@ -176,20 +164,14 @@ void TaskOrthographicViews::scaleTypeChanged(int index)
         //Automatic Scale Type
         Gui::Command::doCommand(Gui::Command::Doc, "App.activeDocument().%s.ScaleType = '%s'", multiView->getNameInDocument()
                                                                                              , "Document");
-        ui->scaleDenom->setDisabled(true);
-        ui->scaleNum->setDisabled(true);
     } else if(index == 1) {
         // Document Scale Type
         Gui::Command::doCommand(Gui::Command::Doc, "App.activeDocument().%s.ScaleType = '%s'", multiView->getNameInDocument()
                                                                                              , "Automatic");
-        ui->scaleDenom->setDisabled(true);
-        ui->scaleNum->setDisabled(true);
     } else if(index == 2) {
         // Custom Scale Type
         Gui::Command::doCommand(Gui::Command::Doc, "App.activeDocument().%s.ScaleType = '%s'", multiView->getNameInDocument()
                                                                                              , "Custom");
-        ui->scaleDenom->setDisabled(false);
-        ui->scaleNum->setDisabled(false);
     } else {
         Gui::Command::abortCommand();
         Base::Console().Log("Error - TaskOrthographicViews::scaleTypeChanged - unknown scale type: %d\n",index);
@@ -227,23 +209,35 @@ void TaskOrthographicViews::updateTask()
     this->blockUpdate = true;
     ui->cmbScaleType->setCurrentIndex(multiView->ScaleType.getValue());
 
-    int a, b;
     // Update the scale value
-    double scale = multiView->Scale.getValue();
-
-    nearestFraction(scale, a,b,10);
-
-    //nearestFraction(scale, a, b, 10);
-    ui->scaleNum->setText(QString::number(a));
-    ui->scaleDenom->setText(QString::number(b));
+    setFractionalScale(multiView->Scale.getValue());
 
     this->blockUpdate = false;
 }
 
-void TaskOrthographicViews::scaleChanged(const QString & text)
+
+void TaskOrthographicViews::setFractionalScale(double newScale)
 {
+    int num, den;
+
+    nearestFraction(newScale, num, den, 10);
+
+    ui->scaleNum->setText(QString::number(num));
+    ui->scaleDenom->setText(QString::number(den));
+}
+
+void TaskOrthographicViews::scaleManuallyChanged(const QString & text)
+{
+    //TODO: See what this is about:
     if(blockUpdate)
         return;
+
+    // If we were in Automatic or Document, switch to Custom
+    if(strcmp(multiView->ScaleType.getValueAsString(), "Automatic") == 0 ||
+       strcmp(multiView->ScaleType.getValueAsString(), "Document") == 0) {
+        ui->cmbScaleType->setCurrentIndex(ui->cmbScaleType->findText(QString::fromLatin1("Custom")));
+    }
+
 
     bool ok1, ok2;
 
@@ -277,6 +271,12 @@ TaskDlgOrthographicViews::TaskDlgOrthographicViews(Drawing::FeatureViewOrthograp
                                          widget->windowTitle(), true, 0);
     taskbox->groupLayout()->addWidget(widget);
     Content.push_back(taskbox);
+}
+
+void TaskDlgOrthographicViews::scaleAutoChanged(double newScale)
+{
+    if(widget)
+        widget->setFractionalScale(newScale);
 }
 
 TaskDlgOrthographicViews::~TaskDlgOrthographicViews()
