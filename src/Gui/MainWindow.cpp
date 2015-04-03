@@ -303,11 +303,17 @@ MainWindow::MainWindow(QWidget * parent, Qt::WFlags f)
 
     d->windowMapper = new QSignalMapper(this);
 
+#if defined(__APPLE__)
+    connect(d->mdiArea, SIGNAL(subWindowActivated(QMdiSubWindow *)),
+            this, SLOT(disableBehindMaximized(QMdiSubWindow *)));
+#endif  //#if defined(__APPLE__)
+
     // connection between workspace, window menu and tab bar
     connect(d->windowMapper, SIGNAL(mapped(QWidget *)),
             this, SLOT(onSetActiveSubWindow(QWidget*)));
     connect(d->mdiArea, SIGNAL(subWindowActivated(QMdiSubWindow*)),
             this, SLOT(onWindowActivated(QMdiSubWindow* )));
+
 
     DockWindowManager* pDockMgr = DockWindowManager::instance();
 
@@ -767,6 +773,32 @@ void MainWindow::removeWindow(Gui::MDIView* view)
 
 void MainWindow::tabChanged(MDIView* view)
 {
+}
+
+//TODO: Look into triggering a redraw after a zoom is done - seems like that's
+//the most obvious issue with this fix, so long as an MDI isn't used...
+//
+// This should only be connected to if program is built with __APPLE__ defined.
+// ( The Qt MOC doesn't seem to like making the slot declaration conditional
+//   on __APPLE__, so we leave this definition in for all platforms and only
+//   use it on MacOS. )
+void MainWindow::disableBehindMaximized(QMdiSubWindow *newWindow)
+{
+    // If the current window is maximized, then disable updates in other
+    // windows.  Very hacky halfway-solution to a rendering issue on MacOS
+    // with Qt4.
+    if(newWindow && newWindow->isMaximized()) {
+        // Iterate through other windows
+        QList<QMdiSubWindow *> windList = d->mdiArea->subWindowList();
+        for(int index = 0; index < windList.size(); ++index) {
+            QMdiSubWindow *sPtr = windList.at(index);
+            if(sPtr != newWindow) {
+                sPtr->setUpdatesEnabled(false);
+            }
+        }
+        newWindow->setUpdatesEnabled(true);
+        newWindow->update();
+    }
 }
 
 void MainWindow::tabCloseRequested(int index)

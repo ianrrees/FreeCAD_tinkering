@@ -155,6 +155,11 @@ public:
 
 public Q_SLOTS:
     /**
+     * Hacky solution for Mac rendering problem
+     */
+    void disableBehindMaximized(QMdiSubWindow *newWindow);
+
+    /**
      * Sets text to the pane in the status bar.
      */
     void setPaneText(int i, QString text);
@@ -238,6 +243,7 @@ private Q_SLOTS:
      * Close tab at position index.
      */
     void tabCloseRequested(int index);
+    
     /**
      * Fills up the menu with the current windows in the workspace.
      */
