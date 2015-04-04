@@ -123,13 +123,21 @@ void QGraphicsItemSVGTemplate::load (const QString & fileName)
 
     std::string outfragment(ofile.str());
 
-    boost::regex e1 ("<text.*?font-size:(.*?)px.*?x=\"(.*?)\".*?y=\"(.*?)\".*?freecad:editable=\"(.*?)\".*?<tspan.*?></tspan>");
+    // Finds the FreeCAD-editable texts in the SVG template, creates
+    // a QGraphicsTextItem for each text found.
+
+    // Regex e1 attempts to find:
+    // [0] - A text tag that contains "freecad:editable=", and it's matching tspan tag
+    // [1] - positive integer font size in px
+    // [2] - pos/neg float x coordinate
+    // [3] - pos/neg float y coordinate
+    // [4] - one or more character Perl "word" for freecad:editable value
+    boost::regex e1 ("<text.*?font-size:([\\d]+)px.*?x=\"([\\d.-]+)\".*?y=\"([\\d.-]+)\".*?freecad:editable=\"(\\w+)\".*?>.*?<tspan.*?</tspan>");
     std::string::const_iterator begin, end;
     begin = outfragment.begin();
     end = outfragment.end();
     boost::match_results<std::string::const_iterator> what;
     int count = 0;
-
 
     try {
         // and update the sketch
@@ -137,7 +145,7 @@ void QGraphicsItemSVGTemplate::load (const QString & fileName)
             QString fStr =  QString::fromStdString(what[1].str());
             QString xStr = QString::fromStdString(what[2].str());
             QString yStr =  QString::fromStdString(what[3].str());
-            QString content =  QString::fromStdString(what[5].str());
+            QString content =  QString::fromStdString(what[4].str());
             double x = xStr.toDouble();
             double y = yStr.toDouble();
             int fontSize = fStr.toInt();
@@ -145,13 +153,14 @@ void QGraphicsItemSVGTemplate::load (const QString & fileName)
             Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
                 .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing");
             std::string fontName = hGrp->GetASCII("LabelFont", "osifont");
+
             QFont font;
             font.setFamily(QString::fromStdString(fontName));
             font.setPixelSize(fontSize);
 
             QGraphicsTextItem *item = new QGraphicsTextItem();
             item->setFont(font);
-            item->setPos(x, -tmplte->getHeight() + y -4);
+            item->setPos(x, -tmplte->getHeight() + y - 4);  //TODO: Replace the 4 with an offset based on QFontMetrics
 
             item->setZValue(100);
             item->setPlainText(content);
@@ -162,8 +171,8 @@ void QGraphicsItemSVGTemplate::load (const QString & fileName)
         }
     }
     catch (...) {
+        //TODO: Handle this better
     }
-
 
     double xaspect, yaspect;
     xaspect = tmplte->getWidth() / (double) size.width();
@@ -173,7 +182,6 @@ void QGraphicsItemSVGTemplate::load (const QString & fileName)
     qtrans.translate(0.f, -tmplte->getHeight());
     qtrans.scale(xaspect , yaspect);
     m_svgItem->setTransform(qtrans);
-
 }
 Drawing::FeatureSVGTemplate * QGraphicsItemSVGTemplate::getSVGTemplate()
 {
