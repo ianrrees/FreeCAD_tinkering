@@ -74,10 +74,15 @@ public:
         return "DrawingGui::ViewProviderViewOrthographic";
     }
 
+    // TODO: Add isometric
+    // Keep this in sync with orthoViewNameFromStr and OrthoViewNameEnumStrs
+    enum OrthoViewNameEnum {FRONT=0, LEFT, RIGHT, TOP, BOTTOM, REAR, ERROR};
 protected:
     void onChanged(const App::Property* prop);
+    OrthoViewNameEnum orthoViewNameFromStr(const char *inStr);
 private:
     static const char* ProjectionTypeEnums[];
+    static const char* OrthoViewNameEnumStrs[];
 
 };
 

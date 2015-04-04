@@ -48,6 +48,15 @@ const char* FeatureViewOrthographic::ProjectionTypeEnums[]= {"Document",
                                                              "Third Angle",
                                                              NULL};
 
+// Should align with OrthoViewNameEnums 
+const char* FeatureViewOrthographic::OrthoViewNameEnumStrs[] = {"Front",
+                                                                "Left",
+                                                                "Right",
+                                                                "Top",
+                                                                "Bottom",
+                                                                "Rear",
+                                                                NULL};
+
 
 PROPERTY_SOURCE(Drawing::FeatureViewOrthographic, Drawing::FeatureViewCollection)
 
@@ -155,6 +164,23 @@ void FeatureViewOrthographic::onChanged(const App::Property* prop)
     Drawing::FeatureViewCollection::onChanged(prop);
 }
 
+FeatureViewOrthographic::OrthoViewNameEnum FeatureViewOrthographic::orthoViewNameFromStr(const char *inStr)
+{
+    if(strcmp(OrthoViewNameEnumStrs[FRONT], inStr) == 0)
+        return FRONT;
+    if(strcmp(OrthoViewNameEnumStrs[LEFT], inStr) == 0)
+        return LEFT;
+    if(strcmp(OrthoViewNameEnumStrs[RIGHT], inStr) == 0)
+        return RIGHT;
+    if(strcmp(OrthoViewNameEnumStrs[TOP], inStr) == 0)
+        return TOP;
+    if(strcmp(OrthoViewNameEnumStrs[BOTTOM], inStr) == 0)
+        return BOTTOM;
+    if(strcmp(OrthoViewNameEnumStrs[REAR], inStr) == 0)
+        return REAR;
+    return ERROR;
+}
+
 App::DocumentObject * FeatureViewOrthographic::getOrthoView(const char *viewProjType) const
 {
     const std::vector<App::DocumentObject *> &views = Views.getValues();
@@ -191,14 +217,7 @@ bool FeatureViewOrthographic::hasOrthoView(const char *viewProjType) const
 
 App::DocumentObject * FeatureViewOrthographic::addOrthoView(const char *viewProjType)
 {
-    // TODO: Find a more elegant way of validating the type
-    if(strcmp(viewProjType, "Front")  == 0 ||
-       strcmp(viewProjType, "Left")   == 0 ||
-       strcmp(viewProjType, "Right")  == 0 ||
-       strcmp(viewProjType, "Top")    == 0 ||
-       strcmp(viewProjType, "Bottom") == 0 ||
-       strcmp(viewProjType, "Rear")   == 0 ) {
-
+    if(orthoViewNameFromStr(viewProjType) != ERROR) {
         if(hasOrthoView(viewProjType)) {
             throw Base::Exception("The Projection is already used in this group");
         }
@@ -218,6 +237,7 @@ App::DocumentObject * FeatureViewOrthographic::addOrthoView(const char *viewProj
 
         return view;
 
+        // Replace with orthoViewNameFromStr() when it's ready
     } else if(strcmp(viewProjType, "Top Right")  == 0 ||
               strcmp(viewProjType, "Top Left")  == 0 ||
               strcmp(viewProjType, "Bottom Right")  == 0 ||
@@ -229,14 +249,7 @@ App::DocumentObject * FeatureViewOrthographic::addOrthoView(const char *viewProj
 
 int FeatureViewOrthographic::removeOrthoView(const char *viewProjType)
 {
-    // Find a more elegant way of validating the type
-    if(strcmp(viewProjType, "Front")  == 0 ||
-       strcmp(viewProjType, "Left")   == 0 ||
-       strcmp(viewProjType, "Right")  == 0 ||
-       strcmp(viewProjType, "Top")    == 0 ||
-       strcmp(viewProjType, "Bottom") == 0 ||
-       strcmp(viewProjType, "Rear")   == 0 ) {
-
+    if(orthoViewNameFromStr(viewProjType) != ERROR) {
         if(!hasOrthoView(viewProjType)) {
             throw Base::Exception("The orthographic projection doesn't exist in the group");
         }
@@ -256,6 +269,7 @@ int FeatureViewOrthographic::removeOrthoView(const char *viewProjType)
                 }
             }
         }
+        // Replace with orthoViewNameFromStr() when it's ready
     } else if(strcmp(viewProjType, "Top Right")  == 0 ||
               strcmp(viewProjType, "Top Left")  == 0 ||
               strcmp(viewProjType, "Bottom Right")  == 0 ||
@@ -269,11 +283,11 @@ bool FeatureViewOrthographic::distributeOrthoViews()
 {
     Drawing::FeatureOrthoView *anchorView =  dynamic_cast<Drawing::FeatureOrthoView *>(this->Anchor.getValue());
 
-    if (!anchorView) {
+    if (!anchorView) {  //TODO: Consider not requiring an anchor view, or allowing ones other than "Front"
         return false;
     }
 
-    // Determine layout
+    // Determine layout - should be either "First Angle" or "Third Angle"
     const char* projType;
     if (this->ProjectionType.isValue("Document")) {
         projType = this->findParentPage()->OrthoProjectionType.getValueAsString();
@@ -281,92 +295,80 @@ bool FeatureViewOrthographic::distributeOrthoViews()
         projType = ProjectionType.getValueAsString();
     }
 
-    double spacing = 25.; // stick with defualt 10 mm   //TODO: sb property of FeatureViewOrthographic???
-    Base::BoundBox3d abbox = anchorView->getBoundingBox();
+    // Setup array of pointers to the views that we're displaying,
+    // assuming front is in centre ala:
+    //      [0]
+    // [1]  [2]  [3]  [4]
+    //      [5]
+    Drawing::FeatureOrthoView * viewPtrs[6] = {};
+
+    // Iterate through views and populate viewPtrs
     FeatureOrthoView* oView;
     std::vector<App::DocumentObject*> views = Views.getValues();
-    for (std::vector<App::DocumentObject*>::const_iterator it = views.begin(); it != views.end(); ++it) {
-        if ((*it)->getTypeId().isDerivedFrom(FeatureOrthoView::getClassTypeId())) {   //TODO: might need Axo too?
-            oView = dynamic_cast<Drawing::FeatureOrthoView *>(*it);
-            if (strcmp(oView->Type.getValueAsString(),
-                       anchorView->Type.getValueAsString()) == 0) {
-                continue;
-            }
-            Base::BoundBox3d obbox = oView->getBoundingBox();         //TODO: this boundingbox is != QGraphics bbox
-            // Position the current FeatureOrthoView
-            // based on: http://course1.winona.edu/kdennehy/ENGR475/Topics/drawingstandardsandconventions.htm
-            // Third Angle:      T
-            //                l  F  R  rr
-            //                   b
-            // First Angle:      b
-            //                R  F  l  rr
-            //                   T
-            if (strcmp(projType, "Third Angle") == 0) {
-                if(strcmp(oView->Type.getValueAsString(), "Left") == 0) {
-                    oView->X.setValue((obbox.LengthX() + abbox.LengthX()) / -2. - spacing);  // curr view to left 
-                } else if(strcmp(oView->Type.getValueAsString(), "Right") == 0) {
-                    oView->X.setValue((obbox.LengthX() + abbox.LengthX()) /  2. + spacing);  // curr view to right
-                    if(this->hasOrthoView("Rear")) {
-                        Drawing::FeatureOrthoView *rearView =  dynamic_cast<Drawing::FeatureOrthoView *>(this->getOrthoView("Rear"));
-                        Base::BoundBox3d rrbbox = rearView->getBoundingBox();
-                        rearView->X.setValue((abbox.LengthX() / 2.) + spacing +
-                                              obbox.LengthX() + spacing +
-                                              (rrbbox.LengthX() / 2.));                           // Rear view 2 spots right
-                    }
-                } else if(strcmp(oView->Type.getValueAsString(), "Top") == 0) {
-                    oView->Y.setValue((obbox.LengthY() + abbox.LengthY()) /  2. + spacing);  // curr view up
-                } else if(strcmp(oView->Type.getValueAsString(), "Bottom") == 0) {
-                    oView->Y.setValue((obbox.LengthY() + abbox.LengthY()) / -2. - spacing);  // curr view down
-                } else if(strcmp(oView->Type.getValueAsString(), "Rear") == 0) {
-                    if(this->hasOrthoView("Right")) {
-                        Drawing::FeatureOrthoView *rightView =  dynamic_cast<Drawing::FeatureOrthoView *>(this->getOrthoView("Right"));
-                        Base::BoundBox3d rtbbox = rightView->getBoundingBox();
-                        oView->X.setValue((abbox.LengthX() / 2.) + spacing +
-                                         rtbbox.LengthX() + spacing +
-                                         (obbox.LengthX() / 2.));                           // curr view 2 spots right
-                    } else {
-                        oView->X.setValue(((obbox.LengthX() + abbox.LengthX()) /  2.) + spacing);  // curr view 1 space to right
-                    }
-                } else {
-                    Base::Console().Error("Error - FeatureViewOrthographic::distributeViews - unknown View Type (3rd): %s\n",
-                                          oView->Type.getValueAsString());
-                    //TODO: break? throw? return?
+    if ( strcmp(projType, "Third Angle") == 0 ||
+         strcmp(projType, "First Angle") == 0    ) {
+        //   Third Angle:      T
+        //                  L  F  Right Rear
+        //                     B
+        //
+        //   First Angle:      B
+        //               Rear  F  L  Right
+        //                     T
+        bool thirdAngle = (strcmp(projType, "Third Angle") == 0);
+        for (std::vector<App::DocumentObject*>::const_iterator it = views.begin(); it != views.end(); ++it) {
+            if ((*it)->getTypeId().isDerivedFrom(FeatureOrthoView::getClassTypeId())) {   //TODO: might need Axo too?
+                oView = dynamic_cast<Drawing::FeatureOrthoView *>(*it);
+
+                switch(orthoViewNameFromStr(oView->Type.getValueAsString())) {
+                    case FRONT:  viewPtrs[thirdAngle ? 2 : 2] = oView; break;
+                    case LEFT:   viewPtrs[thirdAngle ? 1 : 3] = oView; break;
+                    case RIGHT:  viewPtrs[thirdAngle ? 3 : 1] = oView; break;
+                    case TOP:    viewPtrs[thirdAngle ? 0 : 5] = oView; break;
+                    case BOTTOM: viewPtrs[thirdAngle ? 5 : 0] = oView; break;
+                    case REAR:   viewPtrs[thirdAngle ? 4 : 4] = oView; break;
+                    default: break;
                 }
-            } else {  // First Angle
-                if(strcmp(oView->Type.getValueAsString(), "Left") == 0) {
-                    oView->X.setValue((obbox.LengthX() + abbox.LengthX()) /  2. + spacing);  // oView view to right
-                    if(this->hasOrthoView("Rear")) {
-                        Drawing::FeatureOrthoView *rearView =  dynamic_cast<Drawing::FeatureOrthoView *>(this->getOrthoView("Rear"));
-                        Base::BoundBox3d rrbbox = rearView->getBoundingBox();
-                        rearView->X.setValue((abbox.LengthX() / 2.) + spacing +
-                                              obbox.LengthX() + spacing +
-                                              (rrbbox.LengthX() / 2.));                           // Rear view 2 spots right
-                    }
-                } else if(strcmp(oView->Type.getValueAsString(), "Right") == 0) {
-                    oView->X.setValue((obbox.LengthX() + abbox.LengthX()) / -2. - spacing);  // oView to left 
-                } else if(strcmp(oView->Type.getValueAsString(), "Top") == 0) {
-                    oView->Y.setValue((obbox.LengthY() + abbox.LengthY()) / -2. - spacing);  // oView down
-                } else if(strcmp(oView->Type.getValueAsString(), "Bottom") == 0) {
-                    oView->Y.setValue((obbox.LengthY() + abbox.LengthY()) /  2. + spacing);  // oView view up
-                } else if(strcmp(oView->Type.getValueAsString(), "Rear") == 0) {
-                    if(this->hasOrthoView("Left")) {
-                        Drawing::FeatureOrthoView *leftView =  dynamic_cast<Drawing::FeatureOrthoView *>(this->getOrthoView("Left"));
-                        Base::BoundBox3d lbbox = leftView->getBoundingBox();
-                        oView->X.setValue((abbox.LengthX() / 2.) + spacing +
-                                         lbbox.LengthX() + spacing +
-                                         (obbox.LengthX() / 2.));                           // oView view 2 spots right
-                    } else {
-                        oView->X.setValue(((obbox.LengthX() + abbox.LengthX()) /  2.) + spacing);  // oView view 1 space to right
-                    }
-                } else {
-                    Base::Console().Error("Error - FeatureViewOrthographic::distributeViews - unknown View Type (1st): %s\n",
-                                          oView->Type.getValueAsString());
-                    //TODO: break? throw? return?
-               }
-            oView->touch();
             }
         }
+    } else return false;    // ...assuming this is an error condition
+
+    // Calculate bounding boxes for each displayed view
+    Base::BoundBox3d bboxes[6] = {};
+    for(int i = 0; i < 6; ++i)
+        if(viewPtrs[i])
+            bboxes[i] = viewPtrs[i]->getBoundingBox();
+
+    // Now, do the spacing
+    double spacing = 15,    //in mm  TODO: maybe use a property?
+           offset;  // Temporary variable used to correct for the fact that
+                    // our bounding boxes aren't centered on (0,0,0)...
+    if (viewPtrs[0]) {
+        offset = bboxes[2].MinY + bboxes[2].MaxY - bboxes[0].MinY - bboxes[0].MaxY;
+        viewPtrs[0]->Y.setValue((bboxes[0].LengthY() + bboxes[2].LengthY() - offset) / 2.0 + spacing);
     }
+    if (viewPtrs[1]) {
+        offset = bboxes[2].MinX + bboxes[2].MaxX - bboxes[1].MinX - bboxes[1].MaxX;
+        viewPtrs[1]->X.setValue((bboxes[1].LengthX() + bboxes[2].LengthX() - offset) / -2.0 - spacing);
+    }
+    if (viewPtrs[2]) {  // TODO: Move this check above, and figure out a sane bounding box based on other existing views
+    }
+    if (viewPtrs[3]) {
+        offset = -bboxes[2].MinX - bboxes[2].MaxX + bboxes[3].MinX + bboxes[3].MaxX;
+        viewPtrs[3]->X.setValue((bboxes[2].LengthX() + bboxes[3].LengthX() - offset) / 2.0 + spacing);
+    }
+    if (viewPtrs[4]) {
+        offset = -bboxes[2].MinX - bboxes[2].MaxX + bboxes[4].MinX + bboxes[4].MaxX;
+        if (viewPtrs[3])
+            viewPtrs[4]->X.setValue((bboxes[2].LengthX() + bboxes[4].LengthX() - offset) / 2.0 + bboxes[3].LengthX() + 2 * spacing);
+        else
+            viewPtrs[4]->X.setValue((bboxes[2].LengthX() + bboxes[4].LengthX() - offset) / 2.0 + spacing);
+
+    }
+    if (viewPtrs[5]) {
+        offset = -bboxes[2].MinY - bboxes[2].MaxY + bboxes[5].MinY + bboxes[5].MaxY;
+        viewPtrs[5]->Y.setValue((bboxes[5].LengthY() + bboxes[2].LengthY() - offset) / -2.0 - spacing);
+    }
+
     return true;
 }
 
