@@ -1120,19 +1120,29 @@ void Document::restore (void)
     d->objectMap.clear();
     d->activeObject = 0;
 
+    // Start by verifying that we have a zip-compressed file, which starts
+    // with Document.xml
+    try {
+        zipios::ZipFile zipfile(FileName.getValue());
+
+        if ((*zipfile.entries().begin())->getName() != "Document.xml")
+            throw Base::FileException(FileName.getValue(),
+                "FCStd doesn't begin with Document.xml - see http://freecadweb.org/wiki/index.php?title=File_Format_FCStd");
+        zipfile.close();
+    }
+    catch (zipios::FCollException &e) {
+        throw Base::FileException(FileName.getValue(), " is not a valid FCStd file.");
+    }
+
     Base::FileInfo fi(FileName.getValue());
     Base::ifstream file(fi, std::ios::in | std::ios::binary);
-    std::streambuf* buf = file.rdbuf();
-    std::streamoff size = buf->pubseekoff(0, std::ios::end, std::ios::in);
-    buf->pubseekoff(0, std::ios::beg, std::ios::in);
-    if (size < 22) // an empty zip archive has 22 bytes
-        throw Base::FileException("Invalid project file",FileName.getValue());
 
     zipios::ZipInputStream zipstream(file);
+
     Base::XMLReader reader(FileName.getValue(), zipstream);
 
     if (!reader.isValid())
-        throw Base::FileException("Error reading compression file",FileName.getValue());
+        throw Base::FileException("Error reading compressed file ",FileName.getValue());
 
     GetApplication().signalStartRestoreDocument(*this);
 
