@@ -1125,7 +1125,9 @@ void Document::restore (void)
     try {
         zipios::ZipFile zipfile(FileName.getValue());
 
-        if ((*zipfile.entries().begin())->getName() != "Document.xml")
+        zipios::ConstEntries zipEntries = zipfile.entries();
+        if (zipEntries.size() < 1 ||
+            (*zipEntries.begin())->getName() != "Document.xml")
             throw Base::FileException(FileName.getValue(),
                 "FCStd doesn't begin with Document.xml - see http://freecadweb.org/wiki/index.php?title=File_Format_FCStd");
         zipfile.close();
