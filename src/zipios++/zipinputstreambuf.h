@@ -39,6 +39,9 @@ public:
   */
   ConstEntryPointer getNextEntry() ;
 
+  /** Returns file name of current entry */
+  string getCurrentFileName() const;
+
   /** Destructor. */
   virtual ~ZipInputStreambuf() ;
 protected:

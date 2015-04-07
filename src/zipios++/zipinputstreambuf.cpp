@@ -26,6 +26,14 @@ ZipInputStreambuf::ZipInputStreambuf( streambuf *inbuf, int s_pos, bool del_inbu
   }
 }
 
+string ZipInputStreambuf::getCurrentFileName() const {
+  if ( _curr_entry.isValid() ) {
+      return _curr_entry.getFileName();
+  } else {
+      return "";
+  }
+}
+
 void ZipInputStreambuf::closeEntry() {
   if ( ! _open_entry )
     return ;

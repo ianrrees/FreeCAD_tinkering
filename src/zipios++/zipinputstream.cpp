@@ -42,6 +42,14 @@ void ZipInputStream::close() {
   izf->close() ;  
 }
 
+string ZipInputStream::getCurrentFileName() const {
+    if (izf) {
+        return izf->getCurrentFileName();
+    } else {
+        return "";
+    }
+}
+
 //    ZipLocalEntry *ZipInputStream::createZipCDirEntry( const string
 //    &name ) {}
 

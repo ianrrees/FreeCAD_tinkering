@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (c) Jürgen Riegel          (juergen.riegel@web.de) 2002     *
+ *   Copyright (c) Jrgen Riegel          (juergen.riegel@web.de) 2002     *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -1129,6 +1129,9 @@ void Document::restore (void)
         throw Base::FileException("Invalid project file",FileName.getValue());
 
     zipios::ZipInputStream zipstream(file);
+    if (zipstream.getCurrentFileName() != "Document.xml")
+        throw Base::FileException(FileName.getValue(), " does not start with Document.xml - see http://freecadweb.org/wiki/index.php?title=File_Format_FCStd");
+
     Base::XMLReader reader(FileName.getValue(), zipstream);
 
     if (!reader.isValid())

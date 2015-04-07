@@ -39,6 +39,9 @@ public:
   /** Closes the istream. */
   void close() ;
 
+  /** Return current FileName */
+  string getCurrentFileName() const;
+
 //    ZipLocalEntry *createZipCDirEntry( const string &name ) ;
 
   /** \anchor ZipInputStream_getnextentry_anchor
