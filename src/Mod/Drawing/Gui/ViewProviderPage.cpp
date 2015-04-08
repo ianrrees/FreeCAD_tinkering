@@ -190,7 +190,7 @@ bool ViewProviderDrawingPage::showDrawingView()
 
         view->setWindowTitle(QObject::tr("Drawing viewer") + QString::fromAscii("[*]"));
         view->updateDrawing();
-        view->updateTemplate(true);
+     //   view->updateTemplate(true);   //TODO: I don't think this is necessary?  Ends up triggering a reload of SVG template, but the DrawingView constructor does too.
         Gui::getMainWindow()->addWindow(view);
         view->viewAll();
     } else {
