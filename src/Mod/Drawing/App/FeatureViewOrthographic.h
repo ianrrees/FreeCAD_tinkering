@@ -58,7 +58,13 @@ public:
     App::DocumentObject * getOrthoView(const char *viewProjType) const;
 
     App::DocumentObject * addOrthoView(const char *viewProjType);
+
+    //! Removes an ortho view
+    /*!
+     * \return number of ortho views remaining
+     */
     int  removeOrthoView(const char *viewProjType);
+
     bool distributeOrthoViews(void);
 
     short mustExecute() const;
@@ -80,6 +86,9 @@ public:
 protected:
     void onChanged(const App::Property* prop);
     OrthoViewNameEnum orthoViewNameFromStr(const char *inStr);
+
+    //! Moves anchor view to keep our bounding box centre on the origin
+    void moveToCentre();
 private:
     static const char* ProjectionTypeEnums[];
     static const char* OrthoViewNameEnumStrs[];

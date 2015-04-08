@@ -62,7 +62,6 @@ public:
 
     App::PropertyVector XAxisDirection;
 
-public:
     const std::vector<DrawingGeometry::Vertex *> & getVertexGeometry() const;
     const std::vector<DrawingGeometry::BaseGeom  *> & getEdgeGeometry() const;
     const std::vector<DrawingGeometry::Face *> & getFaceGeometry() const;
@@ -91,10 +90,8 @@ public:
     }
 
 protected:
-    void calcBoundingBox();
     void onChanged(const App::Property* prop);
 
-protected:
     DrawingGeometry::GeometryObject *geometryObject;
     Base::BoundBox3d bbox;
 

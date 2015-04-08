@@ -91,6 +91,7 @@ Base::BoundBox3d FeatureViewOrthographic::getBoundingBox() const
     Base::BoundBox3d bbox;
 
     std::vector<App::DocumentObject*> views = Views.getValues();
+    Drawing::FeatureOrthoView *anchorView =  dynamic_cast<Drawing::FeatureOrthoView *>(this->Anchor.getValue());
     for (std::vector<App::DocumentObject*>::const_iterator it = views.begin(); it != views.end(); ++it) {
          if ((*it)->getTypeId().isDerivedFrom(FeatureViewPart::getClassTypeId())) {
             FeatureViewPart *part = static_cast<FeatureViewPart *>(*it);
@@ -99,12 +100,22 @@ Base::BoundBox3d FeatureViewOrthographic::getBoundingBox() const
             bb.ScaleX(1. / part->Scale.getValue());
             bb.ScaleY(1. / part->Scale.getValue());
 
-            bb.MoveX(part->X.getValue());
-            bb.MoveY(part->Y.getValue());
+            // X and Y of dependant views are relative to the anchorView
+            if (part != anchorView) {
+                bb.MoveX(part->X.getValue());
+                bb.MoveY(part->Y.getValue());
+            }
             
             bbox.Add(bb);
 
         }
+    }
+    // This /should/ leave the centre of the bounding box at (0,0) except when
+    // we're in the process of updating the anchor view's position (eg called
+    // by moveToCentre())
+    if (anchorView) { //TODO: It looks like we might be getting called before an anchor view is set - weird...
+        bbox.MoveX(anchorView->X.getValue());
+        bbox.MoveY(anchorView->Y.getValue());
     }
     return bbox;
 }
@@ -181,14 +192,25 @@ FeatureViewOrthographic::OrthoViewNameEnum FeatureViewOrthographic::orthoViewNam
     return ERROR;
 }
 
+void FeatureViewOrthographic::moveToCentre(void) 
+{
+    // Update the anchor view's X and Y to keep the bounding box centred on the origin
+    Base::BoundBox3d tempbbox = getBoundingBox();
+    FeatureOrthoView *anchorView =  dynamic_cast<FeatureOrthoView *>(this->Anchor.getValue());
+    if(anchorView) {
+        anchorView->X.setValue((tempbbox.MinX + tempbbox.MaxX) / -2.0);
+        anchorView->Y.setValue((tempbbox.MinY + tempbbox.MaxY) / -2.0);
+    }
+}
+
 App::DocumentObject * FeatureViewOrthographic::getOrthoView(const char *viewProjType) const
 {
     const std::vector<App::DocumentObject *> &views = Views.getValues();
     for(std::vector<App::DocumentObject *>::const_iterator it = views.begin(); it != views.end(); ++it) {
 
-        Drawing::FeatureView *view = dynamic_cast<Drawing::FeatureView *>(*it);
-        if(view->getTypeId() == Drawing::FeatureOrthoView::getClassTypeId()) {
-            Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(*it);
+        FeatureView *view = dynamic_cast<FeatureView *>(*it);
+        if(view->getTypeId() == FeatureOrthoView::getClassTypeId()) {
+            FeatureOrthoView *orthoView = dynamic_cast<FeatureOrthoView *>(*it);
 
             if(strcmp(viewProjType, orthoView->Type.getValueAsString()) == 0)
                 return *it;
@@ -217,6 +239,8 @@ bool FeatureViewOrthographic::hasOrthoView(const char *viewProjType) const
 
 App::DocumentObject * FeatureViewOrthographic::addOrthoView(const char *viewProjType)
 {
+    FeatureOrthoView *view = NULL;
+
     if(orthoViewNameFromStr(viewProjType) != ERROR) {
         if(hasOrthoView(viewProjType)) {
             throw Base::Exception("The Projection is already used in this group");
@@ -225,17 +249,14 @@ App::DocumentObject * FeatureViewOrthographic::addOrthoView(const char *viewProj
         std::string FeatName = getDocument()->getUniqueObjectName("OrthoView");
         App::DocumentObject *docObj = getDocument()->addObject("Drawing::FeatureOrthoView",
                                                                FeatName.c_str());
-        Drawing::FeatureOrthoView *view = dynamic_cast<Drawing::FeatureOrthoView *>(docObj);
+        view = dynamic_cast<Drawing::FeatureOrthoView *>(docObj);
         view->Source.setValue(Source.getValue());
-        //view->Scale.setValue(this->Scale.getValue());
+        view->Scale.setValue(this->Scale.getValue());
         view->Type.setValue(viewProjType);
 
         std::string label = viewProjType;
         view->Label.setValue(label);
 
-        addView(view);         //from FeatureViewCollection
-
-        return view;
 
         // Replace with orthoViewNameFromStr() when it's ready
     } else if(strcmp(viewProjType, "Top Right")  == 0 ||
@@ -244,7 +265,11 @@ App::DocumentObject * FeatureViewOrthographic::addOrthoView(const char *viewProj
               strcmp(viewProjType, "Bottom Left")  == 0) {
         // Add an isometric view of the part
     }
-    return 0;
+
+    addView(view);         //from FeatureViewCollection
+    moveToCentre();
+
+    return view;
 }
 
 int FeatureViewOrthographic::removeOrthoView(const char *viewProjType)
@@ -265,6 +290,7 @@ int FeatureViewOrthographic::removeOrthoView(const char *viewProjType)
                 if(strcmp(viewProjType, orthoView->Type.getValueAsString()) == 0) {
                     // Remove from the document
                     this->getDocument()->remObject((*it)->getNameInDocument());
+                    moveToCentre();
                     return views.size();
                 }
             }
@@ -338,35 +364,28 @@ bool FeatureViewOrthographic::distributeOrthoViews()
         if(viewPtrs[i])
             bboxes[i] = viewPtrs[i]->getBoundingBox();
 
-    // Now, do the spacing
-    double spacing = 15,    //in mm  TODO: maybe use a property?
-           offset;  // Temporary variable used to correct for the fact that
-                    // our bounding boxes aren't centered on (0,0,0)...
+    // Now that things are setup, do the spacing
+    double spacing = 15;    //in mm  TODO: maybe use a property?
+
     if (viewPtrs[0]) {
-        offset = bboxes[2].MinY + bboxes[2].MaxY - bboxes[0].MinY - bboxes[0].MaxY;
-        viewPtrs[0]->Y.setValue((bboxes[0].LengthY() + bboxes[2].LengthY() - offset) / 2.0 + spacing);
+        viewPtrs[0]->Y.setValue((bboxes[0].LengthY() + bboxes[2].LengthY()) / 2.0 + spacing);
     }
     if (viewPtrs[1]) {
-        offset = bboxes[2].MinX + bboxes[2].MaxX - bboxes[1].MinX - bboxes[1].MaxX;
-        viewPtrs[1]->X.setValue((bboxes[1].LengthX() + bboxes[2].LengthX() - offset) / -2.0 - spacing);
+        viewPtrs[1]->X.setValue((bboxes[1].LengthX() + bboxes[2].LengthX()) / -2.0 - spacing);
     }
     if (viewPtrs[2]) {  // TODO: Move this check above, and figure out a sane bounding box based on other existing views
     }
     if (viewPtrs[3]) {
-        offset = -bboxes[2].MinX - bboxes[2].MaxX + bboxes[3].MinX + bboxes[3].MaxX;
-        viewPtrs[3]->X.setValue((bboxes[2].LengthX() + bboxes[3].LengthX() - offset) / 2.0 + spacing);
+        viewPtrs[3]->X.setValue((bboxes[2].LengthX() + bboxes[3].LengthX()) / 2.0 + spacing);
     }
     if (viewPtrs[4]) {
-        offset = -bboxes[2].MinX - bboxes[2].MaxX + bboxes[4].MinX + bboxes[4].MaxX;
         if (viewPtrs[3])
-            viewPtrs[4]->X.setValue((bboxes[2].LengthX() + bboxes[4].LengthX() - offset) / 2.0 + bboxes[3].LengthX() + 2 * spacing);
+            viewPtrs[4]->X.setValue((bboxes[2].LengthX() + bboxes[4].LengthX()) / 2.0 + bboxes[3].LengthX() + 2 * spacing);
         else
-            viewPtrs[4]->X.setValue((bboxes[2].LengthX() + bboxes[4].LengthX() - offset) / 2.0 + spacing);
-
+            viewPtrs[4]->X.setValue((bboxes[2].LengthX() + bboxes[4].LengthX()) / 2.0 + spacing);
     }
     if (viewPtrs[5]) {
-        offset = -bboxes[2].MinY - bboxes[2].MaxY + bboxes[5].MinY + bboxes[5].MaxY;
-        viewPtrs[5]->Y.setValue((bboxes[5].LengthY() + bboxes[2].LengthY() - offset) / -2.0 - spacing);
+        viewPtrs[5]->Y.setValue((bboxes[5].LengthY() + bboxes[2].LengthY()) / -2.0 - spacing);
     }
 
     return true;

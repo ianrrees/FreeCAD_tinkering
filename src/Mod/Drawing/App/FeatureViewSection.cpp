@@ -212,7 +212,7 @@ App::DocumentObjectExecReturn *FeatureViewSection::execute(void)
         geometryObject->setScale(Scale.getValue());
         geometryObject->extractGeometry(result, Direction.getValue(), ShowHiddenLines.getValue(), XAxisDirection.getValue());
 
-        this->calcBoundingBox();
+        bbox = geometryObject->calcBoundingBox();
         this->touch();
 
         //return App::DocumentObject::StdReturn;

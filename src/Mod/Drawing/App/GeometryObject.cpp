@@ -110,17 +110,17 @@ GeometryObject::GeometryObject() : brep_hlr(0), Tolerance(0.05f), Scale(1.f)
 
 GeometryObject::~GeometryObject()
 {
-    this->clear();
+    clear();
 }
 
 void GeometryObject::setTolerance(double value)
 {
-    this->Tolerance = value;
+    Tolerance = value;
 }
 
 void GeometryObject::setScale(double value)
 {
-    this->Scale = value;
+    Scale = value;
 }
 
 void GeometryObject::clear()
@@ -296,13 +296,52 @@ void GeometryObject::projectSurfaces(const TopoDS_Shape &face,
     delete brep_hlr;
 }
 
+Base::BoundBox3d GeometryObject::calcBoundingBox() const
+{
+    Base::BoundBox3d bbox(0., 0., 0.);
+
+    const std::vector<Vertex *> verts = vertexGeom;
+    const std::vector<BaseGeom *> edges = edgeGeom;
+
+    // First calculate bounding box based on vertices
+    for(std::vector<Vertex *>::const_iterator it = verts.begin(); it != verts.end(); ++it) {
+        bbox.Add(Base::Vector3d((*it)->pnt.fX, (*it)->pnt.fY, 0.));
+    }
+
+    // Now, consider geometry where vertices don't define bounding box eg circles
+    for(std::vector<BaseGeom *>::const_iterator it = edges.begin(); it != edges.end(); ++it) {
+        Base::BoundBox3d bb;
+        switch ((*it)->geomType) {
+          case CIRCLE: {
+              Circle *circ = static_cast<Circle *>(*it);
+              bb = Base::BoundBox3d(0., 0., 0, circ->radius*2., circ->radius*2, 0.);
+              bb.MoveX(circ->center.fX);
+              bb.MoveY(circ->center.fY);
+
+          } break;
+          case ELLIPSE: {
+              Ellipse *circ = static_cast<Ellipse *>(*it);
+                // TODO: double check this - seems like it should have a MoveX, MoveY
+              bb = Base::BoundBox3d(0., 0., 0, circ->minor*2., circ->major*2, 0.);
+          } break;
+          default:
+              break;
+        }
+
+        bbox.Add(bb);
+    }
+    return bbox;
+}
+
+
 DrawingGeometry::BaseGeom * GeometryObject::projectEdge(const TopoDS_Shape &edge,
                                                         const TopoDS_Shape &support,
                                                         const Base::Vector3d &direction) const
 {
     if(edge.IsNull())
         throw Base::Exception("Projected edge is null");
-    // Inverty y function using support to calculate bounding box
+    // Invert y function using support to calculate bounding box
+    // TODO: look at using invertY()
 
     gp_Trsf mat;
     Bnd_Box bounds;
@@ -882,40 +921,47 @@ void GeometryObject::createWire(const TopoDS_Shape &input, std::vector<DrawingGe
 void GeometryObject::extractGeometry(const TopoDS_Shape &input, const Base::Vector3d &direction, bool extractHidden, const Base::Vector3d &xAxis)
 {
     // Clear previous Geometry and References that may have been stored
-    this->clear();
+    clear();
 
-    // Scale the shape TODO - unsure how to apply scale transformation to projection
-    gp_Trsf matScale;
-    matScale.SetScaleFactor(Scale);
 
-    // Apply the transformation
-    BRepBuilderAPI_Transform mkTrf(invertY(input), matScale);
-    const TopoDS_Shape transShape = mkTrf.Shape();
-
-    HLRBRep_Algo *brep_hlr = new HLRBRep_Algo();
-    brep_hlr->Add(transShape);
-
+    TopoDS_Shape transShape;
+    HLRBRep_Algo *brep_hlr = NULL;
     try {
-//         #if defined(__GNUC__) && defined (FC_OS_LINUX)
-//         Base::SignalException se;
-//         #endif
-
+        // Find 3-dimensional bounding box around input
         Bnd_Box bounds;
         BRepBndLib::Add(input, bounds);
         bounds.SetGap(0.0);
         Standard_Real xMin, yMin, zMin, xMax, yMax, zMax;
         bounds.Get(xMin, yMin, zMin, xMax, yMax, zMax);
 
+        // Note centre point of 3D object for...
+        gp_Pnt inputCentre((xMin + xMax) / 2.0,
+                           (yMin + yMax) / 2.0,
+                           (zMin + zMax) / 2.0);
+
+        // First - Making a copy of the shape that's scaled
+        //         around the original shape's centre point
+        gp_Trsf matScale;
+        matScale.SetScale(inputCentre, Scale);
+
+        BRepBuilderAPI_Transform mkTrf(invertY(input), matScale);
+        transShape = mkTrf.Shape();
+
+        brep_hlr = new HLRBRep_Algo();
+        brep_hlr->Add(transShape);
+
+        // Second - Projecting the shape into a properly-oriented
+        //          space with the object's centroid at the origin.
         projXAxis = xAxis;
         projNorm = direction;
         gp_Ax2 transform;
 
         if(xAxis.Length() > FLT_EPSILON) {
-            transform = gp_Ax2(gp_Pnt((xMin+xMax)/2,(yMin+yMax)/2,(zMin+zMax)/2),
+            transform = gp_Ax2(inputCentre,
                                gp_Dir(direction.x, direction.y, direction.z),
                                gp_Dir(xAxis.x, xAxis.y, xAxis.z));
         } else {
-            transform = gp_Ax2(gp_Pnt((xMin+xMax)/2,(yMin+yMax)/2,(zMin+zMax)/2),
+            transform = gp_Ax2(inputCentre,
                                gp_Dir(direction.x, direction.y, direction.z));
         }
         HLRAlgo_Projector projector( transform );

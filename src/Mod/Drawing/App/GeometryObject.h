@@ -53,6 +53,9 @@ public:
     void setTolerance(double value);
     void setScale(double value);
 
+    //! Returns 2D bounding box
+    Base::BoundBox3d calcBoundingBox() const;
+
     const std::vector<Vertex *>   & getVertexGeometry() const { return vertexGeom; };
     const std::vector<BaseGeom *> & getEdgeGeometry() const { return edgeGeom; };
     const std::vector<Face *>     & getFaceGeometry() const { return faceGeom; };

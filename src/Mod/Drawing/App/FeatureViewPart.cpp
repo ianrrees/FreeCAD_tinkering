@@ -104,7 +104,7 @@ FeatureViewPart::~FeatureViewPart()
 App::DocumentObjectExecReturn *FeatureViewPart::execute(void)
 {
     //## Get the Part Link ##/
-    App::DocumentObject* link = Source.getValue();
+    App::DocumentObject *link = Source.getValue();
 
     //Base::Console().Log("execute view feat");
     if (!link)
@@ -122,7 +122,7 @@ App::DocumentObjectExecReturn *FeatureViewPart::execute(void)
         geometryObject->setScale(Scale.getValue());
         geometryObject->extractGeometry(shape, Direction.getValue(), ShowHiddenLines.getValue(), XAxisDirection.getValue());
 
-        this->calcBoundingBox();
+        bbox = geometryObject->calcBoundingBox();
         this->touch();
 
     }
@@ -244,45 +244,11 @@ DrawingGeometry::Vertex * FeatureViewPart::getVertex(int idx) const
     return prjShape;
 }
 
-void FeatureViewPart::calcBoundingBox()
-{
-    bbox = Base::BoundBox3d(0., 0., 0.);
-
-    const std::vector<DrawingGeometry::Vertex *> verts = geometryObject->getVertexGeometry();
-    const std::vector<DrawingGeometry::BaseGeom *> edges = geometryObject->getEdgeGeometry();
-
-    for(std::vector<DrawingGeometry::Vertex *>::const_iterator it = verts.begin(); it != verts.end(); ++it) {
-        DrawingGeometry::Vertex *v = *it;
-        bbox.Add(Base::Vector3d(v->pnt.fX, v->pnt.fY, 0.));
-    }
-
-
-    for(std::vector<DrawingGeometry::BaseGeom *>::const_iterator it = edges.begin(); it != edges.end(); ++it) {
-        Base::BoundBox3d bb;
-        switch ((*it)->geomType) {
-          case DrawingGeometry::CIRCLE: {
-              DrawingGeometry::Circle *circ = static_cast<DrawingGeometry::Circle *>(*it);
-              bb = Base::BoundBox3d(0., 0., 0, circ->radius*2., circ->radius*2, 0.);
-              bb.MoveX(circ->center.fX);
-              bb.MoveY(circ->center.fY);
-
-          } break;
-          case DrawingGeometry::ELLIPSE: {
-              DrawingGeometry::Ellipse *circ = static_cast<DrawingGeometry::Ellipse *>(*it);
-              bb = Base::BoundBox3d(0., 0., 0, circ->minor*2., circ->major*2, 0.);
-          } break;
-          default: break;
-        }
-
-        bbox.Add(bb);
-    }
-}
 
 Base::BoundBox3d FeatureViewPart::getBoundingBox() const
 {
     return this->bbox;
 }
-
 
 // Python Drawing feature ---------------------------------------------------------
 
