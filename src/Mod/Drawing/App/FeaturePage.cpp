@@ -215,7 +215,6 @@ const char * FeaturePage::getPageOrientation() const
     throw Base::Exception("Template not set for Page");
 }
 
-
 }
 
 void FeaturePage::onDocumentRestored()
@@ -232,26 +231,15 @@ void FeaturePage::onDocumentRestored()
     Template.setValue(path);
 
     this->StatusBits.reset(4); // the 'Restore' flag
-
 int FeaturePage::addView(App::DocumentObject *docObj)
 {
     if(!docObj->isDerivedFrom(Drawing::FeatureView::getClassTypeId()))
-        return -1; //Doc Object must be derived from a Part Feature
+        return -1;
 
     const std::vector<App::DocumentObject *> vals = Views.getValues();
     std::vector<App::DocumentObject *> newVals(vals);
     newVals.push_back(docObj);
     Views.setValues(newVals);
-
-    if(docObj->getTypeId().isDerivedFrom(Drawing::FeatureViewCollection::getClassTypeId())) {
-        // Add child views recursively to the page feature
-        Drawing::FeatureViewCollection *collection = dynamic_cast<Drawing::FeatureViewCollection *>(docObj);
-        const std::vector<App::DocumentObject *> & views = collection->Views.getValues();
-        for(std::vector<App::DocumentObject*>::const_iterator it = views.begin(); it != views.end(); ++it) {
-            //this->addView(*it); // Recursively add child views
-        }
-    }
-
     Views.touch();
     return Views.getSize();
 }

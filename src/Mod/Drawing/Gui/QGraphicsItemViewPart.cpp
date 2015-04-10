@@ -93,8 +93,9 @@ void QGraphicsItemViewPart::tidy()
 {
     //Delete any leftover items
     for(QList<QGraphicsItem *>::iterator it = deleteItems.begin(); it != deleteItems.end(); ++it) {
-          delete *it;
+        delete *it;
     }
+    deleteItems.clear();
 }
 
 void QGraphicsItemViewPart::setViewPartFeature(Drawing::FeatureViewPart *obj)
@@ -238,8 +239,6 @@ void QGraphicsItemViewPart::updateView(bool update)
             }
         }
     }
-
-    //QGraphicsItemView::updateView(update);
 }
 
 void QGraphicsItemViewPart::draw() {

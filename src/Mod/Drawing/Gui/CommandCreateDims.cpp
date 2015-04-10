@@ -75,22 +75,19 @@ CmdDrawingNewDimension::CmdDrawingNewDimension()
 
 void CmdDrawingNewDimension::activated(int iMsg)
 {
-
-      // get the selection
     std::vector<Gui::SelectionObject> selection = getSelection().getSelectionEx();
     if(selection.size() == 0 || !selection[0].getObject()){
         return;
     }
 
-    Drawing::FeatureViewPart * Obj = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
-
-    if(!Obj) {
+    Drawing::FeatureViewPart * viewPart = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
+    if(!viewPart) {
         QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No Feature View"),
                                                     QObject::tr("No FeatureView associated with this selection"));
         return;
     }
 
-    App::DocumentObject *docObj = Obj->Source.getValue();
+    //App::DocumentObject *docObj = viewPart->Source.getValue();
 
     // get the needed lists and objects
     const std::vector<std::string> &SubNames = selection[0].getSubNames();
@@ -101,14 +98,14 @@ void CmdDrawingNewDimension::activated(int iMsg)
         return;
     }
 
-    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+    std::vector<App::DocumentObject*> pages = getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     if (pages.empty()){
         QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No Drawing Page"),
                                                    QObject::tr("Create a page first."));
         return;
     }
     Drawing::FeatureViewDimension *dim = 0;
-    std::string support = selection[0].getAsPropertyLinkSubString();
+    //std::string support = selection[0].getAsPropertyLinkSubString();
     std::string FeatName = getUniqueObjectName("Dimension");
 
     std::string dimType;
@@ -117,11 +114,10 @@ void CmdDrawingNewDimension::activated(int iMsg)
     doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewDimension','%s')",FeatName.c_str());
 
     if (SubNames.size() == 1) {
-        // Selected edge constraint
-        if (SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge") {
+        if (SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge") {      //is the selection an edge?
             int GeoId = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
 
-            QScopedPointer<DrawingGeometry::BaseGeom> geom(Obj->getCompleteEdge(GeoId));
+            QScopedPointer<DrawingGeometry::BaseGeom> geom(viewPart->getCompleteEdge(GeoId));
 
             dimType = "Distance";
 
@@ -142,16 +138,17 @@ void CmdDrawingNewDimension::activated(int iMsg)
             doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
                                                                ,dimType.c_str());
 
-            dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getDocument()->getObject(FeatName.c_str()));
-            dim->References.setValue(Obj, SubNames[0].c_str());
+            dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
+            dim->References.setValue(viewPart, SubNames[0].c_str());
         } else {
+            //TODO: message "Can't determine desired Dimension type from selection"
             abortCommand();
             return;
         }
 
     } else if(SubNames.size() == 2) {
         if (SubNames[0].size() > 6 && SubNames[0].substr(0,6) == "Vertex" &&
-            SubNames[1].size() > 6 && SubNames[1].substr(0,6) == "Vertex") {
+            SubNames[1].size() > 6 && SubNames[1].substr(0,6) == "Vertex") {    //is the selection 2 vertices?
             int GeoId1 = std::atoi(SubNames[0].substr(6,std::string::npos).c_str());
             int GeoId2 = std::atoi(SubNames[1].substr(6,std::string::npos).c_str());
 
@@ -159,25 +156,21 @@ void CmdDrawingNewDimension::activated(int iMsg)
             doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
                                                                ,dimType.c_str());
 
-            dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getDocument()->getObject(FeatName.c_str()));
+            dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
             std::vector<App::DocumentObject *> objs;
-            objs.push_back(Obj);
-            objs.push_back(Obj);
+            objs.push_back(viewPart);
+            objs.push_back(viewPart);                                  //yes, twice. once for each Vertex.
             std::vector<std::string> subs;
             subs.push_back(SubNames[0]);
             subs.push_back(SubNames[1]);
             dim->References.setValues(objs, subs);
 
         } else if(SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge" &&
-                  SubNames[1].size() > 4 && SubNames[1].substr(0,4) == "Edge") {
+                  SubNames[1].size() > 4 && SubNames[1].substr(0,4) == "Edge") {         //is the selection 2 edges?
             int GeoId1 = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
             int GeoId2 = std::atoi(SubNames[1].substr(4,std::string::npos).c_str());
-
-            // Project the edges
-            Drawing::FeatureViewPart *viewPart = dynamic_cast<Drawing::FeatureViewPart * >(Obj);
-
-            QScopedPointer<DrawingGeometry::BaseGeom> ed1(Obj->getCompleteEdge(GeoId1));
-            QScopedPointer<DrawingGeometry::BaseGeom> ed2(Obj->getCompleteEdge(GeoId2));
+            QScopedPointer<DrawingGeometry::BaseGeom> ed1(viewPart->getCompleteEdge(GeoId1));
+            QScopedPointer<DrawingGeometry::BaseGeom> ed2(viewPart->getCompleteEdge(GeoId2));
 
             if(ed1->geomType == DrawingGeometry::GENERIC &&
                ed2->geomType == DrawingGeometry::GENERIC) {
@@ -191,7 +184,7 @@ void CmdDrawingNewDimension::activated(int iMsg)
                     return;
                 }
 
-                // Construct edges
+                // Construct edge vectors
                 Base::Vector2D lin1 = gen1->points.at(1) - gen1->points.at(0);
                 Base::Vector2D lin2 = gen2->points.at(1) - gen2->points.at(0);
 
@@ -224,8 +217,8 @@ void CmdDrawingNewDimension::activated(int iMsg)
 
             dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getDocument()->getObject(FeatName.c_str()));
             std::vector<App::DocumentObject *> objs;
-            objs.push_back(Obj);
-            objs.push_back(Obj);
+            objs.push_back(viewPart);
+            objs.push_back(viewPart);
             std::vector<std::string> subs;
             subs.push_back(SubNames[0]);
             subs.push_back(SubNames[1]);
@@ -248,7 +241,7 @@ void CmdDrawingNewDimension::activated(int iMsg)
 
     } else if(strcmp(dimType.c_str(), "Radius") == 0) {
         contentStr.prepend(QString::fromAscii("r"));
-    } else if(strcmp(dimType.c_str(), "Diameter") == 0) {
+    } else if(strcmp(dimType.c_str(), "Diameter") == 0) {              //can't happen in this command
         contentStr += QString::fromAscii("D");
     }
 
@@ -257,7 +250,7 @@ void CmdDrawingNewDimension::activated(int iMsg)
                                                           ,contentStr.toStdString().c_str());
 
     // Check if the part is an orthographic view;
-    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(Obj);
+    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(viewPart);
     if(orthoView) {
         // Set the dimension to projected type
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
@@ -276,7 +269,7 @@ void CmdDrawingNewDimension::activated(int iMsg)
 
     commitCommand();
 
-    Obj->touch();
+    viewPart->touch();
 }
 
 //===========================================================================
@@ -333,7 +326,7 @@ void CmdDrawingNewRadiusDimension::activated(int iMsg)
     }
 
     Drawing::FeatureViewDimension *dim = 0;
-    std::string support = selection[0].getAsPropertyLinkSubString();
+    //std::string support = selection[0].getAsPropertyLinkSubString();
     std::string FeatName = getUniqueObjectName("Dimension");
 
     std::string dimType;
@@ -454,7 +447,7 @@ void CmdDrawingNewDiameterDimension::activated(int iMsg)
     }
 
     Drawing::FeatureViewDimension *dim = 0;
-    std::string support = selection[0].getAsPropertyLinkSubString();
+    //std::string support = selection[0].getAsPropertyLinkSubString();
     std::string FeatName = getUniqueObjectName("Dimension");
 
     std::string dimType;
@@ -583,7 +576,7 @@ void CmdDrawingNewLengthDimension::activated(int iMsg)
         return;
     }
     Drawing::FeatureViewDimension *dim = 0;
-    std::string support = selection[0].getAsPropertyLinkSubString();
+    //std::string support = selection[0].getAsPropertyLinkSubString();
     std::string FeatName = getUniqueObjectName("Dimension");
 
     std::string dimType;
@@ -794,7 +787,7 @@ void CmdDrawingNewDistanceXDimension::activated(int iMsg)
         return;
     }
     Drawing::FeatureViewDimension *dim = 0;
-    std::string support = selection[0].getAsPropertyLinkSubString();
+    //std::string support = selection[0].getAsPropertyLinkSubString();
     std::string FeatName = getUniqueObjectName("Dimension");
 
     std::string dimType;
@@ -1034,7 +1027,7 @@ void CmdDrawingNewDistanceYDimension::activated(int iMsg)
         return;
     }
     Drawing::FeatureViewDimension *dim = 0;
-    std::string support = selection[0].getAsPropertyLinkSubString();
+    //std::string support = selection[0].getAsPropertyLinkSubString();
     std::string FeatName = getUniqueObjectName("Dimension");
 
     std::string dimType;
@@ -1215,10 +1208,9 @@ void CmdDrawingNewDistanceYDimension::activated(int iMsg)
 
 
     Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
-    page->addView(page->getDocument()->getObject(FeatName.c_str()));
-
-
+    page->addView(page->getDocument()->getObject(FeatName.c_str()));            //TODO: this adds Dimension to Page. sb child of View.
     commitCommand();
+    getDocument()->recompute();
 }
 
 
@@ -1274,7 +1266,7 @@ void CmdDrawingNewAngleDimension::activated(int iMsg)
         return;
     }
     Drawing::FeatureViewDimension *dim = 0;
-    std::string support = selection[0].getAsPropertyLinkSubString();
+    //std::string support = selection[0].getAsPropertyLinkSubString();
     std::string FeatName = getUniqueObjectName("Dimension");
 
     std::string dimType;
