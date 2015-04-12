@@ -67,6 +67,29 @@ QGraphicsItemViewOrthographic::~QGraphicsItemViewOrthographic()
 //TODO: if the QGIVO is deleted, should we clean up any remaining QGIVParts??
 }
 
+Drawing::FeatureViewOrthographic * QGraphicsItemViewOrthographic::getFeatureView(void) const
+{
+    App::DocumentObject *obj = getViewObject();
+    return dynamic_cast<Drawing::FeatureViewOrthographic *>(obj);
+}
+
+void QGraphicsItemViewOrthographic::giveSelectionToAnchor(void) const
+{
+    // Get the currently assigned anchor view
+    App::DocumentObject *anchorObj = getFeatureView()->Anchor.getValue();
+    Drawing::FeatureView *anchorView = dynamic_cast<Drawing::FeatureView *>(anchorObj);
+
+    // Locate the anchor view's qgraphicsitemview
+    QList<QGraphicsItem *> list = childItems();
+
+    for (QList<QGraphicsItem *>::iterator it = list.begin(); it != list.end(); ++it) {
+        QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *>(*it);
+        if (view) {
+            view->setSelected(strcmp(view->getViewName(), anchorView->getNameInDocument()) == 0);
+        }
+    }
+}
+
 bool QGraphicsItemViewOrthographic::sceneEventFilter(QGraphicsItem * watched, QEvent *event)
 {
 // i want to handle events before the child item that would ordinarily receive them
@@ -74,15 +97,23 @@ bool QGraphicsItemViewOrthographic::sceneEventFilter(QGraphicsItem * watched, QE
        event->type() == QEvent::GraphicsSceneMouseMove  ||
        event->type() == QEvent::GraphicsSceneMouseRelease) {
 
-        QGraphicsItemView *qAnchor = this->getAnchorQItem();
+        QGraphicsItemView *qAnchor = getAnchorQItem();
         if(qAnchor && watched == qAnchor) {
             QGraphicsSceneMouseEvent *mEvent = dynamic_cast<QGraphicsSceneMouseEvent*>(event);
 
             switch(event->type()) {
-              case QEvent::GraphicsSceneMousePress:    this->mousePressEvent(mEvent);break;
-              case QEvent::GraphicsSceneMouseMove:     this->mouseMoveEvent(mEvent); break;
-              case QEvent::GraphicsSceneMouseRelease:  this->mouseReleaseEvent(mEvent); break;
-              default: break;
+              case QEvent::GraphicsSceneMousePress:
+                  giveSelectionToAnchor();
+                  mousePressEvent(mEvent);
+                  break;
+              case QEvent::GraphicsSceneMouseMove:
+                  mouseMoveEvent(mEvent);
+                  break;
+              case QEvent::GraphicsSceneMouseRelease:
+                  mouseReleaseEvent(mEvent);
+                  break;
+              default:
+                  break;
             }
             return true;
         }
@@ -106,9 +137,7 @@ QVariant QGraphicsItemViewOrthographic::itemChange(GraphicsItemChange change, co
                 } else if(type == QString::fromAscii("Front")) {
                     gView->setLocked(true);
                     installSceneEventFilter(gView);
-                    App::DocumentObject *docObj = getViewObject();
-                    Drawing::FeatureViewOrthographic *viewOrthographic = dynamic_cast<Drawing::FeatureViewOrthographic *>(docObj);
-                    viewOrthographic->Anchor.setValue(fView);
+                    getFeatureView()->Anchor.setValue(fView);
                     updateView();
                 } else {
                     gView->alignTo(origin, QString::fromAscii("Horizontal"));
@@ -158,8 +187,10 @@ void QGraphicsItemViewOrthographic::mouseReleaseEvent(QGraphicsSceneMouseEvent *
             double x = this->x();
             double y = this->getY();            // inverts Y 
             Gui::Command::openCommand("Drag Orthographic Collection");
-            Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.X = %f", this->getViewObject()->getNameInDocument(), x);
-            Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.Y = %f", this->getViewObject()->getNameInDocument(), y);
+            Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.X = %f",
+                                    getViewObject()->getNameInDocument(), x);
+            Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.Y = %f",
+                                    getViewObject()->getNameInDocument(), y);
             Gui::Command::commitCommand();
             //Gui::Command::updateActive();
         }
@@ -170,16 +201,12 @@ void QGraphicsItemViewOrthographic::mouseReleaseEvent(QGraphicsSceneMouseEvent *
 
 QGraphicsItemView * QGraphicsItemViewOrthographic::getAnchorQItem() const
 {
-        // Get FeatureViewOrthohraphic object
-    App::DocumentObject *obj = this->getViewObject();
-    Drawing::FeatureViewOrthographic *viewOrthographic = dynamic_cast<Drawing::FeatureViewOrthographic *>(obj);
-
-      // Get the currently assigned anchor view
-    App::DocumentObject *anchorObj = viewOrthographic->Anchor.getValue();
+    // Get the currently assigned anchor view
+    App::DocumentObject *anchorObj = getFeatureView()->Anchor.getValue();
     Drawing::FeatureView *anchorView = dynamic_cast<Drawing::FeatureView *>(anchorObj);
 
     // Locate the anchor view's qgraphicsitemview
-    QList<QGraphicsItem *> list =  this->childItems();
+    QList<QGraphicsItem *> list = childItems();
 
     for (QList<QGraphicsItem *>::iterator it = list.begin(); it != list.end(); ++it) {
         QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *>(*it);

@@ -45,8 +45,8 @@ using namespace DrawingGui;
 
 QGraphicsItemViewCollection::QGraphicsItemViewCollection(const QPoint &pos, QGraphicsScene *scene) :QGraphicsItemView(pos, scene)
 {
-    this->setFlags(QGraphicsItem::ItemIsSelectable);
-    this->setPos(pos);
+    setFlags(QGraphicsItem::ItemIsSelectable);
+    setPos(pos);
 
     setHandlesChildEvents(false);
 
@@ -70,8 +70,10 @@ void QGraphicsItemViewCollection::mouseReleaseEvent(QGraphicsSceneMouseEvent * e
 {
     if(scene() && this == scene()->mouseGrabberItem()) {
         Gui::Command::openCommand("Drag Orthographic Collection");
-        Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.X = %f", this->getViewObject()->getNameInDocument(), this->x());
-        Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.Y = %f", this->getViewObject()->getNameInDocument(), this->getY());
+        Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.X = %f",
+                                getViewObject()->getNameInDocument(), x());
+        Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.Y = %f",
+                                getViewObject()->getNameInDocument(), getY());
         Gui::Command::commitCommand();
         //Gui::Command::updateActive();
     }
