@@ -71,6 +71,7 @@ public:
 
 protected:
     void onChanged(const App::Property* prop);
+
     std::vector<std::string> getEditableTextsFromTemplate() const;
     QRectF blockDimensions;
 };

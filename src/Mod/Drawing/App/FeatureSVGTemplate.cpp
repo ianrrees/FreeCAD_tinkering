@@ -57,9 +57,9 @@ FeatureSVGTemplate::FeatureSVGTemplate()
 {
     static const char *group = "Drawing view";
 
-    ADD_PROPERTY_TYPE(PageResult   ,(0)   ,group,App::Prop_Output,"Resulting SVG document of that page");
-    ADD_PROPERTY_TYPE(Template     ,("")  ,group,App::Prop_None  ,"Template for the page");
-    ADD_PROPERTY_TYPE(EditableTexts,("")  ,group,App::Prop_None  ,"Substitution values for the editable strings in the template");
+    ADD_PROPERTY_TYPE(PageResult   ,(0)   ,group,App::Prop_Output, "Resulting SVG document of that page");
+    ADD_PROPERTY_TYPE(Template     ,("")  ,group,App::Prop_Transient, "Template for the page");
+    ADD_PROPERTY_TYPE(EditableTexts,("")  ,group,App::Prop_None  , "Substitution values for the editable strings in the template");
 
     // Width and Height properties shouldn't be set by the user
     Height.StatusBits.set(2);       // Read Only
@@ -94,19 +94,25 @@ short FeatureSVGTemplate::mustExecute() const
 void FeatureSVGTemplate::onChanged(const App::Property* prop)
 {
     if (prop == &PageResult) {
-        if (this->isRestoring()) {
+        if (isRestoring()) {
+
             // When loading a document the included file
             // doesn't need to exist at this point.
             Base::FileInfo fi(PageResult.getValue());
-            if (!fi.exists())
+
+//TODO: I don't understand why it is that this "works", seems like we might have two properties where we only need one?  -Ian- 
+Template.setValue(App::Application::getResourceDir() + "Mod/Drawing/Templates/" + fi.fileName());
+
+            if (!fi.exists()) {
                 return;
+            }
         }
     }
 
     if (prop == &Template) {
-        if (!this->isRestoring()) {
+        if (!isRestoring()) {
             EditableTexts.setValues(getEditableTextsFromTemplate());
-            this->execute();
+            execute();
 
             // Update the parent page if exists
             std::vector<App::DocumentObject*> parent = getInList();
@@ -119,11 +125,10 @@ void FeatureSVGTemplate::onChanged(const App::Property* prop)
         }
     }
 
-
     Drawing::FeatureTemplate::onChanged(prop);
 }
 
-App::DocumentObjectExecReturn *FeatureSVGTemplate::execute(void)
+App::DocumentObjectExecReturn * FeatureSVGTemplate::execute(void)
 {
     std::string temp = Template.getValue();
     if (temp.empty())

@@ -64,7 +64,7 @@ FeaturePage::FeaturePage(void) : numChildren(0)
     static const char *group = "Page";
 
 //obs    ADD_PROPERTY_TYPE(PageResult ,(0),group,App::Prop_Output,"Resulting SVG document of that page");
-    ADD_PROPERTY_TYPE(Template ,(0), group, (App::PropertyType)(App::Prop_Transient),"Attached Template");
+    ADD_PROPERTY_TYPE(Template ,(0), group, (App::PropertyType)(App::Prop_None),"Attached Template");
 //obs    ADD_PROPERTY_TYPE(EditableTexts,(""),group,App::Prop_None,"Substitution values for the editable strings in the template");
     ADD_PROPERTY_TYPE(Views    ,(0), group, (App::PropertyType)(App::Prop_None),"Attached Views");
 
@@ -174,11 +174,9 @@ double FeaturePage::getPageWidth() const
     App::DocumentObject *obj = 0;
     obj = Template.getValue();
 
-    if(obj) {
-        if(obj->isDerivedFrom(Drawing::FeatureTemplate::getClassTypeId()) ) {
+    if( obj && obj->isDerivedFrom(Drawing::FeatureTemplate::getClassTypeId()) ) {
         Drawing::FeatureTemplate *templ = static_cast<Drawing::FeatureTemplate *>(obj);
         return templ->getWidth();
-        }
     }
 
     throw Base::Exception("Template not set for Page");

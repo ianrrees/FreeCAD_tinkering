@@ -362,21 +362,19 @@ void CanvasView::setPageTemplate(Drawing::FeatureTemplate *obj)
 {
     // Remove currently set background template
     // Assign a base template class and create object dependent on
-    this->removeTemplate();
+    removeTemplate();
 
     if(obj->isDerivedFrom(Drawing::FeatureParametricTemplate::getClassTypeId())) {
         Drawing::FeatureParametricTemplate *dwgTemplate = static_cast<Drawing::FeatureParametricTemplate *>(obj);
         QGraphicsItemDrawingTemplate *qTempItem = new QGraphicsItemDrawingTemplate(this->scene());
-        qTempItem->setTemplate(dwgTemplate);
-        qTempItem->updateView();
-        this->pageTemplate = qTempItem;
+        pageTemplate = qTempItem;
     } else if(obj->isDerivedFrom(Drawing::FeatureSVGTemplate::getClassTypeId())) {
         Drawing::FeatureSVGTemplate *dwgTemplate = static_cast<Drawing::FeatureSVGTemplate *>(obj);
         QGraphicsItemSVGTemplate *qTempItem = new QGraphicsItemSVGTemplate(this->scene());
-        qTempItem->setTemplate(dwgTemplate);
-        qTempItem->updateView();
-        this->pageTemplate = qTempItem;
+        pageTemplate = qTempItem;
     }
+    pageTemplate->setTemplate(obj);
+    pageTemplate->updateView();
 }
 
 QGraphicsItemTemplate* CanvasView::getTemplate() const

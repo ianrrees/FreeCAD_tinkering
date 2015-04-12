@@ -75,8 +75,6 @@ public:
 protected:
     void onBeforeChange(const App::Property* prop);
     void onChanged(const App::Property* prop);
-    /// get called after a document has been fully restored
-    virtual void onDocumentRestored();
 
 private:
     int numChildren;
