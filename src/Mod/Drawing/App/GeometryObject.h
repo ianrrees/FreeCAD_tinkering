@@ -73,6 +73,13 @@ public:
                          const Base::Vector3d &xaxis,
                          std::vector<DrawingGeometry::Face *> &result) const;
 
+    /// Process 3D shape to get 2D geometry
+    /*!
+     * Applies a projection to the input based on direction and vAxis, then
+     * calls extractEdges (which in turn calls extractVerts) and extractFaces
+     * to populate vectors used by getVertexRefs(), getEdgeRefs(), and
+     * getFaceRefs()
+     */
     void extractGeometry(const TopoDS_Shape &input,const Base::Vector3d &direction, bool extractHidden = false, const Base::Vector3d &vAxis = Base::Vector3d(0.,0.,0.));
 
 protected:
@@ -96,6 +103,7 @@ protected:
 
     int calculateGeometry(const TopoDS_Shape &input, ExtractionType extractionType, std::vector<BaseGeom *> &geoms) const;
 
+    /// Accumulate edges from input and store them in wires
     void createWire(const TopoDS_Shape &input, std::vector<DrawingGeometry::Wire *> &wires) const;
     TopoDS_Shape invertY(const TopoDS_Shape& shape) const;
 

@@ -86,11 +86,11 @@ Wire::Wire()
 
 Wire::~Wire()
 {
-    for(std::vector<BaseGeom *>::iterator it = this->geoms.begin(); it != this->geoms.end(); ++it) {
+    for(std::vector<BaseGeom *>::iterator it = geoms.begin(); it != geoms.end(); ++it) {
         delete (*it);
         *it = 0;
     }
-    this->geoms.clear();
+    geoms.clear();
 }
 
 Face::Face()
@@ -100,43 +100,43 @@ Face::Face()
 
 Face::~Face()
 {
-    for(std::vector<Wire *>::iterator it = this->wires.begin(); it != this->wires.end(); ++it) {
+    for(std::vector<Wire *>::iterator it = wires.begin(); it != wires.end(); ++it) {
         delete (*it);
         *it = 0;
     }
-    this->wires.clear();
+    wires.clear();
 }
 
 Ellipse::Ellipse()
 {
-    this->geomType = ELLIPSE;
+    geomType = ELLIPSE;
 }
 
 Ellipse::Ellipse(const BRepAdaptor_Curve& c)
 {
-    this->geomType = ELLIPSE;
+    geomType = ELLIPSE;
 
     gp_Elips ellp = c.Ellipse();
-    const gp_Pnt& p = ellp.Location();
+    const gp_Pnt &p = ellp.Location();
 
-    this->center = Base::Vector2D(p.X(),p.Y());
+    center = Base::Vector2D(p.X(), p.Y());
 
-    this->major = ellp.MajorRadius();
-    this->minor = ellp.MinorRadius();
+    major = ellp.MajorRadius();
+    minor = ellp.MinorRadius();
 
     gp_Dir xaxis = ellp.XAxis().Direction();
-    this->angle = xaxis.AngleWithRef(gp_Dir(1,0,0),gp_Dir(0,0,-1));
-    this->angle *= 180 / M_PI;
+    angle = xaxis.AngleWithRef(gp_Dir(1, 0, 0), gp_Dir(0, 0, -1));
+    angle *= 180 / M_PI;
 }
 
 AOE::AOE()
 {
-    this->geomType = ARCOFELLIPSE;
+    geomType = ARCOFELLIPSE;
 }
 
 AOE::AOE(const BRepAdaptor_Curve& c) : Ellipse(c)
 {
-    this->geomType = ARCOFELLIPSE;
+    geomType = ARCOFELLIPSE;
 
     gp_Elips ellp = c.Ellipse();
 
@@ -151,10 +151,10 @@ AOE::AOE(const BRepAdaptor_Curve& c) : Ellipse(c)
     gp_Vec v3(0,0,1);
     double a = v3.DotCross(v1,v2);
 
-    this->startAngle = f;
-    this->endAngle = l;
-    this->cw = (a < 0) ? true: false;
-    this->largeArc = (l-f > M_PI) ? true : false;
+    startAngle = f;
+    endAngle = l;
+    cw = (a < 0) ? true: false;
+    largeArc = (l-f > M_PI) ? true : false;
     
     startPnt = Base::Vector2D(s.X(), s.Y());
     endPnt = Base::Vector2D(e.X(), e.Y());
@@ -179,34 +179,34 @@ AOE::AOE(const BRepAdaptor_Curve& c) : Ellipse(c)
 // 
 //     this->endAngle = startAngle + range;
 
-    this->startAngle *= 180 / M_PI;
-    this->endAngle   *= 180 / M_PI;
+    startAngle *= 180 / M_PI;
+    endAngle   *= 180 / M_PI;
 }
 
 Circle::Circle()
 {
-      this->geomType = CIRCLE;
+    geomType = CIRCLE;
 }
 
 Circle::Circle(const BRepAdaptor_Curve& c)
 {
-    this->geomType = CIRCLE;
+    geomType = CIRCLE;
 
     gp_Circ circ = c.Circle();
     const gp_Pnt& p = circ.Location();
 
-    this->radius = circ.Radius();
-    this->center = Base::Vector2D(p.X(), p.Y());
+    radius = circ.Radius();
+    center = Base::Vector2D(p.X(), p.Y());
 }
 
 AOC::AOC()
 {
-    this->geomType = ARCOFCIRCLE;
+    geomType = ARCOFCIRCLE;
 }
 
 AOC::AOC(const BRepAdaptor_Curve& c) : Circle(c)
 {
-    this->geomType = ARCOFCIRCLE;
+    geomType = ARCOFCIRCLE;
     
     double f = c.FirstParameter();
     double l = c.LastParameter();
@@ -219,52 +219,52 @@ AOC::AOC(const BRepAdaptor_Curve& c) : Circle(c)
     gp_Vec v3(0,0,1);
     double a = v3.DotCross(v1,v2);
 
-    this->startAngle = f;
-    this->endAngle = l;
-    this->cw = (a < 0) ? true: false;
-    this->largeArc = (l-f > M_PI) ? true : false;
+    startAngle = f;
+    endAngle = l;
+    cw = (a < 0) ? true: false;
+    largeArc = (l-f > M_PI) ? true : false;
     
     startPnt = Base::Vector2D(s.X(), s.Y());
     endPnt = Base::Vector2D(e.X(), e.Y());
               
-    this->startAngle *= 180 / M_PI;
-    this->endAngle   *= 180 / M_PI;
+    startAngle *= 180 / M_PI;
+    endAngle   *= 180 / M_PI;
 }
 
 Generic::Generic()
 {
-    this->geomType = GENERIC;
+    geomType = GENERIC;
 }
 
 Generic::Generic(const BRepAdaptor_Curve& c)
 {
-    this->geomType = GENERIC;
+    geomType = GENERIC;
 
     TopLoc_Location location;
     Handle_Poly_Polygon3D polygon = BRep_Tool::Polygon3D(c.Edge(), location);
     if (!polygon.IsNull()) {
         const TColgp_Array1OfPnt &nodes = polygon->Nodes();
         for (int i = nodes.Lower(); i <= nodes.Upper(); i++){
-             this->points.push_back(Base::Vector2D(nodes(i).X(), nodes(i).Y()));
+            points.push_back(Base::Vector2D(nodes(i).X(), nodes(i).Y()));
         }
     }
 }
 
 BSpline::BSpline()
 {
-    this->geomType = BSPLINE;
+    geomType = BSPLINE;
 }
 
-BSpline::BSpline(const BRepAdaptor_Curve& c)
+BSpline::BSpline(const BRepAdaptor_Curve &c)
 {
-    this->geomType = BSPLINE;
+    geomType = BSPLINE;
     Handle_Geom_BSplineCurve spline = c.BSpline();
     if (spline->Degree() > 3) {
         Standard_Real tol3D = 0.001;
         Standard_Integer maxDegree = 3, maxSegment = 10;
         Handle_BRepAdaptor_HCurve hCurve = new BRepAdaptor_HCurve(c);
         // approximate the curve using a tolerance
-        Approx_Curve3d approx(hCurve,tol3D,GeomAbs_C2, maxSegment, maxDegree);
+        Approx_Curve3d approx(hCurve, tol3D, GeomAbs_C2, maxSegment, maxDegree);
         if (approx.IsDone() && approx.HasResult()) {
             // have the result
             spline = approx.Curve();
@@ -272,45 +272,22 @@ BSpline::BSpline(const BRepAdaptor_Curve& c)
     }
 
     GeomConvert_BSplineCurveToBezierCurve crt(spline);
-    Standard_Integer arcs = crt.NbArcs();
-    for (Standard_Integer i = 1; i <= arcs; i++) {
+
+    BezierSegment tempSegment;
+    gp_Pnt controlPoint;
+
+    for (Standard_Integer i = 1; i <= crt.NbArcs(); ++i) {
         Handle_Geom_BezierCurve bezier = crt.Arc(i);
-        Standard_Integer poles = bezier->NbPoles();
-        BezierSegment segment;
-        if (bezier->Degree() == 3) {
-            if (poles != 4)
-                Standard_Failure::Raise("do it the generic way");
-            segment.poles = 4;
-            gp_Pnt p1 = bezier->Pole(1);
-            gp_Pnt p2 = bezier->Pole(2);
-            gp_Pnt p3 = bezier->Pole(3);
-            gp_Pnt p4 = bezier->Pole(4);
-            if (i == 1) {
-                segment.pnts[0] = Base::Vector2D(p1.X(), p1.Y());
-                segment.pnts[1] = Base::Vector2D(p2.X(), p2.Y());
-                segment.pnts[2] = Base::Vector2D(p3.X(), p3.Y());
-                segment.pnts[3] = Base::Vector2D(p4.X(), p4.Y());
-            } else {
-                segment.pnts[2] = Base::Vector2D(p3.X(), p3.Y());
-                segment.pnts[3] = Base::Vector2D(p4.X(), p4.Y());
-            }
-        } else if (bezier->Degree() == 2) {
-            if (poles != 3)
-                Standard_Failure::Raise("do it the generic way");
-            segment.poles = 3;
-            gp_Pnt p1 = bezier->Pole(1);
-            gp_Pnt p2 = bezier->Pole(2);
-            gp_Pnt p3 = bezier->Pole(3);
-            if(i == 1) {
-                segment.pnts[0] = Base::Vector2D(p1.X(), p1.Y());
-                segment.pnts[1] = Base::Vector2D(p2.X(), p2.Y());
-                segment.pnts[2] = Base::Vector2D(p3.X(), p3.Y());
-            } else {
-                segment.pnts[2] = Base::Vector2D(p3.X(), p3.Y());
-            }
-        } else {
-            Standard_Failure::Raise("do it the generic way");
+
+        tempSegment.poles = bezier->NbPoles();
+
+        // Note: We really only need to keep the pnts[0] for the first Bezier segment,
+        // assuming this only gets used as in QGraphicsItemViewPart::drawPainterPath
+        for (int pole = 1; pole <= tempSegment.poles; ++pole) {
+            controlPoint = bezier->Pole(pole);
+            tempSegment.pnts[pole - 1] = Base::Vector2D(controlPoint.X(), controlPoint.Y());
         }
-        this->segments.push_back(segment);
+        segments.push_back(tempSegment);
     }    
 }
+

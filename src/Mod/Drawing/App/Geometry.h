@@ -108,10 +108,22 @@ public:
   bool largeArc;
 };
 
+/// Handles degree 1 to 3 Bezier segments
+/*!
+ * \todo extend this to higher orders if necessary
+ */
 struct BezierSegment
 {
-   int poles;
-   Base::Vector2D pnts[4];
+    /// Number of entries in pnts that are valid
+    int poles;
+    /// Control points for this segment
+    /*!
+     * Note that first and last used points define the endpoints for this
+     * segment, so when we know that a sequence of BezierSegment objects are
+     * going to be strung together, then we only need to know the start of
+     * the first element (or the end of the last element).
+     */
+    Base::Vector2D pnts[4];
 };
 
 class DrawingExport BSpline: public BaseGeom

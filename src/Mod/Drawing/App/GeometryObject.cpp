@@ -833,88 +833,91 @@ bool GeometryObject::isSameCurve(const BRepAdaptor_Curve &c1, const BRepAdaptor_
     return false;
 }
 
-void GeometryObject::createWire(const TopoDS_Shape &input, std::vector<DrawingGeometry::Wire *> &wires) const
+void GeometryObject::createWire(const TopoDS_Shape &input,
+                                std::vector<DrawingGeometry::Wire *> &wires) const
 {
-     if(input.IsNull()) {
+    if (input.IsNull()) {
         Base::Console().Log("Drawing::GeometryObject::createWire input is NULL\n");
         return; // There is no OpenCascade Geometry to be calculated
-     }
+    }
 
     std::list<TopoDS_Edge> edgeList;
 
     // Explore all edges of input and calculate base geometry representation
     TopExp_Explorer edges(input, TopAbs_EDGE);
-    for (int i = 1 ; edges.More(); edges.Next(),i++) {
-        const TopoDS_Edge& edge = TopoDS::Edge(edges.Current());
-        edgeList.push_back(edge);
+    while (edges.More()) {
+        edgeList.push_back(TopoDS::Edge(edges.Current()));
+        edges.Next();
     }
 
-    // sort them together to wires
+
+    // Combine connected edges into wires.
+
+    // BRepBuilderAPI_MakeWire has an annoying behaviour where the only [sane]
+    // way to test whether an edge connects to a wire is to attempt adding
+    // the edge.  But, if the last added edge was not connected to the wire,
+    // BRepBuilderAPI_MakeWire::Wire() will throw an exception.  So, we need
+    // to hang on to the last successfully added edge to "reset" mkWire.
+    bool lastAddFailed;
+    TopoDS_Edge lastGoodAdd;
+
     while (edgeList.size() > 0) {
-        BRepBuilderAPI_MakeWire mkWire;
         // add and erase first edge
-        TopoDS_Edge e = TopoDS_Edge(edgeList.front());
-        TopExp_Explorer xp;
-        EdgePoints ep;
-        xp.Init(edgeList.front(),TopAbs_VERTEX);
-        ep.v1 = BRep_Tool::Pnt(TopoDS::Vertex(xp.Current()));
-        xp.Next();
-        ep.v2 = BRep_Tool::Pnt(TopoDS::Vertex(xp.Current()));
-        ep.edge = edgeList.front();
+        BRepBuilderAPI_MakeWire mkWire;
         mkWire.Add(edgeList.front());
+        lastAddFailed = false;
+        lastGoodAdd = edgeList.front();
         edgeList.pop_front();
 
-        DrawingGeometry::Wire *genWire = new DrawingGeometry::Wire();
-        //TopoDS_Wire newWire;
         // try to connect each edge to the wire, the wire is complete if no more egdes are connectible
-        bool found = false;
-        if (!edgeList.empty()) {
-            do {
-                found = false;
-                for (std::list<TopoDS_Edge>::iterator pE = edgeList.begin(); pE != edgeList.end(); ++pE) {
-                    mkWire.Add(*pE);
-                    if (mkWire.Error() != BRepBuilderAPI_DisconnectedWire) {
-                        // edge added ==> remove it from list
-                        found = true;
-                        TopExp_Explorer xp;
+        bool found;
+        do {
+            found = false;
+            for (std::list<TopoDS_Edge>::iterator pE = edgeList.begin(); pE != edgeList.end(); ++pE) {
 
-//                     EdgePoints ep;
-//                     xp.Init(*pE,TopAbs_VERTEX);
-//                     ep.v1 = BRep_Tool::Pnt(TopoDS::Vertex(xp.Current()));
-//                     xp.Next();
-//                     ep.v2 = BRep_Tool::Pnt(TopoDS::Vertex(xp.Current()));
-//                     ep.edge = *pE;
+                // Try adding edge - doesn't necessarily add it
+                mkWire.Add(*pE);
 
-//                     BRep_Builder builder;
-//                     TopoDS_Compound comp;
-//                     builder.MakeCompound(comp);
-//                     builder.Add(comp, *pE);
+                if (mkWire.Error() != BRepBuilderAPI_DisconnectedWire) {
+                    // Edge added!  Remember it, 
+                    lastAddFailed = false;
+                    lastGoodAdd = *pE;
 
-                       edgeList.erase(pE);
-                       break;
-                    }
-                } 
+                    // ...remove it from edgeList,
+                    edgeList.erase(pE);
+
+                    // ...and start searching for the next edge
+                    found = true;
+                    break;
+                } else {
+                    lastAddFailed = true;
+                }
+            } 
+        } while (found);
+
+        // See note above re: BRepBuilderAPI_MakeWire annoying behaviour
+        if (lastAddFailed) {
+            mkWire.Add(lastGoodAdd);
+        }
+
+        if (mkWire.Error() == BRepBuilderAPI_WireDone) {
+            DrawingGeometry::Wire *genWire = new DrawingGeometry::Wire();
+
+            // If there are problems in this area, have a look at ShapeFix_Wire
+            BRepTools_WireExplorer explr(mkWire.Wire());
+            while (explr.More()) {
+                BRep_Builder builder;
+                TopoDS_Compound comp;
+                builder.MakeCompound(comp);
+                builder.Add(comp, explr.Current());
+
+                calculateGeometry(comp, Plain, genWire->geoms);
+                explr.Next();
             }
-            while (found);
+            wires.push_back(genWire);
+        } else if(mkWire.Error() == BRepBuilderAPI_DisconnectedWire) {
+            Standard_Failure::Raise("Fatal error occurred in GeometryObject::createWire()");
         }
-
-        ShapeFix_Wire fix;
-        //fix.Load(newWire);
-        fix.Load(mkWire.Wire());
-        fix.FixReorder();
-        fix.Perform();
-
-        BRepTools_WireExplorer explr(fix.Wire());
-        while(explr.More()){
-            BRep_Builder builder;
-            TopoDS_Compound comp;
-            builder.MakeCompound(comp);
-            builder.Add(comp, explr.Current());
-
-            int edgesAdded = calculateGeometry(comp, Plain , genWire->geoms);
-            explr.Next();
-        }
-        wires.push_back(genWire);
     }
 }
 
@@ -923,7 +926,7 @@ void GeometryObject::extractGeometry(const TopoDS_Shape &input, const Base::Vect
     // Clear previous Geometry and References that may have been stored
     clear();
 
-
+    ///TODO: Consider whether it would be possible/beneficial to cache some of this effort IR
     TopoDS_Shape transShape;
     HLRBRep_Algo *brep_hlr = NULL;
     try {
@@ -975,6 +978,8 @@ void GeometryObject::extractGeometry(const TopoDS_Shape &input, const Base::Vect
 
     // extracting the result sets:
 
+    //TODO: What is this? IR
+
     // V  = shapes.VCompound       ();// hard edge visibly
     // V1 = shapes.Rg1LineVCompound();// Smoth edges visibly
     // VN = shapes.RgNLineVCompound();// contour edges visibly
@@ -1006,7 +1011,9 @@ void GeometryObject::extractGeometry(const TopoDS_Shape &input, const Base::Vect
 }
 
 
-int GeometryObject::calculateGeometry(const TopoDS_Shape &input, const ExtractionType extractionType, std::vector<BaseGeom *> &geom) const
+int GeometryObject::calculateGeometry(const TopoDS_Shape &input,
+                                      const ExtractionType extractionType,
+                                      std::vector<BaseGeom *> &geom) const
 {
     if(input.IsNull()) {
         Base::Console().Log("Drawing::GeometryObject::calculateGeometry input is NULL\n");
@@ -1060,10 +1067,10 @@ int GeometryObject::calculateGeometry(const TopoDS_Shape &input, const Extractio
           case GeomAbs_BSplineCurve: {
             BSpline *bspline = 0;
             try {
-                 bspline = new BSpline(adapt);
-                  bspline->extractType = extractionType;
-                  geom.push_back(bspline);
-                  break;
+                bspline = new BSpline(adapt);
+                bspline->extractType = extractionType;
+                geom.push_back(bspline);
+                break;
             }
             catch (Standard_Failure) {
                 delete bspline;

@@ -107,6 +107,7 @@ void QGraphicsItemViewPart::setViewPartFeature(Drawing::FeatureViewPart *obj)
 QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *baseGeom) const
 {
     QPainterPath path;
+
     switch(baseGeom->geomType) {
         case DrawingGeometry::CIRCLE: {
           DrawingGeometry::Circle *geom = static_cast<DrawingGeometry::Circle *>(baseGeom);
@@ -154,24 +155,25 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
 
           std::vector<DrawingGeometry::BezierSegment>::const_iterator it = geom->segments.begin();
 
-          DrawingGeometry::BezierSegment startSeg = geom->segments.at(0);
-          path.moveTo(startSeg.pnts[0].fX, startSeg.pnts[0].fY);
-          Base::Vector2D prevContPnt = startSeg.pnts[1];
+          // Move painter to the beginning of our first segment
+          path.moveTo(it->pnts[0].fX, it->pnts[0].fY);
 
-          for(int i = 0; it != geom->segments.end(); ++it, ++i) {
-              DrawingGeometry::BezierSegment seg = *it;
-              if(seg.poles == 4) {
-                  path.cubicTo(seg.pnts[1].fX,seg.pnts[1].fY, seg.pnts[2].fX, seg.pnts[2].fY, seg.pnts[3].fX, seg.pnts[3].fY);
-              } else {
-                  Base::Vector2D cPnt;
-                  if(i == 0) {
-                      prevContPnt.Set(startSeg.pnts[1].fX, startSeg.pnts[1].fX);
-                  } else {
-                      prevContPnt.Set(2 * startSeg.pnts[1].fX - prevContPnt.fX, 2 * startSeg.pnts[1].fY - prevContPnt.fY);
-                  }
+          for ( ; it != geom->segments.end(); ++it) {
+              // At this point, the painter is either at the beginning
+              // of the first segment, or end of the last
 
-                  path.quadTo(prevContPnt.fX, prevContPnt.fY, seg.pnts[2].fX, seg.pnts[2].fY);
+              if ( it->poles == 2 ) {
+                  // Degree 1 bezier = straight line...
+                  path.lineTo(it->pnts[1].fX, it->pnts[1].fY);
 
+              } else if ( it->poles == 3 ) {
+                  path.quadTo(it->pnts[1].fX, it->pnts[1].fY,
+                              it->pnts[2].fX, it->pnts[2].fY);
+
+              } else if ( it->poles == 4 ) {
+                  path.cubicTo(it->pnts[1].fX, it->pnts[1].fY,
+                               it->pnts[2].fX, it->pnts[2].fY,
+                               it->pnts[3].fX, it->pnts[3].fY);
               }
           }
         } break;
@@ -198,6 +200,7 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
 
     return path;
 }
+
 void QGraphicsItemViewPart::updateView(bool update)
 {
     if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewPart::getClassTypeId()))
