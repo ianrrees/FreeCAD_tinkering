@@ -34,20 +34,25 @@
 
 using namespace Drawing;
 
-const char* FeatureOrthoView::TypeEnums[]= {"Front",
-                                            "Left",
-                                            "Right",
-                                            "Rear",
-                                            "Top",
-                                            "Bottom",
-                                            NULL};
+const char* FeatureOrthoView::TypeEnums[] = {"Front",
+                                             "Left",
+                                             "Right",
+                                             "Rear",
+                                             "Top",
+                                             "Bottom",
+                                             "FrontTopLeft",
+                                             "FrontTopRight",
+                                             "FrontBottomLeft",
+                                             "FrontBottomRight",
+                                             NULL};
+
 
 PROPERTY_SOURCE(Drawing::FeatureOrthoView, Drawing::FeatureViewPart)
 
 FeatureOrthoView::FeatureOrthoView(void)
 {
     Type.setEnums(TypeEnums);
-    ADD_PROPERTY(Type,((long)0));
+    ADD_PROPERTY(Type, ((long)0));
 
     // Set Hidden
     Direction.StatusBits.set(3);
@@ -67,16 +72,16 @@ short FeatureOrthoView::mustExecute() const
     return Drawing::FeatureViewPart::mustExecute();
 }
 
-/// get called by the container when a Property was changed
 void FeatureOrthoView::onChanged(const App::Property* prop)
 {
     Drawing::FeatureViewPart::onChanged(prop);
 
+    //TODO: Should we allow changes to the Type here?  Seems that should be handled through FeatureViewOrthographic
     if (prop == &Type &&
         Type.isTouched()
     ){
-          if (!this->isRestoring()) {
-              FeatureOrthoView::execute();
+          if (!isRestoring()) {
+              execute();
           }
     }
 
@@ -89,37 +94,17 @@ FeatureOrthoView::~FeatureOrthoView()
 void FeatureOrthoView::onDocumentRestored()
 {
     // Rebuild the view
-    this->execute();
+    execute();
 }
 
+/*
+//TODO: Perhaps we don't need this anymore?
 App::DocumentObjectExecReturn *FeatureOrthoView::execute(void)
 {
     if(this->Type.isTouched()) {
         this->Type.purgeTouched();
-        std::string projType = this->Type.getValueAsString();
-        if(strcmp(projType.c_str(), "Front") == 0) {
-            Direction.setValue(0., 1., 0.);
-            XAxisDirection.setValue(1., 0., 0.);
-        } else if(strcmp(projType.c_str(), "Rear") == 0) {
-            Direction.setValue(0., -1., 0.);
-            XAxisDirection.setValue(-1., 0., 0);
-        } else if(strcmp(projType.c_str(), "Right") == 0) {
-            Direction.setValue(1., 0., 0.);
-            XAxisDirection.setValue(0, -1., 0);
-        } else if(strcmp(projType.c_str(), "Left") == 0) {
-            Direction.setValue(-1., 0., 0.);
-            XAxisDirection.setValue(0, 1., 0);
-        } else if(strcmp(projType.c_str(), "Top") == 0) {
-            Direction.setValue(0., 0., 1.);
-            XAxisDirection.setValue(1., 0., 0);
-        } else if(strcmp(projType.c_str(), "Bottom") == 0) {
-            Direction.setValue(0., 0., -1.);
-            XAxisDirection.setValue(1., 0., 0);
-        }
-
-
     }
 
     return Drawing::FeatureViewPart::execute();
-}
+}*/
 

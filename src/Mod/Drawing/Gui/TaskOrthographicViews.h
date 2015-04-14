@@ -71,13 +71,16 @@ public:
 
 protected Q_SLOTS:
     void viewToggled(bool toggle);
+
+    /// Requests appropriate rotation of our FeatureViewOrthographic
+    void rotateButtonClicked(void);
+
     void projectionTypeChanged(int index);
     void scaleTypeChanged(int index);
     void scaleManuallyChanged(const QString & text);
 
 protected:
     void changeEvent(QEvent * e);
-
 
 private:
     //class Private;

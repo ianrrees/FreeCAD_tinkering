@@ -67,8 +67,20 @@ public:
     }
 //App::DocumentObjectExecReturn * recompute(void);
 
+    /// Check whether we've got a valid template
+    /*!
+     * \return boolean answer to the question: "Doest thou have a valid template?"
+     */
     bool hasValidTemplate() const;
+    /// Returns width of the template
+    /*!
+     * \throws Base::Exception if no template is loaded.
+     */
     double getPageWidth() const;
+    /// Returns height of the template
+    /*!
+     * \throws Base::Exception if no template is loaded.
+     */
     double getPageHeight() const;
     const char* getPageOrientation() const;
 

@@ -30,6 +30,7 @@
 #include <Gui/Command.h>
 
 #include <Mod/Part/App/PartFeature.h>
+
 #include <Mod/Drawing/App/FeaturePage.h>
 #include <Mod/Drawing/App/FeatureViewPart.h>
 
@@ -61,6 +62,7 @@ TaskOrthographicViews::TaskOrthographicViews(Drawing::FeatureViewOrthographic* f
     ui->cmbScaleType->setCurrentIndex(multiView->ScaleType.getValue());
     
     // Initially toggle checkboxes if needed
+    // TODO: Loop on the enum and do this more sanely...
     if(multiView->hasOrthoView("Left")) {
         ui->chkOrthoLeft->setCheckState(Qt::Checked);
     }
@@ -85,15 +87,46 @@ TaskOrthographicViews::TaskOrthographicViews(Drawing::FeatureViewOrthographic* f
         ui->chkOrthoBottom->setCheckState(Qt::Checked);
     }
 
+    if(multiView->hasOrthoView("FrontTopLeft")) {
+        ui->chkIsoFrontTopLeft->setCheckState(Qt::Checked);
+    }
+
+    if(multiView->hasOrthoView("FrontTopRight")) {
+        ui->chkIsoFrontTopRight->setCheckState(Qt::Checked);
+    }
+
+    if(multiView->hasOrthoView("FrontBottomRight")) {
+        ui->chkIsoFrontBottomRight->setCheckState(Qt::Checked);
+    }
+
+    if(multiView->hasOrthoView("FrontBottomLeft")) {
+        ui->chkIsoFrontBottomLeft->setCheckState(Qt::Checked);
+    }
+
     blockUpdate = false;
 
-    // Connect the checkboxes to their views
+    // Rotation buttons
+    // Note we don't do the custom one here, as it's handled by [a different function that's held up in customs]
+    connect(ui->butTopRotate,   SIGNAL(clicked()), this, SLOT(rotateButtonClicked(void)));
+    connect(ui->butCWRotate,    SIGNAL(clicked()), this, SLOT(rotateButtonClicked(void)));
+    connect(ui->butRightRotate, SIGNAL(clicked()), this, SLOT(rotateButtonClicked(void)));
+    connect(ui->butDownRotate,  SIGNAL(clicked()), this, SLOT(rotateButtonClicked(void)));
+    connect(ui->butLeftRotate,  SIGNAL(clicked()), this, SLOT(rotateButtonClicked(void)));
+    connect(ui->butCCWRotate,   SIGNAL(clicked()), this, SLOT(rotateButtonClicked(void)));
+
+    // Orthographic check boxes
     connect(ui->chkOrthoLeft,   SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));    // Left View
     connect(ui->chkOrthoRight,  SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));    // Right View
     connect(ui->chkOrthoTop,    SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));    // Top View
     connect(ui->chkOrthoBottom, SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));    // Bottom View
     connect(ui->chkOrthoFront,  SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));    // Front View
     connect(ui->chkOrthoRear,   SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));    // Rear View
+
+    // Front isometric check boxes
+    connect(ui->chkIsoFrontTopLeft,     SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));
+    connect(ui->chkIsoFrontTopRight,    SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));
+    connect(ui->chkIsoFrontBottomRight, SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));
+    connect(ui->chkIsoFrontBottomLeft,  SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));
 
     // Slot for Scale Type
     connect(ui->cmbScaleType, SIGNAL(currentIndexChanged(int)), this, SLOT(scaleTypeChanged(int)));
@@ -112,18 +145,61 @@ TaskOrthographicViews::~TaskOrthographicViews()
 void TaskOrthographicViews::viewToggled(bool toggle)
 {
     // Obtain name of checkbox
-    QString viewName = sender()->objectName().mid(8); // remove chkOrtho
-    //Gui::Command::openCommand("Toggle orthographic view");
+    QString viewName = sender()->objectName();
 
-    if (toggle && !multiView->hasOrthoView(viewName.toLatin1())) {
-        Drawing::FeatureOrthoView *view = dynamic_cast<Drawing::FeatureOrthoView *>(multiView->addOrthoView(viewName.toLatin1()));
-    } else if(!toggle && multiView->hasOrthoView(viewName.toLatin1())) {
-        multiView->removeOrthoView(viewName.toLatin1());
+    //Gui::Command::openCommand("Toggle orthographic view");    //TODO: Is this for undo?
+
+    if ( viewName.startsWith(QString::fromLatin1("chkOrtho")) ) {
+        viewName = viewName.mid(8); // remove chkOrtho
+    } else if ( viewName.startsWith(QString::fromLatin1("chkIso")) ) {
+        viewName = viewName.mid(6); // remove chkIso
+    } else {
+        return;
+    }
+
+    if ( toggle && !multiView->hasOrthoView( viewName.toLatin1() ) ) {
+        multiView->addOrthoView( viewName.toLatin1() );
+    } else if ( !toggle && multiView->hasOrthoView( viewName.toLatin1() ) ) {
+        multiView->removeOrthoView( viewName.toLatin1() );
     }
 
     /// Called to notify the GUI that the scale has changed
     Gui::Command::commitCommand();
     Gui::Command::updateActive();
+}
+
+void TaskOrthographicViews::rotateButtonClicked(void)
+{
+    if ( multiView && ui ) {
+        const QObject *clicked = sender();
+
+        // Any translation/scale/etc applied here will be ignored, as
+        // FeatureViewOrthographic::setFrontViewOrientation() only
+        // uses it to set Direction and XAxisDirection.
+        Base::Matrix4D m = multiView->viewOrientationMatrix.getValue();
+
+        // TODO: Construct these directly
+        Base::Matrix4D t;
+
+        //TODO: Consider changing the vectors around depending on whether we're in First or Third angle mode - might be more intuitive? IR
+        if ( clicked == ui->butTopRotate ) {
+            t.rotX(M_PI / -2);
+        } else if ( clicked == ui->butCWRotate ) {
+            t.rotY(M_PI / -2);
+        } else if ( clicked == ui->butRightRotate) {
+            t.rotZ(M_PI / 2);
+        } else if ( clicked == ui->butDownRotate) {
+            t.rotX(M_PI / 2);
+        } else if ( clicked == ui->butLeftRotate) {
+            t.rotZ(M_PI / -2);
+        } else if ( clicked == ui->butCCWRotate) {
+            t.rotY(M_PI / 2);
+        }
+        m *= t;
+
+        multiView->setFrontViewOrientation(m);
+        Gui::Command::updateActive();
+    }
 }
 
 void TaskOrthographicViews::projectionTypeChanged(int index)
@@ -230,11 +306,9 @@ void TaskOrthographicViews::setFractionalScale(double newScale)
 
 void TaskOrthographicViews::scaleManuallyChanged(const QString & text)
 {
-    //TODO: See what this is about:
+    //TODO: See what this is about - shouldn't be simplifying the scale ratio while it's being edited... IR
     if(blockUpdate)
         return;
-
-
 
     bool ok1, ok2;
 
@@ -272,6 +346,7 @@ void TaskOrthographicViews::changeEvent(QEvent *e)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//TODO: Do we really need to hang on to the TaskDlgOrthographicViews in this class? IR
 TaskDlgOrthographicViews::TaskDlgOrthographicViews(Drawing::FeatureViewOrthographic* featView) : TaskDialog(), 
                                                                                                  multiView(featView)
 {

@@ -49,7 +49,7 @@ public:
     //@{
     /// recalculate the Feature
     virtual void onDocumentRestored();
-    virtual App::DocumentObjectExecReturn *execute(void);
+//    virtual App::DocumentObjectExecReturn *execute(void);  // TODO: Delete me too if we take out the implementation
     //@}
 
     /// returns the type name of the ViewProvider
@@ -58,6 +58,7 @@ public:
     }
 
 protected:
+    /// Called by the container when a Property was changed
     void onChanged(const App::Property* prop);
 private:
     static const char* TypeEnums[];

@@ -137,8 +137,15 @@ void CanvasView::drawBackground(QPainter *p, const QRectF &)
         return;
     }
 
-    float pageWidth  = pageGui->getPageObject()->getPageWidth();
-    float pageHeight = pageGui->getPageObject()->getPageHeight();
+    // Default to A3 landscape, though this is currently relevant
+    // only for opening corrupt docs, etc.
+    float pageWidth = 420,
+          pageHeight = 297;
+
+    if ( pageGui->getPageObject()->hasValidTemplate() ) {
+        pageWidth = pageGui->getPageObject()->getPageWidth();
+        pageHeight = pageGui->getPageObject()->getPageHeight();
+    }
 
     // Draw the white page
     QRectF paperRect(0, -pageHeight, pageWidth, pageHeight);

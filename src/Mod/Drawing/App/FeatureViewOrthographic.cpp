@@ -38,7 +38,6 @@
 
 #include <Mod/Part/App/PartFeature.h>
 #include "FeaturePage.h"
-#include "FeatureOrthoView.h"
 #include "FeatureViewOrthographic.h"
 
 using namespace Drawing;
@@ -47,16 +46,6 @@ const char* FeatureViewOrthographic::ProjectionTypeEnums[]= {"Document",
                                                              "First Angle",
                                                              "Third Angle",
                                                              NULL};
-
-// Should align with OrthoViewNameEnums 
-const char* FeatureViewOrthographic::OrthoViewNameEnumStrs[] = {"Front",
-                                                                "Left",
-                                                                "Right",
-                                                                "Top",
-                                                                "Bottom",
-                                                                "Rear",
-                                                                NULL};
-
 
 PROPERTY_SOURCE(Drawing::FeatureViewOrthographic, Drawing::FeatureViewCollection)
 
@@ -68,6 +57,7 @@ FeatureViewOrthographic::FeatureViewOrthographic(void)
 
     ProjectionType.setEnums(ProjectionTypeEnums);
     ADD_PROPERTY(ProjectionType,((long)0));
+    ADD_PROPERTY(viewOrientationMatrix, (Base::Matrix4D()));
 }
 
 FeatureViewOrthographic::~FeatureViewOrthographic()
@@ -167,6 +157,7 @@ void FeatureViewOrthographic::onChanged(const App::Property* prop)
 {
     if (prop == &ProjectionType ||
         prop == &ScaleType ||
+        prop == &viewOrientationMatrix ||
         prop == &Scale && !Scale.StatusBits.test(5)){
           if (!this->isRestoring()) {
               this->execute();
@@ -175,29 +166,12 @@ void FeatureViewOrthographic::onChanged(const App::Property* prop)
     Drawing::FeatureViewCollection::onChanged(prop);
 }
 
-FeatureViewOrthographic::OrthoViewNameEnum FeatureViewOrthographic::orthoViewNameFromStr(const char *inStr)
-{
-    if(strcmp(OrthoViewNameEnumStrs[FRONT], inStr) == 0)
-        return FRONT;
-    if(strcmp(OrthoViewNameEnumStrs[LEFT], inStr) == 0)
-        return LEFT;
-    if(strcmp(OrthoViewNameEnumStrs[RIGHT], inStr) == 0)
-        return RIGHT;
-    if(strcmp(OrthoViewNameEnumStrs[TOP], inStr) == 0)
-        return TOP;
-    if(strcmp(OrthoViewNameEnumStrs[BOTTOM], inStr) == 0)
-        return BOTTOM;
-    if(strcmp(OrthoViewNameEnumStrs[REAR], inStr) == 0)
-        return REAR;
-    return ERROR;
-}
-
 void FeatureViewOrthographic::moveToCentre(void) 
 {
     // Update the anchor view's X and Y to keep the bounding box centred on the origin
     Base::BoundBox3d tempbbox = getBoundingBox();
-    FeatureOrthoView *anchorView =  dynamic_cast<FeatureOrthoView *>(this->Anchor.getValue());
-    if(anchorView) {
+    FeatureOrthoView *anchorView = dynamic_cast<FeatureOrthoView *>(Anchor.getValue());
+    if (anchorView) {
         anchorView->X.setValue((tempbbox.MinX + tempbbox.MaxX) / -2.0);
         anchorView->Y.setValue((tempbbox.MinY + tempbbox.MaxY) / -2.0);
     }
@@ -212,7 +186,7 @@ App::DocumentObject * FeatureViewOrthographic::getOrthoView(const char *viewProj
         if(view->getTypeId() == FeatureOrthoView::getClassTypeId()) {
             FeatureOrthoView *orthoView = dynamic_cast<FeatureOrthoView *>(*it);
 
-            if(strcmp(viewProjType, orthoView->Type.getValueAsString()) == 0)
+            if( strcmp(viewProjType, orthoView->Type.getValueAsString()) == 0 )
                 return *it;
         }
     }
@@ -230,9 +204,27 @@ bool FeatureViewOrthographic::hasOrthoView(const char *viewProjType) const
         if(view->getTypeId() == Drawing::FeatureOrthoView::getClassTypeId()) {
             Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(*it);
 
-            if(strcmp(viewProjType, orthoView->Type.getValueAsString()) == 0)
+            if( strcmp(viewProjType, orthoView->Type.getValueAsString()) == 0 ) {
                 return true;
+            }
         }
+    }
+    return false;
+}
+
+bool FeatureViewOrthographic::checkViewProjType(const char *in)
+{
+    if ( strcmp(in, "Front") == 0 ||
+         strcmp(in, "Left") == 0 ||
+         strcmp(in, "Right") == 0 ||
+         strcmp(in, "Top") == 0 ||
+         strcmp(in, "Bottom") == 0 ||
+         strcmp(in, "Rear") == 0 ||
+         strcmp(in, "FrontTopLeft") == 0 ||
+         strcmp(in, "FrontTopRight") == 0 ||
+         strcmp(in, "FrontBottomLeft") == 0 ||
+         strcmp(in, "FrontBottomRight") == 0) {
+        return true;
     }
     return false;
 }
@@ -241,7 +233,7 @@ App::DocumentObject * FeatureViewOrthographic::addOrthoView(const char *viewProj
 {
     FeatureOrthoView *view = NULL;
 
-    if(orthoViewNameFromStr(viewProjType) != ERROR) {
+    if ( checkViewProjType(viewProjType) ) {
         if(hasOrthoView(viewProjType)) {
             throw Base::Exception("The Projection is already used in this group");
         }
@@ -249,21 +241,13 @@ App::DocumentObject * FeatureViewOrthographic::addOrthoView(const char *viewProj
         std::string FeatName = getDocument()->getUniqueObjectName("OrthoView");
         App::DocumentObject *docObj = getDocument()->addObject("Drawing::FeatureOrthoView",
                                                                FeatName.c_str());
-        view = dynamic_cast<Drawing::FeatureOrthoView *>(docObj);
-        view->Source.setValue(Source.getValue());
-        view->Scale.setValue(this->Scale.getValue());
-        view->Type.setValue(viewProjType);
 
-        std::string label = viewProjType;
-        view->Label.setValue(label);
-
-
-        // Replace with orthoViewNameFromStr() when it's ready
-    } else if(strcmp(viewProjType, "Top Right")  == 0 ||
-              strcmp(viewProjType, "Top Left")  == 0 ||
-              strcmp(viewProjType, "Bottom Right")  == 0 ||
-              strcmp(viewProjType, "Bottom Left")  == 0) {
-        // Add an isometric view of the part
+        view = dynamic_cast<Drawing::FeatureOrthoView *>( docObj );
+        view->Source.setValue( Source.getValue() );
+        view->Scale.setValue( Scale.getValue() );
+        view->Type.setValue( viewProjType );
+        view->Label.setValue( viewProjType );
+        setViewOrientation( view, viewProjType );
     }
 
     addView(view);         //from FeatureViewCollection
@@ -272,9 +256,66 @@ App::DocumentObject * FeatureViewOrthographic::addOrthoView(const char *viewProj
     return view;
 }
 
+void FeatureViewOrthographic::setViewOrientation(FeatureOrthoView *v, const char *projType) const
+{
+    Base::Vector3d dir, xDir;
+
+    // Traditional orthographic
+    if(strcmp(projType, "Front") == 0) {
+        dir.Set(0, 1, 0);
+        xDir.Set(1, 0, 0);
+
+    } else if(strcmp(projType, "Rear") == 0) {
+        dir.Set(0, -1, 0);
+        xDir.Set(-1, 0, 0);
+
+    } else if(strcmp(projType, "Right") == 0) {
+        dir.Set(1, 0, 0);
+        xDir.Set(0, -1, 0);
+
+    } else if(strcmp(projType, "Left") == 0) {
+        dir.Set(-1, 0, 0);
+        xDir.Set(0, 1, 0);
+
+    } else if(strcmp(projType, "Top") == 0) {
+        dir.Set(0, 0, 1);
+        xDir.Set(1, 0, 0);
+
+    } else if(strcmp(projType, "Bottom") == 0) {
+        dir.Set(0, 0, -1);
+        xDir.Set(1, 0, 0);
+
+    // Isometric
+    } else if(strcmp(projType, "FrontTopLeft") == 0) {
+        dir.Set(-1/sqrt(3), 1/sqrt(3), 1/sqrt(3));
+        xDir.Set(sqrt(2)/2.0, sqrt(2.0)/2.0, 0);
+
+    } else if(strcmp(projType, "FrontTopRight") == 0) {
+        dir.Set(1/sqrt(3), 1/sqrt(3), 1/sqrt(3));
+        xDir.Set(sqrt(2)/2.0, -sqrt(2.0)/2.0, 0);
+
+    } else if(strcmp(projType, "FrontBottomRight") == 0) {
+        dir.Set(1/sqrt(3), 1/sqrt(3), -1/sqrt(3));
+        xDir.Set(sqrt(2)/2.0, -sqrt(2.0)/2.0, 0);
+
+    } else if(strcmp(projType, "FrontBottomLeft") == 0) {
+        dir.Set(-1/sqrt(3), 1/sqrt(3), -1/sqrt(3));
+        xDir.Set(sqrt(2)/2.0, sqrt(2.0)/2.0, 0);
+
+    } else {
+        throw Base::Exception("Unknown view type in FeatureViewOrthographic::setViewOrientation()");
+    }
+
+    dir = viewOrientationMatrix.getValue() * dir;
+    xDir = viewOrientationMatrix.getValue() * xDir;
+
+    v->Direction.setValue(dir);
+    v->XAxisDirection.setValue(xDir);
+}
+
 int FeatureViewOrthographic::removeOrthoView(const char *viewProjType)
 {
-    if(orthoViewNameFromStr(viewProjType) != ERROR) {
+    if ( checkViewProjType(viewProjType) ) {
         if(!hasOrthoView(viewProjType)) {
             throw Base::Exception("The orthographic projection doesn't exist in the group");
         }
@@ -287,7 +328,7 @@ int FeatureViewOrthographic::removeOrthoView(const char *viewProjType)
             if(view->getTypeId() == Drawing::FeatureOrthoView::getClassTypeId()) {
                 Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(*it);
 
-                if(strcmp(viewProjType, orthoView->Type.getValueAsString()) == 0) {
+                if ( strcmp(viewProjType, orthoView->Type.getValueAsString()) == 0 ) {
                     // Remove from the document
                     this->getDocument()->remObject((*it)->getNameInDocument());
                     moveToCentre();
@@ -295,19 +336,14 @@ int FeatureViewOrthographic::removeOrthoView(const char *viewProjType)
                 }
             }
         }
-        // Replace with orthoViewNameFromStr() when it's ready
-    } else if(strcmp(viewProjType, "Top Right")  == 0 ||
-              strcmp(viewProjType, "Top Left")  == 0 ||
-              strcmp(viewProjType, "Bottom Right")  == 0 ||
-              strcmp(viewProjType, "Bottom Left")  == 0) {
-        // Remove an isometric view of the part
     }
+
     return -1;
 }
 
 bool FeatureViewOrthographic::distributeOrthoViews()
 {
-    Drawing::FeatureOrthoView *anchorView =  dynamic_cast<Drawing::FeatureOrthoView *>(this->Anchor.getValue());
+    FeatureOrthoView *anchorView = dynamic_cast<FeatureOrthoView *>(Anchor.getValue());
 
     if (!anchorView) {  //TODO: Consider not requiring an anchor view, or allowing ones other than "Front"
         return false;
@@ -315,80 +351,137 @@ bool FeatureViewOrthographic::distributeOrthoViews()
 
     // Determine layout - should be either "First Angle" or "Third Angle"
     const char* projType;
-    if (this->ProjectionType.isValue("Document")) {
-        projType = this->findParentPage()->OrthoProjectionType.getValueAsString();
+    if (ProjectionType.isValue("Document")) {
+        projType = findParentPage()->OrthoProjectionType.getValueAsString();
     } else {
         projType = ProjectionType.getValueAsString();
     }
 
     // Setup array of pointers to the views that we're displaying,
-    // assuming front is in centre ala:
-    //      [0]
-    // [1]  [2]  [3]  [4]
-    //      [5]
-    Drawing::FeatureOrthoView * viewPtrs[6] = {};
+    // assuming front is in centre (index 4):
+    // [0]  [1]  [2]
+    // [3]  [4]  [5]  [6]
+    // [7]  [8]  [9]
+    FeatureOrthoView * viewPtrs[10] = {};
 
     // Iterate through views and populate viewPtrs
     FeatureOrthoView* oView;
-    std::vector<App::DocumentObject*> views = Views.getValues();
+    std::vector<App::DocumentObject *> views = Views.getValues();
     if ( strcmp(projType, "Third Angle") == 0 ||
          strcmp(projType, "First Angle") == 0    ) {
-        //   Third Angle:      T
-        //                  L  F  Right Rear
-        //                     B
+        //   Third Angle:  FTL  T  FTRight
+        //                  L   F   Right   Rear
+        //                 FBL  B  FBRight
         //
-        //   First Angle:      B
-        //               Rear  F  L  Right
-        //                     T
+        //   First Angle:  FBRight  B  FBL
+        //                  Right   F   L  Rear
+        //                 FTRight  T  FTL
         bool thirdAngle = (strcmp(projType, "Third Angle") == 0);
         for (std::vector<App::DocumentObject*>::const_iterator it = views.begin(); it != views.end(); ++it) {
-            if ((*it)->getTypeId().isDerivedFrom(FeatureOrthoView::getClassTypeId())) {   //TODO: might need Axo too?
-                oView = dynamic_cast<Drawing::FeatureOrthoView *>(*it);
+            if ((*it)->getTypeId().isDerivedFrom(FeatureOrthoView::getClassTypeId())) {
+                oView = dynamic_cast<FeatureOrthoView *>(*it);
 
-                switch(orthoViewNameFromStr(oView->Type.getValueAsString())) {
-                    case FRONT:  viewPtrs[thirdAngle ? 2 : 2] = oView; break;
-                    case LEFT:   viewPtrs[thirdAngle ? 1 : 3] = oView; break;
-                    case RIGHT:  viewPtrs[thirdAngle ? 3 : 1] = oView; break;
-                    case TOP:    viewPtrs[thirdAngle ? 0 : 5] = oView; break;
-                    case BOTTOM: viewPtrs[thirdAngle ? 5 : 0] = oView; break;
-                    case REAR:   viewPtrs[thirdAngle ? 4 : 4] = oView; break;
-                    default: break;
+                const char *viewTypeCStr = oView->Type.getValueAsString();
+                if (strcmp(viewTypeCStr, "Front") == 0) {
+                    viewPtrs[thirdAngle ? 4 : 4] = oView;
+                } else if (strcmp(viewTypeCStr, "Left") == 0) {
+                    viewPtrs[thirdAngle ? 3 : 5] = oView;
+                } else if (strcmp(viewTypeCStr, "Right") == 0) {
+                    viewPtrs[thirdAngle ? 5 : 3] = oView;
+                } else if (strcmp(viewTypeCStr, "Top") == 0) {
+                    viewPtrs[thirdAngle ? 1 : 8] = oView;
+                } else if (strcmp(viewTypeCStr, "Bottom") == 0) {
+                    viewPtrs[thirdAngle ? 8 : 1] = oView;
+                } else if (strcmp(viewTypeCStr, "Rear") == 0) {
+                    viewPtrs[thirdAngle ? 6 : 6] = oView;
+                } else if (strcmp(viewTypeCStr, "FrontTopLeft") == 0) {
+                    viewPtrs[thirdAngle ? 0 : 9] = oView;
+                } else if (strcmp(viewTypeCStr, "FrontTopRight") == 0) {
+                    viewPtrs[thirdAngle ? 2 : 7] = oView;
+                } else if (strcmp(viewTypeCStr, "FrontBottomLeft") == 0) {
+                    viewPtrs[thirdAngle ? 7 : 2] = oView;
+                } else if (strcmp(viewTypeCStr, "FrontBottomRight") == 0) {
+                    viewPtrs[thirdAngle ? 9 : 0] = oView;
+                } else {
+                    throw Base::Exception("Unknown view type in FeatureViewOrthographic::distributeOrthoViews()");
                 }
             }
         }
     } else return false;    // ...assuming this is an error condition
 
+    // TODO: Work on not requiring the front view...
+    if (!viewPtrs[4])
+        return false;
+
     // Calculate bounding boxes for each displayed view
-    Base::BoundBox3d bboxes[6] = {};
-    for(int i = 0; i < 6; ++i)
-        if(viewPtrs[i])
+    Base::BoundBox3d bboxes[10];
+    for(int i = 0; i < 10; ++i)
+        if(viewPtrs[i]) {
             bboxes[i] = viewPtrs[i]->getBoundingBox();
+        } else {
+            // BoundBox3d defaults to length=(FLOAT_MAX + -FLOAT_MAX)
+            bboxes[i].ScaleX(0);
+            bboxes[i].ScaleY(0);
+            bboxes[i].ScaleZ(0);
+        }
 
     // Now that things are setup, do the spacing
     double spacing = 15;    //in mm  TODO: maybe use a property?
 
     if (viewPtrs[0]) {
-        viewPtrs[0]->Y.setValue((bboxes[0].LengthY() + bboxes[2].LengthY()) / 2.0 + spacing);
+        viewPtrs[0]->X.setValue((bboxes[0].LengthX() + bboxes[4].LengthX()) / -2.0 - spacing);
+        viewPtrs[0]->Y.setValue((bboxes[0].LengthY() + bboxes[4].LengthY()) / 2.0 + spacing);
     }
     if (viewPtrs[1]) {
-        viewPtrs[1]->X.setValue((bboxes[1].LengthX() + bboxes[2].LengthX()) / -2.0 - spacing);
+        viewPtrs[1]->Y.setValue((bboxes[1].LengthY() + bboxes[4].LengthY()) / 2.0 + spacing);
     }
-    if (viewPtrs[2]) {  // TODO: Move this check above, and figure out a sane bounding box based on other existing views
+    if (viewPtrs[2]) {
+        viewPtrs[2]->X.setValue((bboxes[2].LengthX() + bboxes[4].LengthX()) / 2.0 + spacing);
+        viewPtrs[2]->Y.setValue((bboxes[2].LengthY() + bboxes[4].LengthY()) / 2.0 + spacing);
     }
     if (viewPtrs[3]) {
-        viewPtrs[3]->X.setValue((bboxes[2].LengthX() + bboxes[3].LengthX()) / 2.0 + spacing);
+        viewPtrs[3]->X.setValue((bboxes[3].LengthX() + bboxes[4].LengthX()) / -2.0 - spacing);
     }
-    if (viewPtrs[4]) {
-        if (viewPtrs[3])
-            viewPtrs[4]->X.setValue((bboxes[2].LengthX() + bboxes[4].LengthX()) / 2.0 + bboxes[3].LengthX() + 2 * spacing);
-        else
-            viewPtrs[4]->X.setValue((bboxes[2].LengthX() + bboxes[4].LengthX()) / 2.0 + spacing);
+    if (viewPtrs[4]) {  // TODO: Move this check above, and figure out a sane bounding box based on other existing views
     }
     if (viewPtrs[5]) {
-        viewPtrs[5]->Y.setValue((bboxes[5].LengthY() + bboxes[2].LengthY()) / -2.0 - spacing);
+        viewPtrs[5]->X.setValue((bboxes[5].LengthX() + bboxes[4].LengthX()) / 2.0 + spacing);
+    }
+    if (viewPtrs[6]) {
+        if (viewPtrs[5])
+            viewPtrs[6]->X.setValue((bboxes[6].LengthX() + bboxes[4].LengthX()) / 2.0 + bboxes[5].LengthX() + 2 * spacing);
+        else
+            viewPtrs[6]->X.setValue((bboxes[6].LengthX() + bboxes[4].LengthX()) / 2.0 + spacing);
+    }
+    if (viewPtrs[7]) {
+        viewPtrs[7]->X.setValue((bboxes[7].LengthX() + bboxes[4].LengthX()) / -2.0 - spacing);
+        viewPtrs[7]->Y.setValue((bboxes[7].LengthY() + bboxes[4].LengthY()) / -2.0 - spacing);
+    }
+    if (viewPtrs[8]) {
+        viewPtrs[8]->Y.setValue((bboxes[8].LengthY() + bboxes[4].LengthY()) / -2.0 - spacing);
+    }
+    if (viewPtrs[9]) {
+        viewPtrs[9]->X.setValue((bboxes[9].LengthX() + bboxes[4].LengthX()) / 2.0 + spacing);
+        viewPtrs[9]->Y.setValue((bboxes[9].LengthY() + bboxes[4].LengthY()) / -2.0 - spacing);
     }
 
     return true;
+}
+
+//TODO: Turn this into a command so it can be issued from python
+void FeatureViewOrthographic::setFrontViewOrientation(const Base::Matrix4D &newMat)
+{
+    viewOrientationMatrix.setValue(newMat);
+
+    FeatureOrthoView *view;
+    std::vector<App::DocumentObject *> views = Views.getValues();
+    for (std::vector<App::DocumentObject*>::const_iterator it = views.begin(); it != views.end(); ++it) {
+        if ((*it)->getTypeId().isDerivedFrom(FeatureOrthoView::getClassTypeId())) {
+            view = dynamic_cast<FeatureOrthoView *>(*it);
+            setViewOrientation(view, view->Type.getValueAsString());
+            view->touch();
+        }
+    }
 }
 
 App::DocumentObjectExecReturn *FeatureViewOrthographic::execute(void)
@@ -406,8 +499,8 @@ App::DocumentObjectExecReturn *FeatureViewOrthographic::execute(void)
             const std::vector<App::DocumentObject *> &views = Views.getValues();
             for(std::vector<App::DocumentObject *>::const_iterator it = views.begin(); it != views.end(); ++it) {
                 App::DocumentObject *docObj = *it;
-                if(docObj->getTypeId().isDerivedFrom(Drawing::FeatureView::getClassTypeId())) {
-                    Drawing::FeatureView *view = dynamic_cast<Drawing::FeatureView *>(*it);
+                if(docObj->getTypeId().isDerivedFrom(FeatureView::getClassTypeId())) {
+                    FeatureView *view = dynamic_cast<FeatureView *>(*it);
 
                     //Set scale factor of each view
                     view->ScaleType.setValue("Custom");
@@ -419,8 +512,10 @@ App::DocumentObjectExecReturn *FeatureViewOrthographic::execute(void)
             }
         }
     }
+
+    // recalculate positions for children
     if (Views.getSize()) {
-        distributeOrthoViews();                          // recalculate positions for children
+        distributeOrthoViews();
     }
     //this->touch();
 

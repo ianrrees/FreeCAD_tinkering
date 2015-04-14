@@ -130,7 +130,6 @@ App::DocumentObjectExecReturn *FeaturePage::execute(void)
     Views.touch();
     return App::DocumentObject::StdReturn;
 }
-
 short FeaturePage::mustExecute() const
 {
     // If Tolerance Property is touched

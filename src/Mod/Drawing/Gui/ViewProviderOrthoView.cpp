@@ -101,9 +101,17 @@ void ViewProviderOrthoView::updateData(const App::Property* prop)
         } else if(strcmp(projType.c_str(), "Left") == 0) {
            sPixmap = "OrthoLeft";
         } else if(strcmp(projType.c_str(), "Top") == 0) {
-            sPixmap = "OrthoTop";
+           sPixmap = "OrthoTop";
         } else if(strcmp(projType.c_str(), "Bottom") == 0) {
            sPixmap = "OrthoBottom";
+        } else if(strcmp(projType.c_str(), "FrontTopLeft") == 0) {
+           sPixmap = "IsoFrontTopLeft";
+        } else if(strcmp(projType.c_str(), "FrontTopRight") == 0) {
+           sPixmap = "IsoFrontTopRight";
+        } else if(strcmp(projType.c_str(), "FrontBottomRight") == 0) {
+           sPixmap = "IsoFrontBottomRight";
+        } else if(strcmp(projType.c_str(), "FrontBottomLeft") == 0) {
+           sPixmap = "IsoFrontBottomLeft";
         }
     }
  }

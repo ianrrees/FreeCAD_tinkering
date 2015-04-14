@@ -53,14 +53,13 @@ public:
     virtual ~FeatureViewPart();
 
     App::PropertyLink   Source;
-    App::PropertyVector Direction;
+    App::PropertyVector Direction;  //TODO: Rename to YAxisDirection or whatever this actually is
+    App::PropertyVector XAxisDirection;
     App::PropertyBool   ShowHiddenLines;
     App::PropertyBool   ShowSmoothLines;
     App::PropertyFloat  LineWidth;
     App::PropertyFloat  HiddenWidth;
     App::PropertyFloatConstraint  Tolerance;
-
-    App::PropertyVector XAxisDirection;
 
     const std::vector<DrawingGeometry::Vertex *> & getVertexGeometry() const;
     const std::vector<DrawingGeometry::BaseGeom  *> & getEdgeGeometry() const;

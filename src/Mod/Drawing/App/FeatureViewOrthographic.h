@@ -28,7 +28,9 @@
 #include <App/FeaturePython.h>
 
 #include <Base/BoundBox.h>
+#include <Base/Matrix.h>
 #include "FeatureViewCollection.h"
+#include "FeatureOrthoView.h"
 
 namespace Drawing
 {
@@ -47,9 +49,12 @@ public:
     ~FeatureViewOrthographic();
 
     App::PropertyEnumeration ProjectionType;
+
+    /// Transforms Direction and XAxisDirection vectors in child views
+    App::PropertyMatrix viewOrientationMatrix;
+
     App::PropertyLink Anchor; /// Anchor Element to align views to
 
-public:
     Base::BoundBox3d getBoundingBox() const;
     double calculateAutomaticScale() const;
 
@@ -65,7 +70,14 @@ public:
      */
     int  removeOrthoView(const char *viewProjType);
 
+    /// Automatically position child views
     bool distributeOrthoViews(void);
+
+    /// Changes child views' coordinate space
+    /*!
+     * Used to set the Direction and XAxisDirection in child views
+     */
+    void setFrontViewOrientation(const Base::Matrix4D &newMat);
 
     short mustExecute() const;
     /** @name methods overide Feature */
@@ -80,15 +92,25 @@ public:
         return "DrawingGui::ViewProviderViewOrthographic";
     }
 
-    // TODO: Add isometric
-    // Keep this in sync with orthoViewNameFromStr and OrthoViewNameEnumStrs
-    enum OrthoViewNameEnum {FRONT=0, LEFT, RIGHT, TOP, BOTTOM, REAR, ERROR};
 protected:
     void onChanged(const App::Property* prop);
-    OrthoViewNameEnum orthoViewNameFromStr(const char *inStr);
 
     //! Moves anchor view to keep our bounding box centre on the origin
     void moveToCentre();
+
+    /// Annoying helper - keep in sync with FeatureOrthoView::TypeEnums
+    /*!
+     * \TODO See note regarding App::PropertyEnumeration on my wiki page http://freecadweb.org/wiki/index.php?title=User:Ian.rees
+     * \return true iff 'in' is a valid name for an orthographic/isometric view
+     */
+    bool checkViewProjType(const char *in);
+
+    /// Sets Direction and XAxisDirection in v
+    /*!
+     * Applies viewOrientationMatrix to appropriate unit vectors depending on projType
+     */
+    void setViewOrientation(FeatureOrthoView *v, const char *projType) const;
+
 private:
     static const char* ProjectionTypeEnums[];
     static const char* OrthoViewNameEnumStrs[];

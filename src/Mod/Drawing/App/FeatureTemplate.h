@@ -56,8 +56,9 @@ public:
 
 public:
 
-    // virtual functions must be redefined by base class
+    /// Returns template width in mm
     virtual double getWidth() const;
+    /// Returns template height in mm
     virtual double getHeight() const;
 
     virtual void getBlockDimensions(double &x, double &y, double &width, double &height) const;

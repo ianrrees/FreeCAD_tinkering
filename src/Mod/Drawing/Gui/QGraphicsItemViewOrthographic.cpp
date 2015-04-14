@@ -131,15 +131,20 @@ QVariant QGraphicsItemViewOrthographic::itemChange(GraphicsItemChange change, co
             if(fView->getTypeId().isDerivedFrom(Drawing::FeatureOrthoView::getClassTypeId())) {
                 Drawing::FeatureOrthoView *orthoView = static_cast<Drawing::FeatureOrthoView *>(fView);
                 QString type = QString::fromAscii(orthoView->Type.getValueAsString());
-                if(type == QString::fromAscii("Top") ||
-                   type == QString::fromAscii("Bottom")) {
-                    gView->alignTo(origin, QString::fromAscii("Vertical"));
-                } else if(type == QString::fromAscii("Front")) {
+
+                if (type == QString::fromAscii("Front")) {
                     gView->setLocked(true);
                     installSceneEventFilter(gView);
-                    getFeatureView()->Anchor.setValue(fView);
+                    App::DocumentObject *docObj = getViewObject();
+                    Drawing::FeatureViewOrthographic *viewOrthographic = dynamic_cast<Drawing::FeatureViewOrthographic *>(docObj);
+                    viewOrthographic->Anchor.setValue(fView);
                     updateView();
-                } else {
+                } else if ( type == QString::fromAscii("Top") ||
+                    type == QString::fromAscii("Bottom")) {
+                    gView->alignTo(origin, QString::fromAscii("Vertical"));
+                } else if ( type == QString::fromAscii("Left")  ||
+                            type == QString::fromAscii("Right") ||
+                            type == QString::fromAscii("Rear") ) {
                     gView->alignTo(origin, QString::fromAscii("Horizontal"));
                 }
             }
@@ -187,6 +192,7 @@ void QGraphicsItemViewOrthographic::mouseReleaseEvent(QGraphicsSceneMouseEvent *
             double x = this->x();
             double y = this->getY();            // inverts Y 
             Gui::Command::openCommand("Drag Orthographic Collection");
+            //TODO: See if these commands actually handle the horizontal/vertical constraints properly...
             Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.X = %f",
                                     getViewObject()->getNameInDocument(), x);
             Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.Y = %f",
