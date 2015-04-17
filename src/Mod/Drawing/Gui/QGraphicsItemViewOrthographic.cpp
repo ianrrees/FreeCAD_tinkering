@@ -146,6 +146,12 @@ QVariant QGraphicsItemViewOrthographic::itemChange(GraphicsItemChange change, co
                             type == QString::fromAscii("Right") ||
                             type == QString::fromAscii("Rear") ) {
                     gView->alignTo(origin, QString::fromAscii("Horizontal"));
+                } else if ( type == QString::fromAscii("FrontTopRight") ||
+                            type == QString::fromAscii("FrontBottomLeft") ) {
+                    gView->alignTo(origin, QString::fromAscii("45slash"));
+                } else if ( type == QString::fromAscii("FrontTopLeft") ||
+                            type == QString::fromAscii("FrontBottomRight") ) {
+                    gView->alignTo(origin, QString::fromAscii("45backslash"));
                 }
             }
          }

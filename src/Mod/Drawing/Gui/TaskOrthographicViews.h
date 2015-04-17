@@ -49,12 +49,6 @@ namespace Drawing {
 namespace DrawingGui
 {
 
-enum AxoMode{
-  ISOMETRIC = 0,
-  DIMETRIC  = 1,
-  TRIMETRIC = 2
-};
-
 class TaskOrthographicViews : public QWidget//: public Gui::TaskView::TaskBox
 {
     Q_OBJECT
@@ -80,7 +74,10 @@ protected Q_SLOTS:
     void scaleManuallyChanged(const QString & text);
 
 protected:
-    void changeEvent(QEvent * e);
+    void changeEvent(QEvent *e);
+
+    /// Updates state of box to match the state of multiView
+    void setupViewCheckbox(QCheckBox *box);
 
 private:
     //class Private;

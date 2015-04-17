@@ -61,47 +61,17 @@ TaskOrthographicViews::TaskOrthographicViews(Drawing::FeatureViewOrthographic* f
 
     ui->cmbScaleType->setCurrentIndex(multiView->ScaleType.getValue());
     
-    // Initially toggle checkboxes if needed
-    // TODO: Loop on the enum and do this more sanely...
-    if(multiView->hasOrthoView("Left")) {
-        ui->chkOrthoLeft->setCheckState(Qt::Checked);
-    }
-
-    if(multiView->hasOrthoView("Right")) {
-        ui->chkOrthoRight->setCheckState(Qt::Checked);
-    }
-
-    if(multiView->hasOrthoView("Front")) {
-        ui->chkOrthoFront->setCheckState(Qt::Checked);
-    }
-
-    if(multiView->hasOrthoView("Rear")) {
-        ui->chkOrthoRear->setCheckState(Qt::Checked);
-    }
-
-    if(multiView->hasOrthoView("Top")) {
-        ui->chkOrthoTop->setCheckState(Qt::Checked);
-    }
-
-    if(multiView->hasOrthoView("Bottom")) {
-        ui->chkOrthoBottom->setCheckState(Qt::Checked);
-    }
-
-    if(multiView->hasOrthoView("FrontTopLeft")) {
-        ui->chkIsoFrontTopLeft->setCheckState(Qt::Checked);
-    }
-
-    if(multiView->hasOrthoView("FrontTopRight")) {
-        ui->chkIsoFrontTopRight->setCheckState(Qt::Checked);
-    }
-
-    if(multiView->hasOrthoView("FrontBottomRight")) {
-        ui->chkIsoFrontBottomRight->setCheckState(Qt::Checked);
-    }
-
-    if(multiView->hasOrthoView("FrontBottomLeft")) {
-        ui->chkIsoFrontBottomLeft->setCheckState(Qt::Checked);
-    }
+    // Initially toggle view checkboxes if needed
+    setupViewCheckbox(ui->chkOrthoLeft);
+    setupViewCheckbox(ui->chkOrthoRight);
+    setupViewCheckbox(ui->chkOrthoFront);
+    setupViewCheckbox(ui->chkOrthoRear);
+    setupViewCheckbox(ui->chkOrthoTop);
+    setupViewCheckbox(ui->chkOrthoBottom);
+    setupViewCheckbox(ui->chkIsoFrontTopLeft);
+    setupViewCheckbox(ui->chkIsoFrontTopRight);
+    setupViewCheckbox(ui->chkIsoFrontBottomRight);
+    setupViewCheckbox(ui->chkIsoFrontBottomLeft);
 
     blockUpdate = false;
 
@@ -342,6 +312,19 @@ void TaskOrthographicViews::changeEvent(QEvent *e)
 {
     if (e->type() == QEvent::LanguageChange) {
         ui->retranslateUi(this);
+    }
+}
+
+void TaskOrthographicViews::setupViewCheckbox(QCheckBox *box)
+{
+    QString viewName = box->objectName();
+
+    if ( viewName.startsWith(QString::fromLatin1("chkOrtho")) &&
+         multiView->hasOrthoView(viewName.mid(8).toLatin1()) ) {
+            box->setCheckState(Qt::Checked);
+    } else if ( viewName.startsWith(QString::fromLatin1("chkIso")) &&
+                multiView->hasOrthoView(viewName.mid(6).toLatin1())) {
+            box->setCheckState(Qt::Checked);
     }
 }
 

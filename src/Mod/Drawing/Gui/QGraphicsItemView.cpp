@@ -100,9 +100,9 @@ QVariant QGraphicsItemView::itemChange(GraphicsItemChange change, const QVariant
     if(change == ItemPositionChange && scene()) {
         QPointF newPos = value.toPointF();
 
-        if(this->locked){
-            newPos.setX(this->pos().x());
-            newPos.setY(this->pos().y());
+        if(locked){
+            newPos.setX(pos().x());
+            newPos.setY(pos().y());
         }
 
         // TODO  find a better data structure for this
@@ -114,6 +114,37 @@ QVariant QGraphicsItemView::itemChange(GraphicsItemChange change, const QVariant
                 newPos.setX(item->pos().x());
             } else if(alignMode == QString::fromAscii("Horizontal")) {
                 newPos.setY(item->pos().y());
+            } else if(alignMode == QString::fromAscii("45slash")) {
+                // TODO: This ends up creating some weirdness when the view is
+                // moved close to the centre.  Perhaps resolve by creating
+                // different constraints for each quadrant rather than two
+                // diagonal constraints.
+                double relX = newPos.x() - item->pos().x(),
+                       relY = newPos.y() - item->pos().y(),
+                       dist = ( abs(relX) + abs(relY) ) / 2.0;
+
+                // If we're further into the top-right than bottom-left
+                // (remember +Y is down)
+                if ( (relX - relY) > (-relX + relY) ) {
+                    newPos.setX( item->pos().x() + dist);
+                    newPos.setY( item->pos().y() - dist );
+                } else {
+                    newPos.setX( item->pos().x() - dist );
+                    newPos.setY( item->pos().y() + dist );
+                }
+            } else if(alignMode == QString::fromAscii("45backslash")) {
+                double relX = newPos.x() - item->pos().x(),
+                       relY = newPos.y() - item->pos().y(),
+                       dist = ( abs(relX) + abs(relY) ) / 2.0;
+
+                // If we're further into the top-left than bottom-right
+                if ( (-relX - relY) > (relX + relY) ) {
+                    newPos.setX( item->pos().x() - dist);
+                    newPos.setY( item->pos().y() - dist );
+                } else {
+                    newPos.setX( item->pos().x() + dist );
+                    newPos.setY( item->pos().y() + dist );
+                }
             }
         }
         return newPos;

@@ -42,10 +42,10 @@
 
 using namespace Drawing;
 
-const char* FeatureViewOrthographic::ProjectionTypeEnums[]= {"Document",
-                                                             "First Angle",
-                                                             "Third Angle",
-                                                             NULL};
+const char* FeatureViewOrthographic::ProjectionTypeEnums[] = {"Document",
+                                                              "First Angle",
+                                                              "Third Angle",
+                                                              NULL};
 
 PROPERTY_SOURCE(Drawing::FeatureViewOrthographic, Drawing::FeatureViewCollection)
 
@@ -53,10 +53,10 @@ FeatureViewOrthographic::FeatureViewOrthographic(void)
 {
     static const char *group = "Drawing view";
 
-    ADD_PROPERTY_TYPE(Anchor    ,(0), group, App::Prop_None,"The root view to align projections with");
+    ADD_PROPERTY_TYPE(Anchor, (0), group, App::Prop_None, "The root view to align projections with");
 
     ProjectionType.setEnums(ProjectionTypeEnums);
-    ADD_PROPERTY(ProjectionType,((long)0));
+    ADD_PROPERTY(ProjectionType, ((long)0));
     ADD_PROPERTY(viewOrientationMatrix, (Base::Matrix4D()));
 }
 
@@ -81,7 +81,7 @@ Base::BoundBox3d FeatureViewOrthographic::getBoundingBox() const
     Base::BoundBox3d bbox;
 
     std::vector<App::DocumentObject*> views = Views.getValues();
-    Drawing::FeatureOrthoView *anchorView =  dynamic_cast<Drawing::FeatureOrthoView *>(this->Anchor.getValue());
+    Drawing::FeatureOrthoView *anchorView = dynamic_cast<Drawing::FeatureOrthoView *>(Anchor.getValue());
     for (std::vector<App::DocumentObject*>::const_iterator it = views.begin(); it != views.end(); ++it) {
          if ((*it)->getTypeId().isDerivedFrom(FeatureViewPart::getClassTypeId())) {
             FeatureViewPart *part = static_cast<FeatureViewPart *>(*it);
@@ -97,7 +97,6 @@ Base::BoundBox3d FeatureViewOrthographic::getBoundingBox() const
             }
             
             bbox.Add(bb);
-
         }
     }
     // This /should/ leave the centre of the bounding box at (0,0) except when
@@ -113,7 +112,6 @@ Base::BoundBox3d FeatureViewOrthographic::getBoundingBox() const
 // Function provided by Joe Dowsett, 2014
 double FeatureViewOrthographic::calculateAutomaticScale() const
 {
-
     Drawing::FeaturePage *page = 0;
 
     std::vector<App::DocumentObject*> parent = getInList();
@@ -130,7 +128,7 @@ double FeatureViewOrthographic::calculateAutomaticScale() const
     if(!page->hasValidTemplate())
         throw Base::Exception("Page template isn't valid");
 
-    Base::BoundBox3d bbox = this->getBoundingBox();
+    Base::BoundBox3d bbox = getBoundingBox();
 
     float scale_x = (page->getPageWidth()) / bbox.LengthX(); // TODO include gap spaces
     float scale_y = (page->getPageHeight()) / bbox.LengthY();
@@ -159,8 +157,8 @@ void FeatureViewOrthographic::onChanged(const App::Property* prop)
         prop == &ScaleType ||
         prop == &viewOrientationMatrix ||
         prop == &Scale && !Scale.StatusBits.test(5)){
-          if (!this->isRestoring()) {
-              this->execute();
+          if (!isRestoring()) {
+              execute();
           }
     }
     Drawing::FeatureViewCollection::onChanged(prop);
@@ -330,7 +328,7 @@ int FeatureViewOrthographic::removeOrthoView(const char *viewProjType)
 
                 if ( strcmp(viewProjType, orthoView->Type.getValueAsString()) == 0 ) {
                     // Remove from the document
-                    this->getDocument()->remObject((*it)->getNameInDocument());
+                    getDocument()->remObject((*it)->getNameInDocument());
                     moveToCentre();
                     return views.size();
                 }
@@ -415,8 +413,9 @@ bool FeatureViewOrthographic::distributeOrthoViews()
 
     // Calculate bounding boxes for each displayed view
     Base::BoundBox3d bboxes[10];
-    for(int i = 0; i < 10; ++i)
-        if(viewPtrs[i]) {
+
+    for (int i = 0; i < 10; ++i)
+        if (viewPtrs[i]) {
             bboxes[i] = viewPtrs[i]->getBoundingBox();
         } else {
             // BoundBox3d defaults to length=(FLOAT_MAX + -FLOAT_MAX)
@@ -429,15 +428,19 @@ bool FeatureViewOrthographic::distributeOrthoViews()
     double spacing = 15;    //in mm  TODO: maybe use a property?
 
     if (viewPtrs[0]) {
-        viewPtrs[0]->X.setValue((bboxes[0].LengthX() + bboxes[4].LengthX()) / -2.0 - spacing);
-        viewPtrs[0]->Y.setValue((bboxes[0].LengthY() + bboxes[4].LengthY()) / 2.0 + spacing);
+        double displace = std::max(bboxes[0].LengthX() + bboxes[4].LengthX(),
+                                   bboxes[0].LengthY() + bboxes[4].LengthY());
+        viewPtrs[0]->X.setValue(displace / -2.0 - spacing);
+        viewPtrs[0]->Y.setValue(displace / 2.0 + spacing);
     }
     if (viewPtrs[1]) {
         viewPtrs[1]->Y.setValue((bboxes[1].LengthY() + bboxes[4].LengthY()) / 2.0 + spacing);
     }
     if (viewPtrs[2]) {
-        viewPtrs[2]->X.setValue((bboxes[2].LengthX() + bboxes[4].LengthX()) / 2.0 + spacing);
-        viewPtrs[2]->Y.setValue((bboxes[2].LengthY() + bboxes[4].LengthY()) / 2.0 + spacing);
+        double displace = std::max(bboxes[2].LengthX() + bboxes[4].LengthX(),
+                                   bboxes[2].LengthY() + bboxes[4].LengthY());
+        viewPtrs[2]->X.setValue(displace / 2.0 + spacing);
+        viewPtrs[2]->Y.setValue(displace / 2.0 + spacing);
     }
     if (viewPtrs[3]) {
         viewPtrs[3]->X.setValue((bboxes[3].LengthX() + bboxes[4].LengthX()) / -2.0 - spacing);
@@ -454,15 +457,19 @@ bool FeatureViewOrthographic::distributeOrthoViews()
             viewPtrs[6]->X.setValue((bboxes[6].LengthX() + bboxes[4].LengthX()) / 2.0 + spacing);
     }
     if (viewPtrs[7]) {
-        viewPtrs[7]->X.setValue((bboxes[7].LengthX() + bboxes[4].LengthX()) / -2.0 - spacing);
-        viewPtrs[7]->Y.setValue((bboxes[7].LengthY() + bboxes[4].LengthY()) / -2.0 - spacing);
+        double displace = std::max(bboxes[7].LengthX() + bboxes[4].LengthX(),
+                                   bboxes[7].LengthY() + bboxes[4].LengthY());
+        viewPtrs[7]->X.setValue(displace / -2.0 - spacing);
+        viewPtrs[7]->Y.setValue(displace / -2.0 - spacing);
     }
     if (viewPtrs[8]) {
         viewPtrs[8]->Y.setValue((bboxes[8].LengthY() + bboxes[4].LengthY()) / -2.0 - spacing);
     }
     if (viewPtrs[9]) {
-        viewPtrs[9]->X.setValue((bboxes[9].LengthX() + bboxes[4].LengthX()) / 2.0 + spacing);
-        viewPtrs[9]->Y.setValue((bboxes[9].LengthY() + bboxes[4].LengthY()) / -2.0 - spacing);
+        double displace = std::max(bboxes[9].LengthX() + bboxes[4].LengthX(),
+                                   bboxes[9].LengthY() + bboxes[4].LengthY());
+        viewPtrs[9]->X.setValue(displace / 2.0 + spacing);
+        viewPtrs[9]->Y.setValue(displace / -2.0 - spacing);
     }
 
     return true;
@@ -491,9 +498,9 @@ App::DocumentObjectExecReturn *FeatureViewOrthographic::execute(void)
 
         double autoScale = calculateAutomaticScale();
 
-        if(std::abs(this->Scale.getValue() - autoScale) > FLT_EPSILON) {
+        if(std::abs(Scale.getValue() - autoScale) > FLT_EPSILON) {
             // Set this Scale
-            this->Scale.setValue(autoScale);
+            Scale.setValue(autoScale);
 
             //Rebuild the view
             const std::vector<App::DocumentObject *> &views = Views.getValues();
@@ -517,13 +524,13 @@ App::DocumentObjectExecReturn *FeatureViewOrthographic::execute(void)
     if (Views.getSize()) {
         distributeOrthoViews();
     }
-    //this->touch();
+    //touch();
 
     return FeatureViewCollection::execute();
 }
 
 void FeatureViewOrthographic::onDocumentRestored()
 {
-    this->execute();
+    execute();
 }
 
