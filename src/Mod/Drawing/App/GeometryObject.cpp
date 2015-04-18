@@ -28,7 +28,6 @@
 # include <gp_Dir.hxx>
 # include <gp_Elips.hxx>
 # include <gp_Pln.hxx>
-# include <gp_Pnt.hxx>
 # include <gp_Vec.hxx>
 
 # include <Bnd_Box.hxx>
@@ -151,20 +150,6 @@ void GeometryObject::clear()
     edgeReferences.clear();
 }
 
-TopoDS_Shape GeometryObject::invertY(const TopoDS_Shape& shape) const
-{
-    // make sure to have the y coordinates inverted
-    gp_Trsf mat;
-    Bnd_Box bounds;
-    BRepBndLib::Add(shape, bounds);
-    bounds.SetGap(0.0);
-    Standard_Real xMin, yMin, zMin, xMax, yMax, zMax;
-    bounds.Get(xMin, yMin, zMin, xMax, yMax, zMax);
-    mat.SetMirror(gp_Ax2(gp_Pnt((xMin+xMax)/2,(yMin+yMax)/2,(zMin+zMax)/2), gp_Dir(0,1,0)));
-    BRepBuilderAPI_Transform mkTrf(shape, mat);
-    return mkTrf.Shape();
-}
-
 void GeometryObject::drawFace (const bool visible, const int typ, const int iface, Handle_HLRBRep_Data & DS, TopoDS_Shape& Result) const
 {
 // add all the edges for this face(iface) to Result
@@ -206,36 +191,31 @@ void GeometryObject::drawEdge(HLRBRep_EdgeData& ed, TopoDS_Shape& Result, const 
     }
 }
 
-DrawingGeometry::Vertex * GeometryObject::projectVertex(const TopoDS_Shape &vert, const TopoDS_Shape &support, const Base::Vector3d &direction) const
+DrawingGeometry::Vertex * GeometryObject::projectVertex(const TopoDS_Shape &vert,
+                                                        const TopoDS_Shape &support,
+                                                        const Base::Vector3d &direction,
+                                                        const Base::Vector3d &projXAxis) const
 {
     if(vert.IsNull())
         throw Base::Exception("Projected vertex is null");
-    // Inverty y function using support to calculate bounding box
+
+    gp_Pnt supportCentre = findCentroid(support, direction, projXAxis);
+
+    // mirror+scale vert around centre of support
     gp_Trsf mat;
-    Bnd_Box bounds;
-    BRepBndLib::Add(support, bounds);
-    bounds.SetGap(0.0);
-    Standard_Real xMin, yMin, zMin, xMax, yMax, zMax;
-    bounds.Get(xMin, yMin, zMin, xMax, yMax, zMax);
-    mat.SetMirror(gp_Ax2(gp_Pnt((xMin+xMax)/2,(yMin+yMax)/2,(zMin+zMax)/2), gp_Dir(0,1,0)));
-
+    mat.SetMirror(gp_Ax2(supportCentre, gp_Dir(0, 1, 0)));
     gp_Trsf matScale;
-    matScale.SetScaleFactor(Scale);
+    matScale.SetScale(supportCentre, Scale);
+    mat.Multiply(matScale);
 
-    BRepBuilderAPI_Transform mkTrf(vert, mat);
-    BRepBuilderAPI_Transform mkTrfScale(mkTrf.Shape(), matScale);
-
+    //TODO: See if it makes sense to use gp_Trsf::Transforms() instead
+    BRepBuilderAPI_Transform mkTrfScale(vert, mat);
     const TopoDS_Vertex &refVert = TopoDS::Vertex(mkTrfScale.Shape());
 
     gp_Ax2 transform;
-    if(projXAxis.Length() > FLT_EPSILON) {
-        transform = gp_Ax2(gp_Pnt((xMin+xMax)/2,(yMin+yMax)/2,(zMin+zMax)/2),
-                           gp_Dir(direction.x, direction.y, direction.z),
-                           gp_Dir(projXAxis.x, projXAxis.y, projXAxis.z));
-    } else {
-        transform = gp_Ax2(gp_Pnt((xMin+xMax)/2,(yMin+yMax)/2,(zMin+zMax)/2),
-                           gp_Dir(direction.x, direction.y, direction.z));
-    }
+    transform = gp_Ax2(supportCentre,
+                       gp_Dir(direction.x, direction.y, direction.z),
+                       gp_Dir(projXAxis.x, projXAxis.y, projXAxis.z));
 
     HLRAlgo_Projector projector = HLRAlgo_Projector( transform );
     projector.Scaled(true);
@@ -254,30 +234,22 @@ void GeometryObject::projectSurfaces(const TopoDS_Shape &face,
 {
     if(face.IsNull())
         throw Base::Exception("Projected shape is null");
-    // Inverty y function using support to calculate bounding box
 
+    gp_Pnt supportCentre = findCentroid(support, direction, xaxis);
+
+    // TODO: We used to invert Y twice here, make sure that wasn't intentional
     gp_Trsf mat;
-    Bnd_Box bounds;
-    BRepBndLib::Add(invertY(support), bounds);
-    bounds.SetGap(0.0);
-    Standard_Real xMin, yMin, zMin, xMax, yMax, zMax;
-    bounds.Get(xMin, yMin, zMin, xMax, yMax, zMax);
-    mat.SetMirror(gp_Ax2(gp_Pnt((xMin+xMax)/2,(yMin+yMax)/2,(zMin+zMax)/2), gp_Dir(0,1,0)));
+    mat.SetMirror(gp_Ax2(supportCentre, gp_Dir(0, 1, 0)));
     gp_Trsf matScale;
-    matScale.SetScaleFactor(Scale);
+    matScale.SetScale(supportCentre, Scale);
+    mat.Multiply(matScale);
 
-    BRepBuilderAPI_Transform mkTrf(face, mat);
-    BRepBuilderAPI_Transform mkTrfScale(mkTrf.Shape(), matScale);
+    BRepBuilderAPI_Transform mkTrfScale(face, mat);
 
     gp_Ax2 transform;
-    if(xaxis.Length() > FLT_EPSILON) {
-        transform = gp_Ax2(gp_Pnt((xMin+xMax)/2,(yMin+yMax)/2,(zMin+zMax)/2),
-                           gp_Dir(direction.x, direction.y, direction.z),
-                           gp_Dir(xaxis.x, xaxis.y, xaxis.z));
-    } else {
-        transform = gp_Ax2(gp_Pnt((xMin+xMax)/2,(yMin+yMax)/2,(zMin+zMax)/2),
-                           gp_Dir(direction.x, direction.y, direction.z));
-    }
+    transform = gp_Ax2(supportCentre,
+                       gp_Dir(direction.x, direction.y, direction.z),
+                       gp_Dir(xaxis.x, xaxis.y, xaxis.z));
 
     HLRBRep_Algo *brep_hlr = new HLRBRep_Algo();
     brep_hlr->Add(mkTrfScale.Shape());
@@ -292,13 +264,18 @@ void GeometryObject::projectSurfaces(const TopoDS_Shape &face,
     // Extract Faces
     std::vector<int> projFaceRefs;
 
-    extractFaces(brep_hlr, mkTrfScale.Shape(), 5, true, WithSmooth, projFaces, projFaceRefs);  //
+    extractFaces(brep_hlr, mkTrfScale.Shape(), 5, true, WithSmooth, projFaces, projFaceRefs);
     delete brep_hlr;
 }
 
 Base::BoundBox3d GeometryObject::calcBoundingBox() const
 {
-    Base::BoundBox3d bbox(0., 0., 0.);
+    Base::BoundBox3d bbox;
+
+    // BoundBox3d defaults to limits at +/-FLOAT_MAX
+    bbox.ScaleX(0);
+    bbox.ScaleY(0);
+    bbox.ScaleZ(0);
 
     const std::vector<Vertex *> verts = vertexGeom;
     const std::vector<BaseGeom *> edges = edgeGeom;
@@ -336,38 +313,28 @@ Base::BoundBox3d GeometryObject::calcBoundingBox() const
 
 DrawingGeometry::BaseGeom * GeometryObject::projectEdge(const TopoDS_Shape &edge,
                                                         const TopoDS_Shape &support,
-                                                        const Base::Vector3d &direction) const
+                                                        const Base::Vector3d &direction,
+                                                        const Base::Vector3d &projXAxis) const
 {
     if(edge.IsNull())
         throw Base::Exception("Projected edge is null");
     // Invert y function using support to calculate bounding box
-    // TODO: look at using invertY()
+
+    gp_Pnt supportCentre = findCentroid(support, direction, projXAxis);
 
     gp_Trsf mat;
-    Bnd_Box bounds;
-    BRepBndLib::Add(support, bounds);
-    bounds.SetGap(0.0);
-    Standard_Real xMin, yMin, zMin, xMax, yMax, zMax;
-    bounds.Get(xMin, yMin, zMin, xMax, yMax, zMax);
-    mat.SetMirror(gp_Ax2(gp_Pnt((xMin+xMax)/2,(yMin+yMax)/2,(zMin+zMax)/2), gp_Dir(0.f,1.f,0.f)));
-
+    mat.SetMirror(gp_Ax2(supportCentre, gp_Dir(0, 1, 0)));
     gp_Trsf matScale;
-    matScale.SetScaleFactor(Scale);
-
-    BRepBuilderAPI_Transform mkTrf(edge, mat);
-    BRepBuilderAPI_Transform mkTrfScale(mkTrf.Shape(), matScale);
+    matScale.SetScale(supportCentre, Scale);
+    mat.Multiply(matScale);
+    BRepBuilderAPI_Transform mkTrfScale(edge, mat);
 
     const TopoDS_Edge &refEdge = TopoDS::Edge(mkTrfScale.Shape());
 
     gp_Ax2 transform;
-    if(projXAxis.Length() > FLT_EPSILON) {
-        transform = gp_Ax2(gp_Pnt((xMin+xMax)/2,(yMin+yMax)/2,(zMin+zMax)/2),
-                           gp_Dir(direction.x, direction.y, direction.z),
-                           gp_Dir(projXAxis.x, projXAxis.y, projXAxis.z));
-    } else {
-        transform = gp_Ax2(gp_Pnt((xMin+xMax)/2,(yMin+yMax)/2,(zMin+zMax)/2),
-                           gp_Dir(direction.x, direction.y, direction.z));
-    }
+    transform = gp_Ax2(supportCentre,
+                       gp_Dir(direction.x, direction.y, direction.z),
+                       gp_Dir(projXAxis.x, projXAxis.y, projXAxis.z));
 
     BRepAdaptor_Curve refCurve(refEdge);
     HLRAlgo_Projector projector = HLRAlgo_Projector( transform );
@@ -921,53 +888,68 @@ void GeometryObject::createWire(const TopoDS_Shape &input,
     }
 }
 
+gp_Pnt GeometryObject::findCentroid(const TopoDS_Shape &shape,
+                                    const Base::Vector3d &direction,
+                                    const Base::Vector3d &xAxis) const
+{
+    gp_Ax2 viewAxis;
+    viewAxis = gp_Ax2(gp_Pnt(0, 0, 0),
+                      gp_Dir(direction.x, -direction.y, direction.z),
+                      gp_Dir(xAxis.x, -xAxis.y, xAxis.z)); // Y invert warning!
+
+    gp_Trsf tempTransform;
+    tempTransform.SetTransformation(viewAxis);
+    BRepBuilderAPI_Transform builder(shape, tempTransform);
+
+    Bnd_Box tBounds;
+    BRepBndLib::Add(builder.Shape(), tBounds);
+    tBounds.SetGap(0.0);
+    Standard_Real xMin, yMin, zMin, xMax, yMax, zMax;
+    tBounds.Get(xMin, yMin, zMin, xMax, yMax, zMax);
+
+    Standard_Real x = (xMin + xMax) / 2.0,
+                  y = (yMin + yMax) / 2.0,
+                  z = (zMin + zMax) / 2.0;
+
+    // Get centroid back into object space
+    tempTransform.Inverted().Transforms(x, y, z);
+
+    return gp_Pnt(x, y, z);
+}
+
 void GeometryObject::extractGeometry(const TopoDS_Shape &input, const Base::Vector3d &direction, bool extractHidden, const Base::Vector3d &xAxis)
 {
     // Clear previous Geometry and References that may have been stored
     clear();
 
-    ///TODO: Consider whether it would be possible/beneficial to cache some of this effort IR
+    ///TODO: Consider whether it would be possible/beneficial to cache some of this effort (eg don't do scale in OpenCASCADE land) IR
     TopoDS_Shape transShape;
     HLRBRep_Algo *brep_hlr = NULL;
     try {
-        // Find 3-dimensional bounding box around input
-        Bnd_Box bounds;
-        BRepBndLib::Add(input, bounds);
-        bounds.SetGap(0.0);
-        Standard_Real xMin, yMin, zMin, xMax, yMax, zMax;
-        bounds.Get(xMin, yMin, zMin, xMax, yMax, zMax);
+        gp_Pnt inputCentre = findCentroid(input, direction, xAxis);
 
-        // Note centre point of 3D object for...
-        gp_Pnt inputCentre((xMin + xMax) / 2.0,
-                           (yMin + yMax) / 2.0,
-                           (zMin + zMax) / 2.0);
+        // Make tempTransform scale the object around it's centre point and
+        // mirror about the Y axis
+        gp_Trsf tempTransform;
+        tempTransform.SetScale(inputCentre, Scale);
+        gp_Trsf mirrorTransform;
+        mirrorTransform.SetMirror( gp_Ax2(inputCentre, gp_Dir(0, 1, 0)) );
+        tempTransform.Multiply(mirrorTransform);
 
-        // First - Making a copy of the shape that's scaled
-        //         around the original shape's centre point
-        gp_Trsf matScale;
-        matScale.SetScale(inputCentre, Scale);
-
-        BRepBuilderAPI_Transform mkTrf(invertY(input), matScale);
+        // Apply that transform to the shape.  This should preserve the centre.
+        BRepBuilderAPI_Transform mkTrf(input, tempTransform);
         transShape = mkTrf.Shape();
 
         brep_hlr = new HLRBRep_Algo();
         brep_hlr->Add(transShape);
 
-        // Second - Projecting the shape into a properly-oriented
-        //          space with the object's centroid at the origin.
-        projXAxis = xAxis;
-        projNorm = direction;
-        gp_Ax2 transform;
-
-        if(xAxis.Length() > FLT_EPSILON) {
-            transform = gp_Ax2(inputCentre,
-                               gp_Dir(direction.x, direction.y, direction.z),
-                               gp_Dir(xAxis.x, xAxis.y, xAxis.z));
-        } else {
-            transform = gp_Ax2(inputCentre,
-                               gp_Dir(direction.x, direction.y, direction.z));
-        }
-        HLRAlgo_Projector projector( transform );
+        // Project the shape into view space with the object's centroid
+        // at the origin.
+        gp_Ax2 viewAxis;
+        viewAxis = gp_Ax2(inputCentre,
+                          gp_Dir(direction.x, direction.y, direction.z),
+                          gp_Dir(xAxis.x, xAxis.y, xAxis.z));
+        HLRAlgo_Projector projector( viewAxis );
         brep_hlr->Projector(projector);
         brep_hlr->Update();
         brep_hlr->Hide();
@@ -1004,7 +986,7 @@ void GeometryObject::extractGeometry(const TopoDS_Shape &input, const Base::Vect
 //     calculateGeometry(extractCompound(brep_hlr, invertShape, 3, true), WithSmooth); // Smooth Edge
 
     // Extract Faces
-    extractFaces(brep_hlr, transShape, 5, true,WithSmooth,faceGeom,faceReferences);
+    extractFaces(brep_hlr, transShape, 5, true, WithSmooth, faceGeom, faceReferences);
 
     // House Keeping
     delete brep_hlr;

@@ -24,6 +24,8 @@
 #define _DRAWING_GEOMETRYOBJECT_H
 
 #include <TopoDS_Shape.hxx>
+#include <gp_Pnt.hxx>
+
 #include <Base/Vector3D.h>
 #include <string>
 #include <vector>
@@ -64,8 +66,14 @@ public:
     const std::vector<int> & getEdgeRefs()   const { return edgeReferences; };
     const std::vector<int> & getFaceRefs()   const { return faceReferences; };
 
-    DrawingGeometry::BaseGeom * projectEdge(const TopoDS_Shape &edge, const TopoDS_Shape &support, const Base::Vector3d &direction) const;
-    DrawingGeometry::Vertex   * projectVertex(const TopoDS_Shape &vert, const TopoDS_Shape &support, const Base::Vector3d &direction) const;
+    DrawingGeometry::BaseGeom * projectEdge(const TopoDS_Shape &edge,
+                                            const TopoDS_Shape &support,
+                                            const Base::Vector3d &direction,
+                                            const Base::Vector3d &projXAxis) const;
+    DrawingGeometry::Vertex   * projectVertex(const TopoDS_Shape &vert,
+                                              const TopoDS_Shape &support,
+                                              const Base::Vector3d &direction,
+                                              const Base::Vector3d &projXAxis) const;
 
     void projectSurfaces(const TopoDS_Shape   &face,
                          const TopoDS_Shape   &support,
@@ -105,7 +113,6 @@ protected:
 
     /// Accumulate edges from input and store them in wires
     void createWire(const TopoDS_Shape &input, std::vector<DrawingGeometry::Wire *> &wires) const;
-    TopoDS_Shape invertY(const TopoDS_Shape& shape) const;
 
 protected:
     // Geometry
@@ -118,12 +125,14 @@ protected:
     std::vector<int> edgeReferences;
     std::vector<int> faceReferences;
 
-    Base::Vector3d projNorm;
-    Base::Vector3d projXAxis;
-
     double Tolerance;
     double Scale;
     HLRBRep_Algo *brep_hlr;
+
+    /// Returns the centroid of shape, as viewed according to direction and xAxis
+    gp_Pnt findCentroid(const TopoDS_Shape &shape,
+                        const Base::Vector3d &direction,
+                        const Base::Vector3d &xAxis) const;
 };
 
 } //namespace DrawingGeometry

@@ -210,6 +210,7 @@ App::DocumentObjectExecReturn *FeatureViewSection::execute(void)
     try {
         geometryObject->setTolerance(Tolerance.getValue());
         geometryObject->setScale(Scale.getValue());
+        //TODO: Do we need to check for nonzero XAxisDirection here?
         geometryObject->extractGeometry(result, Direction.getValue(), ShowHiddenLines.getValue(), XAxisDirection.getValue());
 
         bbox = geometryObject->calcBoundingBox();
@@ -259,6 +260,7 @@ void FeatureViewSection::getSectionSurface(std::vector<DrawingGeometry::Face *> 
             }
         }
     }
+    //TODO: Do we need to check for nonzero XAxisDirection here?
     geometryObject->projectSurfaces(comp, result, Direction.getValue(), XAxisDirection.getValue(), sectionFace);
 }
 // Python Drawing feature ---------------------------------------------------------

@@ -49,7 +49,7 @@ namespace Drawing {
 namespace DrawingGui
 {
 
-class TaskOrthographicViews : public QWidget//: public Gui::TaskView::TaskBox
+class TaskOrthographicViews : public QWidget
 {
     Q_OBJECT
 

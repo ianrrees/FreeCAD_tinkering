@@ -120,6 +120,7 @@ App::DocumentObjectExecReturn *FeatureViewPart::execute(void)
     try {
         geometryObject->setTolerance(Tolerance.getValue());
         geometryObject->setScale(Scale.getValue());
+        //TODO: Do we need to check for XAxisDirection having nonzero length here?
         geometryObject->extractGeometry(shape, Direction.getValue(), ShowHiddenLines.getValue(), XAxisDirection.getValue());
 
         bbox = geometryObject->calcBoundingBox();
@@ -220,7 +221,9 @@ DrawingGeometry::BaseGeom *FeatureViewPart::getCompleteEdge(int idx) const
     const TopoDS_Shape shape = topoShape.getSubShape(str.str().c_str());
 
     const TopoDS_Shape &support = static_cast<Part::Feature*>(link)->Shape.getValue();
-    DrawingGeometry::BaseGeom *prjShape = geometryObject->projectEdge(shape, support, Direction.getValue());
+    //TODO: Do we need to verify that XAxisDirection is nonzero length?
+    //TODO: make sure prjShape gets deleted
+    DrawingGeometry::BaseGeom *prjShape = geometryObject->projectEdge(shape, support, Direction.getValue(), XAxisDirection.getValue());
 
     return prjShape;
 }
@@ -239,7 +242,9 @@ DrawingGeometry::Vertex * FeatureViewPart::getVertex(int idx) const
     TopoDS_Shape shape = topoShape.getSubShape(str.str().c_str());
 
     const TopoDS_Shape &support = static_cast<Part::Feature*>(link)->Shape.getValue();
-    DrawingGeometry::Vertex *prjShape = geometryObject->projectVertex(shape, support, Direction.getValue());
+    //TODO: Make sure prjShape gets deleted
+    //TODO: Do we need to verify that XAxisDirection is nonzero length?
+    DrawingGeometry::Vertex *prjShape = geometryObject->projectVertex(shape, support, Direction.getValue(), XAxisDirection.getValue());
     //Base::Console().Log("vert %f, %f \n", prjShape->pnt.fX,  prjShape->pnt.fY);
     return prjShape;
 }
