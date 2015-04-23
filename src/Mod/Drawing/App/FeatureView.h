@@ -64,7 +64,7 @@ public:
         return "DrawingGui::ViewProviderDrawingView";
     }
 
-    FeaturePage* findParentPage();
+    FeaturePage* findParentPage() const;
 
 protected:
     void onChanged(const App::Property* prop);
