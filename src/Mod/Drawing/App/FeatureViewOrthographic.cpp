@@ -57,6 +57,10 @@ FeatureViewOrthographic::FeatureViewOrthographic(void)
 
     ProjectionType.setEnums(ProjectionTypeEnums);
     ADD_PROPERTY(ProjectionType, ((long)0));
+
+    ADD_PROPERTY_TYPE(spacingX, (15), group, App::Prop_None, "Horizontal spacing between views");
+    ADD_PROPERTY_TYPE(spacingY, (15), group, App::Prop_None, "Vertical spacing between views");
+
     ADD_PROPERTY(viewOrientationMatrix, (Base::Matrix4D()));
 }
 
@@ -140,9 +144,11 @@ double FeatureViewOrthographic::calculateAutomaticScale() const
     int numHorizSpaces = (viewPtrs[0] || viewPtrs[1] || viewPtrs[2]) +
                          (viewPtrs[7] || viewPtrs[8] || viewPtrs[9]);
 
-    //TODO: Use a Property for spacing here -\/ (also comes up in distributeOrthoViews() or whatever it's called...
-    double scale_x = (page->getPageWidth() - 15 * (numVertSpaces + 1)) / width;
-    double scale_y = (page->getPageHeight() - 15 * (numHorizSpaces + 1)) / height;
+    double availableX = page->getPageWidth() - spacingX.getValue() * (numVertSpaces + 1);
+    double availableY = page->getPageHeight() - spacingY.getValue() * (numHorizSpaces + 1);
+
+    double scale_x = availableX / width;
+    double scale_y = availableY / height;
 
     float working_scale = std::min(scale_x, scale_y);
 
@@ -476,51 +482,52 @@ bool FeatureViewOrthographic::distributeOrthoViews()
     makeViewBbs(viewPtrs, bboxes);
 
     // Now that things are setup, do the spacing
-    double spacing = 15;    //in mm  TODO: maybe use a property?  Also comes up in calculateAutomaticScale
+    double xSpacing = spacingX.getValue();    //in mm
+    double ySpacing = spacingY.getValue();    //in mm
 
     if (viewPtrs[0]) {
         double displace = std::max(bboxes[0].LengthX() + bboxes[4].LengthX(),
                                    bboxes[0].LengthY() + bboxes[4].LengthY());
-        viewPtrs[0]->X.setValue(displace / -2.0 - spacing);
-        viewPtrs[0]->Y.setValue(displace / 2.0 + spacing);
+        viewPtrs[0]->X.setValue(displace / -2.0 - xSpacing);
+        viewPtrs[0]->Y.setValue(displace / 2.0 + ySpacing);
     }
     if (viewPtrs[1]) {
-        viewPtrs[1]->Y.setValue((bboxes[1].LengthY() + bboxes[4].LengthY()) / 2.0 + spacing);
+        viewPtrs[1]->Y.setValue((bboxes[1].LengthY() + bboxes[4].LengthY()) / 2.0 + ySpacing);
     }
     if (viewPtrs[2]) {
         double displace = std::max(bboxes[2].LengthX() + bboxes[4].LengthX(),
                                    bboxes[2].LengthY() + bboxes[4].LengthY());
-        viewPtrs[2]->X.setValue(displace / 2.0 + spacing);
-        viewPtrs[2]->Y.setValue(displace / 2.0 + spacing);
+        viewPtrs[2]->X.setValue(displace / 2.0 + xSpacing);
+        viewPtrs[2]->Y.setValue(displace / 2.0 + ySpacing);
     }
     if (viewPtrs[3]) {
-        viewPtrs[3]->X.setValue((bboxes[3].LengthX() + bboxes[4].LengthX()) / -2.0 - spacing);
+        viewPtrs[3]->X.setValue((bboxes[3].LengthX() + bboxes[4].LengthX()) / -2.0 - xSpacing);
     }
     if (viewPtrs[4]) {  // TODO: Move this check above, and figure out a sane bounding box based on other existing views
     }
     if (viewPtrs[5]) {
-        viewPtrs[5]->X.setValue((bboxes[5].LengthX() + bboxes[4].LengthX()) / 2.0 + spacing);
+        viewPtrs[5]->X.setValue((bboxes[5].LengthX() + bboxes[4].LengthX()) / 2.0 + xSpacing);
     }
     if (viewPtrs[6]) {
         if (viewPtrs[5])
-            viewPtrs[6]->X.setValue((bboxes[6].LengthX() + bboxes[4].LengthX()) / 2.0 + bboxes[5].LengthX() + 2 * spacing);
+            viewPtrs[6]->X.setValue((bboxes[6].LengthX() + bboxes[4].LengthX()) / 2.0 + bboxes[5].LengthX() + 2 * xSpacing);
         else
-            viewPtrs[6]->X.setValue((bboxes[6].LengthX() + bboxes[4].LengthX()) / 2.0 + spacing);
+            viewPtrs[6]->X.setValue((bboxes[6].LengthX() + bboxes[4].LengthX()) / 2.0 + xSpacing);
     }
     if (viewPtrs[7]) {
         double displace = std::max(bboxes[7].LengthX() + bboxes[4].LengthX(),
                                    bboxes[7].LengthY() + bboxes[4].LengthY());
-        viewPtrs[7]->X.setValue(displace / -2.0 - spacing);
-        viewPtrs[7]->Y.setValue(displace / -2.0 - spacing);
+        viewPtrs[7]->X.setValue(displace / -2.0 - xSpacing);
+        viewPtrs[7]->Y.setValue(displace / -2.0 - ySpacing);
     }
     if (viewPtrs[8]) {
-        viewPtrs[8]->Y.setValue((bboxes[8].LengthY() + bboxes[4].LengthY()) / -2.0 - spacing);
+        viewPtrs[8]->Y.setValue((bboxes[8].LengthY() + bboxes[4].LengthY()) / -2.0 - ySpacing);
     }
     if (viewPtrs[9]) {
         double displace = std::max(bboxes[9].LengthX() + bboxes[4].LengthX(),
                                    bboxes[9].LengthY() + bboxes[4].LengthY());
-        viewPtrs[9]->X.setValue(displace / 2.0 + spacing);
-        viewPtrs[9]->Y.setValue(displace / -2.0 - spacing);
+        viewPtrs[9]->X.setValue(displace / 2.0 + xSpacing);
+        viewPtrs[9]->Y.setValue(displace / -2.0 - ySpacing);
     }
 
     return true;

@@ -50,6 +50,11 @@ public:
 
     App::PropertyEnumeration ProjectionType;
 
+    /// Default horizontal spacing between adjacent views on Drawing, in mm
+    App::PropertyFloat spacingX;
+    /// Default vertical spacing between adjacent views on Drawing, in mm
+    App::PropertyFloat spacingY;
+
     /// Transforms Direction and XAxisDirection vectors in child views
     App::PropertyMatrix viewOrientationMatrix;
 
