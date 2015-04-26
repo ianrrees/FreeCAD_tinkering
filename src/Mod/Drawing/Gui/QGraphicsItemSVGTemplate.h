@@ -39,7 +39,7 @@ class FeatureSVGTemplate;
 namespace DrawingGui
 {
 
-class DrawingGuiExport  QGraphicsItemSVGTemplate : public QGraphicsItemTemplate
+class DrawingGuiExport QGraphicsItemSVGTemplate : public QGraphicsItemTemplate
 {
     Q_OBJECT
 
@@ -48,26 +48,26 @@ public:
     ~QGraphicsItemSVGTemplate();
 
     enum {Type = QGraphicsItem::UserType + 153};
-    int type() const { return Type;}
+    int type() const { return Type; }
 
-
+    /// Currently just frees up textFields
     void clearContents();
     void draw();
     virtual void updateView(bool update = false);
 
 Q_SIGNALS:
-  void dirty();
+    void dirty();
 
 protected:
-  void openFile(const QFile &file);
-  void load (const QString & fileName);
+    void openFile(const QFile &file);
+    void load (const QString & fileName);
 
 protected:
-  Drawing::FeatureSVGTemplate * getSVGTemplate();
-  QGraphicsSvgItem *m_svgItem;
-  QSvgRenderer *m_svgRender;
-  virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
-};
+    Drawing::FeatureSVGTemplate * getSVGTemplate();
+    QGraphicsSvgItem *m_svgItem;
+    QSvgRenderer *m_svgRender;
+    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+};  // class QGraphicsItemSVGTemplate
 
 } // namespace DrawingViewGui
 

@@ -247,7 +247,8 @@ void QGraphicsItemView::setViewFeature(Drawing::FeatureView *obj)
 
 void QGraphicsItemView::toggleCache(bool state)
 {
-    this->setCacheMode((state)? NoCache : NoCache);
+    // TODO: huh?  IR
+    setCacheMode((state)? NoCache : NoCache);
 }
 
 void QGraphicsItemView::drawBorder(QPainter *painter)
@@ -255,14 +256,14 @@ void QGraphicsItemView::drawBorder(QPainter *painter)
     painter->save();
 
     // Make a rectangle smaller than the bounding box as a border and draw dashed line for selection
-    QRectF box = this->boundingRect().adjusted(2.,2.,-2.,-2.);
+    QRectF box = boundingRect().adjusted(2.,2.,-2.,-2.);
 
     QPen myPen = m_pen;
     myPen.setStyle(Qt::DashLine);
-    myPen.setWidth(0.3);
+    myPen.setWidth(0);  // 0 means "cosmetic pen" - always 1px
     painter->setPen(myPen);
 
-    QString name = QString::fromUtf8(this->getViewObject()->Label.getValue());
+    QString name = QString::fromUtf8(getViewObject()->Label.getValue());
     painter->setFont(m_font);
     QFontMetrics fm(m_font);
     QPointF pos = box.center();

@@ -21,14 +21,16 @@
  ***************************************************************************/
 
 #include "PreCompiled.h"
+
 #ifndef _PreComp_
 #include <QFile>
 #include <QFont>
+#include <QPen>
 #include <QSvgRenderer>
 #include <QGraphicsSvgItem>
-# include <strstream>
+#include <strstream>
 #include <boost/regex.hpp>
-#endif
+#endif // #ifndef _PreComp_
 
 #include <App/Application.h>
 #include <Base/Console.h>
@@ -43,9 +45,9 @@
 
 using namespace DrawingGui;
 
-QGraphicsItemSVGTemplate::QGraphicsItemSVGTemplate(QGraphicsScene *scene) : QGraphicsItemTemplate(scene)
+QGraphicsItemSVGTemplate::QGraphicsItemSVGTemplate(QGraphicsScene *scene)
+    : QGraphicsItemTemplate(scene)
 {
-
     m_svgRender = new QSvgRenderer();
 
     m_svgItem = new QGraphicsSvgItem();
@@ -54,15 +56,17 @@ QGraphicsItemSVGTemplate::QGraphicsItemSVGTemplate(QGraphicsScene *scene) : QGra
     m_svgItem->setFlags(QGraphicsItem::ItemClipsToShape);
     m_svgItem->setCacheMode(QGraphicsItem::NoCache);
 
-    this->addToGroup(m_svgItem);
+    addToGroup(m_svgItem);
 }
 
 QGraphicsItemSVGTemplate::~QGraphicsItemSVGTemplate()
 {
-  delete m_svgRender;
+    clearContents();
+    delete m_svgRender;
 }
 
-QVariant QGraphicsItemSVGTemplate::itemChange(GraphicsItemChange change, const QVariant &value)
+QVariant QGraphicsItemSVGTemplate::itemChange(GraphicsItemChange change,
+                                              const QVariant &value)
 {
     return QGraphicsItemGroup::itemChange(change, value);
 }
@@ -70,7 +74,11 @@ QVariant QGraphicsItemSVGTemplate::itemChange(GraphicsItemChange change, const Q
 
 void QGraphicsItemSVGTemplate::clearContents()
 {
-
+    for (std::vector<TemplateTextField *>::iterator it = textFields.begin();
+            it != textFields.end(); ++it) {
+        delete *it;
+    }
+    textFields.clear();
 }
 
 void QGraphicsItemSVGTemplate::openFile(const QFile &file)
@@ -78,8 +86,10 @@ void QGraphicsItemSVGTemplate::openFile(const QFile &file)
 
 }
 
-void QGraphicsItemSVGTemplate::load (const QString & fileName)
+void QGraphicsItemSVGTemplate::load(const QString &fileName)
 {
+    clearContents();
+
     if (fileName.isEmpty()){
         return;
     }
@@ -120,58 +130,58 @@ void QGraphicsItemSVGTemplate::load (const QString & fileName)
         }
     }
 
-
     std::string outfragment(ofile.str());
 
-    // Finds the FreeCAD-editable texts in the SVG template, creates
-    // a QGraphicsTextItem for each text found.
+    // Find text tags with freecad:editable attribute and their matching tspans
+    boost::regex tagRegex("<text([^>]*freecad:editable=[^>]*)>[^<]*<tspan[^>]*>([^<]*)</tspan>");
 
-    // Regex e1 attempts to find:
-    // [0] - A text tag that contains "freecad:editable=", and it's matching tspan tag
-    // [1] - positive integer font size in px
-    // [2] - pos/neg float x coordinate
-    // [3] - pos/neg float y coordinate
-    // [4] - one or more character Perl "word" for freecad:editable value
-    boost::regex e1 ("<text.*?font-size:([\\d]+)px.*?x=\"([\\d.-]+)\".*?y=\"([\\d.-]+)\".*?freecad:editable=\"(\\w+)\".*?>.*?<tspan.*?</tspan>");
+    // Smaller regexes for parsing matches to tagRegex
+    boost::regex editableNameRegex("freecad:editable=\"([\\w-]+)\"");
+    boost::regex boxShapeRegex("freecad:boxShape=\"([\\d.]+)[xX]([\\d.]+)\"");
+    boost::regex xRegex("x=\"([\\d.-]+)\"");
+    boost::regex yRegex("y=\"([\\d.-]+)\"");
+
     std::string::const_iterator begin, end;
     begin = outfragment.begin();
     end = outfragment.end();
-    boost::match_results<std::string::const_iterator> what;
-    int count = 0;
+    boost::match_results<std::string::const_iterator> tagMatch, nameMatch, xMatch, yMatch, boxShapeMatch;
 
-    try {
-        // and update the sketch
-        while (boost::regex_search(begin, end, what, e1)) {
-            QString fStr =  QString::fromStdString(what[1].str());
-            QString xStr = QString::fromStdString(what[2].str());
-            QString yStr =  QString::fromStdString(what[3].str());
-            QString content =  QString::fromStdString(what[4].str());
+    //TODO: Find location of special fields (first/third angle) and make graphics items for them
+
+    // and update the sketch
+    while (boost::regex_search(begin, end, tagMatch, tagRegex)) {
+        if ( boost::regex_search(tagMatch[1].first, tagMatch[1].second, nameMatch, editableNameRegex) &&
+             boost::regex_search(tagMatch[1].first, tagMatch[1].second, xMatch, xRegex) &&
+             boost::regex_search(tagMatch[1].first, tagMatch[1].second, yMatch, yRegex) &&
+             boost::regex_search(tagMatch[1].first, tagMatch[1].second, boxShapeMatch, boxShapeRegex) ) {
+
+            QString xStr = QString::fromStdString(xMatch[1].str());
+            QString yStr = QString::fromStdString(yMatch[1].str());
+            QString editableName = QString::fromStdString(nameMatch[1].str());
+            QString widthStr = QString::fromStdString(boxShapeMatch[1].str());
+            QString heightStr = QString::fromStdString(boxShapeMatch[2].str());
+
             double x = xStr.toDouble();
             double y = yStr.toDouble();
-            int fontSize = fStr.toInt();
+            double width = widthStr.toDouble();
+            double height = heightStr.toDouble();
 
-            Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
-                .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing");
-            std::string fontName = hGrp->GetASCII("LabelFont", "osifont");
+            TemplateTextField *item = new TemplateTextField(this, tmplte, nameMatch[1].str());
+            float pad = 1;
+            item->setRect(x - pad, -tmplte->getHeight() + y - height - pad,
+                          width + 2 * pad, height + 2 * pad);
 
-            QFont font;
-            font.setFamily(QString::fromStdString(fontName));
-            font.setPixelSize(fontSize);
-
-            QGraphicsTextItem *item = new QGraphicsTextItem();
-            item->setFont(font);
-            item->setPos(x, -tmplte->getHeight() + y - 4);  //TODO: Replace the 4 with an offset based on QFontMetrics
+            QPen myPen;
+            myPen.setStyle(Qt::DashLine);
+            myPen.setWidth(0);  // 0 means "cosmetic pen" - always 1px
+            item->setPen(myPen);
 
             item->setZValue(100);
-            item->setPlainText(content);
-            item->setTextInteractionFlags(Qt::TextEditorInteraction);
-            this->addToGroup(item);
-
-            begin = what[0].second;
+            addToGroup(item);
+            textFields.push_back(item);
         }
-    }
-    catch (...) {
-        //TODO: Handle this better
+
+        begin = tagMatch[0].second;
     }
 
     double xaspect, yaspect;
@@ -183,6 +193,7 @@ void QGraphicsItemSVGTemplate::load (const QString & fileName)
     qtrans.scale(xaspect , yaspect);
     m_svgItem->setTransform(qtrans);
 }
+
 Drawing::FeatureSVGTemplate * QGraphicsItemSVGTemplate::getSVGTemplate()
 {
     if(pageTemplate && pageTemplate->isDerivedFrom(Drawing::FeatureSVGTemplate::getClassTypeId()))
@@ -193,13 +204,11 @@ Drawing::FeatureSVGTemplate * QGraphicsItemSVGTemplate::getSVGTemplate()
 
 void QGraphicsItemSVGTemplate::draw()
 {
-
     Drawing::FeatureSVGTemplate *tmplte = getSVGTemplate();
     if(!tmplte)
         throw Base::Exception("Template Feature not set for QGraphicsItemSVGTemplate");
 
-    this->load(QString::fromUtf8(tmplte->PageResult.getValue()));
-
+    load(QString::fromUtf8(tmplte->PageResult.getValue()));
 }
 
 void QGraphicsItemSVGTemplate::updateView(bool update)

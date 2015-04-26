@@ -54,6 +54,8 @@ public:
     App::PropertyEnumeration Orientation;
     App::PropertyString PaperSize;
 
+    App::PropertyMap EditableTexts;
+
 public:
 
     /// Returns template width in mm

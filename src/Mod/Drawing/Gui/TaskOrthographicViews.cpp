@@ -23,10 +23,6 @@
 
 #include "PreCompiled.h"
 
-#ifndef _PreComp_
-#include <cmath>
-#endif // #ifndef _PreComp_
-
 #include <Base/Console.h>
 
 #include <Gui/Application.h>
@@ -232,34 +228,25 @@ void TaskOrthographicViews::scaleTypeChanged(int index)
 }
 
 // ** David Eppstein / UC Irvine / 8 Aug 1993
-// Reworked 2015 IR to add the power of logarithms!
-void TaskOrthographicViews::nearestFraction(double val, int &n, int &d) const
+void TaskOrthographicViews::nearestFraction(const double &val, int &n, int &d, const long &maxDenom) const
 {
-    int exponent = std::floor(std::log10(val));
-    if (exponent > 1 || exponent < -1) {
-        val *= std::pow(10, -exponent);
-    }
-
-    n = 1;  // numerator
-    d = 1;  // denominator
-    double fraction = n / d;
-    double m = std::abs(fraction - val);
-
-    while (std::abs(fraction - val) > 0.001) {
-        if (fraction < val) {
-            ++n;
-        } else {
-            ++d;
-            n = (int) round(val * d);
+        n = 1;  // numerator
+        d = 1;  // denominator
+        double fraction = n / d;
+        double m = std::abs(fraction - val);
+        while (std::abs(fraction - val) > 0.001)
+        {
+            if (fraction < val)
+            {
+                n++;
+            }
+            else
+            {
+                d++;
+                n = (int) round(val * d);
+            }
+            fraction = n / (double) d;
         }
-        fraction = n / (double) d;
-    }
-
-    if (exponent > 1) {
-            n *= std::pow(10, exponent);
-    } else if (exponent < -1) {
-            d *= std::pow(10, -exponent);
-    }
 }
 
 void TaskOrthographicViews::updateTask()
@@ -280,7 +267,7 @@ void TaskOrthographicViews::setFractionalScale(double newScale)
     blockUpdate = true;
     int num, den;
 
-    nearestFraction(newScale, num, den);
+    nearestFraction(newScale, num, den, 10);
 
     ui->scaleNum->setText(QString::number(num));
     ui->scaleDenom->setText(QString::number(den));

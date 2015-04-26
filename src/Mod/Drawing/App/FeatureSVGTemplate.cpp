@@ -43,6 +43,8 @@
 #include <iostream>
 #include <iterator>
 
+#include <QDebug>
+
 #include "FeaturePage.h"
 #include "FeatureSVGTemplate.h"
 
@@ -57,9 +59,9 @@ FeatureSVGTemplate::FeatureSVGTemplate()
 {
     static const char *group = "Drawing view";
 
-    ADD_PROPERTY_TYPE(PageResult   ,(0)   ,group,App::Prop_Output, "Resulting SVG document of that page");
-    ADD_PROPERTY_TYPE(Template     ,("")  ,group,App::Prop_Transient, "Template for the page");
-    ADD_PROPERTY_TYPE(EditableTexts,("")  ,group,App::Prop_None  , "Substitution values for the editable strings in the template");
+    //TODO: Do we need PageResult anymore?
+    ADD_PROPERTY_TYPE(PageResult, (0),  group, App::Prop_Output,    "Resulting SVG document of that page");
+    ADD_PROPERTY_TYPE(Template,   (""), group, App::Prop_Transient, "Template for the page");
 
     // Width and Height properties shouldn't be set by the user
     Height.StatusBits.set(2);       // Read Only
@@ -69,6 +71,15 @@ FeatureSVGTemplate::FeatureSVGTemplate()
 
 FeatureSVGTemplate::~FeatureSVGTemplate()
 {
+}
+
+std::string FeatureSVGTemplate::getSvgIdForEditable(const std::string &editableName)
+{
+    if (editableSvgIds.count(editableName)) {
+        return editableSvgIds[editableName];
+    } else {
+        return "";
+    }
 }
 
 PyObject *FeatureSVGTemplate::getPyObject(void)
@@ -93,6 +104,8 @@ short FeatureSVGTemplate::mustExecute() const
 /// get called by the container when a Property was changed
 void FeatureSVGTemplate::onChanged(const App::Property* prop)
 {
+    bool updatePage = false;
+
     if (prop == &PageResult) {
         if (isRestoring()) {
 
@@ -107,20 +120,26 @@ Template.setValue(App::Application::getResourceDir() + "Mod/Drawing/Templates/" 
                 return;
             }
         }
-    }
-
-    if (prop == &Template) {
+    } else if (prop == &Template) {
         if (!isRestoring()) {
             EditableTexts.setValues(getEditableTextsFromTemplate());
-            execute();
+            updatePage = true;
+        }
+    } else if (prop == &EditableTexts) {
+        if (!isRestoring()) {
+            updatePage = true;
+        }
+    }
 
-            // Update the parent page if exists
-            std::vector<App::DocumentObject*> parent = getInList();
-            for (std::vector<App::DocumentObject*>::iterator it = parent.begin(); it != parent.end(); ++it) {
-                if ((*it)->getTypeId().isDerivedFrom(FeaturePage::getClassTypeId())) {
-                    Drawing::FeaturePage *page = static_cast<Drawing::FeaturePage *>(*it);
-                    page->touch();
-                }
+    if (updatePage) {
+        execute();
+
+        // Update the parent page if exists
+        std::vector<App::DocumentObject*> parent = getInList();
+        for (std::vector<App::DocumentObject*>::iterator it = parent.begin(); it != parent.end(); ++it) {
+            if ((*it)->getTypeId().isDerivedFrom(FeaturePage::getClassTypeId())) {
+                Drawing::FeaturePage *page = static_cast<Drawing::FeaturePage *>(*it);
+                page->touch();
             }
         }
     }
@@ -180,23 +199,25 @@ App::DocumentObjectExecReturn * FeatureSVGTemplate::execute(void)
     // checking for freecad editable texts
     string outfragment(ofile.str());
 
-    if (EditableTexts.getSize() > 0) {
+    std::map<std::string, std::string> subs = EditableTexts.getValues();
+
+    if (subs.size() > 0) {
         boost::regex e1 ("<text.*?freecad:editable=\"(.*?)\".*?<tspan.*?>(.*?)</tspan>");
         string::const_iterator begin, end;
         begin = outfragment.begin();
         end = outfragment.end();
         boost::match_results<std::string::const_iterator> what;
-        int count = 0;
 
-         while (boost::regex_search(begin, end, what, e1)) {
-             if (count < EditableTexts.getSize()) {
-                 // change values of editable texts
-                 boost::regex e2 ("(<text.*?freecad:editable=\""+what[1].str()+"\".*?<tspan.*?)>(.*?)(</tspan>)");
-                 outfragment = boost::regex_replace(outfragment, e2, "$1>"+ EditableTexts.getValues()[count] +"$3");
-             }
-             count ++;
-             begin = what[0].second;
-         }
+        // Find editable texts
+        while (boost::regex_search(begin, end, what, e1)) {
+            // if we have a replacement value for the text we've found
+            if (subs.count(what[1].str())) {
+                 // change it to specified value
+                 boost::regex e2 ("(<text.*?freecad:editable=\"" + what[1].str() + "\".*?<tspan.*?)>(.*?)(</tspan>)");
+                 outfragment = boost::regex_replace(outfragment, e2, "$1>" + subs[what[1].str()] + "$3");
+            }
+            begin = what[0].second;
+        }
     }
 
 
@@ -236,31 +257,24 @@ App::DocumentObjectExecReturn * FeatureSVGTemplate::execute(void)
     quantity = Base::Quantity::parse(str);
     quantity.setUnit(Base::Unit::Length);
 
-    this->Width.setValue(quantity.getValue());
+    Width.setValue(quantity.getValue());
 
     str = docElem.attribute(QString::fromAscii("height"));
     quantity = Base::Quantity::parse(str);
     quantity.setUnit(Base::Unit::Length);
 
-    this->Height.setValue(quantity.getValue());
+    Height.setValue(quantity.getValue());
 
     bool isLandscape = getWidth() / getHeight() >= 1.;
 
-    this->Orientation.setValue(isLandscape ? 1 : 0);
+    Orientation.setValue(isLandscape ? 1 : 0);
 
     // Housekeeping close the file
     resultFile.close();
 
-    this->touch();
+    touch();
 
-    //const char* text = "lskdfjlsd";
-    //const char* regex = "lskdflds";
-    //boost::regex e(regex);
-    //boost::smatch what;
-    //if(boost::regex_match(string(text), what, e))
-    //{
-    //}
-    return App::DocumentObject::StdReturn;
+    return Drawing::FeatureTemplate::execute();
 }
 
 void FeatureSVGTemplate::getBlockDimensions(double &x, double &y, double &width, double &height) const
@@ -282,10 +296,10 @@ double FeatureSVGTemplate::getHeight() const
 }
 
 
-std::vector<std::string> FeatureSVGTemplate::getEditableTextsFromTemplate() const {
-    //getting editable texts from "freecad:editable" attributes in SVG template
+std::map<std::string, std::string> FeatureSVGTemplate::getEditableTextsFromTemplate()
+{
+    std::map<std::string, std::string> eds;
 
-    std::vector<string> eds;
     std::string temp = Template.getValue();
     if (!temp.empty()) {
         Base::FileInfo tfi(temp);
@@ -305,13 +319,26 @@ std::vector<std::string> FeatureSVGTemplate::getEditableTextsFromTemplate() cons
             tfrag += "--endOfLine--";
         }
         tfile.close();
-        boost::regex e ("<text.*?freecad:editable=\"(.*?)\".*?<tspan.*?>(.*?)</tspan>");
+        boost::regex e ("<text.*?id=\"(.*?)\".*?freecad:editable=\"(.*?)\".*?<tspan.*?>(.*?)</tspan>");
         string::const_iterator tbegin, tend;
         tbegin = tfrag.begin();
         tend = tfrag.end();
         boost::match_results<std::string::const_iterator> twhat;
         while (boost::regex_search(tbegin, tend, twhat, e)) {
-            eds.push_back(twhat[2]);
+            /*string temp1 = twhat[1],
+                   temp2 = twhat[2],
+                   temp3 = twhat[3];
+            qDebug()<<"Got field id:"<<temp1.c_str()<<" editable as:"<<temp2.c_str()<<" default text:"<<temp3.c_str()<<'.';
+*/
+            if (eds.count(twhat[2]) > 0) {
+                //TODO: Throw or [better] change key
+                qDebug() << "Got duplicate value for key "<<((string)twhat[3]).c_str();
+            } else {
+                //TODO: May also need to maintain an internal map to get SVG ID
+                eds[twhat[2]] = twhat[3];
+                editableSvgIds[twhat[2]] = twhat[1];
+            }
+
             tbegin = twhat[0].second;
         }
     }
@@ -330,5 +357,4 @@ template<> const char* Drawing::FeatureSVGTemplatePython::getViewProviderName(vo
 // explicit template instantiation
 template class DrawingExport FeaturePythonT<Drawing::FeatureSVGTemplate>;
 }
-
 

@@ -124,7 +124,7 @@ App::DocumentObjectExecReturn *FeatureViewPart::execute(void)
         geometryObject->extractGeometry(shape, Direction.getValue(), ShowHiddenLines.getValue(), XAxisDirection.getValue());
 
         bbox = geometryObject->calcBoundingBox();
-        this->touch();
+        touch();
 
     }
     catch (Standard_Failure) {
@@ -169,7 +169,7 @@ void FeatureViewPart::onChanged(const App::Property* prop)
         prop == &Scale ||
         prop == &ScaleType ||
         prop == &ShowHiddenLines) {
-          if (!this->isRestoring()) {
+          if (!isRestoring()) {
               if(prop->isTouched()) {
                   FeatureViewPart::execute();            // TODO: sb this->execute() for derived classes (ex Section) with execute override??
               }
@@ -252,7 +252,7 @@ DrawingGeometry::Vertex * FeatureViewPart::getVertex(int idx) const
 
 Base::BoundBox3d FeatureViewPart::getBoundingBox() const
 {
-    return this->bbox;
+    return bbox;
 }
 
 // Python Drawing feature ---------------------------------------------------------

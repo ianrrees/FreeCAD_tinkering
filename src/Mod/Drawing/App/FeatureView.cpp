@@ -132,7 +132,7 @@ void FeatureView::onDocumentRestored()
     this->execute();
 }
 
-FeaturePage* FeatureView::findParentPage() const
+FeaturePage* FeatureView::findParentPage()
 {
     // Get Feature Page
     FeaturePage *page = 0;

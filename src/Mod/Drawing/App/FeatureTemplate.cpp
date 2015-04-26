@@ -36,6 +36,7 @@
 #include <iostream>
 #include <iterator>
 
+#include "FeaturePage.h"
 #include "FeatureTemplate.h"
 #include "FeatureTemplatePy.h"
 
@@ -56,12 +57,15 @@ FeatureTemplate::FeatureTemplate(void)
     const char *group = "Page Properties";
 
     Orientation.setEnums(OrientationEnums);
-    ADD_PROPERTY(Orientation,((long)0));
+    ADD_PROPERTY(Orientation, ((long)0));
 
     // Physical Properties inherent to every template class
-    ADD_PROPERTY_TYPE(Width,(0)      ,group,(App::PropertyType)(App::Prop_None),"Width ()");
-    ADD_PROPERTY_TYPE(Height,(0)     ,group,(App::PropertyType)(App::Prop_None),"Height()");
-    ADD_PROPERTY_TYPE(PaperSize,("") ,group,(App::PropertyType)(App::Prop_None),"Paper Format");
+    ADD_PROPERTY_TYPE(Width,     (0),  group, (App::PropertyType)(App::Prop_None), "Width of page");
+    ADD_PROPERTY_TYPE(Height,    (0),  group, (App::PropertyType)(App::Prop_None), "Height of page");
+    ADD_PROPERTY_TYPE(PaperSize, (""), group, (App::PropertyType)(App::Prop_None), "Paper Format");
+
+    ADD_PROPERTY_TYPE(EditableTexts, (), group, (App::PropertyType)(App::Prop_None),
+                      "Editable strings in the template");
 }
 
 FeatureTemplate::~FeatureTemplate()
@@ -107,7 +111,19 @@ void FeatureTemplate::onChanged(const App::Property* prop)
 
 App::DocumentObjectExecReturn *FeatureTemplate::execute(void)
 {
-    return App::DocumentObject::StdReturn;
+    FeaturePage *page = 0;
+    std::vector<App::DocumentObject*> parent = getInList();
+    for (std::vector<App::DocumentObject*>::iterator it = parent.begin(); it != parent.end(); ++it) {
+        if ((*it)->getTypeId().isDerivedFrom(FeaturePage::getClassTypeId())) {
+            page = dynamic_cast<Drawing::FeaturePage *>(*it);
+        }
+    }
+
+    if(page) {
+        page->Template.touch();
+    }
+
+    return App::DocumentObject::execute();
 }
 
 void FeatureTemplate::getBlockDimensions(double &x, double &y, double &width, double &height) const
@@ -127,4 +143,4 @@ template<> const char* Drawing::FeatureTemplatePython::getViewProviderName(void)
 
 // explicit template instantiation
 template class DrawingExport FeaturePythonT<Drawing::FeatureTemplate>;
-}
+}   // namespace App

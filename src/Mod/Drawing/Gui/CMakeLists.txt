@@ -42,10 +42,8 @@ set(DrawingGui_MOC_HDRS
     QGraphicsItemViewAnnotation.h
     QGraphicsItemViewSymbol.h
     TaskOrthographicViews.h
+    TemplateTextField.h
 )
-
-
-
 
 fc_wrap_cpp(DrawingGui_MOC_SRCS ${DrawingGui_MOC_HDRS})
 SOURCE_GROUP("Moc" FILES ${DrawingGui_MOC_SRCS})
@@ -110,6 +108,8 @@ SET(DrawingGuiView_SRCS
     QGraphicsItemViewAnnotation.h
     QGraphicsItemViewSymbol.cpp
     QGraphicsItemViewSymbol.h
+    TemplateTextField.cpp
+    TemplateTextField.h
 )
 SET(DrawingGuiViewProvider_SRCS
     ViewProviderPage.cpp

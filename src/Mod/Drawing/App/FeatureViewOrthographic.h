@@ -50,11 +50,6 @@ public:
 
     App::PropertyEnumeration ProjectionType;
 
-    /// Default horizontal spacing between adjacent views on Drawing, in mm
-    App::PropertyFloat spacingX;
-    /// Default vertical spacing between adjacent views on Drawing, in mm
-    App::PropertyFloat spacingY;
-
     /// Transforms Direction and XAxisDirection vectors in child views
     App::PropertyMatrix viewOrientationMatrix;
 
@@ -116,42 +111,6 @@ protected:
      */
     void setViewOrientation(FeatureOrthoView *v, const char *projType) const;
 
-    /// Populates an array of FeatureOrthoView*s arranged for drawing
-    /*!
-     * Setup array of pointers to the views that we're displaying,
-     * assuming front is in centre (index 4):
-     * <pre>
-     * [0]  [1]  [2]
-     * [3]  [4]  [5]  [6]
-     * [7]  [8]  [9]
-     *
-     * Third Angle:  FTL  T  FTRight
-     *                L   F   Right   Rear
-     *               FBL  B  FBRight
-     *
-     * First Angle:  FBRight  B  FBL
-     *                Right   F   L  Rear
-     *               FTRight  T  FTL
-     * </pre>
-     */
-    void arrangeViewPointers(FeatureOrthoView *viewPtrs[10]) const;
-
-    /// Populates array of 10 BoundBox3d's given FeatureOrthoView *s
-    /*!
-     * If documentScale is set, then returned bounding boxes are scaled as in
-     * the Drawing.  Otherwise, the dimensions are as in object space.
-     */
-    void makeViewBbs(FeatureOrthoView *viewPtrs[10],
-                     Base::BoundBox3d bboxes[10],
-                     bool documentScale = true) const;
-
-    /// Helper for calculateAutomaticScale
-    /*!
-     * Returns a width and height in object-space scale, for the enabled views
-     * without accounting for their actual X and Y positions or borders.
-     */
-    void minimumBbViews(FeatureOrthoView *viewPtrs[10],
-                       double &width, double &height) const;
 private:
     static const char* ProjectionTypeEnums[];
     static const char* OrthoViewNameEnumStrs[];

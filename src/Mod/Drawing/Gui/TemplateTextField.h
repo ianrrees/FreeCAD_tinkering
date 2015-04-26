@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (c) 2012-2014 Luke Parry <l.parry@warwick.ac.uk>            *
+ *   Copyright (c) Ian Rees                    (ian.rees@gmail.com) 2015   *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -20,56 +20,45 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "PreCompiled.h"
-#ifndef _PreComp_
-# include <QGraphicsScene>
-#endif
+#ifndef DRAWINGGUI_TEMPLATETEXTFIELD_H
+#define DRAWINGGUI_TEMPLATETEXTFIELD_H
 
-#include <Base/Console.h>
-#include <Base/Exception.h>
+//TODO Precompiled header
 
-#include <Mod/Drawing/App/FeatureTemplate.h>
+#include <QGraphicsRectItem>
 
-#include "QGraphicsItemTemplate.h"
+#include "../App/FeatureTemplate.h"
 
-using namespace DrawingGui;
+QT_BEGIN_NAMESPACE
+class QGraphicsItem;
+QT_END_NAMESPACE
 
-QGraphicsItemTemplate::QGraphicsItemTemplate(QGraphicsScene *scene) : QGraphicsItemGroup(),
-                                                                      pageTemplate(0)
+namespace DrawingGui
 {
-    setHandlesChildEvents(false);
-    setCacheMode(QGraphicsItem::NoCache);
-    setZValue(-1000); //Template is situated in background
+    /// QGraphicsRectItem-derived class for the text fields in title blocks
+    /*!
+     * This essentially just a way for us to make a rectangular area which
+     * will give us a text editing dialog when clicked so that an appropriate
+     * Property in the Drawing's template can be modified.
+     * Dear English, I'm sorry.
+     */
+    class DrawingGuiExport TemplateTextField : public QGraphicsRectItem
+    {
+        public:
+            TemplateTextField(QGraphicsItem *parent,
+                              Drawing::FeatureTemplate *myTmplte,
+                              const std::string &myFieldName);
 
-    scene->addItem(this);
-}
+            ~TemplateTextField();
 
-QGraphicsItemTemplate::~QGraphicsItemTemplate()
-{
-    pageTemplate = 0;
-}
+            /// Returns the field name that this TemplateTextField represents
+            std::string fieldName() const { return fieldNameStr; }
+        protected:
+            virtual void mousePressEvent(QGraphicsSceneMouseEvent *event);
+            Drawing::FeatureTemplate *tmplte;
+            std::string fieldNameStr;
+    };
+}   // namespace DrawingGui
 
-QVariant QGraphicsItemTemplate::itemChange(GraphicsItemChange change, const QVariant &value)
-{
-    return QGraphicsItemGroup::itemChange(change, value);
-}
+#endif // #ifndef DRAWINGGUI_TEMPLATETEXTFIELD_H
 
-void QGraphicsItemTemplate::setTemplate(Drawing::FeatureTemplate *obj)
-{
-    if(obj == 0)
-        return;
-
-    pageTemplate = obj;
-}
-
-void QGraphicsItemTemplate::clearContents()
-{
-
-}
-
-void QGraphicsItemTemplate::updateView(bool update)
-{
-    draw();
-}
-
-#include "moc_QGraphicsItemTemplate.cpp"

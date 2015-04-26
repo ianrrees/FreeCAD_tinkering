@@ -45,7 +45,6 @@ public:
 
     App::PropertyFileIncluded PageResult;
     App::PropertyFile Template;
-    App::PropertyStringList EditableTexts;
 
     /** @name methods overide Feature */
     //@{
@@ -60,18 +59,32 @@ public:
         return "DrawingGui::ViewProviderTemplate";
     }
 
+    /// Returns the SVG ID for editable field with name editableName
+    /*!
+     * If editableName isn't known, returns an empty string
+     */
+    std::string getSvgIdForEditable(const std::string &editableName);
+
     // from base class
     virtual PyObject *getPyObject(void);
     virtual unsigned int getMemSize(void) const;
 
-public:
     double getWidth() const;
     double getHeight() const;
     void getBlockDimensions(double &x, double &y, double &width, double &height) const;
 
 protected:
     void onChanged(const App::Property* prop);
-    std::vector<std::string> getEditableTextsFromTemplate() const;
+
+    /// Returns map with <editable name, default text>
+    /*!
+     * Also populates editableSvgIds
+     */
+    std::map<std::string, std::string> getEditableTextsFromTemplate();
+
+    /// Populated with <editable name, SVG ID>
+    std::map<std::string, std::string> editableSvgIds;
+
     QRectF blockDimensions;
 };
 

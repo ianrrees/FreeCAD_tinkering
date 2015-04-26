@@ -26,6 +26,8 @@
 #include <QGraphicsItemGroup>
 #include <QObject>
 
+#include "TemplateTextField.h"
+
 QT_BEGIN_NAMESPACE
 class QGraphicsScene;
 QT_END_NAMESPACE
@@ -53,15 +55,17 @@ public:
     void setTemplate(Drawing::FeatureTemplate *obj);
     Drawing::FeatureTemplate * getTemplate() { return pageTemplate; }
 
-    inline qreal getY() { return this->y() * -1; }
+    inline qreal getY() { return y() * -1; }
 
     virtual void updateView(bool update = false);
 
     virtual void draw() = 0;
 
 protected:
-  virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
-  Drawing::FeatureTemplate *pageTemplate;
+    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+    Drawing::FeatureTemplate *pageTemplate;
+
+    std::vector<TemplateTextField *> textFields;
 };
 
 } // namespace DrawingViewGui

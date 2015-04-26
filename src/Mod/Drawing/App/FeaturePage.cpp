@@ -64,14 +64,14 @@ FeaturePage::FeaturePage(void) : numChildren(0)
     static const char *group = "Page";
 
 //obs    ADD_PROPERTY_TYPE(PageResult ,(0),group,App::Prop_Output,"Resulting SVG document of that page");
-    ADD_PROPERTY_TYPE(Template ,(0), group, (App::PropertyType)(App::Prop_None),"Attached Template");
+    ADD_PROPERTY_TYPE(Template, (0), group, (App::PropertyType)(App::Prop_None), "Attached Template");
 //obs    ADD_PROPERTY_TYPE(EditableTexts,(""),group,App::Prop_None,"Substitution values for the editable strings in the template");
-    ADD_PROPERTY_TYPE(Views    ,(0), group, (App::PropertyType)(App::Prop_None),"Attached Views");
+    ADD_PROPERTY_TYPE(Views, (0), group, (App::PropertyType)(App::Prop_None),"Attached Views");
 
     // Projection Properties
     OrthoProjectionType.setEnums(OrthoProjectionTypeEnums);
-    ADD_PROPERTY(OrthoProjectionType,((long)0));
-    ADD_PROPERTY_TYPE(Scale ,(1.0)     ,group,App::Prop_None,"Scale factor for this Page");
+    ADD_PROPERTY(OrthoProjectionType, ((long)0));
+    ADD_PROPERTY_TYPE(Scale ,(1.0), group, App::Prop_None, "Scale factor for this Page");
 }
 
 FeaturePage::~FeaturePage()
@@ -91,14 +91,14 @@ void FeaturePage::onBeforeChange(const App::Property* prop)
 void FeaturePage::onChanged(const App::Property* prop)
 {
     if (prop == &Template) {
-        if (!this->isRestoring()) {
+        if (!isRestoring()) {
         //TODO: reload if Template prop changes (ie different Template)
         Base::Console().Message("TODO: Unimplemented function FeaturePage::onChanged(Template)\n");
         }
     }
 
     if (prop == &Views) {
-        if (!this->isRestoring()) {
+        if (!isRestoring()) {
             //TODO: reload if Views prop changes (ie adds/deletes)
             //this->touch();
         }
@@ -159,8 +159,8 @@ bool FeaturePage::hasValidTemplate() const
 
     if(obj && obj->isDerivedFrom(Drawing::FeatureTemplate::getClassTypeId())) {
         Drawing::FeatureTemplate *templ = static_cast<Drawing::FeatureTemplate *>(obj);
-        if(templ->getWidth() > 0. &&
-           templ->getHeight() > 0.) {
+        if (templ->getWidth() > 0. &&
+            templ->getHeight() > 0.) {
             return true;
         }
     }

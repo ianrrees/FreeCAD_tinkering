@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (c) 2012-2014 Luke Parry <l.parry@warwick.ac.uk>            *
+ *   Copyright (c) Ian Rees                    (ian.rees@gmail.com) 2015   *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -21,55 +21,41 @@
  ***************************************************************************/
 
 #include "PreCompiled.h"
+
 #ifndef _PreComp_
-# include <QGraphicsScene>
-#endif
+#include<QInputDialog>
+#include<QLineEdit>
+#endif // #ifndef _PreCmp_
 
-#include <Base/Console.h>
-#include <Base/Exception.h>
+#include "TemplateTextField.h"
 
-#include <Mod/Drawing/App/FeatureTemplate.h>
-
-#include "QGraphicsItemTemplate.h"
+//#include<QDebug>
 
 using namespace DrawingGui;
 
-QGraphicsItemTemplate::QGraphicsItemTemplate(QGraphicsScene *scene) : QGraphicsItemGroup(),
-                                                                      pageTemplate(0)
+TemplateTextField::TemplateTextField(QGraphicsItem *parent,
+                                     Drawing::FeatureTemplate *myTmplte,
+                                     const std::string &myFieldName)
+    : QGraphicsRectItem(parent), tmplte(myTmplte), fieldNameStr(myFieldName)
 {
-    setHandlesChildEvents(false);
-    setCacheMode(QGraphicsItem::NoCache);
-    setZValue(-1000); //Template is situated in background
-
-    scene->addItem(this);
 }
 
-QGraphicsItemTemplate::~QGraphicsItemTemplate()
+
+TemplateTextField::~TemplateTextField()
 {
-    pageTemplate = 0;
 }
 
-QVariant QGraphicsItemTemplate::itemChange(GraphicsItemChange change, const QVariant &value)
+void TemplateTextField::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
-    return QGraphicsItemGroup::itemChange(change, value);
+    //TODO: Add a command to change template text, and call it from here
+    bool ok;
+    QString curStr = QString::fromUtf8(tmplte->EditableTexts[fieldNameStr].c_str());
+    QString newStr = QInputDialog::getText(NULL, QObject::tr("Change template text"),
+                                           QObject::tr("Enter a new value for ") +
+                                               QString::fromUtf8(fieldNameStr.c_str()),
+                                           QLineEdit::Normal, curStr, &ok);
+    if (ok && !newStr.isEmpty()) {
+        tmplte->EditableTexts.setValue(fieldNameStr, newStr.toUtf8().constData());
+    }
 }
 
-void QGraphicsItemTemplate::setTemplate(Drawing::FeatureTemplate *obj)
-{
-    if(obj == 0)
-        return;
-
-    pageTemplate = obj;
-}
-
-void QGraphicsItemTemplate::clearContents()
-{
-
-}
-
-void QGraphicsItemTemplate::updateView(bool update)
-{
-    draw();
-}
-
-#include "moc_QGraphicsItemTemplate.cpp"

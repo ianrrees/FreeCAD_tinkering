@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
+   xmlns:freecad="http://www.freecadweb.org/wiki/index.php?title=Svg_Namespace"
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -8,18 +9,17 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:freecad="http://www.freecadweb.org/wiki/index.php?title=Svg_Namespace"
    width="420mm"
    height="297mm"
    viewBox="0 0 420 297"
    version="1.1"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.5 r10040"
    sodipodi:docname="A3_Landscape.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape">
-   <!-- Working space 10 10 410 287 -->
-   <!-- Title block 220 227 410 287 -->
+  <!-- Working space 10 10 410 287 -->
+  <!-- Title block 220 227 410 287 -->
   <metadata
      id="metadata849">
     <rdf:RDF>
@@ -568,8 +568,8 @@
     </linearGradient>
   </defs>
   <sodipodi:namedview
-     inkscape:window-height="757"
-     inkscape:window-width="1280"
+     inkscape:window-height="1155"
+     inkscape:window-width="1865"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
      guidetolerance="10.0"
@@ -579,12 +579,15 @@
      bordercolor="#666666"
      pagecolor="#ffffff"
      id="base"
-     inkscape:window-x="0"
-     inkscape:window-y="20"
+     inkscape:window-x="55"
+     inkscape:window-y="0"
      inkscape:current-layer="svg2"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:window-maximized="1" />
+     inkscape:window-maximized="1"
+     inkscape:zoom="0.89702957"
+     inkscape:cx="744.09448"
+     inkscape:cy="526.18109" />
   <g
      stroke="rgb(0, 0, 0)"
      stroke-width="0.35"
@@ -1492,20 +1495,11 @@
        fill="rgb(0, 0, 0)"
        id="path664" />
   </g>
-  <g
-     stroke="rgb(0, 0, 0)"
-     stroke-width="0.13"
-     stroke-linecap="butt"
-     stroke-linejoin="miter"
-     fill="none"
-     id="g670">
-    <path
-       d="M 225.641 266.3 L 226.304 266.3 L 226.83 264.83 L 228.826 264.83 L 229.352 266.3 L 230.029 266.3 L 228.199 261.292 L 227.464 261.292 L 225.641 266.3 z M 227.061 264.218 L 227.831 262.013 L 228.602 264.218 L 227.061 264.218 z M 230.353 264.729 L 230.353 264.78 L 230.468 265.471 L 230.807 265.99 L 231.34 266.321 L 232.046 266.444 L 232.795 266.321 L 233.357 266.004 L 233.718 265.5 L 233.847 264.852 L 233.79 264.427 L 233.631 264.081 L 233.372 263.814 L 233.026 263.62 L 233.494 263.231 L 233.66 262.611 L 233.552 262.049 L 233.242 261.624 L 232.738 261.357 L 232.046 261.264 L 231.398 261.379 L 230.901 261.696 L 230.576 262.2 L 230.468 262.87 L 230.468 262.921 L 231.109 262.921 L 231.167 262.46 L 231.354 262.128 L 231.657 261.927 L 232.082 261.854 L 232.457 261.912 L 232.731 262.063 L 232.896 262.308 L 232.961 262.64 L 232.896 262.993 L 232.723 263.231 L 232.421 263.375 L 232.01 263.418 L 231.729 263.411 L 231.729 263.98 L 232.082 263.965 L 232.536 264.03 L 232.875 264.203 L 233.076 264.484 L 233.148 264.852 L 233.069 265.269 L 232.86 265.579 L 232.529 265.774 L 232.089 265.839 L 231.635 265.767 L 231.304 265.55 L 231.095 265.205 L 231.016 264.729 L 230.353 264.729 z"
-       stroke="none"
-       fill-rule="evenodd"
-       fill="rgb(0, 0, 0)"
-       id="path672" />
-  </g>
+  <path
+     style="fill:#000000;fill-rule:evenodd;stroke:none"
+     inkscape:connector-curvature="0"
+     id="path672"
+     d="m 225.641,266.3 0.663,0 0.526,-1.47 1.996,0 0.526,1.47 0.677,0 -1.83,-5.008 -0.735,0 -1.823,5.008 z m 1.42,-2.082 0.77,-2.205 0.771,2.205 -1.541,0 z m 3.292,0.511 0,0.051 0.115,0.691 0.339,0.519 0.533,0.331 0.706,0.123 0.749,-0.123 0.562,-0.317 0.361,-0.504 0.129,-0.648 -0.057,-0.425 -0.159,-0.346 -0.259,-0.267 -0.346,-0.194 0.468,-0.389 0.166,-0.62 -0.108,-0.562 -0.31,-0.425 -0.504,-0.267 -0.692,-0.093 -0.648,0.115 -0.497,0.317 -0.325,0.504 -0.108,0.67 0,0.051 0.641,0 0.058,-0.461 0.187,-0.332 0.303,-0.201 0.425,-0.073 0.375,0.058 0.274,0.151 0.165,0.245 0.065,0.332 -0.065,0.353 -0.173,0.238 -0.302,0.144 -0.411,0.043 -0.281,-0.007 0,0.569 0.353,-0.015 0.454,0.065 0.339,0.173 0.201,0.281 0.072,0.368 -0.079,0.417 -0.209,0.31 -0.331,0.195 -0.44,0.065 -0.454,-0.072 -0.331,-0.217 -0.209,-0.345 -0.079,-0.476 -0.663,0 z" />
   <!-- DrawingContent -->
   <g
      inkscape:label="Layer 1"
@@ -1527,130 +1521,135 @@
          inkscape:connector-curvature="0" />
     </g>
   </g>
-  <g
-     style="fill:none;stroke:#000000;stroke-width:0.13;stroke-linecap:butt;stroke-linejoin:miter"
-     id="g578-7"
-     transform="translate(0,4)">
-    <text
-       xml:space="preserve"
-       style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+  <text
+     freecad:boxShape="43x4"
+     freecad:editable="AuthorName"
+     sodipodi:linespacing="125%"
+     id="text3331"
+     y="232.95425"
+     x="220.9935"
+     style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+     xml:space="preserve"><tspan
+       y="232.95425"
        x="220.9935"
-       y="228.95425"
-       id="text3331"
-       sodipodi:linespacing="125%"
-       freecad:editable="AuthorName"><tspan
-         sodipodi:role="line"
-         id="tspan3333"
-         x="220.9935"
-         y="228.95425">AUTHOR NAME</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+       id="tspan3333"
+       sodipodi:role="line">AUTHOR NAME</tspan></text>
+  <text
+     freecad:boxShape="43x4"
+     freecad:editable="CreationDate"
+     sodipodi:linespacing="125%"
+     id="text3331-5"
+     y="240.50475"
+     x="220.78677"
+     style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+     xml:space="preserve"><tspan
+       y="240.50475"
        x="220.78677"
-       y="236.50475"
-       id="text3331-5"
-       sodipodi:linespacing="125%"
-       freecad:editable="CreationDate"><tspan
-         sodipodi:role="line"
-         id="tspan3333-6"
-         x="220.78677"
-         y="236.50475">CREATION DATE</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+       id="tspan3333-6"
+       sodipodi:role="line">CREATION DATE</tspan></text>
+  <text
+     freecad:boxShape="43x4"
+     freecad:editable="SupervisorName"
+     sodipodi:linespacing="125%"
+     id="text3331-5-5"
+     y="247.9375"
+     x="220.74191"
+     style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+     xml:space="preserve"><tspan
+       y="247.9375"
        x="220.74191"
-       y="243.9375"
-       id="text3331-5-5"
-       sodipodi:linespacing="125%"
-       freecad:editable="SupervisorName"><tspan
-         sodipodi:role="line"
-         id="tspan3333-6-9"
-         x="220.74191"
-         y="243.9375">SUPERVISOR NAME</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+       id="tspan3333-6-9"
+       sodipodi:role="line">SUPERVISOR NAME</tspan></text>
+  <text
+     freecad:boxShape="43x4"
+     freecad:editable="CheckDate"
+     sodipodi:linespacing="125%"
+     id="text3331-5-3"
+     y="255.35406"
+     x="220.69022"
+     style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+     xml:space="preserve"><tspan
+       y="255.35406"
        x="220.69022"
-       y="251.35406"
-       id="text3331-5-3"
-       sodipodi:linespacing="125%"
-       freecad:editable="CheckDate"><tspan
-         sodipodi:role="line"
-         id="tspan3333-6-1"
-         x="220.69022"
-         y="251.35406">CHECK DATE</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+       id="tspan3333-6-1"
+       sodipodi:role="line">CHECK DATE</tspan></text>
+  <text
+     freecad:boxShape="18x4"
+     freecad:editable="FC-Scale"
+     sodipodi:linespacing="125%"
+     id="text3331-5-9"
+     y="278.57715"
+     x="220.65581"
+     style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+     xml:space="preserve"><tspan
+       y="278.57715"
        x="220.65581"
-       y="274.57715"
-       id="text3331-5-9"
-       sodipodi:linespacing="125%"
-       freecad:editable="FC-Scale"><tspan
-         sodipodi:role="line"
-         id="tspan3333-6-6"
-         x="220.65581"
-         y="274.57715">SCALE</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+       id="tspan3333-6-6"
+       sodipodi:role="line">SCALE</tspan></text>
+  <text
+     freecad:boxShape="23x4"
+     freecad:editable="Weight"
+     sodipodi:linespacing="125%"
+     id="text3331-5-9-4"
+     y="278.57715"
+     x="240.50963"
+     style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+     xml:space="preserve"><tspan
+       y="278.57715"
        x="240.50963"
-       y="274.57715"
-       id="text3331-5-9-4"
-       sodipodi:linespacing="125%"
-       freecad:editable="Weight"><tspan
-         sodipodi:role="line"
-         id="tspan3333-6-6-3"
-         x="240.50963"
-         y="274.57715">WEIGHT</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+       id="tspan3333-6-6-3"
+       sodipodi:role="line">WEIGHT</tspan></text>
+  <text
+     freecad:boxShape="97x4"
+     freecad:editable="DrawingNumber"
+     sodipodi:linespacing="125%"
+     id="text3331-5-9-4-3"
+     y="278.57715"
+     x="266.50964"
+     style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+     xml:space="preserve"><tspan
+       y="278.57715"
        x="266.50964"
-       y="274.57715"
-       id="text3331-5-9-4-3"
-       sodipodi:linespacing="125%"
-       freecad:editable="DrawingNumber"><tspan
-         sodipodi:role="line"
-         id="tspan3333-6-6-3-8"
-         x="266.50964"
-         y="274.57715">NUMBER</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+       id="tspan3333-6-6-3-8"
+       sodipodi:role="line">NUMBER</tspan></text>
+  <text
+     freecad:boxShape="17x4"
+     freecad:editable="SheetNumber"
+     sodipodi:linespacing="125%"
+     id="text3331-5-9-4-3-9"
+     y="278.57715"
+     x="366.50964"
+     style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+     xml:space="preserve"><tspan
+       y="278.57715"
        x="366.50964"
-       y="274.57715"
-       id="text3331-5-9-4-3-9"
-       sodipodi:linespacing="125%"
-       freecad:editable="SheetNumber"><tspan
-         sodipodi:role="line"
-         id="tspan3333-6-6-3-8-7"
-         x="366.50964"
-         y="274.57715">SHEET</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+       id="tspan3333-6-6-3-8-7"
+       sodipodi:role="line">SHEET</tspan></text>
+  <text
+     sodipodi:linespacing="125%"
+     id="text3331-0"
+     y="241.26292"
+     x="270.19635"
+     freecad:boxShape="114x10"
+     freecad:editable="FC-Title"
+     style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+     xml:space="preserve"><tspan
+       y="241.26292"
        x="270.19635"
-       y="237.26292"
-       id="text3331-0"
-       sodipodi:linespacing="125%"
-       freecad:editable="FC-Title"><tspan
-         sodipodi:role="line"
-         id="tspan3333-5"
-         x="270.19635"
-         y="237.26292"
-         style="font-size:8px">TITLE</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+       id="tspan3333-5"
+       sodipodi:role="line"
+       style="font-size:9.0311113px">TITLE</tspan></text>
+  <text
+     freecad:boxShape="114x4"
+     freecad:editable="Subtitle"
+     sodipodi:linespacing="125%"
+     id="text3331-0-4"
+     y="247.26292"
+     x="270.19635"
+     style="font-size:4px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:sans;-inkscape-font-specification:sans"
+     xml:space="preserve"><tspan
+       y="247.26292"
        x="270.19635"
-       y="243.26292"
-       id="text3331-0-4"
-       sodipodi:linespacing="125%"
-       freecad:editable="Subtitle"><tspan
-         sodipodi:role="line"
-         id="tspan3333-5-6"
-         x="270.19635"
-         y="243.26292">SUBTITLE</tspan></text>
-  </g>
+       id="tspan3333-5-6"
+       sodipodi:role="line">SUBTITLE</tspan></text>
 </svg>

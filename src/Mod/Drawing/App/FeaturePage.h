@@ -51,7 +51,6 @@ public:
     App::PropertyFloat Scale;
     App::PropertyEnumeration OrthoProjectionType; // First or Third Angle
     
-
     /** @name methods overide Feature */
     //@{
     /// recalculate the Feature
