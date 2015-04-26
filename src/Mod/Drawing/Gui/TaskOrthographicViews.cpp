@@ -23,6 +23,10 @@
 
 #include "PreCompiled.h"
 
+#ifndef _PreComp_
+#include <cmath>
+#endif // #ifndef _PreComp_
+
 #include <Base/Console.h>
 
 #include <Gui/Application.h>
@@ -246,7 +250,7 @@ void TaskOrthographicViews::nearestFraction(double val, int &n, int &d) const
             ++n;
         } else {
             ++d;
-            n = (int) std::round(val * d);
+            n = (int) round(val * d);
         }
         fraction = n / (double) d;
     }
