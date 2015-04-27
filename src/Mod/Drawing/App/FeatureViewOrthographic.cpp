@@ -57,6 +57,10 @@ FeatureViewOrthographic::FeatureViewOrthographic(void)
 
     ProjectionType.setEnums(ProjectionTypeEnums);
     ADD_PROPERTY(ProjectionType, ((long)0));
+
+    ADD_PROPERTY_TYPE(spacingX, (15), group, App::Prop_None, "Horizontal spacing between views");
+    ADD_PROPERTY_TYPE(spacingY, (15), group, App::Prop_None, "Vertical spacing between views");
+
     ADD_PROPERTY(viewOrientationMatrix, (Base::Matrix4D()));
 }
 
@@ -124,14 +128,27 @@ double FeatureViewOrthographic::calculateAutomaticScale() const
     if(!page)
       throw Base::Exception("No page is assigned to this feature");
 
-
     if(!page->hasValidTemplate())
         throw Base::Exception("Page template isn't valid");
 
-    Base::BoundBox3d bbox = getBoundingBox();
+    FeatureOrthoView *viewPtrs[10];
 
-    float scale_x = (page->getPageWidth()) / bbox.LengthX(); // TODO include gap spaces
-    float scale_y = (page->getPageHeight()) / bbox.LengthY();
+    arrangeViewPointers(viewPtrs);
+    double width, height;
+    minimumBbViews(viewPtrs, width, height);
+
+    // C++ Standard says casting bool to int gives 0 or 1
+    int numVertSpaces = (viewPtrs[0] || viewPtrs[3] || viewPtrs[7]) +
+                        (viewPtrs[2] || viewPtrs[5] || viewPtrs[9]) +
+                        (viewPtrs[6] != NULL);
+    int numHorizSpaces = (viewPtrs[0] || viewPtrs[1] || viewPtrs[2]) +
+                         (viewPtrs[7] || viewPtrs[8] || viewPtrs[9]);
+
+    double availableX = page->getPageWidth() - spacingX.getValue() * (numVertSpaces + 1);
+    double availableY = page->getPageHeight() - spacingY.getValue() * (numHorizSpaces + 1);
+
+    double scale_x = availableX / width;
+    double scale_y = availableY / height;
 
     float working_scale = std::min(scale_x, scale_y);
 
@@ -148,18 +165,39 @@ double FeatureViewOrthographic::calculateAutomaticScale() const
     while (valid_scales[(exponent >= 0)][i] > working_scale)                 //choose closest value smaller than 'a' from list.
         i -= 1;                                                              //choosing top list if exponent -ve, bottom list for +ve exponent
 
-    return valid_scales[(exponent >= 0)][i] * pow(10, exponent);            //now have the appropriate scale, reapply the *10^b
+    //now have the appropriate scale, reapply the *10^b
+    return valid_scales[(exponent >= 0)][i] * pow(10, exponent);
+}
+
+void FeatureViewOrthographic::minimumBbViews(FeatureOrthoView *viewPtrs[10],
+                                            double &width, double &height) const
+{
+    // Get bounding boxes in object scale
+    Base::BoundBox3d bboxes[10];
+    makeViewBbs(viewPtrs, bboxes, false);
+
+    double col0w = std::max(std::max(bboxes[0].LengthX(), bboxes[3].LengthX()), bboxes[7].LengthX()),
+           col1w = std::max(std::max(bboxes[1].LengthX(), bboxes[4].LengthX()), bboxes[8].LengthX()),
+           col2w = std::max(std::max(bboxes[2].LengthX(), bboxes[5].LengthX()), bboxes[9].LengthX()),
+           col3w = bboxes[6].LengthX(),
+           row0h = std::max(std::max(bboxes[0].LengthY(), bboxes[1].LengthY()), bboxes[2].LengthY()),
+           row1h = std::max(std::max(bboxes[3].LengthY(), bboxes[4].LengthY()),
+                            std::max(bboxes[5].LengthY(), bboxes[6].LengthY())),
+           row2h = std::max(std::max(bboxes[7].LengthY(), bboxes[8].LengthY()), bboxes[9].LengthY());
+
+    width = col0w + col1w + col2w + col3w;
+    height = row0h + row1h + row2h;
 }
 
 void FeatureViewOrthographic::onChanged(const App::Property* prop)
 {
-    if (prop == &ProjectionType ||
-        prop == &ScaleType ||
-        prop == &viewOrientationMatrix ||
-        prop == &Scale && !Scale.StatusBits.test(5)){
-          if (!isRestoring()) {
-              execute();
-          }
+    if ( prop == &ProjectionType ||
+         prop == &ScaleType ||
+         prop == &viewOrientationMatrix ||
+         ((prop == &Scale) && !Scale.StatusBits.test(5)) ) {
+        if (!isRestoring()) {
+            execute();
+        }
     }
     Drawing::FeatureViewCollection::onChanged(prop);
 }
@@ -339,12 +377,16 @@ int FeatureViewOrthographic::removeOrthoView(const char *viewProjType)
     return -1;
 }
 
-bool FeatureViewOrthographic::distributeOrthoViews()
+void FeatureViewOrthographic::arrangeViewPointers(FeatureOrthoView *viewPtrs[10]) const
 {
+    for (int i=0; i<10; ++i) {
+        viewPtrs[i] = NULL;
+    }
+
     FeatureOrthoView *anchorView = dynamic_cast<FeatureOrthoView *>(Anchor.getValue());
 
     if (!anchorView) {  //TODO: Consider not requiring an anchor view, or allowing ones other than "Front"
-        return false;
+        throw Base::Exception("No anchor view set in FeatureViewOrthographic::arrangeViewPointers()");
     }
 
     // Determine layout - should be either "First Angle" or "Third Angle"
@@ -354,13 +396,6 @@ bool FeatureViewOrthographic::distributeOrthoViews()
     } else {
         projType = ProjectionType.getValueAsString();
     }
-
-    // Setup array of pointers to the views that we're displaying,
-    // assuming front is in centre (index 4):
-    // [0]  [1]  [2]
-    // [3]  [4]  [5]  [6]
-    // [7]  [8]  [9]
-    FeatureOrthoView * viewPtrs[10] = {};
 
     // Iterate through views and populate viewPtrs
     FeatureOrthoView* oView;
@@ -401,75 +436,98 @@ bool FeatureViewOrthographic::distributeOrthoViews()
                 } else if (strcmp(viewTypeCStr, "FrontBottomRight") == 0) {
                     viewPtrs[thirdAngle ? 9 : 0] = oView;
                 } else {
-                    throw Base::Exception("Unknown view type in FeatureViewOrthographic::distributeOrthoViews()");
+                    throw Base::Exception("Unknown view type in FeatureViewOrthographic::arrangeViewPointers()");
                 }
             }
         }
-    } else return false;    // ...assuming this is an error condition
+    } else {
+        throw Base::Exception("Unknown view type in FeatureViewOrthographic::arrangeViewPointers()");
+    }
+}
 
-    // TODO: Work on not requiring the front view...
-    if (!viewPtrs[4])
-        return false;
-
-    // Calculate bounding boxes for each displayed view
-    Base::BoundBox3d bboxes[10];
-
+void FeatureViewOrthographic::makeViewBbs(FeatureOrthoView *viewPtrs[10],
+                                          Base::BoundBox3d bboxes[10],
+                                          bool documentScale) const
+{
     for (int i = 0; i < 10; ++i)
         if (viewPtrs[i]) {
             bboxes[i] = viewPtrs[i]->getBoundingBox();
+            if (!documentScale) {
+                double scale = 1.0 / viewPtrs[i]->Scale.getValue();
+                bboxes[i].ScaleX(scale);
+                bboxes[i].ScaleY(scale);
+                bboxes[i].ScaleZ(scale);
+            }
         } else {
             // BoundBox3d defaults to length=(FLOAT_MAX + -FLOAT_MAX)
             bboxes[i].ScaleX(0);
             bboxes[i].ScaleY(0);
             bboxes[i].ScaleZ(0);
         }
+}
+
+bool FeatureViewOrthographic::distributeOrthoViews()
+{
+    FeatureOrthoView *viewPtrs[10];
+
+    arrangeViewPointers(viewPtrs);
+
+    // TODO: Work on not requiring the front view...
+    if (!viewPtrs[4]) {
+        return false;
+    }
+
+    // Calculate bounding boxes for each displayed view
+    Base::BoundBox3d bboxes[10];
+    makeViewBbs(viewPtrs, bboxes);
 
     // Now that things are setup, do the spacing
-    double spacing = 15;    //in mm  TODO: maybe use a property?
+    double xSpacing = spacingX.getValue();    //in mm
+    double ySpacing = spacingY.getValue();    //in mm
 
     if (viewPtrs[0]) {
         double displace = std::max(bboxes[0].LengthX() + bboxes[4].LengthX(),
                                    bboxes[0].LengthY() + bboxes[4].LengthY());
-        viewPtrs[0]->X.setValue(displace / -2.0 - spacing);
-        viewPtrs[0]->Y.setValue(displace / 2.0 + spacing);
+        viewPtrs[0]->X.setValue(displace / -2.0 - xSpacing);
+        viewPtrs[0]->Y.setValue(displace / 2.0 + ySpacing);
     }
     if (viewPtrs[1]) {
-        viewPtrs[1]->Y.setValue((bboxes[1].LengthY() + bboxes[4].LengthY()) / 2.0 + spacing);
+        viewPtrs[1]->Y.setValue((bboxes[1].LengthY() + bboxes[4].LengthY()) / 2.0 + ySpacing);
     }
     if (viewPtrs[2]) {
         double displace = std::max(bboxes[2].LengthX() + bboxes[4].LengthX(),
                                    bboxes[2].LengthY() + bboxes[4].LengthY());
-        viewPtrs[2]->X.setValue(displace / 2.0 + spacing);
-        viewPtrs[2]->Y.setValue(displace / 2.0 + spacing);
+        viewPtrs[2]->X.setValue(displace / 2.0 + xSpacing);
+        viewPtrs[2]->Y.setValue(displace / 2.0 + ySpacing);
     }
     if (viewPtrs[3]) {
-        viewPtrs[3]->X.setValue((bboxes[3].LengthX() + bboxes[4].LengthX()) / -2.0 - spacing);
+        viewPtrs[3]->X.setValue((bboxes[3].LengthX() + bboxes[4].LengthX()) / -2.0 - xSpacing);
     }
     if (viewPtrs[4]) {  // TODO: Move this check above, and figure out a sane bounding box based on other existing views
     }
     if (viewPtrs[5]) {
-        viewPtrs[5]->X.setValue((bboxes[5].LengthX() + bboxes[4].LengthX()) / 2.0 + spacing);
+        viewPtrs[5]->X.setValue((bboxes[5].LengthX() + bboxes[4].LengthX()) / 2.0 + xSpacing);
     }
     if (viewPtrs[6]) {
         if (viewPtrs[5])
-            viewPtrs[6]->X.setValue((bboxes[6].LengthX() + bboxes[4].LengthX()) / 2.0 + bboxes[5].LengthX() + 2 * spacing);
+            viewPtrs[6]->X.setValue((bboxes[6].LengthX() + bboxes[4].LengthX()) / 2.0 + bboxes[5].LengthX() + 2 * xSpacing);
         else
-            viewPtrs[6]->X.setValue((bboxes[6].LengthX() + bboxes[4].LengthX()) / 2.0 + spacing);
+            viewPtrs[6]->X.setValue((bboxes[6].LengthX() + bboxes[4].LengthX()) / 2.0 + xSpacing);
     }
     if (viewPtrs[7]) {
         double displace = std::max(bboxes[7].LengthX() + bboxes[4].LengthX(),
                                    bboxes[7].LengthY() + bboxes[4].LengthY());
-        viewPtrs[7]->X.setValue(displace / -2.0 - spacing);
-        viewPtrs[7]->Y.setValue(displace / -2.0 - spacing);
+        viewPtrs[7]->X.setValue(displace / -2.0 - xSpacing);
+        viewPtrs[7]->Y.setValue(displace / -2.0 - ySpacing);
     }
     if (viewPtrs[8]) {
-        viewPtrs[8]->Y.setValue((bboxes[8].LengthY() + bboxes[4].LengthY()) / -2.0 - spacing);
+        viewPtrs[8]->Y.setValue((bboxes[8].LengthY() + bboxes[4].LengthY()) / -2.0 - ySpacing);
     }
     if (viewPtrs[9]) {
         double displace = std::max(bboxes[9].LengthX() + bboxes[4].LengthX(),
                                    bboxes[9].LengthY() + bboxes[4].LengthY());
-        viewPtrs[9]->X.setValue(displace / 2.0 + spacing);
-        viewPtrs[9]->Y.setValue(displace / -2.0 - spacing);
+        viewPtrs[9]->X.setValue(displace / 2.0 + xSpacing);
+        viewPtrs[9]->Y.setValue(displace / -2.0 - ySpacing);
     }
 
     return true;

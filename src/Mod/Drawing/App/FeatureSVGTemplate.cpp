@@ -73,6 +73,7 @@ FeatureSVGTemplate::~FeatureSVGTemplate()
 {
 }
 
+/*
 std::string FeatureSVGTemplate::getSvgIdForEditable(const std::string &editableName)
 {
     if (editableSvgIds.count(editableName)) {
@@ -80,7 +81,7 @@ std::string FeatureSVGTemplate::getSvgIdForEditable(const std::string &editableN
     } else {
         return "";
     }
-}
+}*/
 
 PyObject *FeatureSVGTemplate::getPyObject(void)
 {
@@ -336,7 +337,7 @@ std::map<std::string, std::string> FeatureSVGTemplate::getEditableTextsFromTempl
             } else {
                 //TODO: May also need to maintain an internal map to get SVG ID
                 eds[twhat[2]] = twhat[3];
-                editableSvgIds[twhat[2]] = twhat[1];
+                //editableSvgIds[twhat[2]] = twhat[1];
             }
 
             tbegin = twhat[0].second;

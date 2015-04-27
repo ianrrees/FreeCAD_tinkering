@@ -59,7 +59,7 @@ public:
 
 public:
     void updateTask();
-    void nearestFraction(const double &val, int &a, int &b, const long &maxDenom) const;
+    void nearestFraction(double val, int &a, int &b) const;
     /// Sets the numerator and denominator widgets to match newScale
     void setFractionalScale(double newScale);
 

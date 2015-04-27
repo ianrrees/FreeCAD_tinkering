@@ -63,7 +63,7 @@ public:
     /*!
      * If editableName isn't known, returns an empty string
      */
-    std::string getSvgIdForEditable(const std::string &editableName);
+ //   std::string getSvgIdForEditable(const std::string &editableName);
 
     // from base class
     virtual PyObject *getPyObject(void);
@@ -81,9 +81,6 @@ protected:
      * Also populates editableSvgIds
      */
     std::map<std::string, std::string> getEditableTextsFromTemplate();
-
-    /// Populated with <editable name, SVG ID>
-    std::map<std::string, std::string> editableSvgIds;
 
     QRectF blockDimensions;
 };

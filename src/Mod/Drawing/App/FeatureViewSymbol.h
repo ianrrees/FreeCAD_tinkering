@@ -44,6 +44,7 @@ public:
     virtual ~FeatureViewSymbol();
 
     App::PropertyString       Symbol;
+    App::PropertyStringList   EditableTexts;
 
     /** @name methods overide Feature */
     //@{
@@ -55,8 +56,9 @@ public:
     virtual const char* getViewProviderName(void) const {
         return "DrawingGui::ViewProviderSymbol";
     }
-    
+
 protected:
+    void onChanged(const App::Property* prop);
     Base::BoundBox3d bbox;
 };
 
