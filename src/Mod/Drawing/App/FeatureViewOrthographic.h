@@ -97,6 +97,12 @@ public:
         return "DrawingGui::ViewProviderViewOrthographic";
     }
 
+    /// Determines either "First Angle" or "Third Angle".
+    App::Enumeration usedProjectionType(void);
+
+    /// Allowed projection types - either Document, First Angle or Third Angle
+    static const char* ProjectionTypeEnums[];
+
 protected:
     void onChanged(const App::Property* prop);
 
@@ -152,8 +158,10 @@ protected:
      */
     void minimumBbViews(FeatureOrthoView *viewPtrs[10],
                        double &width, double &height) const;
+
+    /// Returns pointer to our page, or NULL if it couldn't be located
+    Drawing::FeaturePage * getPage(void) const;
 private:
-    static const char* ProjectionTypeEnums[];
     static const char* OrthoViewNameEnumStrs[];
 
 };

@@ -76,13 +76,15 @@ protected Q_SLOTS:
 protected:
     void changeEvent(QEvent *e);
 
-    /// Updates state of box to match the state of multiView
-    void setupViewCheckbox(QCheckBox *box);
+    /// Connects and updates state of view checkboxes to match the state of multiView
+    void setupViewCheckboxes(void);
 
 private:
     //class Private;
     Ui_TaskOrthographicViews * ui;
     bool blockUpdate;
+    /// Translate a view checkbox index into represented view string, depending on projection type
+    const char * viewChkIndexToCStr(int index);
 
 protected:
   ViewProviderViewOrthographic *orthographicView;

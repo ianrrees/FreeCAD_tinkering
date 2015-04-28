@@ -113,19 +113,26 @@ Base::BoundBox3d FeatureViewOrthographic::getBoundingBox() const
     return bbox;
 }
 
-// Function provided by Joe Dowsett, 2014
-double FeatureViewOrthographic::calculateAutomaticScale() const
+Drawing::FeaturePage * FeatureViewOrthographic::getPage(void) const
 {
-    Drawing::FeaturePage *page = 0;
+    Drawing::FeaturePage *ret = NULL;
 
     std::vector<App::DocumentObject*> parent = getInList();
     for (std::vector<App::DocumentObject*>::iterator it = parent.begin(); it != parent.end(); ++it) {
         if ((*it)->getTypeId().isDerivedFrom(FeaturePage::getClassTypeId())) {
-            page = static_cast<FeaturePage *>(*it);
+            ret = static_cast<FeaturePage *>(*it);
         }
     }
 
-    if(!page)
+    return ret;
+}
+
+// Function provided by Joe Dowsett, 2014
+double FeatureViewOrthographic::calculateAutomaticScale() const
+{
+    Drawing::FeaturePage *page = getPage();
+
+    if (page == NULL)
       throw Base::Exception("No page is assigned to this feature");
 
     if(!page->hasValidTemplate())
@@ -191,6 +198,7 @@ void FeatureViewOrthographic::minimumBbViews(FeatureOrthoView *viewPtrs[10],
 
 void FeatureViewOrthographic::onChanged(const App::Property* prop)
 {
+    //TODO: For some reason, when the projection type is changed, the isometric views show change appropriately, but the orthographic ones dont... Or vice-versa.
     if ( prop == &ProjectionType ||
          prop == &ScaleType ||
          prop == &viewOrientationMatrix ||
@@ -585,6 +593,19 @@ App::DocumentObjectExecReturn *FeatureViewOrthographic::execute(void)
     //touch();
 
     return FeatureViewCollection::execute();
+}
+
+App::Enumeration FeatureViewOrthographic::usedProjectionType(void)
+{
+    //TODO: Would've been nice to have an Enumeration(const PropertyEnumeration &) constructor
+    App::Enumeration ret(ProjectionTypeEnums, ProjectionType.getValueAsString());
+    if (ret.isValue("Document")) {
+        Drawing::FeaturePage * page = getPage();
+        if ( page != NULL ) {
+            ret.setValue(page->OrthoProjectionType.getValueAsString());
+        }
+    }
+    return ret;
 }
 
 void FeatureViewOrthographic::onDocumentRestored()

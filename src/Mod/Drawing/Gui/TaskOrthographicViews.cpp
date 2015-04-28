@@ -66,7 +66,7 @@ TaskOrthographicViews::TaskOrthographicViews(Drawing::FeatureViewOrthographic* f
     ui->cmbScaleType->setCurrentIndex(multiView->ScaleType.getValue());
     
     // Initially toggle view checkboxes if needed
-    setupViewCheckbox(ui->chkOrthoLeft);
+ /*   setupViewCheckbox(ui->chkOrthoLeft);
     setupViewCheckbox(ui->chkOrthoRight);
     setupViewCheckbox(ui->chkOrthoFront);
     setupViewCheckbox(ui->chkOrthoRear);
@@ -75,7 +75,8 @@ TaskOrthographicViews::TaskOrthographicViews(Drawing::FeatureViewOrthographic* f
     setupViewCheckbox(ui->chkIsoFrontTopLeft);
     setupViewCheckbox(ui->chkIsoFrontTopRight);
     setupViewCheckbox(ui->chkIsoFrontBottomRight);
-    setupViewCheckbox(ui->chkIsoFrontBottomLeft);
+    setupViewCheckbox(ui->chkIsoFrontBottomLeft);*/
+    setupViewCheckboxes();
 
     blockUpdate = false;
 
@@ -88,8 +89,7 @@ TaskOrthographicViews::TaskOrthographicViews(Drawing::FeatureViewOrthographic* f
     connect(ui->butLeftRotate,  SIGNAL(clicked()), this, SLOT(rotateButtonClicked(void)));
     connect(ui->butCCWRotate,   SIGNAL(clicked()), this, SLOT(rotateButtonClicked(void)));
 
-    // Orthographic check boxes
-    connect(ui->chkOrthoLeft,   SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));    // Left View
+/*    connect(ui->chkOrthoLeft,   SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));    // Left View
     connect(ui->chkOrthoRight,  SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));    // Right View
     connect(ui->chkOrthoTop,    SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));    // Top View
     connect(ui->chkOrthoBottom, SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));    // Bottom View
@@ -101,7 +101,7 @@ TaskOrthographicViews::TaskOrthographicViews(Drawing::FeatureViewOrthographic* f
     connect(ui->chkIsoFrontTopRight,    SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));
     connect(ui->chkIsoFrontBottomRight, SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));
     connect(ui->chkIsoFrontBottomLeft,  SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));
-
+*/
     // Slot for Scale Type
     connect(ui->cmbScaleType, SIGNAL(currentIndexChanged(int)), this, SLOT(scaleTypeChanged(int)));
     connect(ui->scaleNum,     SIGNAL(textEdited(const QString &)), this, SLOT(scaleManuallyChanged(const QString &)));
@@ -120,21 +120,15 @@ void TaskOrthographicViews::viewToggled(bool toggle)
 {
     // Obtain name of checkbox
     QString viewName = sender()->objectName();
+    int index = viewName.mid(7).toInt();
+    const char *viewNameCStr = viewChkIndexToCStr(index);
 
     //Gui::Command::openCommand("Toggle orthographic view");    //TODO: Is this for undo?
 
-    if ( viewName.startsWith(QString::fromLatin1("chkOrtho")) ) {
-        viewName = viewName.mid(8); // remove chkOrtho
-    } else if ( viewName.startsWith(QString::fromLatin1("chkIso")) ) {
-        viewName = viewName.mid(6); // remove chkIso
-    } else {
-        return;
-    }
-
-    if ( toggle && !multiView->hasOrthoView( viewName.toLatin1() ) ) {
-        multiView->addOrthoView( viewName.toLatin1() );
-    } else if ( !toggle && multiView->hasOrthoView( viewName.toLatin1() ) ) {
-        multiView->removeOrthoView( viewName.toLatin1() );
+    if ( toggle && !multiView->hasOrthoView( viewNameCStr ) ) {
+        multiView->addOrthoView( viewNameCStr );
+    } else if ( !toggle && multiView->hasOrthoView( viewNameCStr ) ) {
+        multiView->removeOrthoView( viewNameCStr );
     }
 
     /// Called to notify the GUI that the scale has changed
@@ -328,16 +322,60 @@ void TaskOrthographicViews::changeEvent(QEvent *e)
     }
 }
 
-void TaskOrthographicViews::setupViewCheckbox(QCheckBox *box)
+const char * TaskOrthographicViews::viewChkIndexToCStr(int index)
 {
-    QString viewName = box->objectName();
+    //   Third Angle:  FTL  T  FTRight
+    //                  L   F   Right   Rear
+    //                 FBL  B  FBRight
+    //
+    //   First Angle:  FBRight  B  FBL
+    //                  Right   F   L  Rear
+    //                 FTRight  T  FTL
+    assert (multiView != NULL);
 
-    if ( viewName.startsWith(QString::fromLatin1("chkOrtho")) &&
-         multiView->hasOrthoView(viewName.mid(8).toLatin1()) ) {
+    bool thirdAngle = multiView->usedProjectionType().isValue("Third Angle");
+    switch(index) {
+        case 0: return (thirdAngle ? "FrontTopLeft" : "FrontBottomRight");
+        case 1: return (thirdAngle ? "Top" : "Bottom");
+        case 2: return (thirdAngle ? "FrontTopRight" : "FrontBottomLeft");
+        case 3: return (thirdAngle ? "Left" : "Right");
+        case 4: return (thirdAngle ? "Front" : "Front");
+        case 5: return (thirdAngle ? "Right" : "Left");
+        case 6: return (thirdAngle ? "Rear" : "Rear");
+        case 7: return (thirdAngle ? "FrontBottomLeft" : "FrontTopRight");
+        case 8: return (thirdAngle ? "Bottom" : "Top");
+        case 9: return (thirdAngle ? "FrontBottomRight" : "FrontTopLeft");
+        default: return NULL;
+    }
+}
+void TaskOrthographicViews::setupViewCheckboxes(void)
+{
+    if ( multiView == NULL ) {
+        return;
+    }
+
+    // There must be a better way to construct this list...
+    QCheckBox * viewCheckboxes[] = { ui->chkView0,
+                                     ui->chkView1,
+                                     ui->chkView2,
+                                     ui->chkView3,
+                                     ui->chkView4,
+                                     ui->chkView5,
+                                     ui->chkView6,
+                                     ui->chkView7,
+                                     ui->chkView8,
+                                     ui->chkView9 };
+
+
+    for (int i = 0; i < 10; ++i) {
+        QCheckBox *box = viewCheckboxes[i];
+        connect(box, SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));
+
+        
+        const char *viewStr = viewChkIndexToCStr(i);
+        if ( viewStr != NULL && multiView->hasOrthoView(viewStr) ) {
             box->setCheckState(Qt::Checked);
-    } else if ( viewName.startsWith(QString::fromLatin1("chkIso")) &&
-                multiView->hasOrthoView(viewName.mid(6).toLatin1())) {
-            box->setCheckState(Qt::Checked);
+        }
     }
 }
 

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>342</width>
-    <height>695</height>
+    <height>431</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -197,16 +197,6 @@
             </property>
            </widget>
           </item>
-          <item row="4" column="0">
-           <widget class="QPushButton" name="pushButton_7">
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
-            <property name="text">
-             <string>Custom</string>
-            </property>
-           </widget>
-          </item>
           <item row="2" column="1">
            <widget class="QPushButton" name="butTopRotate">
             <property name="text">
@@ -241,26 +231,6 @@
          </layout>
         </item>
         <item>
-         <widget class="QLineEdit" name="lineEdit">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>front vector</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLineEdit" name="lineEdit_2">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Up vector</string>
-          </property>
-         </widget>
-        </item>
-        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_8">
           <item>
            <widget class="QLabel" name="label_6">
@@ -272,26 +242,34 @@
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_9">
-          <item>
-           <widget class="QCheckBox" name="chkOrthoFront">
+         <layout class="QGridLayout" name="gridLayout_2">
+          <item row="5" column="2">
+           <widget class="QCheckBox" name="chkView8">
             <property name="enabled">
              <bool>false</bool>
             </property>
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
+            <property name="text">
+             <string/>
             </property>
-            <property name="contextMenuPolicy">
-             <enum>Qt::NoContextMenu</enum>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
-            <property name="toolTip">
-             <string>Primary view</string>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
             </property>
-            <property name="layoutDirection">
-             <enum>Qt::RightToLeft</enum>
+           </spacer>
+          </item>
+          <item row="3" column="2">
+           <widget class="QCheckBox" name="chkView4">
+            <property name="enabled">
+             <bool>false</bool>
             </property>
             <property name="text">
              <string/>
@@ -301,234 +279,72 @@
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QLabel" name="label_3">
-            <property name="text">
-             <string>Front (0,1,0)</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout">
-          <item>
-           <widget class="QCheckBox" name="chkOrthoTop">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="contextMenuPolicy">
-             <enum>Qt::NoContextMenu</enum>
-            </property>
-            <property name="toolTip">
-             <string>Right click for axonometric settings</string>
-            </property>
-            <property name="layoutDirection">
-             <enum>Qt::RightToLeft</enum>
-            </property>
+          <item row="3" column="3">
+           <widget class="QCheckBox" name="chkView5">
             <property name="text">
              <string/>
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QLabel" name="label_8">
-            <property name="text">
-             <string>Top (0,0,1)</string>
+          <item row="3" column="5">
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
-           </widget>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
           </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
-          <item>
-           <widget class="QCheckBox" name="chkOrthoRight">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="contextMenuPolicy">
-             <enum>Qt::NoContextMenu</enum>
-            </property>
-            <property name="toolTip">
-             <string>Right click for axonometric settings</string>
-            </property>
-            <property name="layoutDirection">
-             <enum>Qt::RightToLeft</enum>
-            </property>
+          <item row="3" column="1">
+           <widget class="QCheckBox" name="chkView3">
             <property name="text">
              <string/>
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QLabel" name="label_9">
-            <property name="text">
-             <string>Right (1,0,0)</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_10">
-          <item>
-           <widget class="QCheckBox" name="chkOrthoRear">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="contextMenuPolicy">
-             <enum>Qt::NoContextMenu</enum>
-            </property>
-            <property name="toolTip">
-             <string>Right click for axonometric settings</string>
-            </property>
-            <property name="layoutDirection">
-             <enum>Qt::RightToLeft</enum>
-            </property>
+          <item row="5" column="1">
+           <widget class="QCheckBox" name="chkView7">
             <property name="text">
              <string/>
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QLabel" name="label_10">
-            <property name="text">
-             <string>Rear (0,-1,0)</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_11">
-          <item>
-           <widget class="QCheckBox" name="chkOrthoBottom">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="contextMenuPolicy">
-             <enum>Qt::NoContextMenu</enum>
-            </property>
-            <property name="toolTip">
-             <string>Right click for axonometric settings</string>
-            </property>
-            <property name="layoutDirection">
-             <enum>Qt::RightToLeft</enum>
-            </property>
+          <item row="2" column="2">
+           <widget class="QCheckBox" name="chkView1">
             <property name="text">
              <string/>
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QLabel" name="label_11">
-            <property name="text">
-             <string>Bottom (0,0,-1)</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_12">
-          <item>
-           <widget class="QCheckBox" name="chkOrthoLeft">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="contextMenuPolicy">
-             <enum>Qt::NoContextMenu</enum>
-            </property>
-            <property name="toolTip">
-             <string>Right click for axonometric settings</string>
-            </property>
-            <property name="layoutDirection">
-             <enum>Qt::RightToLeft</enum>
-            </property>
+          <item row="5" column="3">
+           <widget class="QCheckBox" name="chkView9">
             <property name="text">
              <string/>
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QLabel" name="label_12">
+          <item row="2" column="3">
+           <widget class="QCheckBox" name="chkView2">
             <property name="text">
-             <string>Left (-1,0,0)</string>
+             <string/>
             </property>
            </widget>
           </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_13">
-          <item>
-           <widget class="QCheckBox" name="chkIsoFrontTopLeft">
+          <item row="3" column="4">
+           <widget class="QCheckBox" name="chkView6">
             <property name="text">
-             <string>Front-Top-Left</string>
+             <string/>
             </property>
            </widget>
           </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_15">
-          <item>
-           <widget class="QCheckBox" name="chkIsoFrontTopRight">
+          <item row="2" column="1">
+           <widget class="QCheckBox" name="chkView0">
             <property name="text">
-             <string>Front-Top-Right</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_14">
-          <item>
-           <widget class="QCheckBox" name="chkIsoFrontBottomRight">
-            <property name="text">
-             <string>Front-Bottom-Right</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_7">
-          <item>
-           <widget class="QCheckBox" name="chkIsoFrontBottomLeft">
-            <property name="text">
-             <string>Front-Bottom-Left</string>
+             <string/>
             </property>
            </widget>
           </item>

@@ -39,6 +39,7 @@
 
 #include "FeaturePage.h"
 #include "FeatureView.h"
+#include "FeatureViewOrthographic.h"
 #include "FeatureClip.h"
 #include "FeatureTemplate.h"
 #include "FeatureViewCollection.h"
@@ -95,31 +96,37 @@ void FeaturePage::onChanged(const App::Property* prop)
         //TODO: reload if Template prop changes (ie different Template)
         Base::Console().Message("TODO: Unimplemented function FeaturePage::onChanged(Template)\n");
         }
-    }
-
-    if (prop == &Views) {
+    } else if (prop == &Views) {
         if (!isRestoring()) {
             //TODO: reload if Views prop changes (ie adds/deletes)
             //this->touch();
         }
-    }
-
-    if (prop == &Group) {
+    } else if (prop == &Group) {
         if (Group.getSize() != numChildren) {
             numChildren = Group.getSize();
             touch();
         }
-    }
-
-    if(prop == &Scale) {
+    } else if(prop == &Scale) {
         // touch all views in the Page as they may be dependent on this scale
       const std::vector<App::DocumentObject*> &vals = Views.getValues();
       for(std::vector<App::DocumentObject *>::const_iterator it = vals.begin(); it < vals.end(); ++it) {
           Drawing::FeatureView *view = dynamic_cast<Drawing::FeatureView *>(*it);
-          if(strcmp(view->ScaleType.getValueAsString(), "Document") == 0) {
+          if (view != NULL && view->ScaleType.isValue("Document")) {
               view->Scale.touch();
           }
       }
+    } else if (prop == &OrthoProjectionType) {
+      // touch all ortho views in the Page as they may be dependent on Projection Type
+      const std::vector<App::DocumentObject*> &vals = Views.getValues();
+      for(std::vector<App::DocumentObject *>::const_iterator it = vals.begin(); it < vals.end(); ++it) {
+          Drawing::FeatureViewOrthographic *view = dynamic_cast<Drawing::FeatureViewOrthographic *>(*it);
+          if (view != NULL && view->ProjectionType.isValue("Document")) {
+              view->ProjectionType.touch();
+          }
+      }
+
+      // TODO: Also update Template graphic.
+
     }
     App::DocumentObjectGroup::onChanged(prop);
 }
