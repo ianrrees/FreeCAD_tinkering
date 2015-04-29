@@ -23,8 +23,14 @@
 #include "PreCompiled.h"
 #ifndef _PreComp_
 # include <QMessageBox>
-#include <QScopedPointer>
 #endif
+
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <cstdlib>
+#include <exception>
+#include <boost/regex.hpp>
 
 # include <App/DocumentObject.h>
 # include <Gui/Action.h>
@@ -54,6 +60,23 @@
 using namespace DrawingGui;
 using namespace std;
 
+//internal functions
+bool _checkSelection(Gui::Command* cmd);
+int _isValidSingleEdge(Gui::Command* cmd);
+bool _isValidVertexes(Gui::Command* cmd);
+int _isValidEdgeToEdge(Gui::Command* cmd);
+int _getIndexFromName(std::string geomName);
+bool _checkGeomType(std::string geomType, std::string objName);
+
+enum EdgeType{
+        isInvalid,
+        isHorizontal,
+        isVertical,
+        isDiagonal,
+        isCircle,
+        isCurve,
+        isAngle
+    };
 
 //===========================================================================
 // Drawing_NewDimension
@@ -67,209 +90,110 @@ CmdDrawingNewDimension::CmdDrawingNewDimension()
     sAppModule      = "Drawing";
     sGroup          = QT_TR_NOOP("Drawing");
     sMenuText       = QT_TR_NOOP("Insert a dimension into the drawing");
-    sToolTipText    = QT_TR_NOOP("Insert a new dimension feature into the drawing");
+    sToolTipText    = QT_TR_NOOP("Insert a new dimension");
     sWhatsThis      = "Drawing_NewDimension";
     sStatusTip      = sToolTipText;
-    sPixmap         = "actions/drawing-annotation";
+    sPixmap         = "Dimension";
 }
 
 void CmdDrawingNewDimension::activated(int iMsg)
 {
+    bool result = _checkSelection(this);
+    if (!result)
+        return;
+
     std::vector<Gui::SelectionObject> selection = getSelection().getSelectionEx();
-    if(selection.size() == 0 || !selection[0].getObject()){
-        return;
-    }
-
-    Drawing::FeatureViewPart * viewPart = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
-    if(!viewPart) {
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No Feature View"),
-                                                    QObject::tr("No FeatureView associated with this selection"));
-        return;
-    }
-
-    //App::DocumentObject *docObj = viewPart->Source.getValue();
-
-    // get the needed lists and objects
+    Drawing::FeatureViewPart * objFeat = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
     const std::vector<std::string> &SubNames = selection[0].getSubNames();
 
-    if (SubNames.size() > 2){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                   QObject::tr("Too many edges/vertices selected"));
-        return;
-    }
-
-    std::vector<App::DocumentObject*> pages = getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
-    if (pages.empty()){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No Drawing Page"),
-                                                   QObject::tr("Create a page first."));
-        return;
-    }
     Drawing::FeatureViewDimension *dim = 0;
-    //std::string support = selection[0].getAsPropertyLinkSubString();
     std::string FeatName = getUniqueObjectName("Dimension");
-
     std::string dimType;
+    bool centerLine = false;
+
+    std::vector<App::DocumentObject *> objs;
+    std::vector<std::string> subs;
+
+    if (_isValidSingleEdge(this)) {
+        if (_isValidSingleEdge(this) < isCircle) {
+            dimType = "Distance";
+            objs.push_back(objFeat);
+            subs.push_back(SubNames[0]);
+        } else if (_isValidSingleEdge(this) == isCircle) {
+            dimType = "Radius";
+            centerLine = true;
+        } else {
+            dimType = "Radius";
+        }
+    } else if (_isValidVertexes(this)) {
+        dimType = "Distance";
+        objs.push_back(objFeat);
+        objs.push_back(objFeat);
+        subs.push_back(SubNames[0]);
+        subs.push_back(SubNames[1]);
+    } else if (_isValidEdgeToEdge(this)) {
+        int edgeCase = _isValidEdgeToEdge(this);
+        objs.push_back(objFeat);
+        objs.push_back(objFeat);
+        subs.push_back(SubNames[0]);
+        subs.push_back(SubNames[1]);
+        switch (edgeCase) {
+            case isHorizontal:
+                dimType = "DistanceX";
+            case isVertical:
+                dimType = "DistanceY";
+            case isDiagonal:
+                dimType = "Distance";
+            case isAngle:
+                dimType = "Angle";
+        }
+    } else {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect Selection"),
+                                                   QObject::tr("Can't make a Dimension from this selection"));
+        return;
+    }
 
     openCommand("Create Dimension");
     doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewDimension','%s')",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
+                                                       ,dimType.c_str());
 
-    if (SubNames.size() == 1) {
-        if (SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge") {      //is the selection an edge?
-            int GeoId = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
-
-            QScopedPointer<DrawingGeometry::BaseGeom> geom(viewPart->getCompleteEdge(GeoId));
-
-            dimType = "Distance";
-
-            if(geom->geomType == DrawingGeometry::CIRCLE ||
-               geom->geomType == DrawingGeometry::ARCOFCIRCLE ||
-               geom->geomType == DrawingGeometry::ELLIPSE ||
-               geom->geomType == DrawingGeometry::ARCOFELLIPSE ) {
-
-                if(geom->geomType == DrawingGeometry::CIRCLE ) {
-                    // Add center lines automatically for full circles
-                    doCommand(Doc,"App.activeDocument().%s.CentreLines = True", FeatName.c_str());
-                }
-
-                // Radius Constraint
-                dimType = "Radius";
-            }
-
-            doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
-                                                               ,dimType.c_str());
-
-            dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
-            dim->References.setValue(viewPart, SubNames[0].c_str());
-        } else {
-            //TODO: message "Can't determine desired Dimension type from selection"
-            abortCommand();
-            return;
-        }
-
-    } else if(SubNames.size() == 2) {
-        if (SubNames[0].size() > 6 && SubNames[0].substr(0,6) == "Vertex" &&
-            SubNames[1].size() > 6 && SubNames[1].substr(0,6) == "Vertex") {    //is the selection 2 vertices?
-            int GeoId1 = std::atoi(SubNames[0].substr(6,std::string::npos).c_str());
-            int GeoId2 = std::atoi(SubNames[1].substr(6,std::string::npos).c_str());
-
-            dimType = "Distance";
-            doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
-                                                               ,dimType.c_str());
-
-            dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
-            std::vector<App::DocumentObject *> objs;
-            objs.push_back(viewPart);
-            objs.push_back(viewPart);                                  //yes, twice. once for each Vertex.
-            std::vector<std::string> subs;
-            subs.push_back(SubNames[0]);
-            subs.push_back(SubNames[1]);
-            dim->References.setValues(objs, subs);
-
-        } else if(SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge" &&
-                  SubNames[1].size() > 4 && SubNames[1].substr(0,4) == "Edge") {         //is the selection 2 edges?
-            int GeoId1 = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
-            int GeoId2 = std::atoi(SubNames[1].substr(4,std::string::npos).c_str());
-            QScopedPointer<DrawingGeometry::BaseGeom> ed1(viewPart->getCompleteEdge(GeoId1));
-            QScopedPointer<DrawingGeometry::BaseGeom> ed2(viewPart->getCompleteEdge(GeoId2));
-
-            if(ed1->geomType == DrawingGeometry::GENERIC &&
-               ed2->geomType == DrawingGeometry::GENERIC) {
-                DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(ed1.data());
-                DrawingGeometry::Generic *gen2 = static_cast<DrawingGeometry::Generic *>(ed2.data());
-                if(gen1->points.size() > 2 || gen2->points.size() > 2) {
-                    // Only support straight line edges
-                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                               QObject::tr("Please select only straight line edges"));
-                    abortCommand();
-                    return;
-                }
-
-                // Construct edge vectors
-                Base::Vector2D lin1 = gen1->points.at(1) - gen1->points.at(0);
-                Base::Vector2D lin2 = gen2->points.at(1) - gen2->points.at(0);
-
-                // Cross product
-                double xprod = fabs(lin1.fX * lin2.fY - lin1.fY * lin2.fX);
-
-                //Base::Console().Log("xprod: %f\n", xprod);
-                if(xprod < FLT_EPSILON) {
-                    if(fabs(lin1.fX) < FLT_EPSILON && fabs(lin2.fX) < FLT_EPSILON)
-                        dimType = "DistanceX";
-                    else if(fabs(lin1.fY) < FLT_EPSILON && fabs(lin2.fY) < FLT_EPSILON)
-                        dimType = "DistanceY";
-                    else
-                        dimType = "Distance";
-                } else {
-                    // Angle Measurement
-                    dimType = "Angle";
-                }
-
-            } else {
-                // Only support straight line edges
-                QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                           QObject::tr("Only straight line edges can be currently supported"));
-                abortCommand();
-                return;
-            }
-
-            doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
-                                                               ,dimType.c_str());
-
-            dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getDocument()->getObject(FeatName.c_str()));
-            std::vector<App::DocumentObject *> objs;
-            objs.push_back(viewPart);
-            objs.push_back(viewPart);
-            std::vector<std::string> subs;
-            subs.push_back(SubNames[0]);
-            subs.push_back(SubNames[1]);
-            dim->References.setValues(objs, subs);
-
-        } else {
-
-            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                       QObject::tr("Selection is not an Edge"));
-            abortCommand();
-            return;
-        }
+    if (centerLine) {
+        doCommand(Doc,"App.activeDocument().%s.CentreLines = True", FeatName.c_str());
+    } else {
+        doCommand(Doc,"App.activeDocument().%s.CentreLines = False", FeatName.c_str());
     }
 
-    QString contentStr = QString::fromAscii("%value");
-
-    if(strcmp(dimType.c_str(), "Angle") == 0) {
-        // Append the degree symbol sign using unicode to content string
-        contentStr += QString(QChar(0x00b0));
-
-    } else if(strcmp(dimType.c_str(), "Radius") == 0) {
-        contentStr.prepend(QString::fromAscii("r"));
-    } else if(strcmp(dimType.c_str(), "Diameter") == 0) {              //can't happen in this command
-        contentStr += QString::fromAscii("D");
+    std::string contentStr = "%value";
+    if (dimType == "Angle") {
+        contentStr = "%value\x00b0";
+    } else if (dimType == "Radius") {
+        contentStr = "r%value";
     }
-
-
     doCommand(Doc,"App.activeDocument().%s.Content = '%s'",FeatName.c_str()
-                                                          ,contentStr.toStdString().c_str());
+                                                          ,contentStr.c_str());
 
-    // Check if the part is an orthographic view;
-    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(viewPart);
+    dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
+    dim->References.setValues(objs, subs);
+
+    // Check if the part is an orthographic view;  TODO: shouldn't this be Feature logic?
+    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
     if(orthoView) {
-        // Set the dimension to projected type
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
         dim->ProjectionType.StatusBits.set(2); // Set the projection type to read only
     }
 
     dim->execute();
-//     App::DocumentObject *dimObj = this->getDocument()->addObject("Drawing::FeatureViewDimension", getUniqueObjectName("Dimension").c_str());
-//     Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(dimObj);
 
-//     doCommand(Doc,"App.activeDocument().%s.References = %s",FeatName.c_str(), support.c_str());
-
-
+    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
     page->addView(page->getDocument()->getObject(FeatName.c_str()));
 
     commitCommand();
 
-    viewPart->touch();
+    //Horrible hack to force Tree update
+    double x = objFeat->X.getValue();
+    objFeat->X.setValue(x);
 }
 
 //===========================================================================
@@ -292,105 +216,68 @@ CmdDrawingNewRadiusDimension::CmdDrawingNewRadiusDimension()
 
 void CmdDrawingNewRadiusDimension::activated(int iMsg)
 {
-
-      // get the selection
-    std::vector<Gui::SelectionObject> selection = getSelection().getSelectionEx();
-    if(selection.size() == 0 || !selection[0].getObject()){
+    bool result = _checkSelection(this);
+    if (!result)
         return;
-    }
 
-    Drawing::FeatureViewPart * obj = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
-
-    if(!obj) {
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                             QObject::tr("No Drawing Feature View for this selection"));
-                             return;
-    }
-
-    App::DocumentObject *docObj = obj->Source.getValue();
-
-    // get the needed lists and objects
+    std::vector<Gui::SelectionObject> selection = getSelection().getSelectionEx();
+    Drawing::FeatureViewPart * objFeat = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
     const std::vector<std::string> &SubNames = selection[0].getSubNames();
 
-    if (SubNames.size() > 1){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-            QObject::tr("Too many items selected"));
-        return;
-    }
-
-    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
-    if (pages.empty()){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No Drawing Page"),
-                                                   QObject::tr("Create a page first."));
-        return;
-    }
-
     Drawing::FeatureViewDimension *dim = 0;
-    //std::string support = selection[0].getAsPropertyLinkSubString();
     std::string FeatName = getUniqueObjectName("Dimension");
+    bool centerLine = false;
 
-    std::string dimType;
+    std::vector<App::DocumentObject *> objs;
+    std::vector<std::string> subs;
 
-    openCommand("Create Radius Dimension");
-
-    doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewDimension','%s')",FeatName.c_str());
-
-    // Get geometry of selected edge
-    QScopedPointer<DrawingGeometry::BaseGeom> geom;
-    if (SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge") {
-        int GeoId = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
-        geom.reset(obj->getCompleteEdge(GeoId));
+    if (_isValidSingleEdge(this) == isCircle) {
+        centerLine = true;
+        objs.push_back(objFeat);
+        subs.push_back(SubNames[0]);
+    } else if (_isValidSingleEdge(this) == isCurve) {
+        objs.push_back(objFeat);
+        subs.push_back(SubNames[0]);
     } else {
-        Base::Console().Error("Error - CmdDrawingNewRadiusDimension - Can't resolve selected edge - Dim: %s View: %s Source: %s Edge: %s**\n",
-                            obj->getNameInDocument(),FeatName.c_str(),docObj->getNameInDocument(),SubNames[0].c_str());
-    }
-
-    if(geom->geomType == DrawingGeometry::CIRCLE ||
-       geom->geomType == DrawingGeometry::ARCOFCIRCLE ||
-       geom->geomType == DrawingGeometry::ELLIPSE ||
-       geom->geomType == DrawingGeometry::ARCOFELLIPSE ) {
-        dimType = "Radius";
-        if(geom->geomType == DrawingGeometry::CIRCLE ||
-           geom->geomType == DrawingGeometry::ELLIPSE ) {
-            // Add center lines automatically for full circles
-            doCommand(Doc,"App.activeDocument().%s.CentreLines = True", FeatName.c_str());
-        }
-        doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
-                                                           ,dimType.c_str());
-        dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getDocument()->getObject(FeatName.c_str()));
-        dim->References.setValue(obj, SubNames[0].c_str());
-    } else {
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                  QObject::tr("Edge selected was not of a circular type"));
-        abortCommand();
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect Selection"),
+                                                   QObject::tr("Can't make a radius Dimension from this selection"));
         return;
     }
 
-    QString contentStr = QString::fromAscii("r%value");
+    openCommand("Create Dimension");
+    doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewDimension','%s')",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
+                                                       ,"Radius");
 
-    doCommand(Doc,"App.activeDocument().%s.Content = '%s'",FeatName.c_str()
-                                                          ,contentStr.toStdString().c_str());
+    if (centerLine) {
+        doCommand(Doc,"App.activeDocument().%s.CentreLines = True", FeatName.c_str());
+    } else {
+        doCommand(Doc,"App.activeDocument().%s.CentreLines = False", FeatName.c_str());
+    }
 
-    // Check if the part is an orthographic view;
-    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(obj);
+    doCommand(Doc,"App.activeDocument().%s.Content = 'r%value'",FeatName.c_str());
 
+    dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
+    dim->References.setValues(objs, subs);
+
+    // Check if the part is an orthographic view;  TODO: shouldn't this be Feature logic?
+    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
     if(orthoView) {
-        // Set the dimension to projected type
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
         dim->ProjectionType.StatusBits.set(2); // Set the projection type to read only
     }
 
     dim->execute();
-//     App::DocumentObject *dimObj = this->getDocument()->addObject("Drawing::FeatureViewDimension", getUniqueObjectName("Dimension").c_str());
-//     Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(dimObj);
 
-//     doCommand(Doc,"App.activeDocument().%s.References = %s",FeatName.c_str(), support.c_str());
-
+    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
     page->addView(page->getDocument()->getObject(FeatName.c_str()));
 
-
     commitCommand();
+
+    //Horrible hack to force Tree update
+    double x = objFeat->X.getValue();
+    objFeat->X.setValue(x);
 }
 
 //===========================================================================
@@ -413,114 +300,68 @@ CmdDrawingNewDiameterDimension::CmdDrawingNewDiameterDimension()
 
 void CmdDrawingNewDiameterDimension::activated(int iMsg)
 {
-
-      // get the selection
-    std::vector<Gui::SelectionObject> selection = getSelection().getSelectionEx();
-    if(selection.size() == 0 || !selection[0].getObject()){
+    bool result = _checkSelection(this);
+    if (!result)
         return;
-    }
 
-    Drawing::FeatureViewPart * Obj = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
-
-    if(!Obj) {
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong sized selection"),
-                             QObject::tr("Incorrect selection"));
-                             return;
-    }
-
-    App::DocumentObject *docObj = Obj->Source.getValue();
-
-    // get the needed lists and objects
+    std::vector<Gui::SelectionObject> selection = getSelection().getSelectionEx();
+    Drawing::FeatureViewPart * objFeat = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
     const std::vector<std::string> &SubNames = selection[0].getSubNames();
 
-    if (SubNames.size() != 1 && SubNames.size() != 2){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong sized selection"),
-            QObject::tr("Incorrect selection"));
-        return;
-    }
-
-    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
-    if (pages.empty()){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page to insert"),
-            QObject::tr("Create a page to insert."));
-        return;
-    }
-
     Drawing::FeatureViewDimension *dim = 0;
-    //std::string support = selection[0].getAsPropertyLinkSubString();
     std::string FeatName = getUniqueObjectName("Dimension");
+    bool centerLine = false;
 
-    std::string dimType;
+    std::vector<App::DocumentObject *> objs;
+    std::vector<std::string> subs;
+
+    if (_isValidSingleEdge(this) == isCircle) {
+        centerLine = true;
+        objs.push_back(objFeat);
+        subs.push_back(SubNames[0]);
+    } else if (_isValidSingleEdge(this) == isCurve) {
+        objs.push_back(objFeat);
+        subs.push_back(SubNames[0]);
+    } else {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect Selection"),
+                                                   QObject::tr("Can't make a diameter Dimension from this selection"));
+        return;
+    }
 
     openCommand("Create Dimension");
     doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewDimension','%s')",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
+                                                       ,"Diameter");
 
-    if (SubNames.size() == 1) {
-        // Selected edge constraint
-        if (SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge") {
-            int GeoId = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
-
-            QScopedPointer<DrawingGeometry::BaseGeom> geom(Obj->getCompleteEdge(GeoId));
-
-            dimType = "Distance";
-
-            if(geom->geomType == DrawingGeometry::CIRCLE ||
-               geom->geomType == DrawingGeometry::ARCOFCIRCLE ||
-               geom->geomType == DrawingGeometry::ELLIPSE ||
-               geom->geomType == DrawingGeometry::ARCOFELLIPSE ) {
-                // Radius Constraint
-                dimType = "Diameter";
-            }
-
-            if(geom->geomType == DrawingGeometry::CIRCLE ||
-               geom->geomType == DrawingGeometry::ELLIPSE ) {
-                // Add center lines automatically for full circles
-                doCommand(Doc,"App.activeDocument().%s.CentreLines = True", FeatName.c_str());
-            }
-
-            doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
-                                                               ,dimType.c_str());
-
-            dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getDocument()->getObject(FeatName.c_str()));
-            dim->References.setValue(Obj, SubNames[0].c_str());
-        } else {
-            abortCommand();
-            return;
-        }
-
+    if (centerLine) {
+        doCommand(Doc,"App.activeDocument().%s.CentreLines = True", FeatName.c_str());
     } else {
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Please provide a valid selection"),
-        QObject::tr("Incorrect selection"));
-        abortCommand();
-        return;
+        doCommand(Doc,"App.activeDocument().%s.CentreLines = False", FeatName.c_str());
     }
 
-    QString contentStr = QString::fromAscii("D%value");
+    doCommand(Doc,"App.activeDocument().%s.Content = '%valueD'",FeatName.c_str());
 
-    doCommand(Doc,"App.activeDocument().%s.Content = '%s'",FeatName.c_str()
-                                                          ,contentStr.toStdString().c_str());
+    dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
+    dim->References.setValues(objs, subs);
 
-    // Check if the part is an orthographic view;
-    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(Obj);
-
+    // Check if the part is an orthographic view;  TODO: shouldn't this be Feature logic?
+    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
     if(orthoView) {
-        // Set the dimension to projected type
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
         dim->ProjectionType.StatusBits.set(2); // Set the projection type to read only
     }
 
     dim->execute();
-//     App::DocumentObject *dimObj = this->getDocument()->addObject("Drawing::FeatureViewDimension", getUniqueObjectName("Dimension").c_str());
-//     Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(dimObj);
 
-//     doCommand(Doc,"App.activeDocument().%s.References = %s",FeatName.c_str(), support.c_str());
-
-
+    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
     page->addView(page->getDocument()->getObject(FeatName.c_str()));
 
-
     commitCommand();
+
+    //Horrible hack to force Tree update
+    double x = objFeat->X.getValue();
+    objFeat->X.setValue(x);
 }
 
 
@@ -536,7 +377,7 @@ CmdDrawingNewLengthDimension::CmdDrawingNewLengthDimension()
     sAppModule      = "Drawing";
     sGroup          = QT_TR_NOOP("Drawing");
     sMenuText       = QT_TR_NOOP("Insert a new length dimension into the drawing");
-    sToolTipText    = QT_TR_NOOP("Insert a new length dimension feature for the selected view");
+    sToolTipText    = QT_TR_NOOP("Insert a new length dimension");
     sWhatsThis      = "Drawing_NewLengthDimension";
     sStatusTip      = sToolTipText;
     sPixmap         = "Dimension_Length";
@@ -544,195 +385,67 @@ CmdDrawingNewLengthDimension::CmdDrawingNewLengthDimension()
 
 void CmdDrawingNewLengthDimension::activated(int iMsg)
 {
-    // get the selection
-    std::vector<Gui::SelectionObject> selection = getSelection().getSelectionEx();
-    if(selection.size() == 0 || !selection[0].getObject()){
+    bool result = _checkSelection(this);
+    if (!result)
         return;
-    }
 
-    Drawing::FeatureViewPart * Obj = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
-
-    if(!Obj) {
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong sized selection"),
-                             QObject::tr("Incorrect selection"));
-                             return;
-    }
-
-    App::DocumentObject *docObj = Obj->Source.getValue();
-
-    // get the needed lists and objects
+    std::vector<Gui::SelectionObject> selection = getSelection().getSelectionEx();
+    Drawing::FeatureViewPart * objFeat = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
     const std::vector<std::string> &SubNames = selection[0].getSubNames();
 
-    if (SubNames.size() != 1 && SubNames.size() != 2){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong sized selection"),
-            QObject::tr("Incorrect selection"));
-        return;
-    }
-
-    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
-    if (pages.empty()){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page to insert"),
-            QObject::tr("Create a page to insert."));
-        return;
-    }
     Drawing::FeatureViewDimension *dim = 0;
-    //std::string support = selection[0].getAsPropertyLinkSubString();
     std::string FeatName = getUniqueObjectName("Dimension");
-
     std::string dimType;
+
+    std::vector<App::DocumentObject *> objs;
+    std::vector<std::string> subs;
+
+    if (_isValidSingleEdge(this) < isCircle) {
+        objs.push_back(objFeat);
+        subs.push_back(SubNames[0]);
+    } else if (_isValidVertexes(this)) {
+        objs.push_back(objFeat);
+        objs.push_back(objFeat);
+        subs.push_back(SubNames[0]);
+        subs.push_back(SubNames[1]);
+    } else if (_isValidEdgeToEdge(this) < isCircle) {
+        objs.push_back(objFeat);
+        objs.push_back(objFeat);
+        subs.push_back(SubNames[0]);
+        subs.push_back(SubNames[1]);
+    } else {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect Selection"),
+                                                   QObject::tr("Can't make a length Dimension from this selection"));
+        return;
+    }
 
     openCommand("Create Dimension");
     doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewDimension','%s')",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
+                                                       ,"Distance");
+    dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
+    dim->References.setValues(objs, subs);
 
-    if (SubNames.size() == 1) {
-        // Selected edge constraint
-        if (SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge") {
-            int GeoId = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
+    doCommand(Doc,"App.activeDocument().%s.Content = '%value'",FeatName.c_str());
 
-            QScopedPointer<DrawingGeometry::BaseGeom> geom(Obj->getCompleteEdge(GeoId));
-
-            if(geom && geom->geomType == DrawingGeometry::GENERIC) {
-                DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(geom.data());
-                if(gen1->points.size() > 2) {
-                    // Only support straight line edges
-                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                               QObject::tr("Please select only one straight line edge"));
-                    abortCommand();
-                    return;
-                }
-
-                dimType = "Distance";
-                doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
-                                                                  ,dimType.c_str());
-
-                dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getDocument()->getObject(FeatName.c_str()));
-                dim->References.setValue(Obj, SubNames[0].c_str());
-
-            } else {
-               // Only support straight line edges
-                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                               QObject::tr("Please select only one straight line edge"));
-                    abortCommand();
-                    return;
-            }
-        } else {
-
-            // Invalid selection has been made for one reference
-            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                       QObject::tr("Please select a valid edge"));
-            abortCommand();
-            return;
-        }
-    } else if(SubNames.size() == 2) {
-        if (SubNames[0].size() > 6 && SubNames[0].substr(0,6) == "Vertex" &&
-            SubNames[1].size() > 6 && SubNames[1].substr(0,6) == "Vertex") {
-            int GeoId1 = std::atoi(SubNames[0].substr(6,4000).c_str());
-            int GeoId2 = std::atoi(SubNames[1].substr(6,4000).c_str());
-
-            dimType = "Distance";
-            doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
-                                                               ,dimType.c_str());
-
-            dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getDocument()->getObject(FeatName.c_str()));
-
-            std::vector<App::DocumentObject *> objs;
-            objs.push_back(Obj);
-            objs.push_back(Obj);
-
-            std::vector<std::string> subs;
-            subs.push_back(SubNames[0]);
-            subs.push_back(SubNames[1]);
-
-            dim->References.setValues(objs, subs);
-
-        } else if(SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge" &&
-                  SubNames[1].size() > 4 && SubNames[1].substr(0,4) == "Edge") {
-            int GeoId1 = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
-            int GeoId2 = std::atoi(SubNames[1].substr(4,std::string::npos).c_str());
-
-            // Project the edges
-            Drawing::FeatureViewPart *viewPart = dynamic_cast<Drawing::FeatureViewPart * >(Obj);
-            QScopedPointer<DrawingGeometry::BaseGeom> ed1(Obj->getCompleteEdge(GeoId1));
-            QScopedPointer<DrawingGeometry::BaseGeom> ed2(Obj->getCompleteEdge(GeoId2));
-
-
-            if(ed1->geomType == DrawingGeometry::GENERIC &&
-               ed2->geomType == DrawingGeometry::GENERIC) {
-                DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(ed1.data());
-                DrawingGeometry::Generic *gen2 = static_cast<DrawingGeometry::Generic *>(ed2.data());
-                if(gen1->points.size() > 2 || gen2->points.size() > 2) {
-                    // Only support straight line edges
-                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                               QObject::tr("Please select only straight line edges"));
-                    abortCommand();
-                    return;
-                }
-
-                dimType = "Distance";
-
-            } else {
-                // Only support straight line edges
-                QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                           QObject::tr("Please provide a valid selection: Only straight line edges are allowed"));
-                abortCommand();
-                return;
-            }
-
-            doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
-                                                               ,dimType.c_str());
-
-            dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getDocument()->getObject(FeatName.c_str()));
-
-            std::vector<App::DocumentObject *> objs;
-            objs.push_back(Obj);
-            objs.push_back(Obj);
-
-            std::vector<std::string> subs;
-            subs.push_back(SubNames[0]);
-            subs.push_back(SubNames[1]);
-            dim->References.setValues(objs, subs);
-
-
-        } else {
-
-            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Please provide a valid selection"),
-                                                       QObject::tr("Incorrect selection"));
-            abortCommand();
-            return;
-        }
-    } else {
-
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                   QObject::tr("Please select atleast two references"));
-        abortCommand();
-        return;
-    }
-
-    QString contentStr = QString::fromAscii("%value");
-
-    doCommand(Doc,"App.activeDocument().%s.Content = '%s'",FeatName.c_str()
-                                                          ,contentStr.toStdString().c_str());
-
-    // Check if the part is an orthographic view;
-    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(Obj);
+    // Check if the part is an orthographic view;  TODO: shouldn't this be Feature logic?
+    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
     if(orthoView) {
-        // Set the dimension to projected type
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
         dim->ProjectionType.StatusBits.set(2); // Set the projection type to read only
     }
 
     dim->execute();
-//     App::DocumentObject *dimObj = this->getDocument()->addObject("Drawing::FeatureViewDimension", getUniqueObjectName("Dimension").c_str());
-//     Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(dimObj);
 
-//     doCommand(Doc,"App.activeDocument().%s.References = %s",FeatName.c_str(), support.c_str());
-
-
+    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
     page->addView(page->getDocument()->getObject(FeatName.c_str()));
 
-
     commitCommand();
+
+    //Horrible hack to force Tree update
+    double x = objFeat->X.getValue();
+    objFeat->X.setValue(x);
 }
 
 //===========================================================================
@@ -746,8 +459,8 @@ CmdDrawingNewDistanceXDimension::CmdDrawingNewDistanceXDimension()
 {
     sAppModule      = "Drawing";
     sGroup          = QT_TR_NOOP("Drawing");
-    sMenuText       = QT_TR_NOOP("Insert a new x-distance dimension into the drawing");
-    sToolTipText    = QT_TR_NOOP("Insert a new x-distance dimension feature for the selected view");
+    sMenuText       = QT_TR_NOOP("Insert a new horizontal dimension into the drawing");
+    sToolTipText    = QT_TR_NOOP("Insert a new horizontal-distance dimension");
     sWhatsThis      = "Drawing_NewDistanceXDimension";
     sStatusTip      = sToolTipText;
     sPixmap         = "Dimension_Horizontal";
@@ -755,223 +468,68 @@ CmdDrawingNewDistanceXDimension::CmdDrawingNewDistanceXDimension()
 
 void CmdDrawingNewDistanceXDimension::activated(int iMsg)
 {
-    // get the selection
-    std::vector<Gui::SelectionObject> selection = getSelection().getSelectionEx();
-    if(selection.size() == 0 || !selection[0].getObject()){
+    bool result = _checkSelection(this);
+    if (!result)
         return;
-    }
 
-    Drawing::FeatureViewPart * Obj = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
-
-    if(!Obj) {
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong sized selection"),
-                             QObject::tr("Incorrect selection"));
-                             return;
-    }
-
-    App::DocumentObject *docObj = Obj->Source.getValue();
-
-    // get the needed lists and objects
+    std::vector<Gui::SelectionObject> selection = getSelection().getSelectionEx();
+    Drawing::FeatureViewPart * objFeat = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
     const std::vector<std::string> &SubNames = selection[0].getSubNames();
 
-    if (SubNames.size() != 1 && SubNames.size() != 2){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong sized selection"),
-            QObject::tr("Incorrect selection"));
-        return;
-    }
-
-    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
-    if (pages.empty()){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page to insert"),
-            QObject::tr("Create a page to insert."));
-        return;
-    }
     Drawing::FeatureViewDimension *dim = 0;
-    //std::string support = selection[0].getAsPropertyLinkSubString();
     std::string FeatName = getUniqueObjectName("Dimension");
-
     std::string dimType;
+
+    std::vector<App::DocumentObject *> objs;
+    std::vector<std::string> subs;
+
+    if (_isValidSingleEdge(this) == isHorizontal) {
+        objs.push_back(objFeat);
+        subs.push_back(SubNames[0]);
+    } else if (_isValidVertexes(this)) {
+        objs.push_back(objFeat);
+        objs.push_back(objFeat);
+        subs.push_back(SubNames[0]);
+        subs.push_back(SubNames[1]);
+    } else if (_isValidEdgeToEdge(this) == isHorizontal) {
+        objs.push_back(objFeat);
+        objs.push_back(objFeat);
+        subs.push_back(SubNames[0]);
+        subs.push_back(SubNames[1]);
+    } else {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect Selection"),
+                                                   QObject::tr("Can't make a horizontal Dimension from this selection"));
+        return;
+    }
 
     openCommand("Create Dimension");
     doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewDimension','%s')",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
+                                                       ,"DistanceX");
 
-    if (SubNames.size() == 1) {
-        // Selected edge constraint
-        if (SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge") {
-            int GeoId = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
+    dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
+    dim->References.setValues(objs, subs);
 
-            QScopedPointer<DrawingGeometry::BaseGeom> geom(Obj->getCompleteEdge(GeoId));
+    doCommand(Doc,"App.activeDocument().%s.Content = '%value'",FeatName.c_str());
 
-            if(geom->geomType == DrawingGeometry::GENERIC) {
-                DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(geom.data());
-                if(gen1->points.size() > 2) {
-                    // Only support straight line edges
-                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                               QObject::tr("Please select only one straight line edge"));
-                    abortCommand();
-                    return;
-                }
-
-                Base::Vector2D lin1 = gen1->points.at(1) - gen1->points.at(0);
-
-                if(fabs(lin1.fX) > FLT_EPSILON ) {
-                    dimType = "DistanceX";
-                } else {
-                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Invalid Selection"),
-                                                               QObject::tr("Please select a non-vertical line"));
-                    abortCommand();
-                    return;
-                }
-
-                doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
-                                                                  ,dimType.c_str());
-
-                dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getDocument()->getObject(FeatName.c_str()));
-                dim->References.setValue(Obj, SubNames[0].c_str());
-
-            } else {
-               // Only support straight line edges
-                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                               QObject::tr("Please select only one straight line edge"));
-                    abortCommand();
-                    return;
-            }
-        } else {
-
-            // Invalid selection has been made for one reference
-            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                       QObject::tr("Please select an edge"));
-            abortCommand();
-            return;
-        }
-
-    } else if(SubNames.size() == 2) {
-        if (SubNames[0].size() > 6 && SubNames[0].substr(0,6) == "Vertex" &&
-            SubNames[1].size() > 6 && SubNames[1].substr(0,6) == "Vertex") {
-            int GeoId1 = std::atoi(SubNames[0].substr(6,4000).c_str());
-            int GeoId2 = std::atoi(SubNames[1].substr(6,4000).c_str());
-
-            dimType = "DistanceX";
-            doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
-                                                               ,dimType.c_str());
-
-            dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getDocument()->getObject(FeatName.c_str()));
-            std::vector<App::DocumentObject *> objs;
-            objs.push_back(Obj);
-            objs.push_back(Obj);
-            std::vector<std::string> subs;
-            subs.push_back(SubNames[0]);
-            subs.push_back(SubNames[1]);
-            dim->References.setValues(objs, subs);
-
-        } else if(SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge" &&
-                  SubNames[1].size() > 4 && SubNames[1].substr(0,4) == "Edge") {
-            int GeoId1 = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
-            int GeoId2 = std::atoi(SubNames[1].substr(4,std::string::npos).c_str());
-
-            // Project the edges
-            Drawing::FeatureViewPart *viewPart = dynamic_cast<Drawing::FeatureViewPart * >(Obj);
-            QScopedPointer<DrawingGeometry::BaseGeom> ed1(Obj->getCompleteEdge(GeoId1));
-            QScopedPointer<DrawingGeometry::BaseGeom> ed2(Obj->getCompleteEdge(GeoId2));
-
-            if(ed1->geomType == DrawingGeometry::GENERIC &&
-               ed2->geomType == DrawingGeometry::GENERIC) {
-                DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(ed1.data());
-                DrawingGeometry::Generic *gen2 = static_cast<DrawingGeometry::Generic *>(ed2.data());
-                if(gen1->points.size() > 2 || gen2->points.size() > 2) {
-                    // Only support straight line edges
-                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                               QObject::tr("Please select only straight line edges"));
-                    abortCommand();
-                    return;
-                }
-
-                 // Construct edges
-                Base::Vector2D lin1 = gen1->points.at(1) - gen1->points.at(0);
-                Base::Vector2D lin2 = gen2->points.at(1) - gen2->points.at(0);
-
-                // Cross product
-                double xprod = fabs(lin1.fX * lin2.fY - lin1.fY * lin2.fX);
-
-                Base::Console().Log("xprod: %f\n", xprod);
-                if(xprod > FLT_EPSILON) {
-                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Invalid Selection"),
-                                                               QObject::tr("Please select parallel lines"));
-                    abortCommand();
-                    return;
-                }
-
-                if(fabs(lin1.fX) < FLT_EPSILON && fabs(lin2.fX) < FLT_EPSILON) {
-                    dimType = "DistanceX";
-                } else {
-                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Invalid Selection"),
-                                                               QObject::tr("Please select vertical lines only"));
-                    abortCommand();
-                    return;
-                }
-
-            } else {
-                // Only support straight line edges
-                QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                           QObject::tr("Please provide a valid selection: Only straight line edges are allowed"));
-                abortCommand();
-                return;
-            }
-
-            doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
-                                                               ,dimType.c_str());
-
-            dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getDocument()->getObject(FeatName.c_str()));
-
-            std::vector<App::DocumentObject *> objs;
-            objs.push_back(Obj);
-            objs.push_back(Obj);
-
-            std::vector<std::string> subs;
-            subs.push_back(SubNames[0]);
-            subs.push_back(SubNames[1]);
-            dim->References.setValues(objs, subs);
-
-        } else {
-
-            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                       QObject::tr("Please provide a valid selection"));
-            abortCommand();
-            return;
-        }
-    } else {
-
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                    QObject::tr("Please provide a valid selection"));
-        abortCommand();
-        return;
-    }
-
-    QString contentStr = QString::fromAscii("%value");
-
-    doCommand(Doc,"App.activeDocument().%s.Content = '%s'",FeatName.c_str()
-                                                          ,contentStr.toStdString().c_str());
-
-    // Check if the part is an orthographic view;
-    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(Obj);
+    // Check if the part is an orthographic view;  TODO: shouldn't this be Feature logic?
+    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
     if(orthoView) {
-        // Set the dimension to projected type
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
         dim->ProjectionType.StatusBits.set(2); // Set the projection type to read only
     }
 
     dim->execute();
-//     App::DocumentObject *dimObj = this->getDocument()->addObject("Drawing::FeatureViewDimension", getUniqueObjectName("Dimension").c_str());
-//     Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(dimObj);
 
-//     doCommand(Doc,"App.activeDocument().%s.References = %s",FeatName.c_str(), support.c_str());
-
-
+    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
     page->addView(page->getDocument()->getObject(FeatName.c_str()));
 
-
     commitCommand();
+
+    //Horrible hack to force Tree update
+    double x = objFeat->X.getValue();
+    objFeat->X.setValue(x);
 }
 
 
@@ -986,8 +544,8 @@ CmdDrawingNewDistanceYDimension::CmdDrawingNewDistanceYDimension()
 {
     sAppModule      = "Drawing";
     sGroup          = QT_TR_NOOP("Drawing");
-    sMenuText       = QT_TR_NOOP("Insert a new y-distance dimension into the drawing");
-    sToolTipText    = QT_TR_NOOP("Insert a new y-distance dimension feature for the selected view");
+    sMenuText       = QT_TR_NOOP("Insert a new vertical dimension into the drawing");
+    sToolTipText    = QT_TR_NOOP("Insert a new vertical distance dimension");
     sWhatsThis      = "Drawing_NewDistanceYDimension";
     sStatusTip      = sToolTipText;
     sPixmap         = "Dimension_Vertical";
@@ -995,222 +553,67 @@ CmdDrawingNewDistanceYDimension::CmdDrawingNewDistanceYDimension()
 
 void CmdDrawingNewDistanceYDimension::activated(int iMsg)
 {
-    // get the selection
-    std::vector<Gui::SelectionObject> selection = getSelection().getSelectionEx();
-    if(selection.size() == 0 || !selection[0].getObject()){
+    bool result = _checkSelection(this);
+    if (!result)
         return;
-    }
 
-    Drawing::FeatureViewPart * Obj = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
-
-    if(!Obj) {
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong sized selection"),
-                             QObject::tr("Incorrect selection"));
-                             return;
-    }
-
-    App::DocumentObject *docObj = Obj->Source.getValue();
-
-    // get the needed lists and objects
+    std::vector<Gui::SelectionObject> selection = getSelection().getSelectionEx();
+    Drawing::FeatureViewPart * objFeat = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
     const std::vector<std::string> &SubNames = selection[0].getSubNames();
 
-    if (SubNames.size() != 1 && SubNames.size() != 2){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong sized selection"),
-            QObject::tr("Incorrect selection"));
-        return;
-    }
-
-    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
-    if (pages.empty()){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page to insert"),
-            QObject::tr("Create a page to insert."));
-        return;
-    }
     Drawing::FeatureViewDimension *dim = 0;
-    //std::string support = selection[0].getAsPropertyLinkSubString();
     std::string FeatName = getUniqueObjectName("Dimension");
-
     std::string dimType;
+
+    std::vector<App::DocumentObject *> objs;
+    std::vector<std::string> subs;
+
+    if (_isValidSingleEdge(this) == isVertical) {
+        objs.push_back(objFeat);
+        subs.push_back(SubNames[0]);
+    } else if (_isValidVertexes(this)) {
+        objs.push_back(objFeat);
+        objs.push_back(objFeat);
+        subs.push_back(SubNames[0]);
+        subs.push_back(SubNames[1]);
+    } else if (_isValidEdgeToEdge(this) == isVertical) {
+        objs.push_back(objFeat);
+        objs.push_back(objFeat);
+        subs.push_back(SubNames[0]);
+        subs.push_back(SubNames[1]);
+    } else {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect Selection"),
+                                                   QObject::tr("Can't make a vertical Dimension from this selection"));
+        return;
+    }
 
     openCommand("Create Dimension");
     doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewDimension','%s')",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
+                                                       ,"DistanceY");
+    dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
+    dim->References.setValues(objs, subs);
 
-    if (SubNames.size() == 1) {
-        // Selected edge constraint
-        if (SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge") {
-            int GeoId = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
+    doCommand(Doc,"App.activeDocument().%s.Content = '%value'",FeatName.c_str());
 
-            QScopedPointer<DrawingGeometry::BaseGeom> geom(Obj->getCompleteEdge(GeoId));
-
-            if(geom->geomType == DrawingGeometry::GENERIC) {
-                DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(geom.data());
-                if(gen1->points.size() > 2) {
-                    // Only support straight line edges
-                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                               QObject::tr("Please select only one straight line edge"));
-                    abortCommand();
-                    return;
-                }
-
-                // Construct edges
-                Base::Vector2D lin1 = gen1->points.at(1) - gen1->points.at(0);
-
-                if(fabs(lin1.fY) > FLT_EPSILON) {
-                    dimType = "DistanceY";
-                } else {
-                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Invalid Selection"),
-                                                               QObject::tr("Please select a non-horizontal line"));
-                    abortCommand();
-                    return;
-                }
-
-                doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
-                                                                  ,dimType.c_str());
-
-                dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getDocument()->getObject(FeatName.c_str()));
-                dim->References.setValue(Obj, SubNames[0].c_str());
-
-            } else {
-               // Only support straight line edges
-                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                               QObject::tr("Please select only one straight line edge"));
-                    abortCommand();
-                    return;
-            }
-        } else {
-
-            // Invalid selection has been made for one reference
-            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                       QObject::tr("Please select an edge"));
-            abortCommand();
-            return;
-        }
-    } else if(SubNames.size() == 2) {
-        if (SubNames[0].size() > 6 && SubNames[0].substr(0,6) == "Vertex" &&
-            SubNames[1].size() > 6 && SubNames[1].substr(0,6) == "Vertex") {
-            int GeoId1 = std::atoi(SubNames[0].substr(6,4000).c_str());
-            int GeoId2 = std::atoi(SubNames[1].substr(6,4000).c_str());
-
-            dimType = "DistanceY";
-            doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
-                                                               ,dimType.c_str());
-
-            dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getDocument()->getObject(FeatName.c_str()));
-            std::vector<App::DocumentObject *> objs;
-            objs.push_back(Obj);
-            objs.push_back(Obj);
-            std::vector<std::string> subs;
-            subs.push_back(SubNames[0]);
-            subs.push_back(SubNames[1]);
-            dim->References.setValues(objs, subs);
-
-        } else if(SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge" &&
-                  SubNames[1].size() > 4 && SubNames[1].substr(0,4) == "Edge") {
-            int GeoId1 = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
-            int GeoId2 = std::atoi(SubNames[1].substr(4,std::string::npos).c_str());
-
-            // Project the edges
-            Drawing::FeatureViewPart *viewPart = dynamic_cast<Drawing::FeatureViewPart * >(Obj);
-            QScopedPointer<DrawingGeometry::BaseGeom> ed1(Obj->getCompleteEdge(GeoId1));
-            QScopedPointer<DrawingGeometry::BaseGeom> ed2(Obj->getCompleteEdge(GeoId2));
-
-            if(ed1->geomType == DrawingGeometry::GENERIC &&
-               ed2->geomType == DrawingGeometry::GENERIC) {
-                DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(ed1.data());
-                DrawingGeometry::Generic *gen2 = static_cast<DrawingGeometry::Generic *>(ed2.data());
-                if(gen1->points.size() > 2 || gen2->points.size() > 2) {
-                    // Only support straight line edges
-                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                               QObject::tr("Please select only straight line edges"));
-                    abortCommand();
-                    return;
-                }
-
-                 // Construct edges
-                Base::Vector2D lin1 = gen1->points.at(1) - gen1->points.at(0);
-                Base::Vector2D lin2 = gen2->points.at(1) - gen2->points.at(0);
-
-                // Cross product
-                double xprod = fabs(lin1.fX * lin2.fY - lin1.fY * lin2.fX);
-
-                Base::Console().Log("xprod: %f\n", xprod);
-                if(xprod > FLT_EPSILON) {
-                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Invalid Selection"),
-                                                               QObject::tr("Please select parallel lines"));
-                    abortCommand();
-                    return;
-                }
-
-                if(fabs(lin1.fY) < FLT_EPSILON && fabs(lin2.fY) < FLT_EPSILON) {
-                    dimType = "DistanceY";
-                } else {
-                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Invalid Selection"),
-                                                               QObject::tr("Please select horizonal lines only"));
-                    abortCommand();
-                    return;
-                }
-
-            } else {
-                // Only support straight line edges
-                QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Please provide a valid selection: Only straight line edges are allowed"),
-                                                           QObject::tr("Incorrect selection"));
-                abortCommand();
-                return;
-            }
-
-            doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
-                                                               ,dimType.c_str());
-
-            dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getDocument()->getObject(FeatName.c_str()));
-
-            std::vector<App::DocumentObject *> objs;
-            objs.push_back(Obj);
-            objs.push_back(Obj);
-
-            std::vector<std::string> subs;
-            subs.push_back(SubNames[0]);
-            subs.push_back(SubNames[1]);
-            dim->References.setValues(objs, subs);
-
-        } else {
-
-            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Please provide a valid selection"),
-            QObject::tr("Incorrect selection"));
-            abortCommand();
-            return;
-        }
-    } else {
-
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Please select atleast two references"),
-        QObject::tr("Incorrect selection"));
-        abortCommand();
-        return;
-    }
-
-    QString contentStr = QString::fromAscii("%value");
-
-    doCommand(Doc,"App.activeDocument().%s.Content = '%s'",FeatName.c_str()
-                                                          ,contentStr.toStdString().c_str());
-
-    // Check if the part is an orthographic view;
-    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(Obj);
+    // Check if the part is an orthographic view;  TODO: shouldn't this be Feature logic?
+    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
     if(orthoView) {
-        // Set the dimension to projected type
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
         dim->ProjectionType.StatusBits.set(2); // Set the projection type to read only
     }
 
     dim->execute();
-//     App::DocumentObject *dimObj = this->getDocument()->addObject("Drawing::FeatureViewDimension", getUniqueObjectName("Dimension").c_str());
-//     Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(dimObj);
 
-//     doCommand(Doc,"App.activeDocument().%s.References = %s",FeatName.c_str(), support.c_str());
-
-
+    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
-    page->addView(page->getDocument()->getObject(FeatName.c_str()));            //TODO: this adds Dimension to Page. sb child of View.
+    page->addView(page->getDocument()->getObject(FeatName.c_str()));
+
     commitCommand();
-    getDocument()->recompute();
+
+    //Horrible hack to force Tree update
+    double x = objFeat->X.getValue();
+    objFeat->X.setValue(x);
 }
 
 
@@ -1234,138 +637,58 @@ CmdDrawingNewAngleDimension::CmdDrawingNewAngleDimension()
 
 void CmdDrawingNewAngleDimension::activated(int iMsg)
 {
-    // get the selection
-    std::vector<Gui::SelectionObject> selection = getSelection().getSelectionEx();
-    if(selection.size() == 0 || !selection[0].getObject()){
+    bool result = _checkSelection(this);
+    if (!result)
         return;
-    }
 
-    Drawing::FeatureViewPart * Obj = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
-
-    if(!Obj) {
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                             QObject::tr("No object in selection"));
-                             return;
-    }
-
-    App::DocumentObject *docObj = Obj->Source.getValue();
-
-    // get the needed lists and objects
+    std::vector<Gui::SelectionObject> selection = getSelection().getSelectionEx();
+    Drawing::FeatureViewPart * objFeat = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
     const std::vector<std::string> &SubNames = selection[0].getSubNames();
 
-    if (SubNames.size() != 1 && SubNames.size() != 2){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-            QObject::tr("Select only 1 or 2 objects"));
-        return;
-    }
-
-    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
-    if (pages.empty()){
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No Drawing Page"),
-            QObject::tr("Create a page first."));
-        return;
-    }
     Drawing::FeatureViewDimension *dim = 0;
-    //std::string support = selection[0].getAsPropertyLinkSubString();
     std::string FeatName = getUniqueObjectName("Dimension");
 
-    std::string dimType;
+    std::vector<App::DocumentObject *> objs;
+    std::vector<std::string> subs;
+
+    if (_isValidEdgeToEdge(this) == isAngle) {
+        objs.push_back(objFeat);
+        objs.push_back(objFeat);
+        subs.push_back(SubNames[0]);
+        subs.push_back(SubNames[1]);
+    } else {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect Selection"),
+                                                   QObject::tr("Can't make an angle Dimension from this selection"));
+        return;
+    }
 
     openCommand("Create Dimension");
     doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewDimension','%s')",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
+                                                       ,"Angle");
 
-    if(SubNames.size() == 2) {
-        if(SubNames[0].size() > 4 && SubNames[0].substr(0,4) == "Edge" &&
-                  SubNames[1].size() > 4 && SubNames[1].substr(0,4) == "Edge") {
-            int GeoId1 = std::atoi(SubNames[0].substr(4,std::string::npos).c_str());
-            int GeoId2 = std::atoi(SubNames[1].substr(4,std::string::npos).c_str());
-
-            // Project the edges
-            Drawing::FeatureViewPart *viewPart = dynamic_cast<Drawing::FeatureViewPart * >(Obj);
-            QScopedPointer<DrawingGeometry::BaseGeom> ed1(Obj->getCompleteEdge(GeoId1));
-            QScopedPointer<DrawingGeometry::BaseGeom> ed2(Obj->getCompleteEdge(GeoId2));
-
-            if(ed1->geomType == DrawingGeometry::GENERIC &&
-               ed2->geomType == DrawingGeometry::GENERIC) {
-                DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(ed1.data());
-                DrawingGeometry::Generic *gen2 = static_cast<DrawingGeometry::Generic *>(ed2.data());
-                if(gen1->points.size() > 2 || gen2->points.size() > 2) {
-                    // Only support straight line edges
-                    QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                               QObject::tr("Selected object has too many points"));
-                    abortCommand();
-                    return;
-                }
-
-                dimType = "Angle";
-
-            } else {
-                // Only support straight line edges
-                QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                                           QObject::tr("At least 1 selected object is not a straight line"));
-                abortCommand();
-                return;
-            }
-
-            doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
-                                                               ,dimType.c_str());
-
-            dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getDocument()->getObject(FeatName.c_str()));
-
-            std::vector<App::DocumentObject *> objs;
-            objs.push_back(Obj);
-            objs.push_back(Obj);
-
-            std::vector<std::string> subs;
-            subs.push_back(SubNames[0]);
-            subs.push_back(SubNames[1]);
-            dim->References.setValues(objs, subs);                     //TODO: does References cause Dimension to become child of ViewPart?
-
-        } else {
-            //at least 1 object in selection is not an "Edge"
-            QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                                 QObject::tr("Please select two edges"));
-            abortCommand();
-            return;
-        }
-    } else {
-        //too many objects in selection
-        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
-                             QObject::tr("Too many objects selected"));
-        abortCommand();
-        return;
-    }
-
-    QString contentStr = QString::fromAscii("%value");
-
-    // Add an angle symbol using a unicode character
-    contentStr += QString(QChar(0x00b0));
     doCommand(Doc,"App.activeDocument().%s.Content = '%s'",FeatName.c_str()
-                                                          ,contentStr.toStdString().c_str());
+                                                          ,"%value\x00b0");
+
+    dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
+    dim->References.setValues(objs, subs);
 
     //TODO: "True" angles are not supported. see FeatureViewDimension.cpp::getDimvalue()
-#if 0
-    // Check if the part is an orthographic view;
-    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(Obj);
-    if(orthoView) {
-        // Set the dimension to projected type
-        doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
-        dim->ProjectionType.StatusBits.set(2); // Set the projection type to read only
-    }
-
-    dim->execute();
-#endif
+    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
     doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
-    //dim->ProjectionType.StatusBits.set(2); // Set the projection type to read only
+    dim->ProjectionType.StatusBits.set(2); // Set the projection type to read only
+
     dim->execute();
 
-    //TODO: dimension sb child of FeatureView, not Page?
+    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
     page->addView(page->getDocument()->getObject(FeatName.c_str()));
 
-
-
     commitCommand();
+
+    //Horrible hack to force Tree update
+    double x = objFeat->X.getValue();
+    objFeat->X.setValue(x);
 }
 
 void CreateDrawingCommandsDims(void)
@@ -1379,4 +702,160 @@ void CreateDrawingCommandsDims(void)
     rcCmdMgr.addCommand(new CmdDrawingNewDistanceXDimension());
     rcCmdMgr.addCommand(new CmdDrawingNewDistanceYDimension());
     rcCmdMgr.addCommand(new CmdDrawingNewAngleDimension());
+}
+
+//===========================================================================
+// Selection Validation Helpers
+//===========================================================================
+
+bool _checkSelection(Gui::Command* cmd) {
+    std::vector<Gui::SelectionObject> selection = cmd->getSelection().getSelectionEx();
+    if (selection.size() == 0) {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
+                             QObject::tr("Select an object first"));
+        return false;
+    }
+
+    Drawing::FeatureViewPart * objFeat = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
+    if(!objFeat) {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
+                             QObject::tr("No Feature in selection"));
+        return false;
+    }
+
+    const std::vector<std::string> &SubNames = selection[0].getSubNames();
+    if (SubNames.size() != 1 && SubNames.size() != 2){
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
+            QObject::tr("Wrong number of objects selected"));
+        return false;
+    }
+
+    std::vector<App::DocumentObject*> pages = cmd->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+    if (pages.empty()){
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect selection"),
+            QObject::tr("Create a page to insert."));
+        return false;
+    }
+    return true;
+}
+
+int _isValidSingleEdge(Gui::Command* cmd) {
+    int edgeType = isInvalid;
+    std::vector<Gui::SelectionObject> selection = cmd->getSelection().getSelectionEx();
+    Drawing::FeatureViewPart * objFeat = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
+    const std::vector<std::string> &SubNames = selection[0].getSubNames();
+    if (SubNames.size() == 1) {                                                 //only 1 subshape selected
+        if (_checkGeomType("Edge",SubNames[0])) {                                //the Name starts with "Edge"
+            int GeoId = _getIndexFromName(SubNames[0]);
+            DrawingGeometry::BaseGeom* geom = objFeat->getCompleteEdge(GeoId);
+
+            if(geom->geomType == DrawingGeometry::GENERIC) {
+                DrawingGeometry::Generic* gen1 = static_cast<DrawingGeometry::Generic *>(geom);
+                if(gen1->points.size() > 2) {                                   //the edge is a polyline
+                    return isInvalid;
+                }
+                Base::Vector2D lin1 = gen1->points.at(1) - gen1->points.at(0);
+                if(fabs(lin1.fX) > FLT_EPSILON ) {
+                    edgeType = isHorizontal;
+                } else if(fabs(lin1.fY) > FLT_EPSILON) {
+                    edgeType = isVertical;
+                } else {
+                    edgeType = isDiagonal;
+                }
+            } else if (geom->geomType == DrawingGeometry::CIRCLE ||
+                       geom->geomType == DrawingGeometry::ELLIPSE) {
+                edgeType = isCircle;
+            } else if (geom->geomType == DrawingGeometry::ARCOFCIRCLE ||
+                       geom->geomType == DrawingGeometry::ARCOFELLIPSE ||
+                       geom->geomType == DrawingGeometry::BSPLINE) {
+                edgeType = isCurve;
+            } else {
+                edgeType = isInvalid;
+            }
+        }
+    }
+    return edgeType;
+}
+
+bool _isValidVertexes(Gui::Command* cmd) {
+    std::vector<Gui::SelectionObject> selection = cmd->getSelection().getSelectionEx();
+    const std::vector<std::string> &SubNames = selection[0].getSubNames();
+    if(SubNames.size() == 2) {                                         //there are 2
+        if (_checkGeomType("Vertex",SubNames[0]) &&                    //they both start with "Vertex"
+            _checkGeomType("Vertex",SubNames[1])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int _isValidEdgeToEdge(Gui::Command* cmd) {
+//TODO: can the edges be in 2 different features??
+    int edgeType = isInvalid;
+    std::vector<Gui::SelectionObject> selection = cmd->getSelection().getSelectionEx();
+    Drawing::FeatureViewPart* objFeat1 = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
+    //Drawing::FeatureViewPart* objFeat2 = dynamic_cast<Drawing::FeatureViewPart *>(selection[1].getObject());
+    const std::vector<std::string> &SubNames = selection[0].getSubNames();
+    if(SubNames.size() == 2) {                                          //there are 2
+        if (_checkGeomType("Edge",SubNames[0]) &&                        //they both start with "Edge"
+            _checkGeomType("Edge",SubNames[1])) {
+            int GeoId1 = _getIndexFromName(SubNames[0]);
+            int GeoId2 = _getIndexFromName(SubNames[1]);
+            DrawingGeometry::BaseGeom* edge1 = objFeat1->getCompleteEdge(GeoId1);
+            DrawingGeometry::BaseGeom* edge2 = objFeat1->getCompleteEdge(GeoId2);
+            if(edge1->geomType == DrawingGeometry::GENERIC &&
+               edge2->geomType == DrawingGeometry::GENERIC) {
+                DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(edge1);
+                DrawingGeometry::Generic *gen2 = static_cast<DrawingGeometry::Generic *>(edge2);
+                if(gen1->points.size() > 2 ||
+                   gen2->points.size() > 2) {                          //the edge is a polyline
+                    return isInvalid;
+                }
+                Base::Vector2D lin1 = gen1->points.at(1) - gen1->points.at(0);
+                Base::Vector2D lin2 = gen2->points.at(1) - gen2->points.at(0);
+                double xprod = fabs(lin1.fX * lin2.fY - lin1.fY * lin2.fX);
+                if(xprod > FLT_EPSILON) {                              //edges are not parallel
+                    return isAngle;
+                }
+                if(fabs(lin1.fX) < FLT_EPSILON && fabs(lin2.fX) < FLT_EPSILON) {
+                    edgeType = isHorizontal;
+                } else if(fabs(lin1.fY) < FLT_EPSILON && fabs(lin2.fY) < FLT_EPSILON) {
+                    edgeType = isVertical;
+                } else {
+                    edgeType = isDiagonal;
+                }
+            } else {
+                return isInvalid;
+            }
+        }
+    }
+    return edgeType;
+}
+int _getIndexFromName(std::string geomName) {
+   boost::regex re("\\d+$");                                           //one of more digits at end of string
+   boost::match_results<std::string::const_iterator> what;
+   boost::match_flag_type flags = boost::match_default;
+   char* endChar;
+   string::const_iterator begin = geomName.begin();
+   string::const_iterator end = geomName.end();
+   std::stringstream ErrorMsg;
+
+   if (!geomName.empty()) {
+      if (boost::regex_search(begin, end, what, re, flags)) {
+         return int (std::strtol(what.str().c_str(), &endChar, 10));         //TODO: use std::stoi() in c++11
+      } else {
+         ErrorMsg << "In _getIndexFromName: malformed geometry name - " << geomName;
+         throw std::logic_error(ErrorMsg.str());
+      }
+   } else {
+         throw std::logic_error("In _getIndexFromName: empty geometry name");
+   }
+}
+
+bool _checkGeomType(std::string geomType, std::string objName) {
+    if (objName.compare(0,geomType.length(),geomType) == 0) {                //the Name starts with geomType
+        return true;
+    } else {
+        return false;
+    }
 }
