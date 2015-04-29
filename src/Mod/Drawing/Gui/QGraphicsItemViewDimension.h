@@ -46,11 +46,11 @@ public:
     explicit QGraphicsItemDatumLabel(int ref = -1, QGraphicsScene *scene = 0 );
     ~QGraphicsItemDatumLabel() {}
 
-    void updatePos();
     enum {Type = QGraphicsItem::UserType + 107};
     int type() const { return Type;}
 
-    void setPosition(const double &x, const double &y);
+    void setLabelCenter();
+    void setPosFromCenter(const double &xCenter, const double &yCenter);
     double X() const { return posX; }
     double Y() const { return posY; }
 
@@ -118,11 +118,11 @@ protected:
 
 protected:
     bool hasHover;
-    QGraphicsItem *datumLabel;
-    QGraphicsItem *arrows;
+    QGraphicsItem *datumLabel;                                         //dimension text
+    QGraphicsItem *arrows;                                             //dimension lines + extension lines
     QGraphicsItem *centreLines;
 
-    std::vector<QGraphicsItem *> arw;
+    std::vector<QGraphicsItem *> arw;                                  //arrowheads
     std::vector<DrawingGeometry::BaseGeom *> projGeom;
     QPen pen;
     QColor m_colNormal;

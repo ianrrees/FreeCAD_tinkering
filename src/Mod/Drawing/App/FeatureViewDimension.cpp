@@ -30,12 +30,15 @@
 # include <QRegExp>
 #endif
 
+#include <App/Application.h>
 #include <Base/Console.h>
-# include <Base/Exception.h>
-# include <Mod/Measure/App/Measurement.h>
+#include <Base/Exception.h>
+#include <Base/Parameter.h>
 
-# include "FeatureViewPart.h"
-# include "FeatureViewDimension.h"
+#include <Mod/Measure/App/Measurement.h>
+
+#include "FeatureViewPart.h"
+#include "FeatureViewDimension.h"
 
 using namespace Drawing;
 
@@ -43,7 +46,7 @@ using namespace Drawing;
 // FeatureViewDimension
 //===========================================================================
 
-PROPERTY_SOURCE(Drawing::FeatureViewDimension, Drawing::FeatureViewAnnotation)
+PROPERTY_SOURCE(Drawing::FeatureViewDimension, Drawing::FeatureView)
 
 const char* FeatureViewDimension::TypeEnums[]= {"Distance",
                                                 "DistanceX",
@@ -60,18 +63,36 @@ const char* FeatureViewDimension::ProjTypeEnums[]= {"True",
 
 FeatureViewDimension::FeatureViewDimension(void)
 {
+
+    Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
+                                         .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing");
+    std::string fontName = hGrp->GetASCII("LabelFont", "osifont");
+
     ADD_PROPERTY_TYPE(References,(0,0),"Dimension",(App::PropertyType)(App::Prop_None),"Dimension Supporting References");
     ADD_PROPERTY_TYPE(Precision,(2)   ,"Dimension",(App::PropertyType)(App::Prop_None),"Dimension Precision");
-    ADD_PROPERTY_TYPE(Fontsize,(14)    ,"Dimension",(App::PropertyType)(App::Prop_None),"Dimension Font Size");
+    ADD_PROPERTY_TYPE(Font ,(fontName.c_str()),"Dimension",App::Prop_None, "The name of the font to use");
+    ADD_PROPERTY_TYPE(Fontsize,(6)    ,"Dimension",(App::PropertyType)(App::Prop_None),"Dimension Font Size");
     ADD_PROPERTY_TYPE(CentreLines,(0) ,"Dimension",(App::PropertyType)(App::Prop_None),"Dimension Center Lines");
     ADD_PROPERTY_TYPE(ProjDirection ,(0.,0.,1.0), "Dimension",App::Prop_None,"Projection normal direction");
-    ADD_PROPERTY_TYPE(Content,("%value") ,"Dimension",(App::PropertyType)(App::Prop_None),"Datum Label Content");
+    ADD_PROPERTY_TYPE(FormatSpec,("%value%") ,"Dimension",(App::PropertyType)(App::Prop_None),"Dimension Format");
 
     Type.setEnums(TypeEnums);
     ADD_PROPERTY(Type,((long)0));
 
     ProjectionType.setEnums(ProjTypeEnums);
     ADD_PROPERTY(ProjectionType,((long)0));
+    
+    //hide the FeatureView properties that don't apply to Dimensions
+    //App::PropertyType propType = static_cast<App::PropertyType>(App::Prop_Hidden|App::Prop_Output);
+    int bitReadOnly = 2;
+    int bitHidden = 3;
+    ScaleType.StatusBits.set(bitReadOnly, true);
+    ScaleType.StatusBits.set(bitHidden, true);
+    Scale.StatusBits.set(bitReadOnly, true);
+    Scale.StatusBits.set(bitHidden,true);
+    Rotation.StatusBits.set(bitReadOnly, true);
+    Rotation.StatusBits.set(bitHidden, true);
+    //TODO: hide Dimension X,Y? 
 
     this->measurement = new Measure::Measurement();
 }
@@ -84,20 +105,19 @@ FeatureViewDimension::~FeatureViewDimension()
 
 void FeatureViewDimension::onChanged(const App::Property* prop)
 {
-    // If Tolerance Property is touched
     if(prop == &References  ||
        prop == &Precision   ||
        prop == &Font        ||
        prop == &Fontsize    ||
        prop == &CentreLines ||
-       prop == &ProjectionType) {
+       prop == &ProjectionType ||
+       prop == &FormatSpec) {
         this->touch();
     }
 }
 
 short FeatureViewDimension::mustExecute() const
 {
-    // If Tolerance Property is touched
     if(References.isTouched() ||
        Type.isTouched() ||
        ProjectionType.isTouched()
@@ -105,7 +125,6 @@ short FeatureViewDimension::mustExecute() const
         return 1;
     else
         return 0;
-//     return Drawing::FeatureView::mustExecute();
 }
 
 App::DocumentObjectExecReturn *FeatureViewDimension::execute(void)
@@ -134,31 +153,25 @@ App::DocumentObjectExecReturn *FeatureViewDimension::execute(void)
     return App::DocumentObject::StdReturn;
 }
 
-std::string  FeatureViewDimension::getContent() const
+std::string  FeatureViewDimension::getFormatedValue() const
 {
-    QString str = QString::fromStdString(Content.getStrValue());
+    QString str = QString::fromStdString(FormatSpec.getStrValue());
 
-    QRegExp rx(QString::fromAscii("%(\\w+)"));
+    QRegExp rx(QString::fromAscii("%(\\w+)%"));                        //any word bracketed by %
     QStringList list;
     int pos = 0;
 
-    // Match any placeholders prepended with '%' using Regular Expression
     while ((pos = rx.indexIn(str, pos)) != -1) {
-        list << rx.cap(1);
+        list << rx.cap(0);
         pos += rx.matchedLength();
     }
 
-    // Iterate through for any known subsitutions
     for(QStringList::const_iterator it = list.begin(); it != list.end(); ++it) {
-        QString s = *it;
-        //Base::Console().Log(s.toStdString().c_str());
-
-        s.prepend(QString::fromAscii("%"));
-        if(*it == QString::fromAscii("value")){
-            double val = std::abs(getDimValue()); // Return only the absolute value of the dimension
-            str.replace(s, QString::number(val, 'f', Precision.getValue()) );
-        } else {
-            str.replace(s, QString::fromAscii("")); // Replace with empty statement
+        if(*it == QString::fromAscii("%value%")){
+            double val = std::abs(getDimValue());
+            str.replace(*it, QString::number(val, 'f', Precision.getValue()) );
+        } else {                                                       //insert new placeholder replacement logic here
+            str.replace(*it, QString::fromAscii(""));
         }
     }
 

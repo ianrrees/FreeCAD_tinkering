@@ -89,7 +89,7 @@ void QGraphicsItemArrow::draw() {
     //this->setPen(pen);
     this->setBrush(brush);
 
-    float length = -5.;
+    float length = -5.;           //TODO: Arrow heads sb preference? size & type?
 
     if(isFlipped)
         length *= -1;

@@ -164,13 +164,13 @@ void CmdDrawingNewDimension::activated(int iMsg)
         doCommand(Doc,"App.activeDocument().%s.CentreLines = False", FeatName.c_str());
     }
 
-    std::string contentStr = "%value";
+    std::string contentStr = "%value%";
     if (dimType == "Angle") {
-        contentStr = "%value\x00b0";
+        contentStr = "%value%\x00b0";
     } else if (dimType == "Radius") {
-        contentStr = "r%value";
+        contentStr = "r%value%";
     }
-    doCommand(Doc,"App.activeDocument().%s.Content = '%s'",FeatName.c_str()
+    doCommand(Doc,"App.activeDocument().%s.FormatSpec = '%s'",FeatName.c_str()
                                                           ,contentStr.c_str());
 
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
@@ -255,7 +255,7 @@ void CmdDrawingNewRadiusDimension::activated(int iMsg)
         doCommand(Doc,"App.activeDocument().%s.CentreLines = False", FeatName.c_str());
     }
 
-    doCommand(Doc,"App.activeDocument().%s.Content = 'r%value'",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.FormatSpec = 'r%value%'",FeatName.c_str());
 
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
@@ -339,7 +339,7 @@ void CmdDrawingNewDiameterDimension::activated(int iMsg)
         doCommand(Doc,"App.activeDocument().%s.CentreLines = False", FeatName.c_str());
     }
 
-    doCommand(Doc,"App.activeDocument().%s.Content = '%valueD'",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.FormatSpec = 'D%value%'",FeatName.c_str());
 
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
@@ -426,7 +426,7 @@ void CmdDrawingNewLengthDimension::activated(int iMsg)
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
 
-    doCommand(Doc,"App.activeDocument().%s.Content = '%value'",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.FormatSpec = '%value%'",FeatName.c_str());
 
     // Check if the part is an orthographic view;  TODO: shouldn't this be Feature logic?
     Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
@@ -510,7 +510,7 @@ void CmdDrawingNewDistanceXDimension::activated(int iMsg)
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
 
-    doCommand(Doc,"App.activeDocument().%s.Content = '%value'",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.FormatSpec = '%value%'",FeatName.c_str());
 
     // Check if the part is an orthographic view;  TODO: shouldn't this be Feature logic?
     Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
@@ -594,7 +594,7 @@ void CmdDrawingNewDistanceYDimension::activated(int iMsg)
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
 
-    doCommand(Doc,"App.activeDocument().%s.Content = '%value'",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.FormatSpec = '%value%'",FeatName.c_str());
 
     // Check if the part is an orthographic view;  TODO: shouldn't this be Feature logic?
     Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
@@ -629,7 +629,7 @@ CmdDrawingNewAngleDimension::CmdDrawingNewAngleDimension()
     sAppModule      = "Drawing";
     sGroup          = QT_TR_NOOP("Drawing");
     sMenuText       = QT_TR_NOOP("Insert a new angle dimension into the drawing");
-    sToolTipText    = QT_TR_NOOP("Insert a new angle dimension feature for the selected view");
+    sToolTipText    = QT_TR_NOOP("Insert a new angle dimension");
     sWhatsThis      = "Drawing_NewAngleDimension";
     sStatusTip      = sToolTipText;
     sPixmap         = "Dimension_Angle";
@@ -667,8 +667,8 @@ void CmdDrawingNewAngleDimension::activated(int iMsg)
     doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
                                                        ,"Angle");
 
-    doCommand(Doc,"App.activeDocument().%s.Content = '%s'",FeatName.c_str()
-                                                          ,"%value\x00b0");
+    doCommand(Doc,"App.activeDocument().%s.FormatSpec = '%s'",FeatName.c_str()
+                                                          ,"%value%\x00b0");
 
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
@@ -796,8 +796,8 @@ int _isValidEdgeToEdge(Gui::Command* cmd) {
     Drawing::FeatureViewPart* objFeat1 = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
     //Drawing::FeatureViewPart* objFeat2 = dynamic_cast<Drawing::FeatureViewPart *>(selection[1].getObject());
     const std::vector<std::string> &SubNames = selection[0].getSubNames();
-    if(SubNames.size() == 2) {                                          //there are 2
-        if (_checkGeomType("Edge",SubNames[0]) &&                        //they both start with "Edge"
+    if(SubNames.size() == 2) {                                         //there are 2
+        if (_checkGeomType("Edge",SubNames[0]) &&                      //they both start with "Edge"
             _checkGeomType("Edge",SubNames[1])) {
             int GeoId1 = _getIndexFromName(SubNames[0]);
             int GeoId2 = _getIndexFromName(SubNames[1]);

@@ -64,20 +64,25 @@
 
 using namespace DrawingGui;
 
+enum SnapMode{
+        NoSnap,
+        VerticalSnap,
+        HorizontalSnap
+    };
 
 QGraphicsItemDatumLabel::QGraphicsItemDatumLabel(int ref, QGraphicsScene *scene  ) : reference(ref)
 {
     if(scene) {
         scene->addItem(this);
     }
-    this->posX = 0;
-    this->posY = 0;
+    posX = 0;
+    posY = 0;
 
-    this->setCacheMode(QGraphicsItem::NoCache);
-    this->setFlag(ItemSendsGeometryChanges, true);
-    this->setFlag(ItemIsMovable, true);
-    this->setFlag(ItemIsSelectable, true);
-    this->setAcceptHoverEvents(true);
+    setCacheMode(QGraphicsItem::NoCache);
+    setFlag(ItemSendsGeometryChanges, true);
+    setFlag(ItemIsMovable, true);
+    setFlag(ItemIsSelectable, true);
+    setAcceptHoverEvents(true);
 
     Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
         .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors");
@@ -87,13 +92,11 @@ QGraphicsItemDatumLabel::QGraphicsItemDatumLabel(int ref, QGraphicsScene *scene 
     m_colSel = fcColor.asQColor();
     fcColor.setPackedValue(hGrp->GetUnsigned("PreSelectColor", 0x00080800));
     m_colPre = fcColor.asQColor();
-
 }
 
 QVariant QGraphicsItemDatumLabel::itemChange(GraphicsItemChange change, const QVariant &value)
 {
     if (change == ItemSelectedHasChanged && scene()) {
-        // value is the new position.
         if(isSelected()) {
             Q_EMIT selected(true);
             this->setDefaultTextColor(m_colSel);
@@ -103,23 +106,24 @@ QVariant QGraphicsItemDatumLabel::itemChange(GraphicsItemChange change, const QV
         }
         update();
     } else if(change == ItemPositionHasChanged && scene()) {
-        updatePos();
+        setLabelCenter();
         Q_EMIT dragging();
     }
 
     return QGraphicsItem::itemChange(change, value);
 }
 
-void QGraphicsItemDatumLabel::setPosition(const double &x, const double &y)
+void QGraphicsItemDatumLabel::setPosFromCenter(const double &xCenter, const double &yCenter)
 {
-    // Set the actual QT Coordinates by setting at qt origin rathern than bbox center
-    this->setPos(x -  this->boundingRect().width() / 2., y - this->boundingRect().height() / 2.);
+    //set label's Qt position(top,left) given boundingRect center point
+    setPos(xCenter - boundingRect().width() / 2., yCenter - boundingRect().height() / 2.);
 }
 
-void QGraphicsItemDatumLabel::updatePos()
+void QGraphicsItemDatumLabel::setLabelCenter()
 {
-    this->posX = this->x() + this->boundingRect().width() / 2.;
-    this->posY = this->y() + this->boundingRect().height() / 2.;
+    //save label's bRect center (posX,posY) given Qt position (top,left)
+    posX = x() + boundingRect().width() / 2.;
+    posY = y() + boundingRect().height() / 2.;
 }
 
 void QGraphicsItemDatumLabel::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
@@ -219,12 +223,12 @@ void QGraphicsItemViewDimension::setViewPartFeature(Drawing::FeatureViewDimensio
     this->setViewFeature(static_cast<Drawing::FeatureView *>(obj));
 
     // Set the QGraphicsItemGroup Properties based on the FeatureView
-    float x = obj->X.getValue();
+    float x = obj->X.getValue();                                       //this only called at construction and X,Y is always (0,0)
     float y = obj->Y.getValue();
 
     QGraphicsItemDatumLabel *dLabel = static_cast<QGraphicsItemDatumLabel *>(datumLabel);
 
-    dLabel->setPosition(x, y);
+    dLabel->setPosFromCenter(x, y);
 
     updateDim();
     this->draw();
@@ -253,7 +257,6 @@ void QGraphicsItemViewDimension::hover(bool state)
 
 void QGraphicsItemViewDimension::updateView(bool update)
 {
-          // Iterate
     if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId()))
         return;
     Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension*>(this->getViewObject());
@@ -286,12 +289,12 @@ void QGraphicsItemViewDimension::updateView(bool update)
         font.setFamily(QString::fromAscii(dim->Font.getValue()));
 
         dLabel->setFont(font);
-        dLabel->updatePos();
+        dLabel->setLabelCenter();
 
     } else if(dim->X.isTouched() ||
               dim->Y.isTouched()) {
 
-        dLabel->setPosition(dim->X.getValue(), dim->Y.getValue());
+        dLabel->setPosFromCenter(dim->X.getValue(), dim->Y.getValue());
         updateDim();
 
     } else {
@@ -313,21 +316,19 @@ void QGraphicsItemViewDimension::updateDim()
 
     const Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getViewObject());
 
-    QString str = QString::fromStdString(dim->getContent()); //QString::number((absolute) ? fabs(dim->getDimValue()) : dim->getDimValue(), 'f', dim->Precision.getValue());
+    QString labelText = QString::fromStdString(dim->getFormatedValue()); //QString::number((absolute) ? fabs(dim->getDimValue()) : dim->getDimValue(), 'f', dim->Precision.getValue());
 
     QGraphicsItemDatumLabel *dLabel = dynamic_cast<QGraphicsItemDatumLabel *>(this->datumLabel);
 
-    // TODO eventually dimension should be individually customisable with placeholders, this should later be modularised
     const char *dimType = dim->Type.getValueAsString();
-
 
     QFont font = dLabel->font();
     font.setPointSizeF(dim->Fontsize.getValue());
     font.setFamily(QString::fromAscii(dim->Font.getValue()));
 
-    dLabel->setPlainText(str);
+    dLabel->setPlainText(labelText);
     dLabel->setFont(font);
-    dLabel->updatePos();
+    dLabel->setLabelCenter();
 }
 
 void QGraphicsItemViewDimension::datumLabelDragged()
@@ -337,7 +338,7 @@ void QGraphicsItemViewDimension::datumLabelDragged()
 
 void QGraphicsItemViewDimension::datumLabelDragFinished()
 {
-
+    //TODO: is datumLabelDragFinished ever used? 
     if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId()))
         return;
 
@@ -346,6 +347,7 @@ void QGraphicsItemViewDimension::datumLabelDragFinished()
 
     double x = datumLbl->X(),
            y = datumLbl->Y();
+    //Base::Console().Message("TRACE - datumLabelDragFinished - (x,y): (%.3f,%.3f)\n",x,y);
     Gui::Command::openCommand("Drag Dimension");
     Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.X = %f", dim->getNameInDocument(), x);
     Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.Y = %f", dim->getNameInDocument(), y);
@@ -366,15 +368,15 @@ void QGraphicsItemViewDimension::draw()
 
     // Crude method of determining state [TODO] improve
     if(this->isSelected()) {
-        pen.setColor(QColor(m_colSel));
+        pen.setColor(m_colSel);
     } else if (this->hasHover) {
-        pen.setColor(QColor(m_colPre));
+        pen.setColor(m_colPre);
     } else {
-        pen.setColor(QColor(m_colNormal));
+        pen.setColor(m_colNormal);
     }
 
-    QString str = lbl->toPlainText();
-    Base::Vector3d labelPos(lbl->X(), lbl->Y(), 0);
+    QString labelText = lbl->toPlainText();
+    Base::Vector3d lblCenter(lbl->X(), lbl->Y(), 0);
 
     //Relcalculate the measurement based on references stored.
     const std::vector<App::DocumentObject*> &objects = dim->References.getValues();
@@ -467,8 +469,8 @@ void QGraphicsItemViewDimension::draw()
                 Base::Vector3d lin1 = p1E - p1S;
                 Base::Vector3d lin2 = p2E - p2S;
 
-                Base::Vector3d labelV1 = labelPos - p1S;
-                Base::Vector3d labelV2 = labelPos - p2S;
+                Base::Vector3d labelV1 = lblCenter - p1S;
+                Base::Vector3d labelV2 = lblCenter - p2S;
 
                 //Sort first edges
                 if(lin1.x * labelV1.x + lin1.y * labelV1.y > 0.)
@@ -519,10 +521,10 @@ void QGraphicsItemViewDimension::draw()
         Base::Vector3d midpos = (p1_ + p2) / 2;
 
         QFontMetrics fm(lbl->font());
-        int w = fm.width(str);
+        int w = fm.width(labelText);
         int h = fm.height();
 
-        Base::Vector3d vec = labelPos - p2;
+        Base::Vector3d vec = lblCenter - p2;
         float length = vec.x * norm.x + vec.y * norm.y;
 
         float margin = 3.f;
@@ -537,8 +539,8 @@ void QGraphicsItemViewDimension::draw()
         // Calculate the coordinates for the parallel datum lines
         Base::Vector3d  par1 = p1_ + norm * length;
 
-        Base::Vector3d  par2 = labelPos - dir * (w / 2 + margin);
-        Base::Vector3d  par3 = labelPos + dir * (w / 2 + margin);
+        Base::Vector3d  par2 = lblCenter - dir * (w / 2 + margin);
+        Base::Vector3d  par3 = lblCenter + dir * (w / 2 + margin);
         Base::Vector3d  par4 = p2  + norm * length;
 
         // Add a small margin
@@ -644,10 +646,10 @@ void QGraphicsItemViewDimension::draw()
 
     } else if(strcmp(dimType, "Diameter") == 0) {
         // Not sure whether to treat radius and diameter as the same
-
-        Base::Vector3d p1, p2, dir, centre;
-        QGraphicsItemDatumLabel *lbl = dynamic_cast<QGraphicsItemDatumLabel *>(this->datumLabel);
-        Base::Vector3d labelPos(lbl->X(), lbl->Y(), 0);
+        // terminology: Dimension Text, Dimension Line(s), Extension Lines, Arrowheads
+        Base::Vector3d arrow1Tip, arrow2Tip, dirDimLine, centre; //was p1,p2,dir
+        QGraphicsItemDatumLabel *label = dynamic_cast<QGraphicsItemDatumLabel *>(this->datumLabel);
+        Base::Vector3d lblCenter(label->X(), label->Y(), 0);
 
         double radius;
 
@@ -671,9 +673,8 @@ void QGraphicsItemViewDimension::draw()
             if(projGeom.at(0) &&
                (projGeom.at(0)->geomType == DrawingGeometry::CIRCLE || projGeom.at(0)->geomType == DrawingGeometry::ARCOFCIRCLE)) {
                   DrawingGeometry::Circle *circ = static_cast<DrawingGeometry::Circle *>(projGeom.at(0));
-                  Base::Vector2D pnt1 = circ->center;
                   radius = circ->radius;
-                  centre = Base::Vector3d (pnt1.fX, pnt1.fY, 0); // Center point
+                  centre = Base::Vector3d (circ->center.fX, circ->center.fY, 0);
             } else {
                 clearProjectionCache();
                 throw Base::Exception("Original edge not found or is invalid type");
@@ -681,183 +682,178 @@ void QGraphicsItemViewDimension::draw()
         } else {
             throw Base::Exception("Invalid reference for dimension type");
         }
-
         // Note Bounding Box size is not the same width or height as text (only used for finding center)
-        float bbX  = lbl->boundingRect().width();
-        float bbY = lbl->boundingRect().height();
+        float bbX  = label->boundingRect().width();
+        float bbY = label->boundingRect().height();
 
-        // TODO consider modifying behaviour of SoDatumLabel so position is at center
         // Orientate Position to be at the center of the datumLabel
-//         labelPos += 0.5 * Base::Vector3d(bbX, bbY, 0.f);
-        dir = (labelPos - centre).Normalize();
+//         lblCenter += 0.5 * Base::Vector3d(bbX, bbY, 0.f);
+        dirDimLine = (lblCenter - centre).Normalize();
 
         // Get magnitude of angle between horizontal
-        float angle = atan2f(dir[1],dir[0]);
+        float angle = atan2f(dirDimLine.x,dirDimLine.y);
         bool flip=false;
-        if (angle > M_PI_2+M_PI/12) {
+        if (angle > M_PI_2+M_PI/12) {                                  //90 + 15 = 105
             angle -= (float)M_PI;
             flip = true;
-        } else if (angle <= -M_PI_2+M_PI/12) {
+        } else if (angle <= -M_PI_2+M_PI/12) {                         //-90 + 15 = -75
             angle += (float)M_PI;
             flip = true;
         }
 
         float s = sin(angle);
         float c = cos(angle);
-        /*
 
-        Base::Console().Log("angle (%f, %f), bbx %f, bby %f", s,c,bbX, bbY);*/
+        //Base::Console().Log("angle (%f, %f), bbx %f, bby %f", s,c,bbX, bbY);
         // Note QGraphicsTextItem takes coordinate system from TOP LEFT - transfer to center
         // Create new coordinate system based around x,y
-//         labelPos += 0.5 * Base::Vector3d(bbX * c - bbY * s, bbX * s + bbY * c, 0.f);
-//         dir = (labelPos - p1).Normalize();
+//         lblCenter += 0.5 * Base::Vector3d(bbX * c - bbY * s, bbX * s + bbY * c, 0.f);
+//         dirDimLine = (lblCenter - arrow1Tip).Normalize();
 //
-//         angle = atan2f(dir[1],dir[0]);
+//         angle = atan2f(dirDimLine.x,dirDimLine.y);
 //
-        p2 = centre + dir * radius;
-        p1 = centre - dir * radius;
+        arrow1Tip = centre - dirDimLine * radius;                                    //endpoint of diameter arrowhead1
+        arrow2Tip = centre + dirDimLine * radius;                                    //endpoint of diameter arrowhead2
 
-        QFontMetrics fm(lbl->font());
+        QFontMetrics fm(label->font());
 
-        int w = fm.width(str);
+        int w = fm.width(labelText);       //TODO: why are w,h always 0?
         int h = fm.height();
+        //Base::Console().Message("TRACE - Diameter - labelText w: %.3f h: %.3f\n",w,h);
+        //Base::Console().Message("TRACE - Diameter - labelText: %s**\n",qPrintable(labelText));
 
         float margin = 5.f;
 
         // Calculate the points
-        Base::Vector3d pnt1 = labelPos - dir * (margin + w / 2);
-        Base::Vector3d pnt2 = labelPos + dir * (margin + w / 2);
+        Base::Vector3d dLine1Tail = lblCenter - dirDimLine * (margin + w / 2);   //position of tail of 1st dimension line
+        Base::Vector3d dLine2Tail = lblCenter + dirDimLine * (margin + w / 2);
 
         bool outerPlacement = false;
-        if ((labelPos-centre).Length() > radius) {
+        if ((lblCenter-centre).Length() > radius) {                     //label is outside circle
             outerPlacement = true;
         }
 
         // Reset transformation origin for datum label
-        lbl->setTransformOriginPoint(bbX / 2, bbY /2);
+        label->setTransformOriginPoint(bbX / 2, bbY /2);
 
-        int posMode = 0; // 0 - Position freely
-                         // 1 - Snap Vertically
-                         // 2 - Snap
+        int posMode = NoSnap;
         QPainterPath path;
 
         if(outerPlacement) {
-
             // Select whether to snap vertically or hoziontally given tolerance
-            Base::Vector3d v = (labelPos-p1);
+            Base::Vector3d v = (lblCenter-arrow1Tip);
 
             double angle = atan2(v.y, v.x);
             double tolerance = 15.0; //deg
 
             tolerance *= M_PI / 180;
-            if( (angle > -tolerance && angle < tolerance) ||
+            if( (angle > -tolerance && angle < tolerance) ||           //angle = 0 or 180  (+/- 15)
                 (angle > (M_PI - tolerance) || angle < (-M_PI + tolerance)) ) {
-                // Snap horizontally
-                  posMode = 2;
-            } else if( (angle < ( M_PI / 2. + tolerance) && angle > ( M_PI / 2. - tolerance)) ||
+                  posMode = HorizontalSnap;
+            } else if( (angle < ( M_PI / 2. + tolerance) && angle > ( M_PI / 2. - tolerance)) ||   //angle = 90 or 270 (+/- 15)
                        (angle < (-M_PI / 2. + tolerance) && angle > (-M_PI / 2. - tolerance)) ) {
-                // Snap vertically
-                posMode = 1;
+                posMode = VerticalSnap;
             }
 
-            if(posMode == 1) {
-
-                // Snapped Vertically
-                float tip = (labelPos.y > centre.y) ? margin: -margin;
+            if(posMode == VerticalSnap) {
+                float tip = (lblCenter.y > centre.y) ? margin: -margin;
                 tip *= 0.5;
 
-                p1.x = centre.x - radius;
-                p1.y = labelPos.y;
+                arrow1Tip.x = centre.x - radius;                       //to left, on circle cl
+                arrow1Tip.y = lblCenter.y;
 
-                p2.x = centre.x + radius;
-                p2.y = labelPos.y;
+                arrow2Tip.x = centre.x + radius;
+                arrow2Tip.y = lblCenter.y;
 
-                pnt1 = labelPos;
-                pnt1.x -= (margin + w / 2);
+                dLine1Tail = lblCenter;
+                dLine1Tail.x -= (margin + w / 2);                      //to left, on label cl
 
-                pnt2 = labelPos;
-                pnt2.x += (margin + w / 2);
+                dLine2Tail = lblCenter;
+                dLine2Tail.x += (margin + w / 2);
 
-                // Extension lines
+                // Extension line 1
                 path.moveTo(centre.x - radius, centre.y);
-                path.lineTo(p1[0], p1[1] + tip);
+                path.lineTo(arrow1Tip.x, arrow1Tip.y + tip);
 
                 // Left Arrow
-                path.moveTo(p1[0], p1[1]);
-                path.lineTo(pnt1[0], pnt1[1]);
+                path.moveTo(arrow1Tip.x, arrow1Tip.y);                //dimension line, not arrowhead
+                path.lineTo(dLine1Tail.x, dLine1Tail.y);
 
-                // Extension lines
+                // Extension line 2
                 path.moveTo(centre.x + radius, centre.y);
-                path.lineTo(p2[0], p2[1] + tip);
+                path.lineTo(arrow2Tip.x, arrow2Tip.y + tip);
 
                 // Right arrow
-                path.moveTo(pnt2[0], pnt2[1]);
-                path.lineTo(p2[0], p2[1]);
+                path.moveTo(dLine2Tail.x, dLine2Tail.y);
+                path.lineTo(arrow2Tip.x, arrow2Tip.y);
 
-                lbl->setRotation(0.);
+                label->setRotation(0.);
 
-            } else if(posMode == 2) {
+            } else if(posMode == HorizontalSnap) {
                 // Snapped Horizontally
 
-                float tip = (labelPos.x > centre.x) ? margin: -margin;
+                float tip = (lblCenter.x > centre.x) ? margin: -margin;
                 tip *= 0.5;
 
-                p1.y = centre.y - radius;
-                p1.x = labelPos.x;
+                arrow1Tip.y = centre.y - radius;
+                arrow1Tip.x = lblCenter.x;
 
-                p2.y = centre.y + radius;
-                p2.x = labelPos.x;
+                arrow2Tip.y = centre.y + radius;
+                arrow2Tip.x = lblCenter.x;
 
-                pnt1 = labelPos;
-                pnt1.y -= (margin + w / 2);
+                dLine1Tail = lblCenter;
+                dLine1Tail.y -= (margin + w / 2);
 
-                pnt2 = labelPos;
-                pnt2.y += (margin + w / 2);
+                dLine2Tail = lblCenter;
+                dLine2Tail.y += (margin + w / 2);
 
                 // Extension lines
                 path.moveTo(centre.x, centre.y  - radius);
-                path.lineTo(p1[0] + tip, p1[1]);
+                path.lineTo(arrow1Tip.x + tip, arrow1Tip.y);
 
-                path.moveTo(p1[0], p1[1]);
-                path.lineTo(pnt1[0], pnt1[1]);
+                path.moveTo(arrow1Tip.x, arrow1Tip.y);
+                path.lineTo(dLine1Tail.x, dLine1Tail.y);
 
                 // Extension lines
                 path.moveTo(centre.x, centre.y  + radius);
-                path.lineTo(p2[0] + tip, p2[1]);
+                path.lineTo(arrow2Tip.x + tip, arrow2Tip.y);
 
-                path.moveTo(pnt2[0], pnt2[1]);
-                path.lineTo(p2[0], p2[1]);
+                path.moveTo(dLine2Tail.x, dLine2Tail.y);
+                path.lineTo(arrow2Tip.x, arrow2Tip.y);
 
-                lbl->setRotation(90.);
+                label->setRotation(90.);
 
-            } else {
+            } else {                                                   //NoSnap
                 float tip = (margin + w / 2);
-                tip = (labelPos.x < centre.x) ? tip : -tip;
+                tip = (lblCenter.x < centre.x) ? tip : -tip;
 
-                p1 = labelPos;
-                p1.x += tip;
+                arrow1Tip = lblCenter;
+                arrow1Tip.x += tip;
 
 
-                Base::Vector3d p3 = p1;
-                p3.x += (labelPos.x < centre.x) ? margin : - margin;
+                Base::Vector3d p3 = arrow1Tip;
+                p3.x += (lblCenter.x < centre.x) ? margin : - margin;
 
-                p2 = centre + (p3 - centre).Normalize() * radius;
+                arrow2Tip = centre + (p3 - centre).Normalize() * radius;
 
-                path.moveTo(p1[0], p1[1]);
+                path.moveTo(arrow1Tip.x, arrow1Tip.y);
                 path.lineTo(p3[0], p3[1]);
 
-                path.lineTo(p2[0], p2[1]);
+                path.lineTo(arrow2Tip.x, arrow2Tip.y);
 
-                lbl->setRotation(0.);
+                label->setRotation(0.);
             }
-        } else {
-            lbl->setRotation(angle * 180 / M_PI);
+        } else {                                                       //NOT outerplacement ie dimLines are inside circle
+            double angle = M_PI + atan2(arrow1Tip.y, arrow1Tip.x);
+            label->setRotation(angle * 180 / M_PI);
+            dLine1Tail = centre - dirDimLine * margin;
+            dLine2Tail = centre + dirDimLine * margin;
 
-            path.moveTo(p1[0], p1[1]);
-            path.lineTo(pnt1[0], pnt1[1]);
+            path.moveTo(arrow1Tip.x, arrow1Tip.y);
+            path.lineTo(dLine1Tail.x, dLine1Tail.y);
 
-            path.moveTo(pnt2[0], pnt2[1]);
-            path.lineTo(p2[0], p2[1]);
+            path.moveTo(dLine2Tail.x, dLine2Tail.y);
+            path.lineTo(arrow2Tip.x, arrow2Tip.y);
         }
 
         QGraphicsPathItem *arrw = dynamic_cast<QGraphicsPathItem *> (this->arrows);
@@ -884,13 +880,13 @@ void QGraphicsItemViewDimension::draw()
             clpath.moveTo(centre.x - clDist, centre.y);
             clpath.lineTo(centre.x + clDist, centre.y);
 
-            QPen clPen(QColor(128,128,128));  // TODO: centre line preference?
+            QPen clPen(QColor(128,128,128));  // TODO: centre line colour preference?
             clines->setPen(clPen);
         }
 
         clines->setPath(clpath);
 
-        // Create Two Arrows always
+        // Create Two Arrows always (but sometimes hide one!)
         if(arw.size() != 2) {
             prepareGeometryChange();
             for(std::vector<QGraphicsItem *>::iterator it = arw.begin(); it != arw.end(); ++it) {
@@ -915,33 +911,33 @@ void QGraphicsItemViewDimension::draw()
         QGraphicsItemArrow *ar1 = dynamic_cast<QGraphicsItemArrow *>(arw.at(0));
         QGraphicsItemArrow *ar2 = dynamic_cast<QGraphicsItemArrow *>(arw.at(1));
 
-        Base::Vector3d ar1Pos = p1 + dir * radius;
-        float arAngle = atan2(dir.y, dir.x) * 180 / M_PI;
+        Base::Vector3d ar1Pos = arrow1Tip + dirDimLine * radius;
+        float arAngle = atan2(dirDimLine.y, dirDimLine.x) * 180 / M_PI;
 
         ar1->setHighlighted(isSelected() || this->hasHover);
         ar2->setHighlighted(isSelected() || this->hasHover);
         ar2->show();
 
         if(outerPlacement) {
-            if(posMode > 0) {
-                  ar1->setPos(p2.x, p2.y);
-                  ar2->setPos(p1.x, p1.y);
-                  ar1->setRotation((posMode == 2) ? 90 : 0);
-                  ar2->setRotation((posMode == 2) ? 90 : 0);
+            if(posMode > NoSnap) {
+                  ar1->setPos(arrow2Tip.x, arrow2Tip.y);               //arrow 1's endpoint is arrow2Tip!?
+                  ar2->setPos(arrow1Tip.x, arrow1Tip.y);
+                  ar1->setRotation((posMode == HorizontalSnap) ? 90 : 0);
+                  ar2->setRotation((posMode == HorizontalSnap) ? 90 : 0);
             } else {
-                Base::Vector3d vec = (p2 - centre).Normalize();
+                Base::Vector3d vec = (arrow2Tip - centre).Normalize();
                 float arAngle = atan2(-vec.y, -vec.x) * 180 / M_PI;
-                ar1->setPos(p2.x, p2.y);
+                ar1->setPos(arrow2Tip.x, arrow2Tip.y);
                 ar1->setRotation(arAngle);
-                ar2->hide();
+                ar2->hide();                                           //only 1 arrowhead for NoSnap + outerplacement (ie a leader)
             }
         } else {
             ar1->setRotation(arAngle);
             ar2->setRotation(arAngle);
 
-            ar1->setPos(p2.x, p2.y);
+            ar1->setPos(arrow2Tip.x, arrow2Tip.y);
             ar2->show();
-            ar2->setPos(p1.x, p1.y);
+            ar2->setPos(arrow1Tip.x, arrow1Tip.y);
         }
 
 
@@ -949,8 +945,8 @@ void QGraphicsItemViewDimension::draw()
         // Not sure whether to treat radius and diameter as the same
 
         Base::Vector3d p1, p2, dir;
-        QGraphicsItemDatumLabel *lbl = dynamic_cast<QGraphicsItemDatumLabel *>(this->datumLabel);
-        Base::Vector3d labelPos(lbl->X(), lbl->Y(), 0);
+        QGraphicsItemDatumLabel *label = dynamic_cast<QGraphicsItemDatumLabel *>(this->datumLabel);
+        Base::Vector3d lblCenter(label->X(), label->Y(), 0);
 
         double radius;
 
@@ -986,13 +982,13 @@ void QGraphicsItemViewDimension::draw()
         }
 
         // Note Bounding Box size is not the same width or height as text (only used for finding center)
-        float bbX  = lbl->boundingRect().width();
-        float bbY = lbl->boundingRect().height();
+        float bbX  = label->boundingRect().width();
+        float bbY = label->boundingRect().height();
 
         // TODO consider modifying behaviour of SoDatumLabel so position is at center
         // Orientate Position to be at the center of the datumLabel
-//         labelPos += 0.5 * Base::Vector3d(bbX, bbY, 0.f);
-        dir = (labelPos - p1).Normalize();
+//         lblCenter += 0.5 * Base::Vector3d(bbX, bbY, 0.f);
+        dir = (lblCenter - p1).Normalize();
 
         // Get magnitude of angle between horizontal
         float angle = atan2f(dir[1],dir[0]);
@@ -1012,16 +1008,16 @@ void QGraphicsItemViewDimension::draw()
         Base::Console().Log("angle (%f, %f), bbx %f, bby %f", s,c,bbX, bbY);*/
         // Note QGraphicsTextItem takes coordinate system from TOP LEFT - transfer to center
         // Create new coordinate system based around x,y
-//         labelPos += 0.5 * Base::Vector3d(bbX * c - bbY * s, bbX * s + bbY * c, 0.f);
-//         dir = (labelPos - p1).Normalize();
+//         lblCenter += 0.5 * Base::Vector3d(bbX * c - bbY * s, bbX * s + bbY * c, 0.f);
+//         dir = (lblCenter - p1).Normalize();
 //
 //         angle = atan2f(dir[1],dir[0]);
 //
         p2 = p1 + dir * radius;
 
-        QFontMetrics fm(lbl->font());
+        QFontMetrics fm(label->font());
 
-        int w = fm.width(str);
+        int w = fm.width(labelText);
         int h = fm.height();
 
         float margin = 5.f;
@@ -1033,11 +1029,11 @@ void QGraphicsItemViewDimension::draw()
 //         ar1 -= norm * margin;
 
         // Calculate the points
-        Base::Vector3d pnt1 = labelPos - dir * (margin + w / 2);
-        Base::Vector3d pnt2 = labelPos + dir * (margin + w / 2);
+        Base::Vector3d pnt1 = lblCenter - dir * (margin + w / 2);
+        Base::Vector3d pnt2 = lblCenter + dir * (margin + w / 2);
 
         bool outerPlacement = false;
-        if ((labelPos-p1).Length() > (p2-p1).Length()) {
+        if ((lblCenter-p1).Length() > (p2-p1).Length()) {
             p2 = pnt2;
             outerPlacement = true;
         }
@@ -1053,8 +1049,8 @@ void QGraphicsItemViewDimension::draw()
         arrw->setPath(path);
         arrw->setPen(pen);
 
-        lbl->setTransformOriginPoint(bbX / 2, bbY /2);
-        lbl->setRotation(angle * 180 / M_PI);
+        label->setTransformOriginPoint(bbX / 2, bbY /2);
+        label->setRotation(angle * 180 / M_PI);
 
         if(outerPlacement) {
             if(arw.size() != 1) {
@@ -1197,7 +1193,7 @@ void QGraphicsItemViewDimension::draw()
                 dir1.y *= -1.;
                 dir2.y *= -1.;
 
-                Base::Vector3d labelVec = (labelPos - p0);
+                Base::Vector3d labelVec = (lblCenter - p0);
 
                 double labelangle = atan2(-labelVec.y, labelVec.x);
 
@@ -1208,14 +1204,14 @@ void QGraphicsItemViewDimension::draw()
                 double endangle = startangle + range;
 
                 // Obtain the Label Position and measure the length between intersection
-                QGraphicsItemDatumLabel *lbl = dynamic_cast<QGraphicsItemDatumLabel *>(this->datumLabel);
-                Base::Vector3d labelPos(lbl->X(), lbl->Y(), 0);
+                QGraphicsItemDatumLabel *label = dynamic_cast<QGraphicsItemDatumLabel *>(this->datumLabel);
+                Base::Vector3d lblCenter(label->X(), label->Y(), 0);
 
-                float bbX  = lbl->boundingRect().width();
-                float bbY  = lbl->boundingRect().height();
+                float bbX  = label->boundingRect().width();
+                float bbY  = label->boundingRect().height();
 
                 // Get font height
-                QFontMetrics fm(lbl->font());
+                QFontMetrics fm(label->font());
 
                 int h = fm.height();
                 double length = labelVec.Length();
@@ -1386,9 +1382,9 @@ void QGraphicsItemViewDimension::draw()
                     lAngle += M_PI;
                 }
 
-                lbl->setTransformOriginPoint(bbX / 2., bbY /2.);
+                label->setTransformOriginPoint(bbX / 2., bbY /2.);
 
-                lbl->setRotation(lAngle * 180 / M_PI);
+                label->setRotation(lAngle * 180 / M_PI);
 
             } else {
                 throw Base::Exception("Invalid reference for dimension type");

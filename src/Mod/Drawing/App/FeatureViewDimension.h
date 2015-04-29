@@ -27,7 +27,8 @@
 # include <App/FeaturePython.h>
 # include <App/PropertyLinks.h>
 
-#include "FeatureViewAnnotation.h"
+//#include "FeatureViewAnnotation.h"
+#include "FeatureView.h"
 
 namespace Measure {
 class Measurement;
@@ -37,7 +38,7 @@ namespace Drawing
 
 /** Base class of all View Features in the drawing module
  */
-class DrawingExport FeatureViewDimension : public Drawing::FeatureViewAnnotation
+class DrawingExport FeatureViewDimension : public Drawing::FeatureView
 {
     PROPERTY_HEADER(Drawing::FeatureViewDimension);
 
@@ -55,9 +56,10 @@ public:
 
     /// Properties for Visualisation
     App::PropertyInteger Precision;
+    App::PropertyString  Font;
     App::PropertyFloat   Fontsize;
     App::PropertyBool    CentreLines;
-    App::PropertyString  Content;
+    App::PropertyString  FormatSpec;
 
     short mustExecute() const;
 
@@ -72,7 +74,7 @@ public:
         return "DrawingGui::ViewProviderDimension";
     }
 
-    virtual std::string getContent() const;
+    virtual std::string getFormatedValue() const;
     virtual double getDimValue() const;
 
 protected:
