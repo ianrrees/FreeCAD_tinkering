@@ -155,7 +155,7 @@ App::DocumentObjectExecReturn *FeatureViewDimension::execute(void)
 
 std::string  FeatureViewDimension::getFormatedValue() const
 {
-    QString str = QString::fromStdString(FormatSpec.getStrValue());
+    QString str = QString::fromUtf8(FormatSpec.getStrValue().c_str());
 
     QRegExp rx(QString::fromAscii("%(\\w+)%"));                        //any word bracketed by %
     QStringList list;

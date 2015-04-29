@@ -339,7 +339,7 @@ void CmdDrawingNewDiameterDimension::activated(int iMsg)
         doCommand(Doc,"App.activeDocument().%s.CentreLines = False", FeatName.c_str());
     }
 
-    doCommand(Doc,"App.activeDocument().%s.FormatSpec = 'D%value%'",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.FormatSpec = '\u00d8%value%'",FeatName.c_str());   // \u00d8 is Capital O with stroke
 
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
@@ -668,7 +668,7 @@ void CmdDrawingNewAngleDimension::activated(int iMsg)
                                                        ,"Angle");
 
     doCommand(Doc,"App.activeDocument().%s.FormatSpec = '%s'",FeatName.c_str()
-                                                          ,"%value%\x00b0");
+                                                          ,"%value%\u00b0");        // \u00b0 is degree sign
 
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
