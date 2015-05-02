@@ -418,9 +418,45 @@ void Command::doCommand(DoCmd_Type eType,const char* sCmd,...)
     size_t format_len = std::strlen(sCmd)+4024;
     char* format = (char*) malloc(format_len);
     va_list namelessVars;
-    va_start(namelessVars, sCmd);  // Get the "..." vars
-    vsnprintf(format, format_len, sCmd, namelessVars);
+
+#ifdef FC_DEBUG
+    // Count varargs
+    int vaCount = 0;
+    va_start(namelessVars, sCmd);
+    while (va_arg(namelessVars, void *)) {
+        ++vaCount;
+    } 
     va_end(namelessVars);
+
+    // Count format specifiers
+    int fsCount = 0;
+    const char *formatTemp = sCmd;
+    while ( (formatTemp = strstr(formatTemp, "%")) ) {
+        if (formatTemp[1]) {
+            if (formatTemp[1] != '%') {
+                ++fsCount;
+            }
+            formatTemp += 2;
+        } else {
+            free (format);
+            throw Base::Exception("Command::doCommand(): Format string ends with single %");
+        }
+    }
+
+    if (fsCount > vaCount) {
+        free (format);
+        throw Base::Exception("Command::doCommand(): Got more format specifiers than arguments");
+    }
+#endif // #ifdef FC_DEBUG
+
+    va_start(namelessVars, sCmd);  // Get the "..." vars
+    int formattedLen = vsnprintf(format, format_len, sCmd, namelessVars);
+    va_end(namelessVars);
+
+    if ( formattedLen < 0 || formattedLen >= format_len) {
+        free (format);
+        throw Base::Exception("Command::doCommand(): Error encountered while formatting command");
+    }
 
     if (eType == Gui)
         Gui::Application::Instance->macroManager()->addLine(MacroManager::Gui,format);
