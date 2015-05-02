@@ -164,7 +164,7 @@ void CmdDrawingNewDimension::activated(int iMsg)
         doCommand(Doc,"App.activeDocument().%s.CentreLines = False", FeatName.c_str());
     }
 
-    std::string contentStr = "%value%";
+    std::string contentStr;
     if (dimType == "Angle") {
         contentStr = "%value%\x00b0";
     } else if (dimType == "Radius") {
@@ -255,7 +255,7 @@ void CmdDrawingNewRadiusDimension::activated(int iMsg)
         doCommand(Doc,"App.activeDocument().%s.CentreLines = False", FeatName.c_str());
     }
 
-    doCommand(Doc,"App.activeDocument().%s.FormatSpec = 'r%value%'",FeatName.c_str());
+    doCommand(Doc, "App.activeDocument().%s.FormatSpec = 'r%%value%%'", FeatName.c_str());
 
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
@@ -339,7 +339,7 @@ void CmdDrawingNewDiameterDimension::activated(int iMsg)
         doCommand(Doc,"App.activeDocument().%s.CentreLines = False", FeatName.c_str());
     }
 
-    doCommand(Doc,"App.activeDocument().%s.FormatSpec = '\u00d8%value%'",FeatName.c_str());   // \u00d8 is Capital O with stroke
+    doCommand(Doc, "App.activeDocument().%s.FormatSpec = '\u00d8%%value%%'", FeatName.c_str());   // \u00d8 is Capital O with stroke
 
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
@@ -420,18 +420,18 @@ void CmdDrawingNewLengthDimension::activated(int iMsg)
     }
 
     openCommand("Create Dimension");
-    doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewDimension','%s')",FeatName.c_str());
-    doCommand(Doc,"App.activeDocument().%s.Type = '%s'",FeatName.c_str()
-                                                       ,"Distance");
+    doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewDimension','%s')", FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.Type = '%s'", FeatName.c_str()
+                                                       , "Distance");
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
 
-    doCommand(Doc,"App.activeDocument().%s.FormatSpec = '%value%'",FeatName.c_str());
+    doCommand(Doc, "App.activeDocument().%s.FormatSpec = '%%value%%'", FeatName.c_str());
 
     // Check if the part is an orthographic view;  TODO: shouldn't this be Feature logic?
     Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
     if(orthoView) {
-        doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
+        doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'", FeatName.c_str());
         dim->ProjectionType.StatusBits.set(2); // Set the projection type to read only
     }
 
@@ -510,7 +510,7 @@ void CmdDrawingNewDistanceXDimension::activated(int iMsg)
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
 
-    doCommand(Doc,"App.activeDocument().%s.FormatSpec = '%value%'",FeatName.c_str());
+    doCommand(Doc, "App.activeDocument().%s.FormatSpec = '%%value%%'", FeatName.c_str());
 
     // Check if the part is an orthographic view;  TODO: shouldn't this be Feature logic?
     Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
@@ -594,7 +594,7 @@ void CmdDrawingNewDistanceYDimension::activated(int iMsg)
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
 
-    doCommand(Doc,"App.activeDocument().%s.FormatSpec = '%value%'",FeatName.c_str());
+    doCommand(Doc, "App.activeDocument().%s.FormatSpec = '%%value%%'", FeatName.c_str());
 
     // Check if the part is an orthographic view;  TODO: shouldn't this be Feature logic?
     Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
