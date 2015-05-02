@@ -445,8 +445,8 @@ void QGraphicsItemViewDimension::draw()
                 projGeom.push_back(refObj->getCompleteEdge(idx2));
             }
 
-            if(projGeom.at(0) && projGeom.at(0)->geomType == DrawingGeometry::GENERIC ||
-               projGeom.at(1) && projGeom.at(1)->geomType == DrawingGeometry::GENERIC) {
+            if ( (projGeom.at(0) && projGeom.at(0)->geomType == DrawingGeometry::GENERIC) ||
+                 (projGeom.at(1) && projGeom.at(1)->geomType == DrawingGeometry::GENERIC) ) {
                 DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(projGeom.at(0));
                 DrawingGeometry::Generic *gen2 = static_cast<DrawingGeometry::Generic *>(projGeom.at(1));
 
@@ -1152,8 +1152,8 @@ void QGraphicsItemViewDimension::draw()
                 projGeom.push_back(refObj->getCompleteEdge(idx2));
             }
 
-            if(projGeom.at(0) && projGeom.at(0)->geomType == DrawingGeometry::GENERIC ||
-               projGeom.at(1) && projGeom.at(1)->geomType == DrawingGeometry::GENERIC) {
+            if ( (projGeom.at(0) && projGeom.at(0)->geomType == DrawingGeometry::GENERIC) ||
+                 (projGeom.at(1) && projGeom.at(1)->geomType == DrawingGeometry::GENERIC) ) {
                 DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(projGeom.at(0));
                 DrawingGeometry::Generic *gen2 = static_cast<DrawingGeometry::Generic *>(projGeom.at(1));
 

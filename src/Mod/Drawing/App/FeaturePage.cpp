@@ -219,11 +219,6 @@ const char * FeaturePage::getPageOrientation() const
     throw Base::Exception("Template not set for Page");
 }
 
-    // Needs to be tmp. set because otherwise the custom text gets overridden (#0002064)
-    this->StatusBits.set(4); // the 'Restore' flag
-
-
-    this->StatusBits.reset(4); // the 'Restore' flag
 int FeaturePage::addView(App::DocumentObject *docObj)
 {
     if(!docObj->isDerivedFrom(Drawing::FeatureView::getClassTypeId()))
