@@ -1,6 +1,5 @@
 /***************************************************************************
- *   Copyright (c) 2013 Luke Parry <l.parry@warwick.ac.uk>                 *
- *                 2014 wandererfan <WandererFan@gmail.com>                *
+ *   Copyright (c) 2015 WandererFan <wandererfan@gmail.com>                *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -21,55 +20,41 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef DRAWINGGUI_QGRAPHICSITEMVIEWANNOTATION_H
-#define DRAWINGGUI_QGRAPHICSITEMVIEWANNOTATION_H
+#ifndef DRAWINGGUI_QGCUSTOMTEXT_H
+#define DRAWINGGUI_QGCUSTOMTEXT_H
 
-#include <QObject>
-#include <QPainter>
+#include <QGraphicsItem>
+#include <QGraphicsTextItem>
+#include <QPointF>
 
-#include "QGraphicsItemView.h"
-#include "QGCustomText.h"
-
-namespace Drawing {
-class FeatureViewAnnotation;
-}
+QT_BEGIN_NAMESPACE
+class QPainter;
+class QStyleOptionGraphicsItem;
+QT_END_NAMESPACE
 
 namespace DrawingGui
 {
 
-class DrawingGuiExport QGraphicsItemViewAnnotation : public QGraphicsItemView
+class DrawingGuiExport QGCustomText : public QGraphicsTextItem
 {
-    Q_OBJECT
-
 public:
+    explicit QGCustomText(void);
+    ~QGCustomText() {}
 
-    explicit QGraphicsItemViewAnnotation(const QPoint &position, QGraphicsScene *scene);
-    ~QGraphicsItemViewAnnotation();
-
-    enum {Type = QGraphicsItem::UserType + 120};
+    enum {Type = QGraphicsItem::UserType + 130};
     int type() const { return Type;}
 
-    void updateView(bool update = false);
-    void setViewAnnoFeature(Drawing::FeatureViewAnnotation *obj);
-
-    virtual void draw();
-    virtual QRectF boundingRect() const;
-
-Q_SIGNALS:
-    void hover(bool state);
-    void selected(bool state);
+    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
+    virtual void centerAt(QPointF centerPos);
+    virtual void centerAt(double cX, double cY);
 
 protected:
-    void drawAnnotation();
-    QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
-protected:
-    QGCustomText *m_textItem;
-    QColor m_colNormal;
-    QColor m_colSel;
-    QColor m_colPre;
+private:
+
 };
 
 } // namespace DrawingViewGui
 
-#endif // DRAWINGGUI_QGRAPHICSITEMVIEWANNOTATION_H
+#endif // DRAWINGGUI_QGCUSTOMTEXT_H
+

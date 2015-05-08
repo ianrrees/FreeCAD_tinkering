@@ -1,6 +1,5 @@
 /***************************************************************************
- *   Copyright (c) 2013 Luke Parry <l.parry@warwick.ac.uk>                 *
- *                 2014 wandererfan <WandererFan@gmail.com>                *
+ *   Copyright (c) 2015 WandererFan <wandererfan@gmail.com>                *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -21,55 +20,46 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef DRAWINGGUI_QGRAPHICSITEMVIEWANNOTATION_H
-#define DRAWINGGUI_QGRAPHICSITEMVIEWANNOTATION_H
-
-#include <QObject>
+#include "PreCompiled.h"
+#ifndef _PreComp_
 #include <QPainter>
+#include <QStyleOptionGraphicsItem>
+#endif
 
-#include "QGraphicsItemView.h"
-#include "QGCustomText.h"
+#include <QRectF>
+#include "QGCustomSvg.h"
 
-namespace Drawing {
-class FeatureViewAnnotation;
+using namespace DrawingGui;
+
+QGCustomSvg::QGCustomSvg()
+{
+    setCacheMode(QGraphicsItem::NoCache);
 }
 
-namespace DrawingGui
+void QGCustomSvg::centerAt(QPointF centerPos)
 {
+    QRectF box = boundingRect();
+    double width = box.width();
+    double height = box.height();
+    double newX = centerPos.x() - width/2.;
+    double newY = centerPos.y() - height/2.;
+    setPos(newX,newY);
+}
 
-class DrawingGuiExport QGraphicsItemViewAnnotation : public QGraphicsItemView
+void QGCustomSvg::centerAt(double cX, double cY)
 {
-    Q_OBJECT
+    QRectF box = boundingRect();
+    double width = box.width();
+    double height = box.height();
+    double newX = cX - width/2.;
+    double newY = cY - height/2.;
+    setPos(newX,newY);
+}
 
-public:
+void QGCustomSvg::paint ( QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget) {
+    QStyleOptionGraphicsItem myOption(*option);
+    myOption.state &= ~QStyle::State_Selected;
 
-    explicit QGraphicsItemViewAnnotation(const QPoint &position, QGraphicsScene *scene);
-    ~QGraphicsItemViewAnnotation();
+    QGraphicsSvgItem::paint (painter, &myOption, widget);
+}
 
-    enum {Type = QGraphicsItem::UserType + 120};
-    int type() const { return Type;}
-
-    void updateView(bool update = false);
-    void setViewAnnoFeature(Drawing::FeatureViewAnnotation *obj);
-
-    virtual void draw();
-    virtual QRectF boundingRect() const;
-
-Q_SIGNALS:
-    void hover(bool state);
-    void selected(bool state);
-
-protected:
-    void drawAnnotation();
-    QVariant itemChange(GraphicsItemChange change, const QVariant &value);
-
-protected:
-    QGCustomText *m_textItem;
-    QColor m_colNormal;
-    QColor m_colSel;
-    QColor m_colPre;
-};
-
-} // namespace DrawingViewGui
-
-#endif // DRAWINGGUI_QGRAPHICSITEMVIEWANNOTATION_H

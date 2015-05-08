@@ -56,7 +56,7 @@ public:
     void alignTo(QGraphicsItemViewOrthographic *, const QString &alignment);
 
     virtual void updateView(bool update = false);
-    virtual void drawBorder(QPainter *painter);
+    virtual void drawBorder(void);
 
 Q_SIGNALS:
     void dirty();

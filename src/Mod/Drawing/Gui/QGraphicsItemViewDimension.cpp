@@ -207,6 +207,8 @@ QGraphicsItemViewDimension::QGraphicsItemViewDimension(const QPoint &pos, QGraph
     this->addToGroup(arrows);
     this->addToGroup(datumLabel);
     this->addToGroup(centreLines);
+    
+    toggleBorder(false);
 }
 
 QGraphicsItemViewDimension::~QGraphicsItemViewDimension()
@@ -293,7 +295,6 @@ void QGraphicsItemViewDimension::updateView(bool update)
 
     } else if(dim->X.isTouched() ||
               dim->Y.isTouched()) {
-
         dLabel->setPosFromCenter(dim->X.getValue(), dim->Y.getValue());
         updateDim();
 
@@ -338,7 +339,6 @@ void QGraphicsItemViewDimension::datumLabelDragged()
 
 void QGraphicsItemViewDimension::datumLabelDragFinished()
 {
-    //TODO: is datumLabelDragFinished ever used? 
     if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId()))
         return;
 
@@ -347,7 +347,6 @@ void QGraphicsItemViewDimension::datumLabelDragFinished()
 
     double x = datumLbl->X(),
            y = datumLbl->Y();
-    //Base::Console().Message("TRACE - datumLabelDragFinished - (x,y): (%.3f,%.3f)\n",x,y);
     Gui::Command::openCommand("Drag Dimension");
     Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.X = %f", dim->getNameInDocument(), x);
     Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.Y = %f", dim->getNameInDocument(), y);
@@ -357,7 +356,6 @@ void QGraphicsItemViewDimension::datumLabelDragFinished()
 
 void QGraphicsItemViewDimension::draw()
 {
-    // Iterate
     if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId()))
         return;
 
@@ -717,10 +715,8 @@ void QGraphicsItemViewDimension::draw()
 
         QFontMetrics fm(label->font());
 
-        int w = fm.width(labelText);       //TODO: why are w,h always 0?
+        int w = fm.width(labelText);
         int h = fm.height();
-        //Base::Console().Message("TRACE - Diameter - labelText w: %.3f h: %.3f\n",w,h);
-        //Base::Console().Message("TRACE - Diameter - labelText: %s**\n",qPrintable(labelText));
 
         float margin = 5.f;
 
@@ -940,11 +936,10 @@ void QGraphicsItemViewDimension::draw()
             ar2->setPos(arrow1Tip.x, arrow1Tip.y);
         }
 
-
     } else if(strcmp(dimType, "Radius") == 0) {
         // Not sure whether to treat radius and diameter as the same
-
-        Base::Vector3d p1, p2, dir;
+        // terminology: Dimension Text, Dimension Line(s), Extension Lines, Arrowheads
+        Base::Vector3d arrow1Tip, arrow2Tip, dirDimLine, centre;
         QGraphicsItemDatumLabel *label = dynamic_cast<QGraphicsItemDatumLabel *>(this->datumLabel);
         Base::Vector3d lblCenter(label->X(), label->Y(), 0);
 
@@ -970,9 +965,8 @@ void QGraphicsItemViewDimension::draw()
             if(projGeom.at(0) &&
                (projGeom.at(0)->geomType == DrawingGeometry::CIRCLE || projGeom.at(0)->geomType == DrawingGeometry::ARCOFCIRCLE)) {
                   DrawingGeometry::Circle *circ = static_cast<DrawingGeometry::Circle *>(projGeom.at(0));
-                  Base::Vector2D pnt1 = circ->center;
                   radius = circ->radius;
-                  p1 = Base::Vector3d (pnt1.fX, pnt1.fY, 0);
+                  centre = Base::Vector3d (circ->center.fX, circ->center.fY, 0);
             } else {
                 clearProjectionCache();
                 throw Base::Exception("Original edge not found or is invalid type");
@@ -985,13 +979,12 @@ void QGraphicsItemViewDimension::draw()
         float bbX  = label->boundingRect().width();
         float bbY = label->boundingRect().height();
 
-        // TODO consider modifying behaviour of SoDatumLabel so position is at center
         // Orientate Position to be at the center of the datumLabel
 //         lblCenter += 0.5 * Base::Vector3d(bbX, bbY, 0.f);
-        dir = (lblCenter - p1).Normalize();
+        dirDimLine = (lblCenter - centre).Normalize();
 
         // Get magnitude of angle between horizontal
-        float angle = atan2f(dir[1],dir[0]);
+        float angle = atan2f(dirDimLine.y,dirDimLine.x);
         bool flip=false;
         if (angle > M_PI_2+M_PI/12) {
             angle -= (float)M_PI;
@@ -1003,17 +996,13 @@ void QGraphicsItemViewDimension::draw()
 
         float s = sin(angle);
         float c = cos(angle);
-        /*
 
-        Base::Console().Log("angle (%f, %f), bbx %f, bby %f", s,c,bbX, bbY);*/
-        // Note QGraphicsTextItem takes coordinate system from TOP LEFT - transfer to center
-        // Create new coordinate system based around x,y
-//         lblCenter += 0.5 * Base::Vector3d(bbX * c - bbY * s, bbX * s + bbY * c, 0.f);
-//         dir = (lblCenter - p1).Normalize();
-//
-//         angle = atan2f(dir[1],dir[0]);
-//
-        p2 = p1 + dir * radius;
+        //for inner placement
+        //arrow1 is from label centre(+ margin) to circle edge
+        //arrow1 is from label centre to circle centre
+        //arrow2Tip = centre + dirDimLine * radius;
+        arrow1Tip = centre;
+        arrow2Tip = centre + dirDimLine * radius;
 
         QFontMetrics fm(label->font());
 
@@ -1022,76 +1011,41 @@ void QGraphicsItemViewDimension::draw()
 
         float margin = 5.f;
 
-//         // Create the arrowhead
-//         SbVec3f ar0  = p2;
-//         SbVec3f ar1  = p2 - dir * 0.866f * 2 * margin;
-//         SbVec3f ar2  = ar1 + norm * margin;
-//         ar1 -= norm * margin;
-
-        // Calculate the points
-        Base::Vector3d pnt1 = lblCenter - dir * (margin + w / 2);
-        Base::Vector3d pnt2 = lblCenter + dir * (margin + w / 2);
+        Base::Vector3d dLine1Tail = lblCenter - dirDimLine * (margin + w / 2);
+        Base::Vector3d dLine2Tail = lblCenter + dirDimLine * (margin + w / 2);
 
         bool outerPlacement = false;
-        if ((lblCenter-p1).Length() > (p2-p1).Length()) {
-            p2 = pnt2;
+        if ((lblCenter-centre).Length() > radius) {
+            arrow1Tip = arrow2Tip;
             outerPlacement = true;
         }
 
-        QPainterPath path;
-        path.moveTo(p1[0], p1[1]);
-        path.lineTo(pnt1[0], pnt1[1]);
-
-        path.moveTo(pnt2[0], pnt2[1]);
-        path.lineTo(p2[0], p2[1]);
-
-        QGraphicsPathItem *arrw = dynamic_cast<QGraphicsPathItem *> (this->arrows);
-        arrw->setPath(path);
-        arrw->setPen(pen);
+        double dTip = fabs((lblCenter - arrow1Tip).Length());
+        double dTail = fabs((lblCenter - dLine1Tail).Length());
+        if (dTail > dTip) {
+            dLine1Tail = arrow1Tip;                                    //draw a null line
+        }
+        dTip = fabs((lblCenter - arrow2Tip).Length());
+        dTail = fabs((lblCenter - dLine2Tail).Length());
+        if (dTail > dTip) {
+            dLine2Tail = arrow2Tip;                                    //draw a null line
+        }
 
         label->setTransformOriginPoint(bbX / 2, bbY /2);
         label->setRotation(angle * 180 / M_PI);
 
-        if(outerPlacement) {
-            if(arw.size() != 1) {
-                prepareGeometryChange();
-                for(std::vector<QGraphicsItem *>::iterator it = arw.begin(); it != arw.end(); ++it) {
-                    this->removeFromGroup(*it);
-                    delete (*it);
-                }
-                arw.clear();
+        QPainterPath path;
+        path.moveTo(dLine1Tail.x, dLine1Tail.y);
+        path.lineTo(arrow1Tip.x, arrow1Tip.y);
 
-                // These items are added to the scene-graph so should be handled by the canvas
-                QGraphicsItemArrow *ar1 = new QGraphicsItemArrow();
-                arw.push_back(ar1);
-
-                ar1->draw();
-                this->addToGroup(arw.at(0));
-            }
-        } else {
-            // Create Two Arrows
-            if(arw.size() != 2) {
-                prepareGeometryChange();
-                for(std::vector<QGraphicsItem *>::iterator it = arw.begin(); it != arw.end(); ++it) {
-                    this->removeFromGroup(*it);
-                    delete (*it);
-                }
-                arw.clear();
-
-                // These items are added to the scene-graph so should be handled by the canvas
-                QGraphicsItemArrow *ar1 = new QGraphicsItemArrow();
-                QGraphicsItemArrow *ar2 = new QGraphicsItemArrow();
-                arw.push_back(ar1);
-                arw.push_back(ar2);
-
-                ar1->draw();
-                ar2->flip(true);
-                ar2->draw();
-                this->addToGroup(arw.at(0));
-                this->addToGroup(arw.at(1));
-            }
+        if (!outerPlacement) {
+            path.moveTo(dLine2Tail.x, dLine2Tail.y);
+            path.lineTo(arrow2Tip.x, arrow2Tip.y);
         }
 
+        QGraphicsPathItem *arrw = dynamic_cast<QGraphicsPathItem *> (this->arrows);
+        arrw->setPath(path);
+        arrw->setPen(pen);
 
         // Add or remove centre lines
         QGraphicsPathItem *clines = dynamic_cast<QGraphicsPathItem *> (this->centreLines);
@@ -1106,12 +1060,12 @@ void QGraphicsItemViewDimension::draw()
                 clDist = radius * 0.2;
             }
             // Vertical Line
-            clpath.moveTo(p1.x, p1.y + clDist);
-            clpath.lineTo(p1.x, p1.y - clDist);
+            clpath.moveTo(centre.x, centre.y + clDist);
+            clpath.lineTo(centre.x, centre.y - clDist);
 
             // Vertical Line
-            clpath.moveTo(p1.x - clDist, p1.y);
-            clpath.lineTo(p1.x + clDist, p1.y);
+            clpath.moveTo(centre.x - clDist, centre.y);
+            clpath.lineTo(centre.x + clDist, centre.y);
 
             QPen clPen(QColor(128,128,128));  // TODO: centre line preference?
             clines->setPen(clPen);
@@ -1119,22 +1073,52 @@ void QGraphicsItemViewDimension::draw()
 
         clines->setPath(clpath);
 
-        QGraphicsItemArrow *ar1 = dynamic_cast<QGraphicsItemArrow *>(arw.at(0));
+        // Always create Two Arrows (but sometimes hide 1!)
+        QGraphicsItemArrow *ar1;
+        QGraphicsItemArrow *ar2;
+        if(arw.size() != 2) {
+            prepareGeometryChange();
+            for(std::vector<QGraphicsItem *>::iterator it = arw.begin(); it != arw.end(); ++it) {
+                this->removeFromGroup(*it);
+                delete (*it);
+            }
+            arw.clear();
+ 
+            // These items are added to the scene-graph so should be handled by the canvas
+            ar1 = new QGraphicsItemArrow();
+            ar2 = new QGraphicsItemArrow();
+            arw.push_back(ar1);
+            arw.push_back(ar2);
 
-        Base::Vector3d ar1Pos = p1 + dir * radius;
-        float arAngle = atan2(dir.y, dir.x) * 180 / M_PI;
+            ar1->flip(true);
+            ar1->draw();
+            ar2->draw();
+            this->addToGroup(arw.at(0));
+            this->addToGroup(arw.at(1));
+        }
+
+        ar1 = dynamic_cast<QGraphicsItemArrow *>(arw.at(0));
+        ar2 = dynamic_cast<QGraphicsItemArrow *>(arw.at(1));
+
+        Base::Vector3d ar1Pos = centre + dirDimLine * radius;
+        float arAngle = atan2(dirDimLine.y, dirDimLine.x) * 180 / M_PI;
 
         ar1->setPos(ar1Pos.x, ar1Pos.y);
+        ar1->setPos(arrow1Tip.x, arrow1Tip.y);
         ar1->setRotation(arAngle);
         ar1->setHighlighted(isSelected() || this->hasHover);
+        ar1->show();
+        ar2->setPos(arrow2Tip.x, arrow2Tip.y);
+        ar2->setRotation(arAngle);
+        ar2->setHighlighted(isSelected() || this->hasHover);
+        ar2->show();
 
-        if(!outerPlacement) {
-            QGraphicsItemArrow *ar2 = dynamic_cast<QGraphicsItemArrow *>(arw.at(1));
-            ar2->setPos(p1.x, p1.y);
-            ar2->setRotation(arAngle);
-            ar2->setHighlighted(isSelected() || this->hasHover);
+        if(outerPlacement) {
+            ar2->hide();
         }
+
     } else if(strcmp(dimType, "Angle") == 0) {
+
 
         // Only use two straight line edeges for angle
         if(dim->References.getValues().size() == 2 &&
@@ -1392,8 +1376,19 @@ void QGraphicsItemViewDimension::draw()
         }
     }
 
-    // Call to redraw the object
+    // redraw the Dimension and the parent View
     update();
+    if (parentItem()) {
+        //TODO: parent redraw still required with new frame/label??
+        parentItem()->update();
+    }
+
+}
+
+void QGraphicsItemViewDimension::drawBorder(void) 
+{
+//Dimensions have no border!
+//    Base::Console().Message("TRACE - QGraphicsItemViewDimension::drawBorder - doing nothing!\n");
 }
 
 QVariant QGraphicsItemViewDimension::itemChange(GraphicsItemChange change, const QVariant &value)

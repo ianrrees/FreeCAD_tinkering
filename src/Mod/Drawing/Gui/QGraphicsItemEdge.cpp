@@ -74,7 +74,8 @@ QGraphicsItemEdge::QGraphicsItemEdge(int ref) :
 
 QRectF QGraphicsItemEdge::boundingRect() const
 {
-    return shape().controlPointRect().adjusted(-2.,-2.,2.,2.);         //a bit bigger than the controlPointRect - for ease of selecting?
+    //return shape().controlPointRect().adjusted(-2.,-2.,2.,2.);         //a bit bigger than the controlPointRect - for ease of selecting?
+    return shape().controlPointRect();
 }
 
 QVariant QGraphicsItemEdge::itemChange(GraphicsItemChange change, const QVariant &value)

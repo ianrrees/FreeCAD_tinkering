@@ -32,6 +32,7 @@
 #include <QGraphicsSvgItem>
 
 #include "QGraphicsItemView.h"
+#include "QGCustomSvg.h"
 
 namespace Drawing {
 class FeatureViewSymbol;
@@ -48,7 +49,7 @@ public:
     explicit QGraphicsItemViewSymbol(const QPoint &position, QGraphicsScene *scene);
     ~QGraphicsItemViewSymbol();
 
-    enum {Type = QGraphicsItem::UserType + 121};      //121??
+    enum {Type = QGraphicsItem::UserType + 121};
     int type() const { return Type;}
 
     void updateView(bool update = false);
@@ -67,7 +68,7 @@ protected:
 
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
-    QGraphicsSvgItem *m_svgItem;
+    QGCustomSvg *m_svgItem;
     QSvgRenderer *m_svgRender;
 };
 

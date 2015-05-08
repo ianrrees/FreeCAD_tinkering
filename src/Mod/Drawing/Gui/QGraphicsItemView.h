@@ -55,7 +55,7 @@ public:
     Drawing::FeatureView * getViewObject() const;
 
     virtual void toggleBorder(bool state = true) { this->borderVisible = state; }
-    virtual void drawBorder(QPainter *painter);
+    virtual void drawBorder(void);
 
     /// Methods to ensure that Y-Coordinates are orientated correctly.
     void setPosition(qreal x, qreal y);
@@ -67,7 +67,7 @@ public:
     virtual void toggleCache(bool state);
     virtual void updateView(bool update = false);
     virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
-    virtual QPainterPath shape(void) const;
+    //virtual QPainterPath shape(void) const;
 
     virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent * event);
 
@@ -82,6 +82,7 @@ protected:
     // Preselection events:
     virtual void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
+    virtual QRectF customChildrenBoundingRect(void);
 
     Drawing::FeatureView *viewObj;
     std::string viewName;
@@ -97,6 +98,9 @@ protected:
     QColor m_colPre;
     QColor m_colSel;
     QFont m_font;
+    QGraphicsTextItem* m_label;
+    QGraphicsRectItem* m_frame;
+    QPen m_decorPen;
 };
 
 } // namespace DrawingViewGui

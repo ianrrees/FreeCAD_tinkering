@@ -78,6 +78,10 @@ SET(DrawingGuiView_SRCS
     DrawingView.h
     CanvasView.cpp
     CanvasView.h
+    QGCustomText.cpp
+    QGCustomText.h
+    QGCustomSvg.cpp
+    QGCustomSvg.h
     QGraphicsItemView.cpp
     QGraphicsItemView.h
     QGraphicsItemArrow.cpp

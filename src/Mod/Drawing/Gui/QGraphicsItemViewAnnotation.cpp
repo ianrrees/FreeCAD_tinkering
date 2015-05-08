@@ -46,6 +46,7 @@
 
 #include "../App/FeatureViewAnnotation.h"
 #include "QGraphicsItemViewAnnotation.h"
+#include "QGCustomText.h"
 
 using namespace DrawingGui;
 
@@ -57,7 +58,7 @@ QGraphicsItemViewAnnotation::QGraphicsItemViewAnnotation(const QPoint &pos, QGra
     setAcceptHoverEvents(true);
     setFlag(QGraphicsItem::ItemIsMovable, true);
 
-    m_textItem = new QGraphicsTextItem();
+    m_textItem = new QGCustomText();
     this->addToGroup(m_textItem);
     m_textItem->setPos(0.,0.);
 }
@@ -101,6 +102,9 @@ void QGraphicsItemViewAnnotation::updateView(bool update)
 void QGraphicsItemViewAnnotation::draw()
 {
     drawAnnotation();
+    if (borderVisible) {
+        drawBorder();
+    }
 }
 
 void QGraphicsItemViewAnnotation::drawAnnotation()
@@ -113,7 +117,7 @@ void QGraphicsItemViewAnnotation::drawAnnotation()
     // get the Text values
     const std::vector<std::string>& annoText = viewAnno->Text.getValues();
     std::stringstream ss;
-    for(std::vector<std::string>::const_iterator it = annoText.begin(); it != annoText.end(); ++it) {
+    for(std::vector<std::string>::const_iterator it = annoText.begin(); it != annoText.end(); it++) {
         if (it == annoText.begin()) {
             ss << *it;
         } else {
@@ -130,14 +134,15 @@ void QGraphicsItemViewAnnotation::drawAnnotation()
     m_textItem->setDefaultTextColor(c.asQColor());
 
     this->prepareGeometryChange();
-    QString qs = QString::fromUtf8(ss.str().c_str()); 
+    QString qs = QString::fromUtf8(ss.str().c_str());
     m_textItem->setPlainText(qs);
     m_textItem->adjustSize();
+    m_textItem->setPos(0.,0.);
 }
 
 QRectF QGraphicsItemViewAnnotation::boundingRect() const
 {
-    return m_textItem->boundingRect().adjusted(-3.,-3.,3.,3.);     // bigger than QGraphicsTextItem
+    return childrenBoundingRect();
 }
 
 #include "moc_QGraphicsItemViewAnnotation.cpp"

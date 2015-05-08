@@ -56,10 +56,12 @@ QGraphicsItemViewOrthographic::QGraphicsItemViewOrthographic(const QPoint &pos, 
     // In place to ensure correct drawing and bounding box calculations
     m_backgroundItem = new QGraphicsRectItem();
     m_backgroundItem->setPen(QPen(QColor(Qt::black)));
+
     //this->addToGroup(m_backgroundItem);
     setFlag(ItemIsSelectable, false);
     setFlag(ItemIsMovable, true);
     setFiltersChildEvents(true);
+    borderVisible = false;
 }
 
 QGraphicsItemViewOrthographic::~QGraphicsItemViewOrthographic()
@@ -235,9 +237,10 @@ void QGraphicsItemViewOrthographic::updateView(bool update)
     return QGraphicsItemViewCollection::updateView(update);
 }
 
-void QGraphicsItemViewOrthographic::drawBorder(QPainter *painter)
+void QGraphicsItemViewOrthographic::drawBorder()
 {
 //QGraphicsItemViewOrthographic does not have a border!
+//    Base::Console().Message("TRACE - QGraphicsItemViewOrthographic::drawBorder - doing nothing!!\n");
 }
 
 #include "moc_QGraphicsItemViewOrthographic.cpp"

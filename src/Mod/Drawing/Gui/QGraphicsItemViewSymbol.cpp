@@ -54,7 +54,7 @@ QGraphicsItemViewSymbol::QGraphicsItemViewSymbol(const QPoint &pos, QGraphicsSce
 
     m_svgRender = new QSvgRenderer();
 
-    m_svgItem = new QGraphicsSvgItem();
+    m_svgItem = new QGCustomSvg();
     this->addToGroup(m_svgItem);
     m_svgItem->setPos(0.,0.);
 }
@@ -97,6 +97,9 @@ void QGraphicsItemViewSymbol::updateView(bool update)
 void QGraphicsItemViewSymbol::draw()
 {
     drawSvg();
+    if (borderVisible) {
+        drawBorder();
+    }
 }
 
 void QGraphicsItemViewSymbol::drawSvg()
@@ -112,11 +115,15 @@ void QGraphicsItemViewSymbol::drawSvg()
     if (!load(&qba)) {
         Base::Console().Error("QGraphicsItemViewSymbol::drawSvg - Could not load %s.Symbol into renderer\n", viewSymbol->getNameInDocument());
     }
+    //QRectF symbolArea = m_svgItem->boundingRect();
+    //m_svgItem->setPos(-symbolArea.width()/2.,-symbolArea.height()/2.);
+    m_svgItem->setPos(0.,0.);
 }
 
 QRectF QGraphicsItemViewSymbol::boundingRect() const
 {
-    return m_svgItem->boundingRect().adjusted(-3.,-3.,3.,3.);     // bigger than QGraphicsSvgItem
+//    return m_svgItem->boundingRect().adjusted(-3.,-3.,3.,3.);     // bigger than QGraphicsSvgItem
+    return childrenBoundingRect();
 }
 
 bool QGraphicsItemViewSymbol::load(QByteArray *svgBytes)

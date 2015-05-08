@@ -52,6 +52,8 @@
 
 using namespace DrawingGui;
 
+void _debugRect(char* text, QRectF r);
+
 QGraphicsItemView::QGraphicsItemView(const QPoint &pos, QGraphicsScene *scene)
     :QGraphicsItemGroup(),
      locked(false),
@@ -78,10 +80,19 @@ QGraphicsItemView::QGraphicsItemView(const QPoint &pos, QGraphicsScene *scene)
     hGrp = App::GetApplication().GetUserParameter().GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing");
     std::string fontName = hGrp->GetASCII("LabelFont", "osifont");
     m_font.setFamily(QString::fromStdString(fontName));
-    m_font.setPointSize(5.f);
+    m_font.setPointSize(5.f);                                                   //TODO: m_font needs scaling. 5 sb too small.
 
     //Add object to scene
     scene->addItem(this);
+    
+    m_label = new QGraphicsTextItem();
+    addToGroup(m_label);
+    m_label->setFont(m_font);
+    
+    m_frame = new QGraphicsRectItem();
+    addToGroup(m_frame);
+    m_decorPen.setStyle(Qt::DashLine);
+    m_decorPen.setWidth(0.3);
 }
 
 QGraphicsItemView::~QGraphicsItemView()
@@ -100,9 +111,9 @@ QVariant QGraphicsItemView::itemChange(GraphicsItemChange change, const QVariant
     if(change == ItemPositionChange && scene()) {
         QPointF newPos = value.toPointF();
 
-        if(locked){
-            newPos.setX(pos().x());
-            newPos.setY(pos().y());
+        if(this->locked){
+            newPos.setX(this->pos().x());
+            newPos.setY(this->pos().y());
         }
 
         // TODO  find a better data structure for this
@@ -137,6 +148,7 @@ QVariant QGraphicsItemView::itemChange(GraphicsItemChange change, const QVariant
         } else {
             m_colCurrent = m_colNormal;
         }
+        drawBorder();
     }
 
     return QGraphicsItemGroup::itemChange(change, value);
@@ -172,14 +184,14 @@ void QGraphicsItemView::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
     // TODO don't like this but only solution at the minute
     if (isSelected()) {
         m_colCurrent = m_colSel;
-        return;
     } else {
         m_colCurrent = m_colPre;
-        if(this->shape().contains(event->pos())) {                     // TODO don't like this for determining preselect
-            m_colCurrent = m_colPre;
-        }
+        //if(this->shape().contains(event->pos())) {                     // TODO don't like this for determining preselect
+        //    m_colCurrent = m_colPre;
+        //}
     }
-    update();
+    drawBorder();
+    //update();
 }
 
 void QGraphicsItemView::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
@@ -189,7 +201,8 @@ void QGraphicsItemView::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
     } else {
         m_colCurrent = m_colNormal;
     }
-    update();
+    drawBorder();
+    //update();
 }
 
 void QGraphicsItemView::setPosition(qreal x, qreal y)
@@ -209,7 +222,7 @@ void QGraphicsItemView::updateView(bool update)
 
     if (update ||
         getViewObject()->Rotation.isTouched()) {
-        //NOTE: QPainterPaths have to be rotated individually. This transform handles everything else.
+        //NOTE: QPainterPaths have to be rotated individually. This transform handles everything else.  TODO: verify this. 
         double rot = getViewObject()->Rotation.getValue();
         QPointF centre = boundingRect().center();
         setTransform(QTransform().translate(centre.x(), centre.y()).rotate(-rot).translate(-centre.x(), -centre.y()));
@@ -247,54 +260,84 @@ void QGraphicsItemView::setViewFeature(Drawing::FeatureView *obj)
 
 void QGraphicsItemView::toggleCache(bool state)
 {
-    // TODO: huh?  IR
+    // TODO: huh?  IR  //temp for devl. chaching was hiding problems WF
     setCacheMode((state)? NoCache : NoCache);
 }
 
-void QGraphicsItemView::drawBorder(QPainter *painter)
+void QGraphicsItemView::drawBorder()
 {
-    painter->save();
+    if (!borderVisible) {
+        return;
+    }
 
-    // Make a rectangle smaller than the bounding box as a border and draw dashed line for selection
-    QRectF box = boundingRect().adjusted(2.,2.,-2.,-2.);
+    double margin = 2.0;
+    prepareGeometryChange();
+    m_label->hide();
+    m_frame->hide();
 
-    QPen myPen = m_pen;
-    myPen.setStyle(Qt::DashLine);
-    myPen.setWidth(0);  // 0 means "cosmetic pen" - always 1px
-    painter->setPen(myPen);
+    m_label->setDefaultTextColor(m_colCurrent);
+    m_label->setFont(m_font);
+    QString labelStr = QString::fromUtf8(this->getViewObject()->Label.getValue());
+    m_label->setPlainText(labelStr);
+    QRectF labelArea = m_label->boundingRect();
+    double labelWidth = m_label->boundingRect().width();
+    double labelHeight = m_label->boundingRect().height();
 
-    QString name = QString::fromUtf8(getViewObject()->Label.getValue());
-    painter->setFont(m_font);
-    QFontMetrics fm(m_font);
-    QPointF pos = box.center();
-    pos.setY(box.bottom());
-    pos.setX(pos.x() - fm.width(name) / 2.);
+    m_frame->hide();
+    m_decorPen.setColor(m_colCurrent);
+    m_frame->setPen(m_decorPen);
 
-    painter->drawText(pos, name);
-    painter->drawRect(box);
+    QRectF displayArea = customChildrenBoundingRect();
+    double displayWidth = displayArea.width();
+    double displayHeight = displayArea.height();
 
-    painter->restore();
+    double frameWidth = displayWidth;
+    if (labelWidth > displayWidth) {
+        frameWidth = labelWidth;
+    }
+    double frameHeight = labelHeight + displayHeight;
+    QPointF displayCenter = displayArea.center();
+
+    m_label->setX(displayCenter.x() - labelArea.width()/2.);
+    m_label->setY(displayArea.bottom());
+
+    QRectF frameArea = QRectF(displayCenter.x() - frameWidth/2.,
+                              displayArea.top(),
+                              frameWidth,
+                              frameHeight);
+    m_frame->setRect(frameArea);
+    m_frame->setPos(0.,0.);
+
+    m_label->show();
+    m_frame->show();
 }
 
 void QGraphicsItemView::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     QStyleOptionGraphicsItem myOption(*option);
     myOption.state &= ~QStyle::State_Selected;
-    m_pen.setColor(m_colCurrent);
 
-    if(borderVisible){
-         this->drawBorder(painter);
+    if(!borderVisible){
+         m_label->hide();
+         m_frame->hide();
     }
     QGraphicsItemGroup::paint(painter, &myOption, widget);
 }
 
-QPainterPath QGraphicsItemView::shape() const {
-    QPainterPath path;
-    QRectF box = this->boundingRect().adjusted(2.,2.,-2.,-2.);
-    path.addRect(box);
-    QPainterPathStroker stroker;
-    stroker.setWidth(5.f);
-    return stroker.createStroke(path);
+QRectF QGraphicsItemView::customChildrenBoundingRect() {
+    QList<QGraphicsItem *> children = childItems();
+    QRectF result;
+    for (QList<QGraphicsItem *>::iterator it = children.begin(); it != children.end(); ++it) {
+        if ((*it)->type() >= QGraphicsItem::UserType) {
+            result = result.united((*it)->boundingRect());
+        }
+    }
+    return result;
+}
+
+void _debugRect(char* text, QRectF r) {
+    Base::Console().Message("TRACE - %s - rect: (%.3f,%.3f) x (%.3f,%.3f)\n",text,
+                            r.left(),r.top(),r.right(),r.bottom());
 }
 
 #include "moc_QGraphicsItemView.cpp"

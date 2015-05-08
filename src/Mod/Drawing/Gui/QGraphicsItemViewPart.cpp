@@ -115,7 +115,7 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
           double x = geom->center.fX - geom->radius;
           double y = geom->center.fY - geom->radius;
 
-          path.addEllipse(x, y, geom->radius * 2, geom->radius * 2);
+          path.addEllipse(x, y, geom->radius * 2, geom->radius * 2);            //topleft@(x,y) radx,rady
 
         } break;
         case DrawingGeometry::ARCOFCIRCLE: {
@@ -246,6 +246,7 @@ void QGraphicsItemViewPart::updateView(bool update)
 
 void QGraphicsItemViewPart::draw() {
     drawViewPart();
+    drawBorder();
 }
 
 void QGraphicsItemViewPart::drawViewPart()
@@ -257,7 +258,7 @@ void QGraphicsItemViewPart::drawViewPart()
 
     float lineWidth = part->LineWidth.getValue() * lineScaleFactor;
     float lineWidthHid = part->HiddenWidth.getValue() * lineScaleFactor;
-
+    
     prepareGeometryChange();
 
 //TODO: QGraphicsItemFace disabled temporarily to ease selection of edges/vertices during devel. 
@@ -323,7 +324,8 @@ void QGraphicsItemViewPart::drawViewPart()
           ((*it)->extractType == DrawingGeometry::WithSmooth)) {
 //          (((*it)->extractType == DrawingGeometry::WithSmooth) && part->ShowSmoothLines.getValue())) {
             item = new QGraphicsItemEdge(refs.at(i));
-            addToGroup(item);
+            addToGroup(item);                                                   //item is at scene(0,0), not group(0,0)
+            item->setPos(0.0,0.0);
             item->setStrokeWidth(lineWidth);
             if((*it)->extractType == DrawingGeometry::WithHidden) {
                 item->setStrokeWidth(lineWidthHid);
@@ -331,9 +333,7 @@ void QGraphicsItemViewPart::drawViewPart()
             } else if((*it)->extractType == DrawingGeometry::WithSmooth) {
                 item->setSmoothEdge(true);
             }
-            QPointF tCenter = mapToScene(0.,0.);
-            QPainterPath path = drawPainterPath(*it).translated(tCenter);
-            item->setPath(path);
+            item->setPath(drawPainterPath(*it));
             if(refs.at(i) > 0) {
                 item->setFlag(QGraphicsItem::ItemIsSelectable, true);  //TODO: bug in App/GeometryObject? why no edge reference?
                 item->setAcceptHoverEvents(true);                      //TODO: verify that edge w/o ref is ineligible for selecting
@@ -532,7 +532,8 @@ void QGraphicsItemViewPart::toggleVertices(bool state)
 
 QRectF QGraphicsItemViewPart::boundingRect() const
 {
-    return childrenBoundingRect().adjusted(-2.,-2.,2.,6.);             //just a bit bigger than the children need
+    //return childrenBoundingRect().adjusted(-2.,-2.,2.,6.);             //just a bit bigger than the children need
+    return childrenBoundingRect();
 }
 
 #include "moc_QGraphicsItemViewPart.cpp"

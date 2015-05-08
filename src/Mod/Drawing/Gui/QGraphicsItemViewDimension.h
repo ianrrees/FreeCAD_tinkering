@@ -96,7 +96,7 @@ public:
     void setViewPartFeature(Drawing::FeatureViewDimension *obj);
     int type() const { return Type;}
 
-    virtual void drawBorder(QPainter *painter) { };                             //Dimensions don't have borders
+    virtual void drawBorder();
     virtual void updateView(bool update = false);
     virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 
