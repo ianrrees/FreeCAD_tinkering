@@ -21,12 +21,8 @@
  *                                                                         *
  ***************************************************************************/
 
- 
-
-
 #ifndef _FeatureViewPart_h_
 #define _FeatureViewPart_h_
-
 
 #include <App/DocumentObject.h>
 #include <App/PropertyLinks.h>
@@ -36,10 +32,8 @@
 #include <Base/BoundBox.h>
 #include "GeometryObject.h"
 
-
 namespace Drawing
 {
-
 
 /** Base class of all View Features in the drawing module
  */
@@ -100,8 +94,6 @@ private:
 
 typedef App::FeaturePythonT<FeatureViewPart> FeatureViewPartPython;
 
-
 } //namespace Drawing
 
-
-#endif
+#endif  // #ifndef _FeatureViewPart_h_

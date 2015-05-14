@@ -48,8 +48,8 @@
 
 using namespace DrawingGui;
 
-const float lineScaleFactor = 1.;                                      //temp fiddle for devel
-const float vertexScaleFactor = 2.;                                    //temp fiddle for devel
+const float lineScaleFactor = 1.;   // temp fiddle for devel
+const float vertexScaleFactor = 2.; // temp fiddle for devel
 
 QGraphicsItemViewPart::QGraphicsItemViewPart(const QPoint &pos, QGraphicsScene *scene)
                 :QGraphicsItemView(pos, scene)
@@ -203,8 +203,10 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
 
 void QGraphicsItemViewPart::updateView(bool update)
 {
-    if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewPart::getClassTypeId()))
+    if (getViewObject() == 0 ||
+        !getViewObject()->isDerivedFrom(Drawing::FeatureViewPart::getClassTypeId())) {
         return;
+    }
 
     QGraphicsItemView::updateView(update);
 
@@ -216,23 +218,25 @@ void QGraphicsItemViewPart::updateView(bool update)
        viewPart->Direction.isTouched() ||
        viewPart->Tolerance.isTouched() ||
        viewPart->Scale.isTouched() ||
-       viewPart->ShowHiddenLines.isTouched()){
+       viewPart->ShowHiddenLines.isTouched()) {
         // Remove all existing graphical representations (QGIxxxx)
         prepareGeometryChange();
         QList<QGraphicsItem *> items = this->childItems();
         for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); ++it) {
-            if(dynamic_cast<QGraphicsItemEdge *> (*it) ||
-              dynamic_cast<QGraphicsItemFace *>(*it) ||
-              dynamic_cast<QGraphicsItemVertex *>(*it)) {
+            if (dynamic_cast<QGraphicsItemEdge *> (*it) ||
+                dynamic_cast<QGraphicsItemFace *>(*it) ||
+                dynamic_cast<QGraphicsItemVertex *>(*it)) {
                 removeFromGroup(*it);
                 scene()->removeItem(*it);
-                deleteItems.append(*it);                               // We store these and delete till later to prevent rendering crash ISSUE
+
+                // We store these and delete till later to prevent rendering crash ISSUE
+                deleteItems.append(*it);
             }
         }
         draw();
     } else if(viewPart->LineWidth.isTouched() ||
               viewPart->HiddenWidth.isTouched()) {
-        QList<QGraphicsItem *> items = this->childItems();
+        QList<QGraphicsItem *> items = childItems();
         for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); ++it) {
             QGraphicsItemEdge *edge = dynamic_cast<QGraphicsItemEdge *>(*it);
             if(edge  && edge->getHiddenEdge()) {
@@ -251,8 +255,10 @@ void QGraphicsItemViewPart::draw() {
 
 void QGraphicsItemViewPart::drawViewPart()
 {
-    if(getViewObject() == 0 || !getViewObject()->isDerivedFrom(Drawing::FeatureViewPart::getClassTypeId()))
+    if ( getViewObject() == 0 ||
+         !getViewObject()->isDerivedFrom(Drawing::FeatureViewPart::getClassTypeId())) {
         return;
+    }
 
     Drawing::FeatureViewPart *part = dynamic_cast<Drawing::FeatureViewPart *>(this->getViewObject());
 

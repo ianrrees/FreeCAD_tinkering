@@ -107,21 +107,27 @@ App::DocumentObjectExecReturn *FeatureViewPart::execute(void)
     App::DocumentObject *link = Source.getValue();
 
     //Base::Console().Log("execute view feat");
-    if (!link)
+    if (!link) {
         return new App::DocumentObjectExecReturn("No object linked");
+    }
 
-    if (!link->getTypeId().isDerivedFrom(Part::Feature::getClassTypeId()))
+    if (!link->getTypeId().isDerivedFrom(Part::Feature::getClassTypeId())) {
         return new App::DocumentObjectExecReturn("Linked object is not a Part object");
+    }
 
     TopoDS_Shape shape = static_cast<Part::Feature*>(link)->Shape.getShape()._Shape;
-    if (shape.IsNull())
+    if (shape.IsNull()) {
         return new App::DocumentObjectExecReturn("Linked shape object is empty");
+    }
 
     try {
         geometryObject->setTolerance(Tolerance.getValue());
         geometryObject->setScale(Scale.getValue());
         //TODO: Do we need to check for XAxisDirection having nonzero length here?
-        geometryObject->extractGeometry(shape, Direction.getValue(), ShowHiddenLines.getValue(), XAxisDirection.getValue());
+        geometryObject->extractGeometry(shape,
+                                        Direction.getValue(),
+                                        ShowHiddenLines.getValue(),
+                                        XAxisDirection.getValue());
 
         bbox = geometryObject->calcBoundingBox();
         touch();
@@ -149,14 +155,12 @@ App::DocumentObjectExecReturn *FeatureViewPart::execute(void)
 short FeatureViewPart::mustExecute() const
 {
     // If Tolerance Property is touched
-    if(Direction.isTouched() ||
-       XAxisDirection.isTouched() ||
-       Source.isTouched() ||
-       Scale.isTouched() ||
-       ScaleType.isTouched() ||
-       ShowHiddenLines.isTouched())
-        return 1;
-
+    return (Direction.isTouched() ||
+            XAxisDirection.isTouched() ||
+            Source.isTouched() ||
+            Scale.isTouched() ||
+            ScaleType.isTouched() ||
+            ShowHiddenLines.isTouched());
 }
 
 void FeatureViewPart::onChanged(const App::Property* prop)
@@ -268,3 +272,4 @@ template<> const char* Drawing::FeatureViewPartPython::getViewProviderName(void)
 // explicit template instantiation
 template class DrawingExport FeaturePythonT<Drawing::FeatureViewPart>;
 }
+

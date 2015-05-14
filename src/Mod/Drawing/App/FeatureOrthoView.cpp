@@ -72,17 +72,15 @@ short FeatureOrthoView::mustExecute() const
     return Drawing::FeatureViewPart::mustExecute();
 }
 
-void FeatureOrthoView::onChanged(const App::Property* prop)
+void FeatureOrthoView::onChanged(const App::Property *prop)
 {
     Drawing::FeatureViewPart::onChanged(prop);
 
     //TODO: Should we allow changes to the Type here?  Seems that should be handled through FeatureViewOrthographic
-    if (prop == &Type &&
-        Type.isTouched()
-    ){
-          if (!isRestoring()) {
-              execute();
-          }
+    if (prop == &Type && Type.isTouched()) {
+        if (!isRestoring()) {
+            execute();
+        }
     }
 
 }

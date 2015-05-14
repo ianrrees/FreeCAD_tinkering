@@ -54,12 +54,12 @@ FeatureViewCollection::~FeatureViewCollection()
 
 int FeatureViewCollection::addView(FeatureView *view)
 {
-      // Add the new view to the collection
+    // Add the new view to the collection
     std::vector<App::DocumentObject *> newViews(Views.getValues());
     newViews.push_back(view);
     Views.setValues(newViews);
 
-    this->touch();
+    touch();
 //TODO: also have to touch the parent page's views to get repaint??
     FeaturePage* page = findParentPage();
     if (page) {
@@ -71,11 +71,12 @@ int FeatureViewCollection::addView(FeatureView *view)
 short FeatureViewCollection::mustExecute() const
 {
     // If Tolerance Property is touched
-    if(Views.isTouched() ||
-       Source.isTouched()) {
+    if (Views.isTouched() ||
+        Source.isTouched()) {
         return 1;
-   } else
+    } else {
         return Drawing::FeatureView::mustExecute();
+    }
 }
 
 int FeatureViewCollection::countChildren()
@@ -124,10 +125,9 @@ void FeatureViewCollection::onChanged(const App::Property* prop)
 
 App::DocumentObjectExecReturn *FeatureViewCollection::execute(void)
 {
-    if(strcmp(ScaleType.getValueAsString(), "Document") == 0) {
+    if (ScaleType.isValue("Document")) {
         // Recalculate scale
-
-        this->Scale.StatusBits.set(2);
+        Scale.StatusBits.set(App::Prop_ReadOnly);
 
         const std::vector<App::DocumentObject *> &views = Views.getValues();
         for(std::vector<App::DocumentObject *>::const_iterator it = views.begin(); it != views.end(); ++it) {
@@ -142,7 +142,7 @@ App::DocumentObjectExecReturn *FeatureViewCollection::execute(void)
         }
     } else if(strcmp(ScaleType.getValueAsString(), "Custom") == 0) {
         // Rebuild the view
-        this->Scale.StatusBits.set(2, false);
+        Scale.StatusBits.set(App::Prop_ReadOnly, false);
 
         const std::vector<App::DocumentObject *> &views = Views.getValues();
         for(std::vector<App::DocumentObject *>::const_iterator it = views.begin(); it != views.end(); ++it) {
@@ -152,7 +152,7 @@ App::DocumentObjectExecReturn *FeatureViewCollection::execute(void)
 
                 view->ScaleType.setValue("Custom");
                 // Set scale factor of each view
-                view->Scale.setValue(this->Scale.getValue());
+                view->Scale.setValue(Scale.getValue());
                 view->touch();
             }
         }

@@ -288,14 +288,15 @@ App::DocumentObject * FeatureViewOrthographic::addOrthoView(const char *viewProj
 
         view = dynamic_cast<Drawing::FeatureOrthoView *>( docObj );
         view->Source.setValue( Source.getValue() );
+        view->ScaleType.setValue( ScaleType.getValue() );
         view->Scale.setValue( Scale.getValue() );
         view->Type.setValue( viewProjType );
         view->Label.setValue( viewProjType );
         setViewOrientation( view, viewProjType );
-    }
 
-    addView(view);         //from FeatureViewCollection
-    moveToCentre();
+        addView(view);         //from FeatureViewCollection
+        moveToCentre();
+    }
 
     return view;
 }
@@ -559,9 +560,9 @@ void FeatureViewOrthographic::setFrontViewOrientation(const Base::Matrix4D &newM
 
 App::DocumentObjectExecReturn *FeatureViewOrthographic::execute(void)
 {
-    if(strcmp(ScaleType.getValueAsString(), "Automatic") == 0) {
-        //Recalculate scale
+    if (ScaleType.isValue("Automatic")) {
 
+        //Recalculate scale
         double autoScale = calculateAutomaticScale();
 
         if(std::abs(Scale.getValue() - autoScale) > FLT_EPSILON) {

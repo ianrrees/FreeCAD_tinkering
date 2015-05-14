@@ -92,7 +92,7 @@ App::DocumentObjectExecReturn *FeatureView::recompute(void)
 
 App::DocumentObjectExecReturn *FeatureView::execute(void)
 {
-    if(strcmp(ScaleType.getValueAsString(), "Document") == 0) {
+    if (ScaleType.isValue("Document")) {
         Scale.StatusBits.set(2, true);
 
         Drawing::FeaturePage *page = findParentPage();
@@ -102,7 +102,7 @@ App::DocumentObjectExecReturn *FeatureView::execute(void)
                 Scale.touch();
             }
         }
-    } else if(strcmp(ScaleType.getValueAsString(), "Custom") == 0) {
+    } else if (ScaleType.isValue("Custom")) {
         Scale.StatusBits.set(2, false);
         //TODO: need to ?recompute? ?redraw? to get this to stick.  Mantis #1941
         //currently need to lose focus and re-get focus to make Scale editable.
@@ -129,7 +129,7 @@ void FeatureView::onChanged(const App::Property* prop)
 void FeatureView::onDocumentRestored()
 {
     // Rebuild the view
-    this->execute();
+    execute();
 }
 
 FeaturePage* FeatureView::findParentPage() const
