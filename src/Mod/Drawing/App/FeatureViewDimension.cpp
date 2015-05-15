@@ -71,7 +71,7 @@ FeatureViewDimension::FeatureViewDimension(void)
     ADD_PROPERTY_TYPE(References,(0,0),"Dimension",(App::PropertyType)(App::Prop_None),"Dimension Supporting References");
     ADD_PROPERTY_TYPE(Precision,(2)   ,"Dimension",(App::PropertyType)(App::Prop_None),"Dimension Precision");
     ADD_PROPERTY_TYPE(Font ,(fontName.c_str()),"Dimension",App::Prop_None, "The name of the font to use");
-    ADD_PROPERTY_TYPE(Fontsize,(6)    ,"Dimension",(App::PropertyType)(App::Prop_None),"Dimension Font Size");
+    ADD_PROPERTY_TYPE(Fontsize,(4)    ,"Dimension",(App::PropertyType)(App::Prop_None),"Dimension text size in mm");
     ADD_PROPERTY_TYPE(CentreLines,(0) ,"Dimension",(App::PropertyType)(App::Prop_None),"Dimension Center Lines");
     ADD_PROPERTY_TYPE(ProjDirection ,(0.,0.,1.0), "Dimension",App::Prop_None,"Projection normal direction");
     ADD_PROPERTY_TYPE(FormatSpec,("%value%") ,"Dimension",(App::PropertyType)(App::Prop_None),"Dimension Format");

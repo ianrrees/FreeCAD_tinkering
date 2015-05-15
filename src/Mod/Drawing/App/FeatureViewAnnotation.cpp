@@ -51,7 +51,7 @@ PROPERTY_SOURCE(Drawing::FeatureViewAnnotation, Drawing::FeatureView)
 
 FeatureViewAnnotation::FeatureViewAnnotation(void) 
 {
-    static const char *vgroup = "Drawing view";
+    static const char *vgroup = "Annotation";
 
     Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
         .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing");
@@ -61,7 +61,7 @@ FeatureViewAnnotation::FeatureViewAnnotation(void)
     ADD_PROPERTY_TYPE(Font ,(fontName.c_str())         ,vgroup,App::Prop_None, "The name of the font to use");
     ADD_PROPERTY_TYPE(TextColor,(0.0f,0.0f,0.0f),vgroup,App::Prop_None,"The color of the text");
 
-    ADD_PROPERTY_TYPE(TextSize,(24),vgroup,App::Prop_None,"The size of the text in points");
+    ADD_PROPERTY_TYPE(TextSize,(8),vgroup,App::Prop_None,"The size of the text in mm");
     
     Scale.StatusBits.set(3);         //hide scale.  n/a for Annotation
     ScaleType.StatusBits.set(3);
