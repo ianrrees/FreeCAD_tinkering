@@ -213,8 +213,6 @@ QGraphicsItemViewDimension::QGraphicsItemViewDimension(const QPoint &pos, QGraph
 
 QGraphicsItemViewDimension::~QGraphicsItemViewDimension()
 {
-    // datumLabel, arrows, centreLines belong to this group & will be deleted by group
-    clearProjectionCache();
 }
 
 void QGraphicsItemViewDimension::setViewPartFeature(Drawing::FeatureViewDimension *obj)
@@ -235,14 +233,6 @@ void QGraphicsItemViewDimension::setViewPartFeature(Drawing::FeatureViewDimensio
     updateDim();
     this->draw();
     Q_EMIT dirty();
-}
-void QGraphicsItemViewDimension::clearProjectionCache()
-{
-    for(std::vector<DrawingGeometry::BaseGeom *>::iterator it = projGeom.begin(); it != projGeom.end(); ++it) {
-        delete *it;
-    }
-
-    projGeom.clear();
 }
 
 void QGraphicsItemViewDimension::select(bool state)
@@ -265,20 +255,6 @@ void QGraphicsItemViewDimension::updateView(bool update)
 
     std::vector<App::DocumentObject *> refs = dim->References.getValues();
 
-  if(update ||
-       dim->References.isTouched() ||
-       dim->ProjDirection.isTouched()) {
-        // Reset the cache;
-        clearProjectionCache();
-    }
-
-    for(std::vector<App::DocumentObject *>::iterator it = refs.begin(); it != refs.end(); ++it) {
-      if((*it)->isTouched()) {
-          clearProjectionCache();
-          break;
-      }
-    }
-
     QGraphicsItemDatumLabel *dLabel = dynamic_cast<QGraphicsItemDatumLabel *>(this->datumLabel);
 
     // Identify what changed to prevent complete redraw
@@ -287,7 +263,7 @@ void QGraphicsItemViewDimension::updateView(bool update)
 
 
         QFont font = dLabel->font();
-        font.setPointSizeF(dim->Fontsize.getValue());
+        font.setPointSizeF(dim->Fontsize.getValue());          //scene units (mm), not points
         font.setFamily(QString::fromAscii(dim->Font.getValue()));
 
         dLabel->setFont(font);
@@ -324,7 +300,7 @@ void QGraphicsItemViewDimension::updateDim()
     const char *dimType = dim->Type.getValueAsString();
 
     QFont font = dLabel->font();
-    font.setPointSizeF(dim->Fontsize.getValue());
+    font.setPointSizeF(dim->Fontsize.getValue());            //scene units (mm), not points
     font.setFamily(QString::fromAscii(dim->Font.getValue()));
 
     dLabel->setPlainText(labelText);
@@ -386,28 +362,26 @@ void QGraphicsItemViewDimension::draw()
        strcmp(dimType, "DistanceX") == 0 ||
        strcmp(dimType, "DistanceY") == 0) {
 
-        Base::Vector3d p1, p2;
+        Base::Vector3d distStart, distEnd;
         if(dim->References.getValues().size() == 1 && SubNames[0].substr(0,4) == "Edge") {
-            // Assuming currently just edge
 
             const Drawing::FeatureViewPart *refObj = static_cast<const Drawing::FeatureViewPart*>(objects[0]);
             int idx = std::atoi(SubNames[0].substr(4,4000).c_str());
 
-            // Use the cached value
             if(projGeom.size() != 1 || !projGeom.at(0)) {
-                clearProjectionCache();
-                projGeom.push_back(refObj->getCompleteEdge(idx));
+                projGeom.clear();
+                projGeom.push_back(refObj->getEdgeGeomByRef(idx));
             }
 
             if(projGeom.at(0) && projGeom.at(0)->geomType == DrawingGeometry::GENERIC ) {
                 DrawingGeometry::Generic *gen = static_cast<DrawingGeometry::Generic *>(projGeom.at(0));
                 Base::Vector2D pnt1 = gen->points.at(0);
                 Base::Vector2D pnt2 = gen->points.at(1);
-                p1 = Base::Vector3d(pnt1.fX, pnt1.fY, 0.);
-                p2 = Base::Vector3d(pnt2.fX, pnt2.fY, 0.);
+                distStart = Base::Vector3d(pnt1.fX, pnt1.fY, 0.);
+                distEnd = Base::Vector3d(pnt2.fX, pnt2.fY, 0.);
 
             } else {
-                clearProjectionCache();
+                projGeom.clear();
                 throw Base::Exception("Original edge not found or is invalid type");
             }
 
@@ -419,28 +393,23 @@ void QGraphicsItemViewDimension::draw()
             int idx = std::atoi(SubNames[0].substr(6,4000).c_str());
             int idx2 = std::atoi(SubNames[1].substr(6,4000).c_str());
 
-            DrawingGeometry::Vertex *v1 = refObj->getVertex(idx);
-            DrawingGeometry::Vertex *v2 = refObj->getVertex(idx2);
-            p1 = Base::Vector3d (v1->pnt.fX, v1->pnt.fY, 0.);
-            p2 = Base::Vector3d (v2->pnt.fX, v2->pnt.fY, 0.);
-
-            // Do some house keeping
-            delete v1; v1 = 0;
-            delete v2; v2 = 0;
+            DrawingGeometry::Vertex *v1 = refObj->getVertexGeomByRef(idx);
+            DrawingGeometry::Vertex *v2 = refObj->getVertexGeomByRef(idx2);
+            distStart = Base::Vector3d (v1->pnt.fX, v1->pnt.fY, 0.);
+            distEnd = Base::Vector3d (v2->pnt.fX, v2->pnt.fY, 0.);
 
         } else if(dim->References.getValues().size() == 2 &&
             SubNames[0].substr(0,4) == "Edge" &&
             SubNames[1].substr(0,4) == "Edge") {
-            // Point to Point Dimension
+            // Edge to Edge Dimension
             const Drawing::FeatureViewPart *refObj = static_cast<const Drawing::FeatureViewPart*>(objects[0]);
             int idx = std::atoi(SubNames[0].substr(4,4000).c_str());
             int idx2 = std::atoi(SubNames[1].substr(4,4000).c_str());
 
-            // Use the cached value or gather projected edges
             if(projGeom.size() != 2 || !projGeom.at(0) || !projGeom.at(0)) {
-                clearProjectionCache();
-                projGeom.push_back(refObj->getCompleteEdge(idx));
-                projGeom.push_back(refObj->getCompleteEdge(idx2));
+                projGeom.clear();
+                projGeom.push_back(refObj->getEdgeGeomByRef(idx));
+                projGeom.push_back(refObj->getEdgeGeomByRef(idx2));
             }
 
             if ( (projGeom.at(0) && projGeom.at(0)->geomType == DrawingGeometry::GENERIC) ||
@@ -448,38 +417,36 @@ void QGraphicsItemViewDimension::draw()
                 DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(projGeom.at(0));
                 DrawingGeometry::Generic *gen2 = static_cast<DrawingGeometry::Generic *>(projGeom.at(1));
 
-                // Get Points for line
                 Base::Vector2D pnt1, pnt2;
-                Base::Vector3d p1S, p1E, p2S, p2E;
+                Base::Vector3d edge1Start, edge1End, edge2Start, edge2End;
                 pnt1 = gen1->points.at(0);
                 pnt2 = gen1->points.at(1);
 
-                p1S = Base::Vector3d(pnt1.fX, pnt1.fY, 0);
-                p1E = Base::Vector3d(pnt2.fX, pnt2.fY, 0);
+                edge1Start = Base::Vector3d(pnt1.fX, pnt1.fY, 0);
+                edge1End = Base::Vector3d(pnt2.fX, pnt2.fY, 0);
 
                 pnt1 = gen2->points.at(0);
                 pnt2 = gen2->points.at(1);
 
-                p2S = Base::Vector3d(pnt1.fX, pnt1.fY, 0);
-                p2E = Base::Vector3d(pnt2.fX, pnt2.fY, 0);
+                edge2Start = Base::Vector3d(pnt1.fX, pnt1.fY, 0);
+                edge2End = Base::Vector3d(pnt2.fX, pnt2.fY, 0);
 
-                // Calaculate dot product using p1S as reference
-                Base::Vector3d lin1 = p1E - p1S;
-                Base::Vector3d lin2 = p2E - p2S;
+                // figure out which end of each edge to use for distance calculation
+                Base::Vector3d lin1 = edge1End - edge1Start;                    //vector from edge1Start to edge2End
+                Base::Vector3d lin2 = edge2End - edge2Start;
 
-                Base::Vector3d labelV1 = lblCenter - p1S;
-                Base::Vector3d labelV2 = lblCenter - p2S;
+                Base::Vector3d labelV1 = lblCenter - edge1Start;                //vector from edge1Start to lblCenter
+                Base::Vector3d labelV2 = lblCenter - edge2Start;
 
-                //Sort first edges
-                if(lin1.x * labelV1.x + lin1.y * labelV1.y > 0.)
-                    p1 = p1E;
+                if(lin1.x * labelV1.x + lin1.y * labelV1.y > 0.)       //dotprod > 0 ==> angle(lin1,labelV1) < PI/2??
+                    distStart = edge1End;
                 else
-                    p1 = p1S;
+                    distStart = edge1Start;
 
                 if(lin2.x * labelV2.x + lin2.y * labelV2.y > 0.)
-                    p2 = p2E;
+                    distEnd = edge2End;
                 else
-                    p2 = p2S;
+                    distEnd = edge2Start;
 
             } else {
                 throw Base::Exception("Invalid reference for dimension type");
@@ -489,18 +456,18 @@ void QGraphicsItemViewDimension::draw()
         Base::Vector3d dir, norm;
 
         if (strcmp(dimType, "Distance") == 0 ) {
-            dir = (p2-p1);
+            dir = (distEnd-distStart);
         } else if (strcmp(dimType, "DistanceX") == 0 ) {
-            dir = Base::Vector3d ( (p2[0] - p1[0] >= FLT_EPSILON) ? 1 : -1, 0, 0);
+            dir = Base::Vector3d ( ((distEnd.x - distStart.x >= FLT_EPSILON) ? 1 : -1) , 0, 0);
         } else if (strcmp(dimType, "DistanceY") == 0 ) {
-            dir = Base::Vector3d (0, (p2[1] - p1[1] >= FLT_EPSILON) ? 1 : -1, 0);
+            dir = Base::Vector3d (0, ((distEnd.y - distStart.y >= FLT_EPSILON) ? 1 : -1) , 0);
         }
 
         dir.Normalize();
-        norm = Base::Vector3d (-dir[1],dir[0], 0);
+        norm = Base::Vector3d (-dir.y,dir.x, 0);
 
-        // Get magnitude of angle between horizontal
-        float angle = atan2f(dir[1],dir[0]);
+        // Get magnitude of angle between dir and horizontal
+        float angle = atan2f(dir.y,dir.x);
         bool flip=false;
         if (angle > M_PI_2+M_PI/12) {
             angle -= (float)M_PI;
@@ -510,19 +477,19 @@ void QGraphicsItemViewDimension::draw()
             flip = true;
         }
 
-        // when the datum line is not parallel to p1-p2 the projection of
-        // p1-p2 on norm is not zero, p2 is considered as reference and p1
-        // is replaced by its projection p1_
-        float normproj12 = (p2-p1)[0] * norm[0] + (p2-p1)[1] * norm[1];
-        Base::Vector3d p1_ = p1 + norm * normproj12;
+        // when the datum line(dimension line??) is not parallel to (distStart-distEnd) the projection of
+        // (distStart-distEnd) on norm is not zero, distEnd is considered as reference and distStart
+        // is replaced by its projection distStart_
+        float normproj12 = (distEnd-distStart).x * norm.x + (distEnd-distStart).y * norm.y;
+        Base::Vector3d distStart_ = distStart + norm * normproj12;
 
-        Base::Vector3d midpos = (p1_ + p2) / 2;
+        Base::Vector3d midpos = (distStart_ + distEnd) / 2;
 
         QFontMetrics fm(lbl->font());
         int w = fm.width(labelText);
         int h = fm.height();
 
-        Base::Vector3d vec = lblCenter - p2;
+        Base::Vector3d vec = lblCenter - distEnd;
         float length = vec.x * norm.x + vec.y * norm.y;
 
         float margin = 3.f;
@@ -531,63 +498,62 @@ void QGraphicsItemViewDimension::draw()
         float offset1 = (length + normproj12 < 0) ? -margin : margin;
         float offset2 = (length < 0) ? -margin : margin;
 
-        Base::Vector3d perp1 = p1_ + norm * (length + offset1 * scaler);
-        Base::Vector3d perp2 = p2  + norm * (length + offset2 * scaler);
+        Base::Vector3d ext1End = distStart_ + norm * (length + offset1 * scaler);   //extension line 1 end
+        Base::Vector3d ext2End = distEnd  + norm * (length + offset2 * scaler);
 
-        // Calculate the coordinates for the parallel datum lines
-        Base::Vector3d  par1 = p1_ + norm * length;
-
-        Base::Vector3d  par2 = lblCenter - dir * (w / 2 + margin);
-        Base::Vector3d  par3 = lblCenter + dir * (w / 2 + margin);
-        Base::Vector3d  par4 = p2  + norm * length;
+        // Calculate the start/end for the Dimension lines
+        Base::Vector3d  dim1Tip = distStart_ + norm * length;              //dim line 1 tip
+        Base::Vector3d  dim1Tail = lblCenter - dir * (w / 2 + margin);     //dim line 1 tail
+        Base::Vector3d  dim2Tip = lblCenter + dir * (w / 2 + margin);
+        Base::Vector3d  dim2Tail = distEnd  + norm * length;
 
         // Add a small margin
-        //p1_ += norm * margin * 0.5;
-       // p2  += norm * margin * 0.5;
+        //distStart_ += norm * margin * 0.5;
+       // distEnd  += norm * margin * 0.5;
 
         bool flipTriang = false;
 
-        Base::Vector3d del1 = (par3-par1);
-        Base::Vector3d del2 = (par2-par1);
+        Base::Vector3d del1 = (dim2Tip-dim1Tip);
+        Base::Vector3d del2 = (dim1Tail-dim1Tip);
         float dot1 = del1.x * dir.x + del1.y * dir.y;
         float dot2 = del2.x * dir.x + del2.y * dir.y;
 
-        //Compare to see if datum label is larger than dimension
-        if (dot1 > (par4 - par1).Length()) {
+        //Compare to see if Dimension text is larger than dimension
+        if (dot1 > (dim2Tail - dim1Tip).Length()) {
             // Increase Margin to improve visability
             float tmpMargin = 10.f * scaler;
-            par3 = par4;
-            if(dot2 > (par4 - par1).Length()) {
-                par3 = par2;
-                par2 = par1 - dir * tmpMargin;
+            dim2Tip = dim2Tail;
+            if(dot2 > (dim2Tail - dim1Tip).Length()) {
+                dim2Tip = dim1Tail;
+                dim1Tail = dim1Tip - dir * tmpMargin;
                 flipTriang = true;
             }
         } else if (dot2 < 0.f) {
             float tmpMargin = 10.f * scaler;
-            par2 = par1;
+            dim1Tail = dim1Tip;
             if(dot1 < 0.f) {
-                par2 = par3;
-                par3 = par4 + dir * tmpMargin;
+                dim1Tail = dim2Tip;
+                dim2Tip = dim2Tail + dir * tmpMargin;
                 flipTriang = true;
             }
         }
 
 
 
-        // Perp Lines
+        // Extension lines
         QPainterPath path;
-        path.moveTo(p1.x, p1.y);
-        path.lineTo(perp1.x, perp1.y);
+        path.moveTo(distStart.x, distStart.y);
+        path.lineTo(ext1End.x, ext1End.y);
 
-        path.moveTo(p2.x, p2.y);
-        path.lineTo(perp2.x, perp2.y);
+        path.moveTo(distEnd.x, distEnd.y);
+        path.lineTo(ext2End.x, ext2End.y);
 
-        // Parallel Lines
-        path.moveTo(par1.x, par1.y);
-        path.lineTo(par2.x, par2.y);
+        //Dimension lines
+        path.moveTo(dim1Tip.x, dim1Tip.y);
+        path.lineTo(dim1Tail.x, dim1Tail.y);
 
-        path.moveTo(par3.x, par3.y);
-        path.lineTo(par4.x, par4.y);
+        path.moveTo(dim2Tip.x, dim2Tip.y);
+        path.lineTo(dim2Tail.x, dim2Tail.y);
 
         QGraphicsPathItem *arrw = dynamic_cast<QGraphicsPathItem *> (this->arrows);
         arrw->setPath(path);
@@ -609,7 +575,7 @@ void QGraphicsItemViewDimension::draw()
             arw.clear();
 
             // These items are added to the scene-graph so should be handled by the canvas
-            QGraphicsItemArrow *ar1 = new QGraphicsItemArrow();
+            QGraphicsItemArrow *ar1 = new QGraphicsItemArrow();        //arrowhead
             QGraphicsItemArrow *ar2 = new QGraphicsItemArrow();
             arw.push_back(ar1);
             arw.push_back(ar2);
@@ -636,8 +602,8 @@ void QGraphicsItemViewDimension::draw()
             ar2->setRotation(arrowAngle);
         }
 
-        ar1->setPos(par1[0], par1[1]);
-        ar2->setPos(par4[0], par4[1]);
+        ar1->setPos(dim1Tip.x, dim1Tip.y);
+        ar2->setPos(dim2Tail.x, dim2Tail.y);
 
         ar1->setHighlighted(isSelected() || this->hasHover);
         ar2->setHighlighted(isSelected() || this->hasHover);
@@ -645,6 +611,7 @@ void QGraphicsItemViewDimension::draw()
     } else if(strcmp(dimType, "Diameter") == 0) {
         // Not sure whether to treat radius and diameter as the same
         // terminology: Dimension Text, Dimension Line(s), Extension Lines, Arrowheads
+        // not datumLabel, datum line/parallel line, perpendicular line, arw
         Base::Vector3d arrow1Tip, arrow2Tip, dirDimLine, centre; //was p1,p2,dir
         QGraphicsItemDatumLabel *label = dynamic_cast<QGraphicsItemDatumLabel *>(this->datumLabel);
         Base::Vector3d lblCenter(label->X(), label->Y(), 0);
@@ -659,8 +626,8 @@ void QGraphicsItemViewDimension::draw()
 
             // Use the cached value if available otherwise load this
             if(projGeom.size() != 1) {
-                clearProjectionCache();
-                DrawingGeometry::BaseGeom *geom = refObj->getCompleteEdge(idx);
+                projGeom.clear();
+                DrawingGeometry::BaseGeom *geom = refObj->getEdgeGeomByRef(idx);
 
                 if(!geom)
                     throw Base::Exception("Edge couldn't be found for radius / diameter dimension");
@@ -674,7 +641,7 @@ void QGraphicsItemViewDimension::draw()
                   radius = circ->radius;
                   centre = Base::Vector3d (circ->center.fX, circ->center.fY, 0);
             } else {
-                clearProjectionCache();
+                projGeom.clear();
                 throw Base::Exception("Original edge not found or is invalid type");
             }
         } else {
@@ -953,8 +920,8 @@ void QGraphicsItemViewDimension::draw()
 
             // Use the cached value if available otherwise load this
             if(projGeom.size() != 1) {
-                clearProjectionCache();
-                DrawingGeometry::BaseGeom *geom = refObj->getCompleteEdge(idx);
+                projGeom.clear();
+                DrawingGeometry::BaseGeom *geom = refObj->getEdgeGeomByRef(idx);
 
                 if(!geom)
                     throw Base::Exception("Edge couldn't be found for radius / diameter dimension");
@@ -968,7 +935,7 @@ void QGraphicsItemViewDimension::draw()
                   radius = circ->radius;
                   centre = Base::Vector3d (circ->center.fX, circ->center.fY, 0);
             } else {
-                clearProjectionCache();
+                projGeom.clear();
                 throw Base::Exception("Original edge not found or is invalid type");
             }
         } else {
@@ -1131,9 +1098,9 @@ void QGraphicsItemViewDimension::draw()
 
             // Use the cached value or gather projected edges
             if(projGeom.size() != 2 || !projGeom.at(0) || !projGeom.at(0)) {
-                clearProjectionCache();
-                projGeom.push_back(refObj->getCompleteEdge(idx));
-                projGeom.push_back(refObj->getCompleteEdge(idx2));
+                projGeom.clear();
+                projGeom.push_back(refObj->getEdgeGeomByRef(idx));
+                projGeom.push_back(refObj->getEdgeGeomByRef(idx2));
             }
 
             if ( (projGeom.at(0) && projGeom.at(0)->geomType == DrawingGeometry::GENERIC) ||

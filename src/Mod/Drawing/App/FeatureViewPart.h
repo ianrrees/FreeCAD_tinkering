@@ -61,6 +61,8 @@ public:
 
     DrawingGeometry::BaseGeom * getCompleteEdge(int idx) const;
     DrawingGeometry::Vertex   * getVertex(int idx) const;
+    DrawingGeometry::Vertex*    getVertexGeomByRef(int ref) const;
+    DrawingGeometry::BaseGeom*  getEdgeGeomByRef(int ref) const;
 
     /// Get References for geometric features
     const std::vector<int> & getVertexReferences() const;

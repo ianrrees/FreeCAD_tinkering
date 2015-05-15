@@ -400,7 +400,9 @@ void CmdDrawingNewLengthDimension::activated(int iMsg)
     std::vector<App::DocumentObject *> objs;
     std::vector<std::string> subs;
 
-    if (_isValidSingleEdge(this) < isCircle) {
+    if ((_isValidSingleEdge(this) == isHorizontal) ||
+        (_isValidSingleEdge(this) == isVertical) ||
+        (_isValidSingleEdge(this) == isDiagonal)) {
         objs.push_back(objFeat);
         subs.push_back(SubNames[0]);
     } else if (_isValidVertexes(this)) {
@@ -408,7 +410,9 @@ void CmdDrawingNewLengthDimension::activated(int iMsg)
         objs.push_back(objFeat);
         subs.push_back(SubNames[0]);
         subs.push_back(SubNames[1]);
-    } else if (_isValidEdgeToEdge(this) < isCircle) {
+    } else if ((_isValidEdgeToEdge(this) == isHorizontal) ||
+               (_isValidEdgeToEdge(this) == isVertical) ||
+               (_isValidEdgeToEdge(this) == isVertical)) {
         objs.push_back(objFeat);
         objs.push_back(objFeat);
         subs.push_back(SubNames[0]);

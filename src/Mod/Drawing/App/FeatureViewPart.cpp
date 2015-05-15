@@ -167,6 +167,7 @@ void FeatureViewPart::onChanged(const App::Property* prop)
 {
     FeatureView::onChanged(prop);
 
+//TODO: when scale changes, any Dimensions for this View sb recalculated.  
     if (prop == &Direction ||
         prop == &XAxisDirection ||
         prop == &Source ||
@@ -253,6 +254,43 @@ DrawingGeometry::Vertex * FeatureViewPart::getVertex(int idx) const
     return prjShape;
 }
 
+DrawingGeometry::Vertex* FeatureViewPart::getVertexGeomByRef(int ref) const 
+{
+    const std::vector<DrawingGeometry::Vertex *> &verts = getVertexGeometry();
+    const std::vector<int> &vertRefs                    = getVertexReferences();
+    std::vector<DrawingGeometry::Vertex *>::const_iterator vert = verts.begin();
+    bool found = false;
+    for(int i = 0 ; vert != verts.end(); ++vert, i++) {
+        if (vertRefs[i] == ref) {
+            found = true;
+            break;
+        }
+    }
+    if (found) {
+        return (*vert);
+    } else {
+        throw Base::Exception("getVertexGeomByRef: no vertex geometry for ref");
+    }
+}
+
+DrawingGeometry::BaseGeom* FeatureViewPart::getEdgeGeomByRef(int ref) const 
+{
+    const std::vector<DrawingGeometry::BaseGeom *> &geoms = getEdgeGeometry();
+    const std::vector<int> &refs = getEdgeReferences();
+    std::vector<DrawingGeometry::BaseGeom*>::const_iterator it = geoms.begin();
+    bool found = false;
+    for(int i = 0 ; it != geoms.end(); ++it, i++) {
+        if (refs[i] == ref) {
+            found = true;
+            break;
+        }
+    }
+    if (found) {
+        return (*it);
+    } else {
+        throw Base::Exception("getEdgeGeomByRef: no edge geometry for ref");
+    }
+}
 
 Base::BoundBox3d FeatureViewPart::getBoundingBox() const
 {

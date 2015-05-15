@@ -112,7 +112,6 @@ public Q_SLOTS:
 
 protected:
     void draw();
-    void clearProjectionCache();
     // Selection detection
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
