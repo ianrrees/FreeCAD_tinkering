@@ -80,7 +80,7 @@ QGraphicsItemView::QGraphicsItemView(const QPoint &pos, QGraphicsScene *scene)
     hGrp = App::GetApplication().GetUserParameter().GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing");
     std::string fontName = hGrp->GetASCII("LabelFont", "osifont");
     m_font.setFamily(QString::fromStdString(fontName));
-    m_font.setPointSize(5.f);                                                   //TODO: m_font needs scaling. 5 sb too small.
+    m_font.setPointSize(5.0);     //scene units (mm), not points
 
     //Add object to scene
     scene->addItem(this);
