@@ -73,6 +73,8 @@ using namespace std;
 // FeatureViewPart
 //===========================================================================
 
+Base::Vector3d _getValidXDir(const FeatureViewPart *me);
+
 App::PropertyFloatConstraint::Constraints FeatureViewPart::floatRange = {0.01f,5.0f,0.05f};
 
 PROPERTY_SOURCE(Drawing::FeatureViewPart, Drawing::FeatureView)
@@ -90,7 +92,7 @@ FeatureViewPart::FeatureViewPart(void) : geometryObject(0)
     ADD_PROPERTY_TYPE(HiddenWidth,(0.15),vgroup,App::Prop_None,"The thickness of the hidden lines, if enabled");
     ADD_PROPERTY_TYPE(Tolerance,(0.05f),vgroup,App::Prop_None,"The tessellation tolerance");
     Tolerance.setConstraints(&floatRange);
-    ADD_PROPERTY_TYPE(XAxisDirection ,(0,0,0) ,group,App::Prop_None,"X-Axis direction");
+    ADD_PROPERTY_TYPE(XAxisDirection ,(1,0,0) ,group,App::Prop_None,"X-Axis direction");
 
     geometryObject = new DrawingGeometry::GeometryObject();
 }
@@ -123,12 +125,10 @@ App::DocumentObjectExecReturn *FeatureViewPart::execute(void)
     try {
         geometryObject->setTolerance(Tolerance.getValue());
         geometryObject->setScale(Scale.getValue());
-        //TODO: Do we need to check for XAxisDirection having nonzero length here?
         geometryObject->extractGeometry(shape,
                                         Direction.getValue(),
                                         ShowHiddenLines.getValue(),
-                                        XAxisDirection.getValue());
-
+                                        _getValidXDir(this));
         bbox = geometryObject->calcBoundingBox();
         touch();
 
@@ -226,10 +226,8 @@ DrawingGeometry::BaseGeom *FeatureViewPart::getCompleteEdge(int idx) const
     const TopoDS_Shape shape = topoShape.getSubShape(str.str().c_str());
 
     const TopoDS_Shape &support = static_cast<Part::Feature*>(link)->Shape.getValue();
-    //TODO: Do we need to verify that XAxisDirection is nonzero length?
     //TODO: make sure prjShape gets deleted
-    DrawingGeometry::BaseGeom *prjShape = geometryObject->projectEdge(shape, support, Direction.getValue(), XAxisDirection.getValue());
-
+    DrawingGeometry::BaseGeom* prjShape = geometryObject->projectEdge(shape, support, Direction.getValue(), _getValidXDir(this));
     return prjShape;
 }
 
@@ -248,8 +246,7 @@ DrawingGeometry::Vertex * FeatureViewPart::getVertex(int idx) const
 
     const TopoDS_Shape &support = static_cast<Part::Feature*>(link)->Shape.getValue();
     //TODO: Make sure prjShape gets deleted
-    //TODO: Do we need to verify that XAxisDirection is nonzero length?
-    DrawingGeometry::Vertex *prjShape = geometryObject->projectVertex(shape, support, Direction.getValue(), XAxisDirection.getValue());
+    DrawingGeometry::Vertex *prjShape = geometryObject->projectVertex(shape, support, Direction.getValue(), _getValidXDir(this));
     //Base::Console().Log("vert %f, %f \n", prjShape->pnt.fX,  prjShape->pnt.fY);
     return prjShape;
 }
@@ -295,6 +292,16 @@ DrawingGeometry::BaseGeom* FeatureViewPart::getEdgeGeomByRef(int ref) const
 Base::BoundBox3d FeatureViewPart::getBoundingBox() const
 {
     return bbox;
+}
+
+Base::Vector3d _getValidXDir(const FeatureViewPart *me)
+{
+    Base::Vector3d xDir = me->XAxisDirection.getValue();
+    if (xDir.Length() == 0) {
+        Base::Console().Warning("XAxisDirection has zero length - using (1,0,0)\n");
+        xDir = Base::Vector3d(1.0,0.0,0.0);
+    }
+    return xDir;
 }
 
 // Python Drawing feature ---------------------------------------------------------
