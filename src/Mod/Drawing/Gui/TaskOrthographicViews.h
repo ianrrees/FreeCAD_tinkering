@@ -77,7 +77,11 @@ protected:
     void changeEvent(QEvent *e);
 
     /// Connects and updates state of view checkboxes to match the state of multiView
-    void setupViewCheckboxes(void);
+    /*!
+     * If addConnections is true, then also sets up Qt connections
+     * between checkboxes and viewToggled()
+     */
+    void setupViewCheckboxes(bool addConnections = false);
 
 private:
     //class Private;

@@ -66,17 +66,7 @@ TaskOrthographicViews::TaskOrthographicViews(Drawing::FeatureViewOrthographic* f
     ui->cmbScaleType->setCurrentIndex(multiView->ScaleType.getValue());
     
     // Initially toggle view checkboxes if needed
- /*   setupViewCheckbox(ui->chkOrthoLeft);
-    setupViewCheckbox(ui->chkOrthoRight);
-    setupViewCheckbox(ui->chkOrthoFront);
-    setupViewCheckbox(ui->chkOrthoRear);
-    setupViewCheckbox(ui->chkOrthoTop);
-    setupViewCheckbox(ui->chkOrthoBottom);
-    setupViewCheckbox(ui->chkIsoFrontTopLeft);
-    setupViewCheckbox(ui->chkIsoFrontTopRight);
-    setupViewCheckbox(ui->chkIsoFrontBottomRight);
-    setupViewCheckbox(ui->chkIsoFrontBottomLeft);*/
-    setupViewCheckboxes();
+    setupViewCheckboxes(true);
 
     blockUpdate = false;
 
@@ -89,19 +79,6 @@ TaskOrthographicViews::TaskOrthographicViews(Drawing::FeatureViewOrthographic* f
     connect(ui->butLeftRotate,  SIGNAL(clicked()), this, SLOT(rotateButtonClicked(void)));
     connect(ui->butCCWRotate,   SIGNAL(clicked()), this, SLOT(rotateButtonClicked(void)));
 
-/*    connect(ui->chkOrthoLeft,   SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));    // Left View
-    connect(ui->chkOrthoRight,  SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));    // Right View
-    connect(ui->chkOrthoTop,    SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));    // Top View
-    connect(ui->chkOrthoBottom, SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));    // Bottom View
-    connect(ui->chkOrthoFront,  SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));    // Front View
-    connect(ui->chkOrthoRear,   SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));    // Rear View
-
-    // Front isometric check boxes
-    connect(ui->chkIsoFrontTopLeft,     SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));
-    connect(ui->chkIsoFrontTopRight,    SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));
-    connect(ui->chkIsoFrontBottomRight, SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));
-    connect(ui->chkIsoFrontBottomLeft,  SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));
-*/
     // Slot for Scale Type
     connect(ui->cmbScaleType, SIGNAL(currentIndexChanged(int)), this, SLOT(scaleTypeChanged(int)));
     connect(ui->scaleNum,     SIGNAL(textEdited(const QString &)), this, SLOT(scaleManuallyChanged(const QString &)));
@@ -178,22 +155,29 @@ void TaskOrthographicViews::projectionTypeChanged(int index)
     Gui::Command::openCommand("Update orthographic projection type");
     if(index == 0) {
         //layout per Page (Document)
-        Gui::Command::doCommand(Gui::Command::Doc, "App.activeDocument().%s.ProjectionType = '%s'", multiView->getNameInDocument()
-                                                                                             , "Document");
+        Gui::Command::doCommand(Gui::Command::Doc,
+                                "App.activeDocument().%s.ProjectionType = '%s'",
+                                multiView->getNameInDocument(), "Document");
     } else if(index == 1) {
         // First Angle layout
-        Gui::Command::doCommand(Gui::Command::Doc, "App.activeDocument().%s.ProjectionType = '%s'", multiView->getNameInDocument()
-                                                                                             , "First Angle");
+        Gui::Command::doCommand(Gui::Command::Doc,
+                                "App.activeDocument().%s.ProjectionType = '%s'",
+                                multiView->getNameInDocument(), "First Angle");
     } else if(index == 2) {
         // Third Angle layout
-        Gui::Command::doCommand(Gui::Command::Doc, "App.activeDocument().%s.ProjectionType = '%s'", multiView->getNameInDocument()
-                                                                                             , "Third Angle");
+        Gui::Command::doCommand(Gui::Command::Doc,
+                                "App.activeDocument().%s.ProjectionType = '%s'",
+                                multiView->getNameInDocument(), "Third Angle");
     } else {
         Gui::Command::abortCommand();
-        Base::Console().Log("Error - TaskOrthographicViews::projectionTypeChanged - unknown projection layout: %d\n",index);
+        Base::Console().Log("Error - TaskOrthographicViews::projectionTypeChanged - unknown projection layout: %d\n",
+                            index);
         return;
     }
-    // need to recalculate the positions of the views here (at least top/bottom and left/right)
+
+    // Update checkboxes so checked state matches the drawing
+    setupViewCheckboxes();
+
     Gui::Command::commitCommand();
     Gui::Command::updateActive();
 }
@@ -237,9 +221,9 @@ void TaskOrthographicViews::nearestFraction(double val, int &n, int &d) const
     n = 1;  // numerator
     d = 1;  // denominator
     double fraction = n / d;
-    double m = std::abs(fraction - val);
+    double m = fabs(fraction - val);
 
-    while (std::abs(fraction - val) > 0.001) {
+    while (fabs(fraction - val) > 0.001) {
         if (fraction < val) {
             ++n;
         } else {
@@ -259,13 +243,13 @@ void TaskOrthographicViews::nearestFraction(double val, int &n, int &d) const
 void TaskOrthographicViews::updateTask()
 {
     // Update the scale type
-    this->blockUpdate = true;
+    blockUpdate = true;
     ui->cmbScaleType->setCurrentIndex(multiView->ScaleType.getValue());
 
     // Update the scale value
     setFractionalScale(multiView->Scale.getValue());
 
-    this->blockUpdate = false;
+    blockUpdate = false;
 }
 
 
@@ -348,7 +332,7 @@ const char * TaskOrthographicViews::viewChkIndexToCStr(int index)
         default: return NULL;
     }
 }
-void TaskOrthographicViews::setupViewCheckboxes(void)
+void TaskOrthographicViews::setupViewCheckboxes(bool addConnections)
 {
     if ( multiView == NULL ) {
         return;
@@ -369,12 +353,15 @@ void TaskOrthographicViews::setupViewCheckboxes(void)
 
     for (int i = 0; i < 10; ++i) {
         QCheckBox *box = viewCheckboxes[i];
-        connect(box, SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));
-
+        if (addConnections) {
+            connect(box, SIGNAL(toggled(bool)), this, SLOT(viewToggled(bool)));
+        }
         
         const char *viewStr = viewChkIndexToCStr(i);
         if ( viewStr != NULL && multiView->hasOrthoView(viewStr) ) {
             box->setCheckState(Qt::Checked);
+        } else {
+            box->setCheckState(Qt::Unchecked);
         }
     }
 }
