@@ -326,10 +326,13 @@ void QGraphicsItemView::paint(QPainter *painter, const QStyleOptionGraphicsItem 
 
 QRectF QGraphicsItemView::customChildrenBoundingRect() {
     QList<QGraphicsItem *> children = childItems();
+    int dimItemType = QGraphicsItem::UserType + 106;
     QRectF result;
     for (QList<QGraphicsItem *>::iterator it = children.begin(); it != children.end(); ++it) {
         if ((*it)->type() >= QGraphicsItem::UserType) {
-            result = result.united((*it)->boundingRect());
+            if ((*it)->type() != dimItemType) {                         //Dimensions don't count towards bRect
+                result = result.united((*it)->boundingRect());
+            }
         }
     }
     return result;

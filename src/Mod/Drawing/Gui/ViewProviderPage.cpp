@@ -111,7 +111,6 @@ void ViewProviderDrawingPage::show(void)
     showDrawingView();
 }
 
-//TODO: ViewProviderDrawingPage::hide is no longer used?
 void ViewProviderDrawingPage::hide(void)
 {
     // hiding the drawing page should not affect its children but closes the MDI view
@@ -164,6 +163,7 @@ bool ViewProviderDrawingPage::setEdit(int ModNum)
     if (ModNum == 1) {
         showDrawingView();   // show the drawing
         Gui::getMainWindow()->setActiveWindow(this->view);
+        return false;
     } else {
         Gui::ViewProviderDocumentObjectGroup::setEdit(ModNum);
     }
@@ -172,11 +172,8 @@ bool ViewProviderDrawingPage::setEdit(int ModNum)
 
 bool ViewProviderDrawingPage::doubleClicked(void)
 {
-    if (!this->view) {
-        showDrawingView();
-    }
+    showDrawingView();
     Gui::getMainWindow()->setActiveWindow(this->view);
-    Gui::Application::Instance->activeDocument()->setEdit(this);
     return true;
 }
 
@@ -189,12 +186,12 @@ bool ViewProviderDrawingPage::showDrawingView()
         view->setWindowIcon(Gui::BitmapFactory().pixmap("actions/drawing-landscape"));
 
         view->setWindowTitle(QObject::tr("Drawing viewer") + QString::fromAscii("[*]"));
-        view->updateDrawing();
+        view->updateDrawing(true);
      //   view->updateTemplate(true);   //TODO: I don't think this is necessary?  Ends up triggering a reload of SVG template, but the DrawingView constructor does too.
         Gui::getMainWindow()->addWindow(view);
         view->viewAll();
     } else {
-        view->updateDrawing();
+        view->updateDrawing(true);
         view->updateTemplate(true);
     }
     return true;
