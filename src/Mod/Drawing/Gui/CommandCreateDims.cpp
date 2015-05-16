@@ -23,14 +23,13 @@
 #include "PreCompiled.h"
 #ifndef _PreComp_
 # include <QMessageBox>
-#endif
-
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <cstdlib>
-#include <exception>
-#include <boost/regex.hpp>
+# include <iostream>
+# include <string>
+# include <sstream>
+# include <cstdlib>
+# include <exception>
+# include <boost/regex.hpp>
+#endif  //#ifndef _PreComp_
 
 # include <App/DocumentObject.h>
 # include <Gui/Action.h>
@@ -138,14 +137,22 @@ void CmdDrawingNewDimension::activated(int iMsg)
         subs.push_back(SubNames[0]);
         subs.push_back(SubNames[1]);
         switch (edgeCase) {
+            //TODO: This didn't have the breaks in it before 17 May, but didn't
+            // seem to crash either, so should check whether execution can even
+            // get here -Ian-
             case isHorizontal:
                 dimType = "DistanceX";
+                break;
             case isVertical:
                 dimType = "DistanceY";
+                break;
             case isDiagonal:
                 dimType = "Distance";
+                break;
             case isAngle:
                 dimType = "Angle";
+            default:
+                break;
         }
     } else {
         QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Incorrect Selection"),
@@ -180,12 +187,11 @@ void CmdDrawingNewDimension::activated(int iMsg)
     Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
     if(orthoView) {
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
-        dim->ProjectionType.StatusBits.set(2); // Set the projection type to read only
     }
 
     dim->execute();
 
-    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+    std::vector<App::DocumentObject*> pages = getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
     page->addView(page->getDocument()->getObject(FeatName.c_str()));
 
@@ -264,7 +270,6 @@ void CmdDrawingNewRadiusDimension::activated(int iMsg)
     Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
     if(orthoView) {
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
-        dim->ProjectionType.StatusBits.set(2); // Set the projection type to read only
     }
 
     dim->execute();
@@ -348,7 +353,6 @@ void CmdDrawingNewDiameterDimension::activated(int iMsg)
     Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
     if(orthoView) {
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
-        dim->ProjectionType.StatusBits.set(2); // Set the projection type to read only
     }
 
     dim->execute();
@@ -436,12 +440,11 @@ void CmdDrawingNewLengthDimension::activated(int iMsg)
     Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
     if(orthoView) {
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'", FeatName.c_str());
-        dim->ProjectionType.StatusBits.set(2); // Set the projection type to read only
     }
 
     dim->execute();
 
-    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+    std::vector<App::DocumentObject*> pages = getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
     page->addView(page->getDocument()->getObject(FeatName.c_str()));
 
@@ -520,7 +523,6 @@ void CmdDrawingNewDistanceXDimension::activated(int iMsg)
     Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
     if(orthoView) {
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
-        dim->ProjectionType.StatusBits.set(2); // Set the projection type to read only
     }
 
     dim->execute();
@@ -604,7 +606,6 @@ void CmdDrawingNewDistanceYDimension::activated(int iMsg)
     Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
     if(orthoView) {
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
-        dim->ProjectionType.StatusBits.set(2); // Set the projection type to read only
     }
 
     dim->execute();
@@ -677,14 +678,12 @@ void CmdDrawingNewAngleDimension::activated(int iMsg)
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
 
-    //TODO: "True" angles are not supported. see FeatureViewDimension.cpp::getDimvalue()
     Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
     doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
-    dim->ProjectionType.StatusBits.set(2); // Set the projection type to read only
 
     dim->execute();
 
-    std::vector<App::DocumentObject*> pages = this->getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+    std::vector<App::DocumentObject*> pages = getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
     page->addView(page->getDocument()->getObject(FeatName.c_str()));
 

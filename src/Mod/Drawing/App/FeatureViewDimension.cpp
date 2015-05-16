@@ -80,7 +80,7 @@ FeatureViewDimension::FeatureViewDimension(void)
     ADD_PROPERTY(Type,((long)0));
 
     ProjectionType.setEnums(ProjTypeEnums);
-    ADD_PROPERTY(ProjectionType,((long)0));
+    ADD_PROPERTY(ProjectionType, ((long)0));
     
     //hide the FeatureView properties that don't apply to Dimensions
     //App::PropertyType propType = static_cast<App::PropertyType>(App::Prop_Hidden|App::Prop_Output);
@@ -94,7 +94,7 @@ FeatureViewDimension::FeatureViewDimension(void)
     Rotation.StatusBits.set(bitHidden, true);
     //TODO: hide Dimension X,Y? 
 
-    this->measurement = new Measure::Measurement();
+    measurement = new Measure::Measurement();
 }
 
 FeatureViewDimension::~FeatureViewDimension()
@@ -105,26 +105,26 @@ FeatureViewDimension::~FeatureViewDimension()
 
 void FeatureViewDimension::onChanged(const App::Property* prop)
 {
-    if(prop == &References  ||
-       prop == &Precision   ||
-       prop == &Font        ||
-       prop == &Fontsize    ||
-       prop == &CentreLines ||
-       prop == &ProjectionType ||
-       prop == &FormatSpec) {
-        this->touch();
+    if (prop == &References  ||
+        prop == &Precision   ||
+        prop == &Font        ||
+        prop == &Fontsize    ||
+        prop == &CentreLines ||
+        prop == &ProjectionType ||
+        prop == &FormatSpec) {
+        touch();
     }
 }
 
 short FeatureViewDimension::mustExecute() const
 {
-    if(References.isTouched() ||
-       Type.isTouched() ||
-       ProjectionType.isTouched()
-    )
+    if (References.isTouched() ||
+        Type.isTouched() ||
+        ProjectionType.isTouched()) {
         return 1;
-    else
+    } else {
         return 0;
+    }
 }
 
 App::DocumentObjectExecReturn *FeatureViewDimension::execute(void)
@@ -180,34 +180,33 @@ std::string  FeatureViewDimension::getFormatedValue() const
 
 double FeatureViewDimension::getDimValue() const
 {
-    const char *dimType = Type.getValueAsString();
-    if(strcmp(ProjectionType.getValueAsString(), "True") == 0) {
+    if (ProjectionType.isValue("True")) {
         // True Values
-        if(strcmp(dimType, "Distance") == 0) {
+        if(Type.isValue("Distance")) {
             return measurement->length();
-        } else if(strcmp(dimType, "DistanceX") == 0){
+        } else if(Type.isValue("DistanceX")){
             Base::Vector3d delta = measurement->delta();
             return delta.x;
-        } else if(strcmp(dimType, "DistanceY") == 0){
+        } else if(Type.isValue("DistanceY")){
             Base::Vector3d delta = measurement->delta();
             return delta.y;
-        } else if(strcmp(dimType, "DistanceZ") == 0){
+        } else if(Type.isValue("DistanceZ")){
             Base::Vector3d delta = measurement->delta();
             return delta.z;
-        } else if(strcmp(dimType, "Radius") == 0){
+        } else if(Type.isValue("Radius")){
             return measurement->radius();
-        } else if(strcmp(dimType, "Diameter") == 0){
+        } else if(Type.isValue("Diameter")){
             return measurement->radius() * 2.0;
-        } else if(strcmp(dimType, "Angle") == 0){
+        } else if(Type.isValue("Angle")){
             return measurement->angle();
         }
         throw Base::Exception("Unknown Dimension Type");
     } else {
         // Projected Values
-        if(strcmp(dimType, "Distance") == 0 ||
-            strcmp(dimType, "DistanceX") == 0 ||
-            strcmp(dimType, "DistanceY") == 0 ||
-            strcmp(dimType, "DistanceZ") == 0) {
+        if (Type.isValue("Distance") ||
+            Type.isValue("DistanceX") ||
+            Type.isValue("DistanceY") ||
+            Type.isValue("DistanceZ")) {
 
             Base::Vector3d delta   = measurement->delta();
             Base::Vector3d projDir = ProjDirection.getValue();
@@ -232,20 +231,20 @@ double FeatureViewDimension::getDimValue() const
             //Base::Console().Log("proj <%f %f %f>", delta.x, delta.y, delta.z);
             //Base::Console().Log("yaxis <%f %f %f>", yaxis.x, yaxis.y, yaxis.z);
             //Base::Console().Log("proj <%f %f %f>", projDim.x, projDim.y, projDim.z);
-            if(strcmp(dimType, "Distance") == 0) {
+            if(Type.isValue("Distance")) {
                 return projDim.Length();
-            } else if(strcmp(dimType, "DistanceX") == 0) {
+            } else if(Type.isValue("DistanceX")) {
                 return x;
-            } else if(strcmp(dimType, "DistanceY") == 0) {
+            } else if(Type.isValue("DistanceY")) {
                 return y;
-            } else if(strcmp(dimType, "DistanceZ") == 0) {
+            } else if(Type.isValue("DistanceZ")) {
                 throw Base::Exception("Cannot use z direction for projection type");
             }
-        } else if(strcmp(dimType, "Radius") == 0){
+        } else if(Type.isValue("Radius")){
             return measurement->radius(); // Can only use true value
-        } else if(strcmp(dimType, "Diameter") == 0){
+        } else if(Type.isValue("Diameter")){
             return measurement->radius() * 2.0; // Can only use true value
-        } else if(strcmp(dimType, "Angle") == 0){
+        } else if(Type.isValue("Angle")){
 
             // Must project lines to 2D so cannot use measurement framework this time
             //Relcalculate the measurement based on references stored.
