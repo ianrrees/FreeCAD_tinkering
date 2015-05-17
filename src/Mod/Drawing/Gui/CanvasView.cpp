@@ -74,8 +74,6 @@
 #include "CanvasView.h"
 
 using namespace DrawingGui;
-QColor CanvasView::PreselectColor   =    QColor(0.88f,0.88f,0.0f);   // #E1E100 -> (225,225,  0)
-QColor CanvasView::SelectColor      =    QColor(0.11f,0.68f,0.11f);  // #1CAD1C -> ( 28,173, 28)
 
 CanvasView::CanvasView(ViewProviderDrawingPage *vp, QWidget *parent)
     : pageGui(0)

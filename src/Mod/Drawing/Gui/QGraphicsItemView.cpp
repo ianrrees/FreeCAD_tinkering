@@ -92,7 +92,7 @@ QGraphicsItemView::QGraphicsItemView(const QPoint &pos, QGraphicsScene *scene)
     m_frame = new QGraphicsRectItem();
     addToGroup(m_frame);
     m_decorPen.setStyle(Qt::DashLine);
-    m_decorPen.setWidth(0.3);
+    m_decorPen.setWidth(0); // 0 => 1px "cosmetic pen"
 }
 
 QGraphicsItemView::~QGraphicsItemView()

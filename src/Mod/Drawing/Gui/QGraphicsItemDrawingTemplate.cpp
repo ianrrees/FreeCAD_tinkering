@@ -89,8 +89,9 @@ void QGraphicsItemDrawingTemplate::draw()
 {
 
     Drawing::FeatureParametricTemplate *tmplte = getParametricTemplate();
-    if(!tmplte)
+    if(!tmplte) {
         throw Base::Exception("Template Feuature not set for QGraphicsItemDrawingTemplate");
+    }
 
 
     // Clear the previous geometry stored
@@ -116,13 +117,14 @@ void QGraphicsItemDrawingTemplate::draw()
             for(++it; it != geom->points.end(); ++it) {
                 path.lineTo((*it).fX, (*it).fY);
             }
-          } break;
+            break;
+          }
+          default:
+            break;
         }
     }
 
-    this->pathItem->setPath(path);
-
-
+    pathItem->setPath(path);
 }
 
 void QGraphicsItemDrawingTemplate::updateView(bool update)
