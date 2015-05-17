@@ -53,10 +53,7 @@ FeatureViewSymbol::FeatureViewSymbol(void)
 
     ADD_PROPERTY_TYPE(Symbol,(""),vgroup,App::Prop_Hidden,"The SVG code defining this symbol");
     ADD_PROPERTY_TYPE(EditableTexts,(""),vgroup,App::Prop_None,"Substitution values for the editable strings in this symbol");
-
-    Scale.StatusBits.set(3);         //hide scale.  n/a for Symbol
-    ScaleType.StatusBits.set(3);
-
+    ScaleType.setValue("Custom");
 }
 
 FeatureViewSymbol::~FeatureViewSymbol()

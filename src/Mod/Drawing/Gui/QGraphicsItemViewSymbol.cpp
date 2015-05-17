@@ -87,7 +87,11 @@ void QGraphicsItemViewSymbol::updateView(bool update)
     if (update ||
         viewSymbol->isTouched() ||
         viewSymbol->Symbol.isTouched()) {
-
+        draw();
+    }
+    
+    if (viewSymbol->Scale.isTouched()) {
+        setScale(viewSymbol->Scale.getValue());
         draw();
     }
 
@@ -115,14 +119,11 @@ void QGraphicsItemViewSymbol::drawSvg()
     if (!load(&qba)) {
         Base::Console().Error("QGraphicsItemViewSymbol::drawSvg - Could not load %s.Symbol into renderer\n", viewSymbol->getNameInDocument());
     }
-    //QRectF symbolArea = m_svgItem->boundingRect();
-    //m_svgItem->setPos(-symbolArea.width()/2.,-symbolArea.height()/2.);
     m_svgItem->setPos(0.,0.);
 }
 
 QRectF QGraphicsItemViewSymbol::boundingRect() const
 {
-//    return m_svgItem->boundingRect().adjusted(-3.,-3.,3.,3.);     // bigger than QGraphicsSvgItem
     return childrenBoundingRect();
 }
 
