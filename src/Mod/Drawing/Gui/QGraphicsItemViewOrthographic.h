@@ -70,12 +70,6 @@ protected:
     virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent * event);
     QGraphicsItemView * getAnchorQItem() const;
 
-    /// Used for unselecting children while dragging the anchor object
-    /*!
-     * TODO - Perhaps just pass the mouse event on to the anchor somehow?
-     */
-    void giveSelectionToAnchor(void) const;
-
 private:
     /// Convenience function
     Drawing::FeatureViewOrthographic * getFeatureView(void) const;

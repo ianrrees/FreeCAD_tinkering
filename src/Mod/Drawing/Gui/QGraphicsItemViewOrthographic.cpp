@@ -75,23 +75,6 @@ Drawing::FeatureViewOrthographic * QGraphicsItemViewOrthographic::getFeatureView
     return dynamic_cast<Drawing::FeatureViewOrthographic *>(obj);
 }
 
-void QGraphicsItemViewOrthographic::giveSelectionToAnchor(void) const
-{
-    // Get the currently assigned anchor view
-    App::DocumentObject *anchorObj = getFeatureView()->Anchor.getValue();
-    Drawing::FeatureView *anchorView = dynamic_cast<Drawing::FeatureView *>(anchorObj);
-
-    // Locate the anchor view's qgraphicsitemview
-    QList<QGraphicsItem *> list = childItems();
-
-    for (QList<QGraphicsItem *>::iterator it = list.begin(); it != list.end(); ++it) {
-        QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *>(*it);
-        if (view) {
-            view->setSelected(strcmp(view->getViewName(), anchorView->getNameInDocument()) == 0);
-        }
-    }
-}
-
 bool QGraphicsItemViewOrthographic::sceneEventFilter(QGraphicsItem * watched, QEvent *event)
 {
 // i want to handle events before the child item that would ordinarily receive them
@@ -105,7 +88,11 @@ bool QGraphicsItemViewOrthographic::sceneEventFilter(QGraphicsItem * watched, QE
 
             switch(event->type()) {
               case QEvent::GraphicsSceneMousePress:
-                  giveSelectionToAnchor();
+                  // TODO - Perhaps just pass the mouse event on to the anchor somehow?
+                  if (scene()) {
+                      scene()->clearSelection();
+                      qAnchor->setSelected(true);
+                  }
                   mousePressEvent(mEvent);
                   break;
               case QEvent::GraphicsSceneMouseMove:
