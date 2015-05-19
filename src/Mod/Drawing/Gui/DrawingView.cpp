@@ -172,7 +172,7 @@ DrawingView::DrawingView(ViewProviderDrawingPage *pageVp, Gui::Document* doc, QW
     App::DocumentObject *obj = pageGui->getPageObject()->Template.getValue();
     if(obj && obj->isDerivedFrom(Drawing::FeatureTemplate::getClassTypeId())) {
         Drawing::FeatureTemplate *pageTemplate = dynamic_cast<Drawing::FeatureTemplate *>(obj);
-        this->attachTemplate(pageTemplate);
+        attachTemplate(pageTemplate);
     }
 
 }
@@ -254,15 +254,15 @@ void DrawingView::closeEvent(QCloseEvent* ev)
 void DrawingView::contextMenuEvent(QContextMenuEvent *event)
 {
     QMenu menu;
-    menu.addAction(this->m_backgroundAction);
-    menu.addAction(this->m_outlineAction);
-    menu.addAction(this->m_exportSVGAction);
+    menu.addAction(m_backgroundAction);
+    menu.addAction(m_outlineAction);
+    menu.addAction(m_exportSVGAction);
     QMenu* submenu = menu.addMenu(tr("&Renderer"));
-    submenu->addAction(this->m_nativeAction);
-    submenu->addAction(this->m_glAction);
-    submenu->addAction(this->m_imageAction);
+    submenu->addAction(m_nativeAction);
+    submenu->addAction(m_glAction);
+    submenu->addAction(m_imageAction);
     submenu->addSeparator();
-    submenu->addAction(this->m_highQualityAntialiasingAction);
+    submenu->addAction(m_highQualityAntialiasingAction);
     menu.exec(event->globalPos());
 }
 
@@ -376,12 +376,12 @@ void DrawingView::preSelectionChanged(const QPoint &pos)
 
 void DrawingView::blockSelection(const bool state)
 {
-  this->isSlectionBlocked = state;
+  isSlectionBlocked = state;
 }
 
 void DrawingView::clearSelection()
 {
-  this->blockSelection(true);
+  blockSelection(true);
   std::vector<QGraphicsItemView *> views = m_view->getViews();
 
   // Iterate through all views and unselect all
@@ -391,7 +391,7 @@ void DrawingView::clearSelection()
       item->updateView();
   }
 
-  this->blockSelection(false);
+  blockSelection(false);
 }
 
 void DrawingView::selectFeature(App::DocumentObject *obj, const bool isSelected)
@@ -399,12 +399,12 @@ void DrawingView::selectFeature(App::DocumentObject *obj, const bool isSelected)
     // Update CanvasView's selection based on Selection made outside Drawing Interace
   QGraphicsItemView *view = m_view->findView(obj);
 
-  this->blockSelection(true);
+  blockSelection(true);
   if(view) {
       view->setSelected(isSelected);
       view->updateView();
   }
-  this->blockSelection(false);
+  blockSelection(false);
 }
 
 void DrawingView::selectionChanged()
@@ -414,7 +414,7 @@ void DrawingView::selectionChanged()
 
     QList<QGraphicsItem *> selection = m_view->scene()->selectedItems();
 
-    bool block = this->blockConnection(true); // avoid to be notified by itself
+    bool block = blockConnection(true); // avoid to be notified by itself
 
     Gui::Selection().clearSelection();
     for (QList<QGraphicsItem *>::iterator it = selection.begin(); it != selection.end(); ++it) {
@@ -500,7 +500,7 @@ void DrawingView::selectionChanged()
 
     }
 
-    this->blockConnection(block);
+    blockConnection(block);
 }
 
 void DrawingView::updateTemplate(bool forceUpdate)
@@ -555,7 +555,7 @@ void DrawingView::updateDrawing(bool forceUpdate)
         // Iterate over DocumentObjects without graphical representations and create the QGIVxxxx
         // TODO think of a better algorithm to deal with any changes to views list
         std::vector<App::DocumentObject*> notFnd;
-        this->findMissingViews(pageChildren, notFnd);
+        findMissingViews(pageChildren, notFnd);
         for(std::vector<App::DocumentObject*>::const_iterator it = notFnd.begin(); it != notFnd.end(); ++it) {
             attachView(*it);
         }
@@ -566,7 +566,7 @@ void DrawingView::updateDrawing(bool forceUpdate)
         std::vector<QGraphicsItemView *> newGraphicsList;
         bool fnd = false;
         while(itGraphics != graphicsList.end()) {
-            fnd = this->orphanExists((*itGraphics)->getViewName(), pageChildren);
+            fnd = orphanExists((*itGraphics)->getViewName(), pageChildren);
             if(fnd) {
                 newGraphicsList.push_back(*itGraphics);
             } else {
@@ -599,14 +599,14 @@ void DrawingView::findMissingViews(const std::vector<App::DocumentObject*> &list
 {
     for(std::vector<App::DocumentObject*>::const_iterator it = list.begin(); it != list.end(); ++it) {
 
-        if(!this->hasQView(*it))
+        if(!hasQView(*it))
              missing.push_back(*it);
 
         if((*it)->getTypeId().isDerivedFrom(Drawing::FeatureViewCollection::getClassTypeId())) {
             std::vector<App::DocumentObject*> missingChildViews;
             Drawing::FeatureViewCollection *collection = dynamic_cast<Drawing::FeatureViewCollection *>(*it);
             // Find Child Views recursively
-            this->findMissingViews(collection->Views.getValues(), missingChildViews);
+            findMissingViews(collection->Views.getValues(), missingChildViews);
 
             // Append the views to current missing list
             for(std::vector<App::DocumentObject*>::const_iterator it = missingChildViews.begin(); it != missingChildViews.end(); ++it) {
@@ -860,7 +860,7 @@ void DrawingView::print(QPrinter* printer)
         // care if it uses wrong printer settings
         bool doPrint = paintType != QPaintEngine::Picture;
 
-        if (doPrint && printer->orientation() != this->m_orientation) {
+        if (doPrint && printer->orientation() != m_orientation) {
             int ret = QMessageBox::warning(this, tr("Different orientation"),
                 tr("The printer uses a different orientation  than the drawing.\n"
                    "Do you want to continue?"),
@@ -868,7 +868,7 @@ void DrawingView::print(QPrinter* printer)
             if (ret != QMessageBox::Yes)
                 return;
         }
-        else if (doPrint && realPaperSize != this->m_pageSize) {
+        else if (doPrint && realPaperSize != m_pageSize) {
             int ret = QMessageBox::warning(this, tr("Different paper size"),
                 tr("The printer uses a different paper size than the drawing.\n"
                    "Do you want to continue?"),
@@ -876,7 +876,7 @@ void DrawingView::print(QPrinter* printer)
             if (ret != QMessageBox::Yes)
                 return;
         }
-        else if (doPrint && curPaperSize != this->m_pageSize) {
+        else if (doPrint && curPaperSize != m_pageSize) {
             int ret = QMessageBox::warning(this, tr("Different paper size"),
                 tr("The printer uses a different paper size than the drawing.\n"
                    "Do you want to continue?"),
@@ -895,18 +895,18 @@ void DrawingView::print(QPrinter* printer)
         rect = printer->pageRect();
 #endif
 
-    bool block = this->blockConnection(true); // avoid to be notified by itself
+    bool block = blockConnection(true); // avoid to be notified by itself
     Gui::Selection().clearSelection();
 
-    this->m_view->toggleEdit(false);
-    this->m_view->scene()->update();
+    m_view->toggleEdit(false);
+    m_view->scene()->update();
 
     Gui::Selection().clearSelection();
 
-    this->m_view->scene()->render(&p, rect);
+    m_view->scene()->render(&p, rect);
 
     // Reset
-    this->m_view->toggleEdit(true);
+    m_view->toggleEdit(true);
 }
 
 //QPrinter::PageSize is obsolete. Use QPrinter::PaperSize instead.
@@ -1021,20 +1021,20 @@ void DrawingView::saveSVG()
     svgGen.setTitle(QObject::tr("FreeCAD SVG Export"));
     svgGen.setDescription(svgDescription);
 
-    bool block = this->blockConnection(true); // avoid to be notified by itself
+    bool block = blockConnection(true); // avoid to be notified by itself
     Gui::Selection().clearSelection();
 
-    this->m_view->toggleEdit(false);             //fiddle cache, cosmetic lines, vertices, etc
-    this->m_view->scene()->update();
+    m_view->toggleEdit(false);             //fiddle cache, cosmetic lines, vertices, etc
+    m_view->scene()->update();
 
     Gui::Selection().clearSelection();
     QPainter p;
 
     p.begin(&svgGen);
-    this->m_view->scene()->render(&p);
+    m_view->scene()->render(&p);
     p.end();
 
-    this->m_view->toggleEdit(true);
+    m_view->toggleEdit(true);
 }
 
     if (!p.isActive() && !printer->outputFileName().isEmpty()) {

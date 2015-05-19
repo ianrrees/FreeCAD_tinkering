@@ -54,15 +54,15 @@ public:
     void setViewFeature(Drawing::FeatureView *obj);
     Drawing::FeatureView * getViewObject() const;
 
-    virtual void toggleBorder(bool state = true) { this->borderVisible = state; }
+    virtual void toggleBorder(bool state = true) { borderVisible = state; }
     virtual void drawBorder(void);
 
     /// Methods to ensure that Y-Coordinates are orientated correctly.
     void setPosition(qreal x, qreal y);
-    inline qreal getY() { return this->y() * -1; }
+    inline qreal getY() { return y() * -1; }
 
     void alignTo(QGraphicsItem *, const QString &alignment);
-    void setLocked(bool state = true) { this->locked = true; }
+    void setLocked(bool state = true) { locked = true; }
 
     virtual void toggleCache(bool state);
     virtual void updateView(bool update = false);

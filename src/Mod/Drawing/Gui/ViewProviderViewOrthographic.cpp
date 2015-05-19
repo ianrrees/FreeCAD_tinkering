@@ -134,7 +134,7 @@ bool ViewProviderViewOrthographic::setEdit(int ModNum)
     if (orthoDlg)
         Gui::Control().showDialog(orthoDlg);
     else
-        Gui::Control().showDialog(new TaskDlgOrthographicViews(this->getObject()));
+        Gui::Control().showDialog(new TaskDlgOrthographicViews(getObject()));
 
     return true;
 }

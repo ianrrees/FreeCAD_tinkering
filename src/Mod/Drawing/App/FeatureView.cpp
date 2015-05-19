@@ -118,7 +118,7 @@ void FeatureView::onChanged(const App::Property* prop)
         prop == &Y ||
         prop == &ScaleType ||
         prop == &Rotation) {
-          if (!this->isRestoring()) {
+          if (!isRestoring()) {
               FeatureView::execute();
           }
     }

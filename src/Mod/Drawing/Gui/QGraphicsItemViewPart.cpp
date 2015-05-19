@@ -73,7 +73,7 @@ QGraphicsItemViewPart::~QGraphicsItemViewPart()
 QVariant QGraphicsItemViewPart::itemChange(GraphicsItemChange change, const QVariant &value)
 {
     if (change == ItemSelectedHasChanged && scene()) {
-        QList<QGraphicsItem *> items = this->childItems();
+        QList<QGraphicsItem *> items = childItems();
         for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); ++it) {
             QGraphicsItemEdge *edge = dynamic_cast<QGraphicsItemEdge *>(*it);
             QGraphicsItemVertex *vert = dynamic_cast<QGraphicsItemVertex *>(*it);
@@ -84,7 +84,7 @@ QVariant QGraphicsItemViewPart::itemChange(GraphicsItemChange change, const QVar
             }
         }
     } else if(change == ItemSceneChange && scene()) {
-           this->tidy();
+           tidy();
     }
     return QGraphicsItemView::itemChange(change, value);
 }
@@ -145,7 +145,7 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
           double spanAngle =  (startAngle - geom->endAngle);
           double endAngle = geom->endAngle;
 
-          this->pathArc(path, geom->major, geom->minor, geom->angle, geom->largeArc, geom->cw,
+          pathArc(path, geom->major, geom->minor, geom->angle, geom->largeArc, geom->cw,
                         geom->endPnt.fX, geom->endPnt.fY,
                         geom->startPnt.fX, geom->startPnt.fY);
 
@@ -210,7 +210,7 @@ void QGraphicsItemViewPart::updateView(bool update)
 
     QGraphicsItemView::updateView(update);
 
-    Drawing::FeatureViewPart *viewPart = dynamic_cast<Drawing::FeatureViewPart *>(this->getViewObject());
+    Drawing::FeatureViewPart *viewPart = dynamic_cast<Drawing::FeatureViewPart *>(getViewObject());
 
     if(update ||
        viewPart->isTouched() ||
@@ -221,7 +221,7 @@ void QGraphicsItemViewPart::updateView(bool update)
        viewPart->ShowHiddenLines.isTouched()) {
         // Remove all existing graphical representations (QGIxxxx)
         prepareGeometryChange();
-        QList<QGraphicsItem *> items = this->childItems();
+        QList<QGraphicsItem *> items = childItems();
         for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); ++it) {
             if (dynamic_cast<QGraphicsItemEdge *> (*it) ||
                 dynamic_cast<QGraphicsItemFace *>(*it) ||
@@ -260,7 +260,7 @@ void QGraphicsItemViewPart::drawViewPart()
         return;
     }
 
-    Drawing::FeatureViewPart *part = dynamic_cast<Drawing::FeatureViewPart *>(this->getViewObject());
+    Drawing::FeatureViewPart *part = dynamic_cast<Drawing::FeatureViewPart *>(getViewObject());
 
     float lineWidth = part->LineWidth.getValue() * lineScaleFactor;
     float lineWidthHid = part->HiddenWidth.getValue() * lineScaleFactor;
@@ -300,7 +300,7 @@ void QGraphicsItemViewPart::drawViewPart()
         QGraphicsItemFace *item = new QGraphicsItemFace(-1);
         item->setPath(facePath);
 
-        item->moveBy(this->x(), this->y());
+        item->moveBy(x(), y());
         QPointF posRef(0.,0.);
         QPointF mapPos = item->mapToItem(this, posRef);
         item->moveBy(-mapPos.x(), -mapPos.y());
@@ -312,7 +312,7 @@ void QGraphicsItemViewPart::drawViewPart()
             // Hide any edges that are hidden if option is set.
 //             if((*fit)->extractType == DrawingGeometry::WithHidden && !part->ShowHiddenLines.getValue())
 //                 graphicsItem->hide();
-            this->addToGroup(graphicsItem);
+            addToGroup(graphicsItem);
             graphicsItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
         }
     } 
@@ -481,7 +481,7 @@ void QGraphicsItemViewPart::pathArcSegment(QPainterPath &path,
 
 QGraphicsItemEdge * QGraphicsItemViewPart::findRefEdge(int idx)
 {
-    QList<QGraphicsItem *> items = this->childItems();
+    QList<QGraphicsItem *> items = childItems();
     for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); it++) {
         QGraphicsItemEdge *edge = dynamic_cast<QGraphicsItemEdge *>(*it);
         if(edge && edge->getReference() == idx)
@@ -492,7 +492,7 @@ QGraphicsItemEdge * QGraphicsItemViewPart::findRefEdge(int idx)
 
 QGraphicsItemVertex * QGraphicsItemViewPart::findRefVertex(int idx)
 {
-    QList<QGraphicsItem *> items = this->childItems();
+    QList<QGraphicsItem *> items = childItems();
     for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); it++) {
         QGraphicsItemVertex *vert = dynamic_cast<QGraphicsItemVertex *>(*it);
         if(vert && vert->getReference() == idx)
@@ -503,7 +503,7 @@ QGraphicsItemVertex * QGraphicsItemViewPart::findRefVertex(int idx)
 
 void QGraphicsItemViewPart::toggleCache(bool state)
 {
-  QList<QGraphicsItem *> items = this->childItems();
+  QList<QGraphicsItem *> items = childItems();
     for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); it++) {
         //(*it)->setCacheMode((state)? DeviceCoordinateCache : NoCache);        //TODO: fiddle cache settings if req'd for performance
         (*it)->setCacheMode((state)? NoCache : NoCache);
@@ -513,7 +513,7 @@ void QGraphicsItemViewPart::toggleCache(bool state)
 
 void QGraphicsItemViewPart::toggleCosmeticLines(bool state)
 {
-  QList<QGraphicsItem *> items = this->childItems();
+  QList<QGraphicsItem *> items = childItems();
     for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); it++) {
         QGraphicsItemEdge *edge = dynamic_cast<QGraphicsItemEdge *>(*it);
         if(edge) {
@@ -524,7 +524,7 @@ void QGraphicsItemViewPart::toggleCosmeticLines(bool state)
 
 void QGraphicsItemViewPart::toggleVertices(bool state)
 {
-    QList<QGraphicsItem *> items = this->childItems();
+    QList<QGraphicsItem *> items = childItems();
     for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); it++) {
         QGraphicsItemVertex *vert = dynamic_cast<QGraphicsItemVertex *>(*it);
         if(vert) {

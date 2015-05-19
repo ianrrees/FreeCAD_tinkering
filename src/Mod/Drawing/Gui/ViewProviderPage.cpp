@@ -124,11 +124,11 @@ void ViewProviderDrawingPage::hide(void)
 void ViewProviderDrawingPage::updateData(const App::Property* prop)
 {
     if (prop == &(getPageObject()->Views)) {
-        if(this->view) {
+        if(view) {
             view->updateDrawing();
         }
     } else if (prop == &(getPageObject()->Template)) {
-       if(this->view) {
+       if(view) {
             view->updateTemplate();
         }
     }
@@ -162,7 +162,7 @@ bool ViewProviderDrawingPage::setEdit(int ModNum)
 {
     if (ModNum == 1) {
         showDrawingView();   // show the drawing
-        Gui::getMainWindow()->setActiveWindow(this->view);
+        Gui::getMainWindow()->setActiveWindow(view);
         return false;
     } else {
         Gui::ViewProviderDocumentObjectGroup::setEdit(ModNum);
@@ -173,7 +173,7 @@ bool ViewProviderDrawingPage::setEdit(int ModNum)
 bool ViewProviderDrawingPage::doubleClicked(void)
 {
     showDrawingView();
-    Gui::getMainWindow()->setActiveWindow(this->view);
+    Gui::getMainWindow()->setActiveWindow(view);
     return true;
 }
 
@@ -181,7 +181,7 @@ bool ViewProviderDrawingPage::showDrawingView()
 {
     if (!view){
         Gui::Document* doc = Gui::Application::Instance->getDocument
-            (this->pcObject->getDocument());
+            (pcObject->getDocument());
         view = new DrawingView(this, doc, Gui::getMainWindow());
         view->setWindowIcon(Gui::BitmapFactory().pixmap("actions/drawing-landscape"));
 
@@ -234,7 +234,7 @@ void ViewProviderDrawingPage::unsetEdit(int ModNum)
 {
     if (!view){
         Gui::Document* doc = Gui::Application::Instance->getDocument
-            (this->pcObject->getDocument());
+            (pcObject->getDocument());
         view = new DrawingView(this, doc, Gui::getMainWindow());
         view->setWindowIcon(Gui::BitmapFactory().pixmap("actions/drawing-landscape"));
 
@@ -292,7 +292,7 @@ void ViewProviderDrawingPage::onSelectionChanged(const Gui::SelectionChanges& ms
             }
         } else {
             bool selectState = (msg.Type == Gui::SelectionChanges::AddSelection) ? true : false;
-            Gui::Document* doc = Gui::Application::Instance->getDocument(this->pcObject->getDocument());
+            Gui::Document* doc = Gui::Application::Instance->getDocument(pcObject->getDocument());
             App::DocumentObject *obj = doc->getDocument()->getObject(msg.pObjectName);
             if(obj) {
 
@@ -312,11 +312,11 @@ void ViewProviderDrawingPage::onSelectionChanged(const Gui::SelectionChanges& ms
 void ViewProviderDrawingPage::onChanged(const App::Property *prop)
 {
   if (prop == &(getPageObject()->Views)) {
-        if(this->view) {
+        if(view) {
             view->updateDrawing();
         }
     } else if (prop == &(getPageObject()->Template)) {
-       if(this->view) {
+       if(view) {
             view->updateTemplate();
         }
     }

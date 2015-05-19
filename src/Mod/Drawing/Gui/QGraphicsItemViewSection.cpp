@@ -56,17 +56,17 @@ QGraphicsItemViewSection::~QGraphicsItemViewSection()
 
 void QGraphicsItemViewSection::draw()
 {
-    this->drawSectionFace();
+    drawSectionFace();
     QGraphicsItemViewPart::draw();
 }
 
 void QGraphicsItemViewSection::drawSectionFace()
 {
     // Iterate
-    if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewSection::getClassTypeId()))
+    if(getViewObject() == 0 || !getViewObject()->isDerivedFrom(Drawing::FeatureViewSection::getClassTypeId()))
         return;
 
-    Drawing::FeatureViewSection *part = dynamic_cast<Drawing::FeatureViewSection *>(this->getViewObject());
+    Drawing::FeatureViewSection *part = dynamic_cast<Drawing::FeatureViewSection *>(getViewObject());
 
     Base::Console().Log("drawing section face\n");
 
@@ -115,7 +115,7 @@ void QGraphicsItemViewSection::drawSectionFace()
         item->setBrush(faceBrush);
         facePen.setColor(Qt::black);
         item->setPen(facePen);
-        item->moveBy(this->x(), this->y());
+        item->moveBy(x(), y());
         graphicsItem = dynamic_cast<QGraphicsItem *>(item);
 
         if(graphicsItem) {
@@ -123,7 +123,7 @@ void QGraphicsItemViewSection::drawSectionFace()
             //             if((*fit)->extractType == DrawingGeometry::WithHidden && !part->ShowHiddenLines.getValue())
             //                 graphicsItem->hide();
 
-            this->addToGroup(graphicsItem);
+            addToGroup(graphicsItem);
             graphicsItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
         }
     }
@@ -132,10 +132,10 @@ void QGraphicsItemViewSection::drawSectionFace()
 void QGraphicsItemViewSection::updateView(bool update)
 {
       // Iterate
-    if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewPart::getClassTypeId()))
+    if(getViewObject() == 0 || !getViewObject()->isDerivedFrom(Drawing::FeatureViewPart::getClassTypeId()))
         return;
 
-    Drawing::FeatureViewSection *viewPart = dynamic_cast<Drawing::FeatureViewSection *>(this->getViewObject());
+    Drawing::FeatureViewSection *viewPart = dynamic_cast<Drawing::FeatureViewSection *>(getViewObject());
 
     if(update ||
        viewPart->SectionNormal.isTouched() ||

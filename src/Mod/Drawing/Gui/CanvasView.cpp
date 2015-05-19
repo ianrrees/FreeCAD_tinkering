@@ -87,7 +87,7 @@ CanvasView::CanvasView(ViewProviderDrawingPage *vp, QWidget *parent)
     assert(vp);
     pageGui = vp;
     const char* name = vp->getPageObject()->getNameInDocument();
-    this->setObjectName(QString::fromLocal8Bit(name));
+    setObjectName(QString::fromLocal8Bit(name));
 
     setScene(new QGraphicsScene(this));
     //setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
@@ -101,12 +101,12 @@ CanvasView::CanvasView(ViewProviderDrawingPage *vp, QWidget *parent)
     m_backgroundItem = new QGraphicsRectItem();
     m_backgroundItem->setCacheMode(QGraphicsItem::NoCache);
     m_backgroundItem->setZValue(-999999);
-//     this->scene()->addItem(m_backgroundItem); // TODO IF SEGFAULTS WITH DRAW ENABLE THIS (REDRAWS ARE SLOWER :s)
+//     scene()->addItem(m_backgroundItem); // TODO IF SEGFAULTS WITH DRAW ENABLE THIS (REDRAWS ARE SLOWER :s)
 
     // Prepare background check-board pattern
     QLinearGradient gradient;
     gradient.setStart(0, 0);
-    gradient.setFinalStop(0, this->height());
+    gradient.setFinalStop(0, height());
     gradient.setColorAt(0., QColor(72, 72, 72));
     gradient.setColorAt(1., QColor(150, 150, 150));
     bkgBrush = new QBrush(QColor::fromRgb(70,70,70));
@@ -121,7 +121,7 @@ CanvasView::~CanvasView()
 
 void CanvasView::drawBackground(QPainter *p, const QRectF &)
 {
-    if(!this->drawBkg)
+    if(!drawBkg)
         return;
 
     p->save();
@@ -147,7 +147,7 @@ void CanvasView::drawBackground(QPainter *p, const QRectF &)
 
     // Draw the white page
     QRectF paperRect(0, -pageHeight, pageWidth, pageHeight);
-    QPolygon poly = this->mapFromScene(paperRect);
+    QPolygon poly = mapFromScene(paperRect);
 
     QBrush pageBrush(Qt::white);
     p->setBrush(pageBrush);
@@ -163,7 +163,7 @@ int CanvasView::addView(QGraphicsItemView * view) {
 
     // Find if it belongs to a parent
     QGraphicsItemView *parent = 0;
-    parent = this->findParent(view);
+    parent = findParent(view);
 
     QPointF viewPos(view->getViewObject()->X.getValue(),
                     view->getViewObject()->Y.getValue() * -1);
@@ -185,42 +185,42 @@ int CanvasView::addView(QGraphicsItemView * view) {
 
 QGraphicsItemView * CanvasView::addViewPart(Drawing::FeatureViewPart *part)
 {
-    QGraphicsItemViewPart *viewPart = new QGraphicsItemViewPart(QPoint(0,0), this->scene());
+    QGraphicsItemViewPart *viewPart = new QGraphicsItemViewPart(QPoint(0,0), scene());
     viewPart->setViewPartFeature(part);
 
-    this->addView(viewPart);
+    addView(viewPart);
     return viewPart;
 }
 
 QGraphicsItemView * CanvasView::addViewSection(Drawing::FeatureViewPart *part)
 {
-    QGraphicsItemViewSection *viewSection = new QGraphicsItemViewSection(QPoint(0,0), this->scene());
+    QGraphicsItemViewSection *viewSection = new QGraphicsItemViewSection(QPoint(0,0), scene());
     viewSection->setViewPartFeature(part);
 
-    this->addView(viewSection);
+    addView(viewSection);
     return viewSection;
 }
 
 QGraphicsItemView * CanvasView::addViewOrthographic(Drawing::FeatureViewOrthographic *view) {
-    QGraphicsItemViewCollection *qview = new  QGraphicsItemViewOrthographic(QPoint(0,0), this->scene());
+    QGraphicsItemViewCollection *qview = new  QGraphicsItemViewOrthographic(QPoint(0,0), scene());
     qview->setViewFeature(view);
-    this->addView(qview);
+    addView(qview);
     return qview;
 }
 
 QGraphicsItemView * CanvasView::addFeatureView(Drawing::FeatureView *view)
 {
-    QGraphicsItemView *qview = new  QGraphicsItemView(QPoint(0,0), this->scene());
+    QGraphicsItemView *qview = new  QGraphicsItemView(QPoint(0,0), scene());
     qview->setViewFeature(view);
-    this->addView(qview);
+    addView(qview);
     return qview;
 }
 
 QGraphicsItemView * CanvasView::addFeatureViewCollection(Drawing::FeatureViewCollection *view)
 {
-    QGraphicsItemViewCollection *qview = new  QGraphicsItemViewCollection(QPoint(0,0), this->scene());
+    QGraphicsItemViewCollection *qview = new  QGraphicsItemViewCollection(QPoint(0,0), scene());
     qview->setViewFeature(view);
-    this->addView(qview);
+    addView(qview);
     return qview;
 }
 
@@ -229,11 +229,11 @@ QGraphicsItemView * CanvasView::addFeatureViewAnnotation(Drawing::FeatureViewAnn
 {
     //QPoint qp(view->X.getValue(),view->Y.getValue());
     // This essentially adds a null view feature to ensure view size is consistent
-    //QGraphicsItemViewAnnotation *qview = new  QGraphicsItemViewAnnotation(qp, this->scene());
-    QGraphicsItemViewAnnotation *qview = new  QGraphicsItemViewAnnotation(QPoint(0,0), this->scene());
+    //QGraphicsItemViewAnnotation *qview = new  QGraphicsItemViewAnnotation(qp, scene());
+    QGraphicsItemViewAnnotation *qview = new  QGraphicsItemViewAnnotation(QPoint(0,0), scene());
     qview->setViewAnnoFeature(view);
 
-    this->addView(qview);
+    addView(qview);
     return qview;
 }
 
@@ -241,16 +241,16 @@ QGraphicsItemView * CanvasView::addFeatureViewSymbol(Drawing::FeatureViewSymbol 
 {
     QPoint qp(view->X.getValue(),view->Y.getValue());
     // This essentially adds a null view feature to ensure view size is consistent
-    QGraphicsItemViewSymbol *qview = new  QGraphicsItemViewSymbol(qp, this->scene());
+    QGraphicsItemViewSymbol *qview = new  QGraphicsItemViewSymbol(qp, scene());
     qview->setViewFeature(view);
 
-    this->addView(qview);
+    addView(qview);
     return qview;
 }
 
 QGraphicsItemView * CanvasView::addViewDimension(Drawing::FeatureViewDimension *dim)
 {
-    QGraphicsItemViewDimension *dimGroup = new QGraphicsItemViewDimension(QPoint(0,0), this->scene());
+    QGraphicsItemViewDimension *dimGroup = new QGraphicsItemViewDimension(QPoint(0,0), scene());
     dimGroup->setViewPartFeature(dim);
 
     // TODO consider changing dimension feature to use another property for label position
@@ -260,7 +260,7 @@ QGraphicsItemView * CanvasView::addViewDimension(Drawing::FeatureViewDimension *
 
     // Find if it belongs to a parent
     QGraphicsItemView *parent = 0;
-    parent = this->findParent(dimGroup);
+    parent = findParent(dimGroup);
 
     if(parent) {
         // Transfer the child vierw to the parent
@@ -277,7 +277,7 @@ QGraphicsItemView * CanvasView::addViewDimension(Drawing::FeatureViewDimension *
 QGraphicsItemView * CanvasView::findView(App::DocumentObject *obj) const
 {
   if(scene()) {
-    const std::vector<QGraphicsItemView *> qviews = this->views;
+    const std::vector<QGraphicsItemView *> qviews = views;
     for(std::vector<QGraphicsItemView *>::const_iterator it = qviews.begin(); it != qviews.end(); ++it) {
           Drawing::FeatureView *fview = (*it)->getViewObject();
           if(fview && strcmp(obj->getNameInDocument(), fview->getNameInDocument()) == 0)
@@ -289,7 +289,7 @@ QGraphicsItemView * CanvasView::findView(App::DocumentObject *obj) const
 
 QGraphicsItemView * CanvasView::findParent(QGraphicsItemView *view) const
 {
-    const std::vector<QGraphicsItemView *> qviews = this->views;
+    const std::vector<QGraphicsItemView *> qviews = views;
     Drawing::FeatureView *myView = view->getViewObject();
 
     //If type is dimension we check references first
@@ -339,7 +339,7 @@ void CanvasView::setPageFeature(Drawing::FeaturePage *page)
     //redundant
 #if 0
     // TODO verify if the pointer should even be used. Not really safe
-    this->pageFeat = page;
+    pageFeat = page;
 
     float pageWidth  = pageGui->getPageObject()->getPageWidth();
     float pageHeight = pageGui->getPageObject()->getPageHeight();
@@ -359,7 +359,7 @@ void CanvasView::setPageFeature(Drawing::FeaturePage *page)
 
     QRectF myRect = paperRect;
     myRect.adjust(-20,-20,20,20);
-    this->setSceneRect(myRect);
+    setSceneRect(myRect);
 #endif
 }
 
@@ -371,11 +371,11 @@ void CanvasView::setPageTemplate(Drawing::FeatureTemplate *obj)
 
     if(obj->isDerivedFrom(Drawing::FeatureParametricTemplate::getClassTypeId())) {
         Drawing::FeatureParametricTemplate *dwgTemplate = static_cast<Drawing::FeatureParametricTemplate *>(obj);
-        QGraphicsItemDrawingTemplate *qTempItem = new QGraphicsItemDrawingTemplate(this->scene());
+        QGraphicsItemDrawingTemplate *qTempItem = new QGraphicsItemDrawingTemplate(scene());
         pageTemplate = qTempItem;
     } else if(obj->isDerivedFrom(Drawing::FeatureSVGTemplate::getClassTypeId())) {
         Drawing::FeatureSVGTemplate *dwgTemplate = static_cast<Drawing::FeatureSVGTemplate *>(obj);
-        QGraphicsItemSVGTemplate *qTempItem = new QGraphicsItemSVGTemplate(this->scene());
+        QGraphicsItemSVGTemplate *qTempItem = new QGraphicsItemSVGTemplate(scene());
         pageTemplate = qTempItem;
     }
     pageTemplate->setTemplate(obj);
@@ -389,10 +389,10 @@ QGraphicsItemTemplate* CanvasView::getTemplate() const
 
 void CanvasView::removeTemplate()
 {
-    if(this->pageTemplate) {
-        this->scene()->removeItem(this->pageTemplate);
-        this->pageTemplate->deleteLater();
-        this->pageTemplate = 0;
+    if(pageTemplate) {
+        scene()->removeItem(pageTemplate);
+        pageTemplate->deleteLater();
+        pageTemplate = 0;
     }
 }
 void CanvasView::setRenderer(RendererType type)
@@ -436,7 +436,7 @@ void CanvasView::setViewOutline(bool enable)
 void CanvasView::toggleEdit(bool enable)
 {
 // TODO: needs fiddling to handle items that don't inherit QGraphicsItemViewPart: Annotation, Symbol, Templates, Edges, Faces, Vertices,...
-    QList<QGraphicsItem *> list = this->scene()->items();
+    QList<QGraphicsItem *> list = scene()->items();
 
     for (QList<QGraphicsItem *>::iterator it = list.begin(); it != list.end(); ++it) {
         QGraphicsItemView *itemView = dynamic_cast<QGraphicsItemView *>(*it);
@@ -462,9 +462,9 @@ void CanvasView::toggleEdit(bool enable)
             item->update();
         }
     }
-    this->scene()->update();
-    this->update();
-    this->viewport()->repaint();
+    scene()->update();
+    update();
+    viewport()->repaint();
 }
 
 

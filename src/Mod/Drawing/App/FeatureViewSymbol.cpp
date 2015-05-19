@@ -64,7 +64,7 @@ FeatureViewSymbol::~FeatureViewSymbol()
 void FeatureViewSymbol::onChanged(const App::Property* prop)
 {
     if (prop == &Symbol) {
-        if (!this->isRestoring()) {
+        if (!isRestoring()) {
             std::vector<string> eds;
             std::string svg = Symbol.getValue();
             if (!svg.empty()) {

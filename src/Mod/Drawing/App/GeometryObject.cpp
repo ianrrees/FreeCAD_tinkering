@@ -1003,8 +1003,8 @@ int GeometryObject::calculateGeometry(const TopoDS_Shape &input,
     }
 
     // build a mesh to explore the shape
-    //BRepMesh::Mesh(input, this->Tolerance);   //OCC has removed BRepMesh::Mesh() as of v6.8.0.oce-0.17-dev
-    BRepMesh_IncrementalMesh(input, this->Tolerance);
+    //BRepMesh::Mesh(input, Tolerance);   //OCC has removed BRepMesh::Mesh() as of v6.8.0.oce-0.17-dev
+    BRepMesh_IncrementalMesh(input, Tolerance);
 
     int geomsAdded = 0;
 

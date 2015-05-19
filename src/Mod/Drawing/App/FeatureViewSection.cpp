@@ -205,7 +205,7 @@ App::DocumentObjectExecReturn *FeatureViewSection::execute(void)
         return new App::DocumentObjectExecReturn("Section cut has failed");
 
     // Cache the result
-    this->result = mkCut.Shape();
+    result = mkCut.Shape();
 
     try {
         geometryObject->setTolerance(Tolerance.getValue());
@@ -214,7 +214,7 @@ App::DocumentObjectExecReturn *FeatureViewSection::execute(void)
         geometryObject->extractGeometry(result, Direction.getValue(), ShowHiddenLines.getValue(), XAxisDirection.getValue());
 
         bbox = geometryObject->calcBoundingBox();
-        this->touch();
+        touch();
 
         //return App::DocumentObject::StdReturn;
     }

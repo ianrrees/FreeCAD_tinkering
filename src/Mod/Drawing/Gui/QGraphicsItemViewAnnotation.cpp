@@ -59,7 +59,7 @@ QGraphicsItemViewAnnotation::QGraphicsItemViewAnnotation(const QPoint &pos, QGra
     setFlag(QGraphicsItem::ItemIsMovable, true);
 
     m_textItem = new QGCustomText();
-    this->addToGroup(m_textItem);
+    addToGroup(m_textItem);
     m_textItem->setPos(0.,0.);
 }
 
@@ -81,10 +81,10 @@ void QGraphicsItemViewAnnotation::setViewAnnoFeature(Drawing::FeatureViewAnnotat
 
 void QGraphicsItemViewAnnotation::updateView(bool update)
 {
-    if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewAnnotation::getClassTypeId()))
+    if(getViewObject() == 0 || !getViewObject()->isDerivedFrom(Drawing::FeatureViewAnnotation::getClassTypeId()))
         return;
 
-    Drawing::FeatureViewAnnotation *viewAnno = dynamic_cast<Drawing::FeatureViewAnnotation *>(this->getViewObject());
+    Drawing::FeatureViewAnnotation *viewAnno = dynamic_cast<Drawing::FeatureViewAnnotation *>(getViewObject());
 
     if (update ||
         viewAnno->isTouched() ||
@@ -109,10 +109,10 @@ void QGraphicsItemViewAnnotation::draw()
 
 void QGraphicsItemViewAnnotation::drawAnnotation()
 {
-    if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewAnnotation::getClassTypeId()))
+    if(getViewObject() == 0 || !getViewObject()->isDerivedFrom(Drawing::FeatureViewAnnotation::getClassTypeId()))
         return;
 
-    Drawing::FeatureViewAnnotation *viewAnno = dynamic_cast<Drawing::FeatureViewAnnotation *>(this->getViewObject());
+    Drawing::FeatureViewAnnotation *viewAnno = dynamic_cast<Drawing::FeatureViewAnnotation *>(getViewObject());
 
     // get the Text values
     const std::vector<std::string>& annoText = viewAnno->Text.getValues();
@@ -133,7 +133,7 @@ void QGraphicsItemViewAnnotation::drawAnnotation()
     App::Color c = viewAnno->TextColor.getValue();
     m_textItem->setDefaultTextColor(c.asQColor());
 
-    this->prepareGeometryChange();
+    prepareGeometryChange();
     QString qs = QString::fromUtf8(ss.str().c_str());
     m_textItem->setPlainText(qs);
     m_textItem->adjustSize();

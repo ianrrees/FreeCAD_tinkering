@@ -97,7 +97,7 @@ void QGraphicsItemEdge::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 
 void QGraphicsItemEdge::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 {
-    QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *> (this->parentItem());    //this is temp for debug??
+    QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *> (parentItem());    //this is temp for debug??
     assert(view != 0);
 
     if(!isSelected() && !isHighlighted) {

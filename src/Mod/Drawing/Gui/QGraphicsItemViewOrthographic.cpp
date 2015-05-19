@@ -49,7 +49,7 @@ using namespace DrawingGui;
 QGraphicsItemViewOrthographic::QGraphicsItemViewOrthographic(const QPoint &pos, QGraphicsScene *scene)
     :QGraphicsItemViewCollection(pos, scene)
 {
-    this->setPos(pos);
+    setPos(pos);
     origin = new QGraphicsItemGroup();
     origin->setParentItem(this);
 
@@ -57,7 +57,7 @@ QGraphicsItemViewOrthographic::QGraphicsItemViewOrthographic(const QPoint &pos, 
     m_backgroundItem = new QGraphicsRectItem();
     m_backgroundItem->setPen(QPen(QColor(Qt::black)));
 
-    //this->addToGroup(m_backgroundItem);
+    //addToGroup(m_backgroundItem);
     setFlag(ItemIsSelectable, false);
     setFlag(ItemIsMovable, true);
     setFiltersChildEvents(true);
@@ -151,7 +151,7 @@ QVariant QGraphicsItemViewOrthographic::itemChange(GraphicsItemChange change, co
 
 void QGraphicsItemViewOrthographic::mousePressEvent(QGraphicsSceneMouseEvent * event)
 {
-    QGraphicsItemView *qAnchor = this->getAnchorQItem();
+    QGraphicsItemView *qAnchor = getAnchorQItem();
     if(qAnchor) {
         QPointF transPos = qAnchor->mapFromScene(event->scenePos());
         if(qAnchor->shape().contains(transPos)) {
@@ -164,7 +164,7 @@ void QGraphicsItemViewOrthographic::mousePressEvent(QGraphicsSceneMouseEvent * e
 
 void QGraphicsItemViewOrthographic::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
 {
-    QGraphicsItemView *qAnchor = this->getAnchorQItem();
+    QGraphicsItemView *qAnchor = getAnchorQItem();
     if(scene() && qAnchor && (qAnchor == scene()->mouseGrabberItem())) {
         if((mousePos - event->screenPos()).manhattanLength() > 5) {    //if the mouse has moved more than 5, process the mouse event
             QGraphicsItemViewCollection::mouseMoveEvent(event);
@@ -177,21 +177,19 @@ void QGraphicsItemViewOrthographic::mouseMoveEvent(QGraphicsSceneMouseEvent * ev
 void QGraphicsItemViewOrthographic::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 {
      if(scene()) {
-       QGraphicsItemView *qAnchor = this->getAnchorQItem();
+       QGraphicsItemView *qAnchor = getAnchorQItem();
         if((mousePos - event->screenPos()).manhattanLength() < 5) {
             if(qAnchor && qAnchor->shape().contains(event->pos())) {
               qAnchor->mouseReleaseEvent(event);
             }
         } else if(scene() && qAnchor && (qAnchor == scene()->mouseGrabberItem())) {
             // End of Drag
-            double x = this->x();
-            double y = this->getY();            // inverts Y 
             Gui::Command::openCommand("Drag Orthographic Collection");
             //TODO: See if these commands actually handle the horizontal/vertical constraints properly...
             Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.X = %f",
-                                    getViewObject()->getNameInDocument(), x);
+                                    getViewObject()->getNameInDocument(), x());
             Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.Y = %f",
-                                    getViewObject()->getNameInDocument(), y);
+                                    getViewObject()->getNameInDocument(), getY());// inverts Y 
             Gui::Command::commitCommand();
             //Gui::Command::updateActive();
         }
@@ -220,7 +218,7 @@ QGraphicsItemView * QGraphicsItemViewOrthographic::getAnchorQItem() const
 
 void QGraphicsItemViewOrthographic::updateView(bool update)
 {
-    m_backgroundItem->setRect(this->boundingRect());
+    m_backgroundItem->setRect(boundingRect());
     return QGraphicsItemViewCollection::updateView(update);
 }
 

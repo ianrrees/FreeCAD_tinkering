@@ -79,7 +79,7 @@ void QGraphicsItemVertex::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 
 void QGraphicsItemVertex::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 {
-    QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *> (this->parentItem());
+    QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *> (parentItem());
     assert(view != 0);
 
     if(!isSelected() && !isHighlighted) {

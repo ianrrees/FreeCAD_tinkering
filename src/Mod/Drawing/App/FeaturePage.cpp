@@ -99,7 +99,7 @@ void FeaturePage::onChanged(const App::Property* prop)
     } else if (prop == &Views) {
         if (!isRestoring()) {
             //TODO: reload if Views prop changes (ie adds/deletes)
-            //this->touch();
+            //touch();
         }
     } else if (prop == &Group) {
         if (Group.getSize() != numChildren) {

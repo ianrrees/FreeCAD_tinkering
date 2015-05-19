@@ -99,8 +99,8 @@ void FeatureOrthoView::onDocumentRestored()
 //TODO: Perhaps we don't need this anymore?
 App::DocumentObjectExecReturn *FeatureOrthoView::execute(void)
 {
-    if(this->Type.isTouched()) {
-        this->Type.purgeTouched();
+    if(Type.isTouched()) {
+        Type.purgeTouched();
     }
 
     return Drawing::FeatureViewPart::execute();

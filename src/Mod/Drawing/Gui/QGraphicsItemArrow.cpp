@@ -52,22 +52,22 @@ QGraphicsItemArrow::QGraphicsItemArrow(QGraphicsScene *scene)
 
 QPainterPath QGraphicsItemArrow::shape() const
 {
-    return this->path();
+    return path();
 }
 
 void QGraphicsItemArrow::setHighlighted(bool state)
 {
-    QPen pen     = this->pen();
-    QBrush brush = this->brush();
+    QPen myPen = pen();
+    QBrush myBrush = brush();
     if(state) {
-        pen.setColor(Qt::blue);
-        brush.setColor(Qt::blue);
+        myPen.setColor(Qt::blue);
+        myBrush.setColor(Qt::blue);
     } else {
-        pen.setColor(Qt::black);
-        brush.setColor(Qt::black);
+        myPen.setColor(Qt::black);
+        myBrush.setColor(Qt::black);
     }
-    this->setBrush(brush);
-    this->setPen(pen);
+    setBrush(myBrush);
+    setPen(myPen);
 }
 
 QVariant QGraphicsItemArrow::itemChange(GraphicsItemChange change, const QVariant &value)
@@ -86,8 +86,8 @@ void QGraphicsItemArrow::draw() {
     pen.setWidth(1);
 
     QBrush brush(Qt::black);
-    //this->setPen(pen);
-    this->setBrush(brush);
+    //setPen(pen);
+    setBrush(brush);
 
     float length = -5.;           //TODO: Arrow heads sb preference? size & type?
 
@@ -100,7 +100,7 @@ void QGraphicsItemArrow::draw() {
     path.closeSubpath();
 //     path.moveTo(QPointF(-1,1));
 //     path.lineTo(QPointF(1,-1));
-    this->setPath(path);
+    setPath(path);
 
 }
 

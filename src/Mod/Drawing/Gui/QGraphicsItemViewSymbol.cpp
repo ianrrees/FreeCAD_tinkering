@@ -55,7 +55,7 @@ QGraphicsItemViewSymbol::QGraphicsItemViewSymbol(const QPoint &pos, QGraphicsSce
     m_svgRender = new QSvgRenderer();
 
     m_svgItem = new QGCustomSvg();
-    this->addToGroup(m_svgItem);
+    addToGroup(m_svgItem);
     m_svgItem->setPos(0.,0.);
 }
 
@@ -79,10 +79,10 @@ void QGraphicsItemViewSymbol::setViewSymbolFeature(Drawing::FeatureViewSymbol *o
 
 void QGraphicsItemViewSymbol::updateView(bool update)
 {
-    if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewSymbol::getClassTypeId()))
+    if(getViewObject() == 0 || !getViewObject()->isDerivedFrom(Drawing::FeatureViewSymbol::getClassTypeId()))
         return;
 
-    Drawing::FeatureViewSymbol *viewSymbol = dynamic_cast<Drawing::FeatureViewSymbol *>(this->getViewObject());
+    Drawing::FeatureViewSymbol *viewSymbol = dynamic_cast<Drawing::FeatureViewSymbol *>(getViewObject());
 
     if (update ||
         viewSymbol->isTouched() ||
@@ -108,10 +108,10 @@ void QGraphicsItemViewSymbol::draw()
 
 void QGraphicsItemViewSymbol::drawSvg()
 {
-    if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewSymbol::getClassTypeId()))
+    if(getViewObject() == 0 || !getViewObject()->isDerivedFrom(Drawing::FeatureViewSymbol::getClassTypeId()))
         return;
 
-    Drawing::FeatureViewSymbol *viewSymbol = dynamic_cast<Drawing::FeatureViewSymbol *>(this->getViewObject());
+    Drawing::FeatureViewSymbol *viewSymbol = dynamic_cast<Drawing::FeatureViewSymbol *>(getViewObject());
 
     QString qs(QString::fromUtf8(viewSymbol->Symbol.getValue()));
     QByteArray qba;

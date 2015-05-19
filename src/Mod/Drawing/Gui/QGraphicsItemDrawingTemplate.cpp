@@ -56,9 +56,9 @@ QGraphicsItemDrawingTemplate::QGraphicsItemDrawingTemplate(QGraphicsScene *scene
     QTransform qtrans;
     qtrans.scale(1., -1.);
 
-    this->pathItem->setTransform(qtrans);
+    pathItem->setTransform(qtrans);
 
-    this->addToGroup(pathItem);
+    addToGroup(pathItem);
 }
 
 QGraphicsItemDrawingTemplate::~QGraphicsItemDrawingTemplate()

@@ -111,9 +111,9 @@ QVariant QGraphicsItemView::itemChange(GraphicsItemChange change, const QVariant
     if(change == ItemPositionChange && scene()) {
         QPointF newPos = value.toPointF();
 
-        if(this->locked){
-            newPos.setX(this->pos().x());
-            newPos.setY(this->pos().y());
+        if(locked){
+            newPos.setX(pos().x());
+            newPos.setY(pos().y());
         }
 
         // TODO  find a better data structure for this
@@ -156,7 +156,7 @@ QVariant QGraphicsItemView::itemChange(GraphicsItemChange change, const QVariant
 
 void QGraphicsItemView::mousePressEvent(QGraphicsSceneMouseEvent * event)
 {
-    if(this->locked) {
+    if(locked) {
         event->ignore();
     } else {
       QGraphicsItem::mousePressEvent(event);
@@ -170,11 +170,11 @@ void QGraphicsItemView::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
 
 void QGraphicsItemView::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 {
-    if(!this->locked && isSelected()) {
-        double x = this->x(),
-               y = this->getY();
-        getViewObject()->X.setValue(x);
-        getViewObject()->Y.setValue(y);
+    if(!locked && isSelected()) {
+        double tempX = x(),
+               tempY = getY();
+        getViewObject()->X.setValue(tempX);
+        getViewObject()->Y.setValue(tempY);
     }
     QGraphicsItem::mouseReleaseEvent(event);
 }
@@ -186,7 +186,7 @@ void QGraphicsItemView::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
         m_colCurrent = m_colSel;
     } else {
         m_colCurrent = m_colPre;
-        //if(this->shape().contains(event->pos())) {                     // TODO don't like this for determining preselect
+        //if(shape().contains(event->pos())) {                     // TODO don't like this for determining preselect
         //    m_colCurrent = m_colPre;
         //}
     }
@@ -207,7 +207,7 @@ void QGraphicsItemView::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 
 void QGraphicsItemView::setPosition(qreal x, qreal y)
 {
-    this->setPos(x, -y);
+    setPos(x, -y);
 }
 
 void QGraphicsItemView::updateView(bool update)
@@ -277,7 +277,7 @@ void QGraphicsItemView::drawBorder()
 
     m_label->setDefaultTextColor(m_colCurrent);
     m_label->setFont(m_font);
-    QString labelStr = QString::fromUtf8(this->getViewObject()->Label.getValue());
+    QString labelStr = QString::fromUtf8(getViewObject()->Label.getValue());
     m_label->setPlainText(labelStr);
     QRectF labelArea = m_label->boundingRect();
     double labelWidth = m_label->boundingRect().width();

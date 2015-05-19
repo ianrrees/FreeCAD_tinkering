@@ -165,7 +165,7 @@ struct DrawingExport Face
 /// Simple vertex
 struct DrawingExport Vertex
 {
-  Vertex(double x, double y) { this->pnt = Base::Vector2D(x, y); }
+  Vertex(double x, double y) { pnt = Base::Vector2D(x, y); }
   ~Vertex() {}
   Base::Vector2D pnt;
   ExtractionType extractType;  

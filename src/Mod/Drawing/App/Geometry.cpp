@@ -165,19 +165,19 @@ AOE::AOE(const BRepAdaptor_Curve& c) : Ellipse(c)
             << " A" << r1 << " " << r2 << " "
             << angle << " " << las << " " << swp << " "
             << e.X() << " " << e.Y() << "\" />" << std::endl;
-//     if (this->startAngle > this->endAngle) {// if arc is reversed
-//         std::swap(this->startAngle, this->endAngle);
+//     if (startAngle > endAngle) {// if arc is reversed
+//         std::swap(startAngle, endAngle);
 //     }*/
     
-//     double ax = s.X() - this->center.fX;
-//     double ay = s.Y() - this->center.fY;
-//     double bx = e.X() - this->center.fX;
-//     double by = e.Y() - this->center.fY;
+//     double ax = s.X() - center.fX;
+//     double ay = s.Y() - center.fY;
+//     double bx = e.X() - center.fX;
+//     double by = e.Y() - center.fY;
     
-//     this->startAngle = f;
+//     startAngle = f;
 //     float range = l-f;
 // 
-//     this->endAngle = startAngle + range;
+//     endAngle = startAngle + range;
 
     startAngle *= 180 / M_PI;
     endAngle   *= 180 / M_PI;

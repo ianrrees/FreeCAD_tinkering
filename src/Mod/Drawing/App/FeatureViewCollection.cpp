@@ -101,7 +101,7 @@ int FeatureViewCollection::countChildren()
 void FeatureViewCollection::onDocumentRestored()
 {
     // Rebuild the view
-    this->execute();
+    execute();
 }
 
 /// get called by the container when a Property was changed
@@ -111,7 +111,7 @@ void FeatureViewCollection::onChanged(const App::Property* prop)
 
     if (prop == &Source ||
         prop == &Views){
-        if (!this->isRestoring()) {
+        if (!isRestoring()) {
             std::vector<App::DocumentObject*> parent = getInList();
             for (std::vector<App::DocumentObject*>::iterator it = parent.begin(); it != parent.end(); ++it) {
                 if ((*it)->getTypeId().isDerivedFrom(FeaturePage::getClassTypeId())) {

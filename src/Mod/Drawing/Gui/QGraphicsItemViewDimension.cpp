@@ -99,10 +99,10 @@ QVariant QGraphicsItemDatumLabel::itemChange(GraphicsItemChange change, const QV
     if (change == ItemSelectedHasChanged && scene()) {
         if(isSelected()) {
             Q_EMIT selected(true);
-            this->setDefaultTextColor(m_colSel);
+            setDefaultTextColor(m_colSel);
         } else {
             Q_EMIT selected(false);
-            this->setDefaultTextColor(m_colNormal);
+            setDefaultTextColor(m_colNormal);
         }
         update();
     } else if(change == ItemPositionHasChanged && scene()) {
@@ -129,18 +129,18 @@ void QGraphicsItemDatumLabel::setLabelCenter()
 void QGraphicsItemDatumLabel::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
     Q_EMIT hover(true);
-    this->setDefaultTextColor(m_colPre);
+    setDefaultTextColor(m_colPre);
     update();
 }
 
 void QGraphicsItemDatumLabel::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 {
-    QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *> (this->parentItem());
+    QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *> (parentItem());
     assert(view != 0);
 
     Q_EMIT hover(false);
     if(!isSelected() && !view->isSelected()) {
-        this->setDefaultTextColor(m_colNormal);
+        setDefaultTextColor(m_colNormal);
         update();
     }
 }
@@ -164,16 +164,16 @@ void QGraphicsItemDatumLabel::paint(QPainter *painter, const QStyleOptionGraphic
 QGraphicsItemViewDimension::QGraphicsItemViewDimension(const QPoint &pos, QGraphicsScene *scene) :QGraphicsItemView(pos, scene)
 {
     setHandlesChildEvents(false);
-    this->setFlag(QGraphicsItem::ItemIsMovable, false);
-    this->setCacheMode(QGraphicsItem::NoCache);
+    setFlag(QGraphicsItem::ItemIsMovable, false);
+    setCacheMode(QGraphicsItem::NoCache);
 
     QGraphicsItemDatumLabel *dlabel = new QGraphicsItemDatumLabel();
     QGraphicsPathItem *arrws        = new QGraphicsPathItem();
     QGraphicsPathItem *clines       = new QGraphicsPathItem();
 
-    this->datumLabel  = dlabel;
-    this->arrows      = arrws;
-    this->centreLines = clines;
+    datumLabel  = dlabel;
+    arrows      = arrws;
+    centreLines = clines;
 
     // connecting the needed slots and signals
     QObject::connect(
@@ -192,8 +192,8 @@ QGraphicsItemViewDimension::QGraphicsItemViewDimension(const QPoint &pos, QGraph
         dlabel, SIGNAL(hover(bool)),
         this  , SLOT  (hover(bool)));
 
-    this->pen.setCosmetic(true);
-    this->pen.setWidthF(1.);
+    pen.setCosmetic(true);
+    pen.setWidthF(1.);
 
     Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
         .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors");
@@ -204,9 +204,9 @@ QGraphicsItemViewDimension::QGraphicsItemViewDimension(const QPoint &pos, QGraph
     fcColor.setPackedValue(hGrp->GetUnsigned("PreSelectColor", 0x00080800));
     m_colPre = fcColor.asQColor();
 
-    this->addToGroup(arrows);
-    this->addToGroup(datumLabel);
-    this->addToGroup(centreLines);
+    addToGroup(arrows);
+    addToGroup(datumLabel);
+    addToGroup(centreLines);
     
     toggleBorder(false);
 }
@@ -220,7 +220,7 @@ void QGraphicsItemViewDimension::setViewPartFeature(Drawing::FeatureViewDimensio
     if(obj == 0)
         return;
 
-    this->setViewFeature(static_cast<Drawing::FeatureView *>(obj));
+    setViewFeature(static_cast<Drawing::FeatureView *>(obj));
 
     // Set the QGraphicsItemGroup Properties based on the FeatureView
     float x = obj->X.getValue();                                       //this only called at construction and X,Y is always (0,0)
@@ -231,19 +231,19 @@ void QGraphicsItemViewDimension::setViewPartFeature(Drawing::FeatureViewDimensio
     dLabel->setPosFromCenter(x, y);
 
     updateDim();
-    this->draw();
+    draw();
     Q_EMIT dirty();
 }
 
 void QGraphicsItemViewDimension::select(bool state)
 {
-    this->setSelected(state);
+    setSelected(state);
     draw();
 }
 
 void QGraphicsItemViewDimension::hover(bool state)
 {
-    this->hasHover = state;
+    hasHover = state;
     draw();
 }
 
@@ -258,13 +258,13 @@ void QGraphicsItemViewDimension::updateView(bool update)
     //    Base::Console().Message("TRACE - QGraphicsItemViewDimension::updateView - I am an orphan\n");
     //}
 
-    if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId()))
+    if(getViewObject() == 0 || !getViewObject()->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId()))
         return;
-    Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension*>(this->getViewObject());
+    Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension*>(getViewObject());
 
     std::vector<App::DocumentObject *> refs = dim->References.getValues();
 
-    QGraphicsItemDatumLabel *dLabel = dynamic_cast<QGraphicsItemDatumLabel *>(this->datumLabel);
+    QGraphicsItemDatumLabel *dLabel = dynamic_cast<QGraphicsItemDatumLabel *>(datumLabel);
 
     // Identify what changed to prevent complete redraw
     if(dim->Fontsize.isTouched() ||
@@ -297,14 +297,14 @@ void QGraphicsItemViewDimension::updateDim()
     // For now assume only show absolute dimension values
     bool absolute = true;
 
-    if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId()))
+    if(getViewObject() == 0 || !getViewObject()->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId()))
         return;
 
-    const Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getViewObject());
+    const Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(getViewObject());
 
     QString labelText = QString::fromStdString(dim->getFormatedValue()); //QString::number((absolute) ? fabs(dim->getDimValue()) : dim->getDimValue(), 'f', dim->Precision.getValue());
 
-    QGraphicsItemDatumLabel *dLabel = dynamic_cast<QGraphicsItemDatumLabel *>(this->datumLabel);
+    QGraphicsItemDatumLabel *dLabel = dynamic_cast<QGraphicsItemDatumLabel *>(datumLabel);
 
     const char *dimType = dim->Type.getValueAsString();
 
@@ -324,11 +324,11 @@ void QGraphicsItemViewDimension::datumLabelDragged()
 
 void QGraphicsItemViewDimension::datumLabelDragFinished()
 {
-    if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId()))
+    if(getViewObject() == 0 || !getViewObject()->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId()))
         return;
 
-    Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getViewObject());
-    QGraphicsItemDatumLabel *datumLbl = dynamic_cast<QGraphicsItemDatumLabel *>(this->datumLabel);
+    Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(getViewObject());
+    QGraphicsItemDatumLabel *datumLbl = dynamic_cast<QGraphicsItemDatumLabel *>(datumLabel);
 
     double x = datumLbl->X(),
            y = datumLbl->Y();
@@ -341,18 +341,18 @@ void QGraphicsItemViewDimension::datumLabelDragFinished()
 
 void QGraphicsItemViewDimension::draw()
 {
-    if(this->getViewObject() == 0 || !this->getViewObject()->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId()))
+    if(getViewObject() == 0 || !getViewObject()->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId()))
         return;
 
-    Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(this->getViewObject());
-    QGraphicsItemDatumLabel *lbl = dynamic_cast<QGraphicsItemDatumLabel *>(this->datumLabel);
+    Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(getViewObject());
+    QGraphicsItemDatumLabel *lbl = dynamic_cast<QGraphicsItemDatumLabel *>(datumLabel);
 
     pen.setStyle(Qt::SolidLine);
 
     // Crude method of determining state [TODO] improve
-    if(this->isSelected()) {
+    if(isSelected()) {
         pen.setColor(m_colSel);
-    } else if (this->hasHover) {
+    } else if (hasHover) {
         pen.setColor(m_colPre);
     } else {
         pen.setColor(m_colNormal);
@@ -564,7 +564,7 @@ void QGraphicsItemViewDimension::draw()
         path.moveTo(dim2Tip.x, dim2Tip.y);
         path.lineTo(dim2Tail.x, dim2Tail.y);
 
-        QGraphicsPathItem *arrw = dynamic_cast<QGraphicsPathItem *> (this->arrows);
+        QGraphicsPathItem *arrw = dynamic_cast<QGraphicsPathItem *> (arrows);
         arrw->setPath(path);
         arrw->setPen(pen);
 
@@ -578,7 +578,7 @@ void QGraphicsItemViewDimension::draw()
         if(arw.size() != 2) {
             prepareGeometryChange();
             for(std::vector<QGraphicsItem *>::iterator it = arw.begin(); it != arw.end(); ++it) {
-                this->removeFromGroup(*it);
+                removeFromGroup(*it);
                 delete (*it);
             }
             arw.clear();
@@ -593,8 +593,8 @@ void QGraphicsItemViewDimension::draw()
             ar2->flip(true);
             ar2->draw();
 
-            this->addToGroup(arw.at(0));
-            this->addToGroup(arw.at(1));
+            addToGroup(arw.at(0));
+            addToGroup(arw.at(1));
         }
 
         QGraphicsItemArrow *ar1 = dynamic_cast<QGraphicsItemArrow *>(arw.at(0));
@@ -614,15 +614,15 @@ void QGraphicsItemViewDimension::draw()
         ar1->setPos(dim1Tip.x, dim1Tip.y);
         ar2->setPos(dim2Tail.x, dim2Tail.y);
 
-        ar1->setHighlighted(isSelected() || this->hasHover);
-        ar2->setHighlighted(isSelected() || this->hasHover);
+        ar1->setHighlighted(isSelected() || hasHover);
+        ar2->setHighlighted(isSelected() || hasHover);
 
     } else if(strcmp(dimType, "Diameter") == 0) {
         // Not sure whether to treat radius and diameter as the same
         // terminology: Dimension Text, Dimension Line(s), Extension Lines, Arrowheads
         // not datumLabel, datum line/parallel line, perpendicular line, arw
         Base::Vector3d arrow1Tip, arrow2Tip, dirDimLine, centre; //was p1,p2,dir
-        QGraphicsItemDatumLabel *label = dynamic_cast<QGraphicsItemDatumLabel *>(this->datumLabel);
+        QGraphicsItemDatumLabel *label = dynamic_cast<QGraphicsItemDatumLabel *>(datumLabel);
         Base::Vector3d lblCenter(label->X(), label->Y(), 0);
 
         double radius;
@@ -828,12 +828,12 @@ void QGraphicsItemViewDimension::draw()
             path.lineTo(arrow2Tip.x, arrow2Tip.y);
         }
 
-        QGraphicsPathItem *arrw = dynamic_cast<QGraphicsPathItem *> (this->arrows);
+        QGraphicsPathItem *arrw = dynamic_cast<QGraphicsPathItem *> (arrows);
         arrw->setPath(path);
         arrw->setPen(pen);
 
         // Add or remove centre lines
-        QGraphicsPathItem *clines = dynamic_cast<QGraphicsPathItem *> (this->centreLines);
+        QGraphicsPathItem *clines = dynamic_cast<QGraphicsPathItem *> (centreLines);
         QPainterPath clpath;
 
         if(dim->CentreLines.getValue()) {
@@ -862,7 +862,7 @@ void QGraphicsItemViewDimension::draw()
         if(arw.size() != 2) {
             prepareGeometryChange();
             for(std::vector<QGraphicsItem *>::iterator it = arw.begin(); it != arw.end(); ++it) {
-                this->removeFromGroup(*it);
+                removeFromGroup(*it);
                 delete (*it);
             }
             arw.clear();
@@ -876,8 +876,8 @@ void QGraphicsItemViewDimension::draw()
             ar1->draw();
             ar2->flip(true);
             ar2->draw();
-            this->addToGroup(arw.at(0));
-            this->addToGroup(arw.at(1));
+            addToGroup(arw.at(0));
+            addToGroup(arw.at(1));
         }
 
         QGraphicsItemArrow *ar1 = dynamic_cast<QGraphicsItemArrow *>(arw.at(0));
@@ -886,8 +886,8 @@ void QGraphicsItemViewDimension::draw()
         Base::Vector3d ar1Pos = arrow1Tip + dirDimLine * radius;
         float arAngle = atan2(dirDimLine.y, dirDimLine.x) * 180 / M_PI;
 
-        ar1->setHighlighted(isSelected() || this->hasHover);
-        ar2->setHighlighted(isSelected() || this->hasHover);
+        ar1->setHighlighted(isSelected() || hasHover);
+        ar2->setHighlighted(isSelected() || hasHover);
         ar2->show();
 
         if(outerPlacement) {
@@ -916,7 +916,7 @@ void QGraphicsItemViewDimension::draw()
         // Not sure whether to treat radius and diameter as the same
         // terminology: Dimension Text, Dimension Line(s), Extension Lines, Arrowheads
         Base::Vector3d arrow1Tip, arrow2Tip, dirDimLine, centre;
-        QGraphicsItemDatumLabel *label = dynamic_cast<QGraphicsItemDatumLabel *>(this->datumLabel);
+        QGraphicsItemDatumLabel *label = dynamic_cast<QGraphicsItemDatumLabel *>(datumLabel);
         Base::Vector3d lblCenter(label->X(), label->Y(), 0);
 
         double radius;
@@ -1019,12 +1019,12 @@ void QGraphicsItemViewDimension::draw()
             path.lineTo(arrow2Tip.x, arrow2Tip.y);
         }
 
-        QGraphicsPathItem *arrw = dynamic_cast<QGraphicsPathItem *> (this->arrows);
+        QGraphicsPathItem *arrw = dynamic_cast<QGraphicsPathItem *> (arrows);
         arrw->setPath(path);
         arrw->setPen(pen);
 
         // Add or remove centre lines
-        QGraphicsPathItem *clines = dynamic_cast<QGraphicsPathItem *> (this->centreLines);
+        QGraphicsPathItem *clines = dynamic_cast<QGraphicsPathItem *> (centreLines);
         QPainterPath clpath;
 
         if(dim->CentreLines.getValue()) {
@@ -1055,7 +1055,7 @@ void QGraphicsItemViewDimension::draw()
         if(arw.size() != 2) {
             prepareGeometryChange();
             for(std::vector<QGraphicsItem *>::iterator it = arw.begin(); it != arw.end(); ++it) {
-                this->removeFromGroup(*it);
+                removeFromGroup(*it);
                 delete (*it);
             }
             arw.clear();
@@ -1069,8 +1069,8 @@ void QGraphicsItemViewDimension::draw()
             ar1->flip(true);
             ar1->draw();
             ar2->draw();
-            this->addToGroup(arw.at(0));
-            this->addToGroup(arw.at(1));
+            addToGroup(arw.at(0));
+            addToGroup(arw.at(1));
         }
 
         ar1 = dynamic_cast<QGraphicsItemArrow *>(arw.at(0));
@@ -1082,11 +1082,11 @@ void QGraphicsItemViewDimension::draw()
         ar1->setPos(ar1Pos.x, ar1Pos.y);
         ar1->setPos(arrow1Tip.x, arrow1Tip.y);
         ar1->setRotation(arAngle);
-        ar1->setHighlighted(isSelected() || this->hasHover);
+        ar1->setHighlighted(isSelected() || hasHover);
         ar1->show();
         ar2->setPos(arrow2Tip.x, arrow2Tip.y);
         ar2->setRotation(arAngle);
-        ar2->setHighlighted(isSelected() || this->hasHover);
+        ar2->setHighlighted(isSelected() || hasHover);
         ar2->show();
 
         if(outerPlacement) {
@@ -1164,7 +1164,7 @@ void QGraphicsItemViewDimension::draw()
                 double endangle = startangle + range;
 
                 // Obtain the Label Position and measure the length between intersection
-                QGraphicsItemDatumLabel *label = dynamic_cast<QGraphicsItemDatumLabel *>(this->datumLabel);
+                QGraphicsItemDatumLabel *label = dynamic_cast<QGraphicsItemDatumLabel *>(datumLabel);
                 Base::Vector3d lblCenter(label->X(), label->Y(), 0);
 
                 float bbX  = label->boundingRect().width();
@@ -1276,7 +1276,7 @@ void QGraphicsItemViewDimension::draw()
                     path.arcTo(arcRect, endangle * 180 / M_PI, -range * 180 / M_PI);
                 }
 
-                QGraphicsPathItem *arrw = dynamic_cast<QGraphicsPathItem *> (this->arrows);
+                QGraphicsPathItem *arrw = dynamic_cast<QGraphicsPathItem *> (arrows);
                 arrw->setPath(path);
                 arrw->setPen(pen);
 
@@ -1284,7 +1284,7 @@ void QGraphicsItemViewDimension::draw()
                 if(arw.size() != 2) {
                     prepareGeometryChange();
                     for(std::vector<QGraphicsItem *>::iterator it = arw.begin(); it != arw.end(); ++it) {
-                        this->removeFromGroup(*it);
+                        removeFromGroup(*it);
                         delete (*it);
                     }
                     arw.clear();
@@ -1299,8 +1299,8 @@ void QGraphicsItemViewDimension::draw()
                     ar1->draw();
                     ar2->draw();
 
-                    this->addToGroup(arw.at(0));
-                    this->addToGroup(arw.at(1));
+                    addToGroup(arw.at(0));
+                    addToGroup(arw.at(1));
                 }
 
                 QGraphicsItemArrow *ar1 = dynamic_cast<QGraphicsItemArrow *>(arw.at(0));
@@ -1328,8 +1328,8 @@ void QGraphicsItemViewDimension::draw()
                     ar2->setRotation(ar2angle);
                 }
 
-                ar1->setHighlighted(isSelected() || this->hasHover);
-                ar2->setHighlighted(isSelected() || this->hasHover);
+                ar1->setHighlighted(isSelected() || hasHover);
+                ar2->setHighlighted(isSelected() || hasHover);
 
                 // Set the angle of the datum text
 
@@ -1370,7 +1370,7 @@ void QGraphicsItemViewDimension::drawBorder(void)
 QVariant QGraphicsItemViewDimension::itemChange(GraphicsItemChange change, const QVariant &value)
 {
    if (change == ItemSelectedHasChanged && scene()) {
-        QGraphicsItemDatumLabel *dLabel = dynamic_cast<QGraphicsItemDatumLabel *>(this->datumLabel);
+        QGraphicsItemDatumLabel *dLabel = dynamic_cast<QGraphicsItemDatumLabel *>(datumLabel);
 
         if(isSelected()) {
             dLabel->setSelected(true);

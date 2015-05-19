@@ -53,7 +53,7 @@ QGraphicsItemFace::QGraphicsItemFace(int ref, QGraphicsScene *scene  ) :
     } else {
         Base::Console().Log("PROBLEM? - QGraphicsItemFace(%d) has NO scene\n",ref);
     }
-    this->setAcceptHoverEvents(true);
+    setAcceptHoverEvents(true);
 
     Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
         .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors");
@@ -89,7 +89,7 @@ void QGraphicsItemFace::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 
 void QGraphicsItemFace::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 {
-    QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *> (this->parentItem());
+    QGraphicsItemView *view = dynamic_cast<QGraphicsItemView *> (parentItem());
 
     if(!isSelected() && !view->isSelected()) {
         setPrettyNormal();
