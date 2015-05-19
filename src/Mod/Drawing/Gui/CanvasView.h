@@ -38,6 +38,7 @@ class FeatureViewSymbol;
 namespace DrawingGui
 {
 class QGraphicsItemView;
+class QGraphicsItemViewDimension;
 class QGraphicsItemTemplate;
 class ViewProviderDrawingPage;
 
@@ -66,6 +67,8 @@ public:
     QGraphicsItemView * findView(App::DocumentObject *obj) const;
     QGraphicsItemView * findParent(QGraphicsItemView *) const;
 
+    void addDimToParent(QGraphicsItemViewDimension* dim, QGraphicsItemView* parent);
+    
     const std::vector<QGraphicsItemView *> & getViews() const { return views; }
     int addView(QGraphicsItemView * view);
     void setViews(const std::vector<QGraphicsItemView *> &view) {views = view; }

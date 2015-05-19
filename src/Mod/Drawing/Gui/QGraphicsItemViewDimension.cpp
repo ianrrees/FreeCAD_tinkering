@@ -249,15 +249,6 @@ void QGraphicsItemViewDimension::hover(bool state)
 
 void QGraphicsItemViewDimension::updateView(bool update)
 {
-    //TODO: Dimensions for orthoviews are made orphans if the drawing is closed and reopened. plain viewPart + dimension is ok!
-    //      Dimension parentage is set at attach time in CanvasView
-    //QGraphicsItem* parent = parentItem();
-    //if (parent) {
-    //    Base::Console().Message("TRACE - QGraphicsItemViewDimension::updateView - I have a parent(%d)\n",parent->type() - QGraphicsItem::UserType);
-    //} else {
-    //    Base::Console().Message("TRACE - QGraphicsItemViewDimension::updateView - I am an orphan\n");
-    //}
-
     if(getViewObject() == 0 || !getViewObject()->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId()))
         return;
     Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension*>(getViewObject());

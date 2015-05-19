@@ -27,8 +27,8 @@
 # include <App/FeaturePython.h>
 # include <App/PropertyLinks.h>
 
-//#include "FeatureViewAnnotation.h"
 #include "FeatureView.h"
+#include "FeatureViewPart.h"
 
 namespace Measure {
 class Measurement;
@@ -76,6 +76,7 @@ public:
 
     virtual std::string getFormatedValue() const;
     virtual double getDimValue() const;
+    FeatureViewPart* getViewPart() const;
 
 protected:
     void onChanged(const App::Property* prop);

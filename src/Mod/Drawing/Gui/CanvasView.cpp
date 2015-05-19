@@ -227,10 +227,8 @@ QGraphicsItemView * CanvasView::addFeatureViewCollection(Drawing::FeatureViewCol
 // TODO change to (App?) annotation object  ??
 QGraphicsItemView * CanvasView::addFeatureViewAnnotation(Drawing::FeatureViewAnnotation *view)
 {
-    //QPoint qp(view->X.getValue(),view->Y.getValue());
     // This essentially adds a null view feature to ensure view size is consistent
-    //QGraphicsItemViewAnnotation *qview = new  QGraphicsItemViewAnnotation(qp, scene());
-    QGraphicsItemViewAnnotation *qview = new  QGraphicsItemViewAnnotation(QPoint(0,0), scene());
+    QGraphicsItemViewAnnotation *qview = new  QGraphicsItemViewAnnotation(QPoint(0,0), this->scene());
     qview->setViewAnnoFeature(view);
 
     addView(qview);
@@ -256,6 +254,7 @@ QGraphicsItemView * CanvasView::addViewDimension(Drawing::FeatureViewDimension *
     // TODO consider changing dimension feature to use another property for label position
     // Instead of calling addView - the view must for now be added manually
 
+    //Note dimension X,Y is different from other views -> can't use addView
     views.push_back(dimGroup);
 
     // Find if it belongs to a parent
@@ -263,15 +262,20 @@ QGraphicsItemView * CanvasView::addViewDimension(Drawing::FeatureViewDimension *
     parent = findParent(dimGroup);
 
     if(parent) {
-        // Transfer the child vierw to the parent
-        QPointF posRef(0.,0.);
-        QPointF mapPos = dimGroup->mapToItem(parent, posRef);
-        dimGroup->moveBy(-mapPos.x(), -mapPos.y());
-
-        parent->addToGroup(dimGroup);
+        addDimToParent(dimGroup,parent);
     }
 
     return dimGroup;
+}
+
+void CanvasView::addDimToParent(QGraphicsItemViewDimension* dim, QGraphicsItemView* parent)
+{
+    assert(dim);
+    assert(parent);          //blow up if we don't have Dimension or Parent
+    QPointF posRef(0.,0.);
+    QPointF mapPos = dim->mapToItem(parent, posRef);
+    dim->moveBy(-mapPos.x(), -mapPos.y());
+    parent->addToGroup(dim);
 }
 
 QGraphicsItemView * CanvasView::findView(App::DocumentObject *obj) const
@@ -293,7 +297,6 @@ QGraphicsItemView * CanvasView::findParent(QGraphicsItemView *view) const
     Drawing::FeatureView *myView = view->getViewObject();
 
     //If type is dimension we check references first
-    // Todo change this to an annotation object later
     Drawing::FeatureViewDimension *dim = 0;
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(myView);
 

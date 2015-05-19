@@ -100,6 +100,7 @@ protected:
     void closeEvent(QCloseEvent*);
     void findPrinterSettings(const QString&);
     QPrinter::PageSize getPageSize(int w, int h) const;
+    void setDimensionGroups(void);
 
 private:
     QAction *m_nativeAction;

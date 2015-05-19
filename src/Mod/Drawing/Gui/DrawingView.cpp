@@ -78,6 +78,8 @@
 #include <Gui/Selection.h>
 
 #include <Mod/Drawing/App/FeaturePage.h>
+#include <Mod/Drawing/App/FeatureView.h>
+#include <Mod/Drawing/App/FeatureViewCollection.h>
 #include <Mod/Drawing/App/FeatureViewOrthographic.h>
 #include <Mod/Drawing/App/FeatureViewPart.h>
 #include <Mod/Drawing/App/FeatureViewSection.h>
@@ -164,10 +166,23 @@ DrawingView::DrawingView(ViewProviderDrawingPage *pageVp, Gui::Document* doc, QW
 
 
      // A fresh page is added and we iterate through its collected children and add these to Canvas View
+     // if docobj is a featureviewcollection (ex orthogroup), add its child views. if there are ever children that have children,
+     // we'll have to make this recursive. -WF
     const std::vector<App::DocumentObject*> &grp = pageGui->getPageObject()->Views.getValues();
+    std::vector<App::DocumentObject*> childViews;
     for (std::vector<App::DocumentObject*>::const_iterator it = grp.begin();it != grp.end(); ++it) {
         attachView(*it);
+        Drawing::FeatureViewCollection* collect = dynamic_cast<Drawing::FeatureViewCollection *>(*it);
+        if (collect) {
+            childViews = collect->Views.getValues();
+            for (std::vector<App::DocumentObject*>::iterator itChild = childViews.begin();itChild != childViews.end(); ++itChild) {
+                attachView(*itChild);
+            }
+        }
     }
+    //it is possible for a Dimension to be loaded before the ViewPart it applies to (???)
+    //therefore we need to make sure parentage of the graphics representation is set properly. bit of a kludge. 
+    setDimensionGroups();
 
     App::DocumentObject *obj = pageGui->getPageObject()->Template.getValue();
     if(obj && obj->isDerivedFrom(Drawing::FeatureTemplate::getClassTypeId())) {
@@ -188,6 +203,22 @@ DrawingView::~DrawingView()
   delete m_view;
 }
 
+void DrawingView::setDimensionGroups(void)
+{
+    const std::vector<QGraphicsItemView *> &allItems = m_view->getViews();
+    std::vector<QGraphicsItemView *>::const_iterator itInspect;
+    int dimItemType = QGraphicsItem::UserType + 106;
+
+    for (itInspect = allItems.begin(); itInspect != allItems.end(); itInspect++) {
+        if (((*itInspect)->type() == dimItemType) && (!(*itInspect)->group())) {
+            QGraphicsItemView* parent = m_view->findParent((*itInspect));
+            if (parent) {
+                QGraphicsItemViewDimension* dim = dynamic_cast<QGraphicsItemViewDimension*>((*itInspect));
+                m_view->addDimToParent(dim,parent);
+            }
+        }
+    }
+}
 void DrawingView::findPrinterSettings(const QString& fileName)
 {
     if (fileName.indexOf(QLatin1String("Portrait"), Qt::CaseInsensitive) >= 0) {

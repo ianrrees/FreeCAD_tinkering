@@ -214,7 +214,7 @@ double FeatureViewDimension::getDimValue() const
             Base::Vector3d projDim = delta.ProjToPlane(Base::Vector3d(0.,0.,0.),
                                                        Base::Vector3d(projDir.x, projDir.y, projDir.z));
 
-            Drawing::FeatureViewPart *viewPart = dynamic_cast<Drawing::FeatureViewPart * >(References.getValues().at(0));
+            Drawing::FeatureViewPart *viewPart = getViewPart();
 
             Base::Vector3d xaxis = XAxisDirection.getValue();
 
@@ -315,5 +315,10 @@ double FeatureViewDimension::getDimValue() const
             }
         }
     }
+}
+
+FeatureViewPart* FeatureViewDimension::getViewPart() const
+{
+    return dynamic_cast<Drawing::FeatureViewPart * >(References.getValues().at(0));
 }
 

@@ -2,7 +2,7 @@
  *   Copyright (c) 2004 Jürgen Riegel <juergen.riegel@web.de>              *
  *   Copyright (c) 2012 Luke Parry <l.parry@warwick.ac.uk>                 *
  *                                                                         *
- *   This file is part of the FreeCAD CAx development system.           *
+ *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
  *   This library is free software; you can redistribute it and/or         *
  *   modify it under the terms of the GNU Library General Public           *
@@ -11,7 +11,7 @@
  *                                                                         *
  *   This library  is distributed in the hope that it will be useful,      *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU Library General Public License for more details.                  *
  *                                                                         *
  *   You should have received a copy of the GNU Library General Public     *
@@ -43,7 +43,7 @@
 
 using namespace DrawingGui;
 
-PROPERTY_SOURCE(DrawingGui::ViewProviderDimension, Gui::ViewProviderDocumentObject)
+PROPERTY_SOURCE(DrawingGui::ViewProviderDimension, DrawingGui::ViewProviderDrawingView)
 
 //**************************************************************************
 // Construction/Destruction
@@ -60,18 +60,18 @@ ViewProviderDimension::~ViewProviderDimension()
 void ViewProviderDimension::attach(App::DocumentObject *pcFeat)
 {
     // call parent attach method
-    ViewProviderDocumentObject::attach(pcFeat);
+    ViewProviderDrawingView::attach(pcFeat);
 }
 
 void ViewProviderDimension::setDisplayMode(const char* ModeName)
 {
-    ViewProviderDocumentObject::setDisplayMode(ModeName);
+    ViewProviderDrawingView::setDisplayMode(ModeName);
 }
 
 std::vector<std::string> ViewProviderDimension::getDisplayModes(void) const
 {
     // get the modes of the father
-    std::vector<std::string> StrList = ViewProviderDocumentObject::getDisplayModes();
+    std::vector<std::string> StrList = ViewProviderDrawingView::getDisplayModes();
 
     return StrList;
 }
