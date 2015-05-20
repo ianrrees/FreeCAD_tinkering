@@ -183,9 +183,8 @@ bool ViewProviderDrawingPage::showDrawingView()
         Gui::Document* doc = Gui::Application::Instance->getDocument
             (pcObject->getDocument());
         view = new DrawingView(this, doc, Gui::getMainWindow());
-        view->setWindowIcon(Gui::BitmapFactory().pixmap("actions/drawing-landscape"));
-
         view->setWindowTitle(QObject::tr("Drawing viewer") + QString::fromAscii("[*]"));
+        view->setWindowIcon(Gui::BitmapFactory().pixmap("actions/drawing-landscape"));
         view->updateDrawing(true);
      //   view->updateTemplate(true);   //TODO: I don't think this is necessary?  Ends up triggering a reload of SVG template, but the DrawingView constructor does too.
         Gui::getMainWindow()->addWindow(view);

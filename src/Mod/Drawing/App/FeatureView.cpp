@@ -105,6 +105,7 @@ App::DocumentObjectExecReturn *FeatureView::execute(void)
     } else if (ScaleType.isValue("Custom")) {
         Scale.StatusBits.set(2, false);
         //TODO: need to ?recompute? ?redraw? to get this to stick.  Mantis #1941
+        //TODO: try Gui::Selection to force update
         //currently need to lose focus and re-get focus to make Scale editable.
         //Scale.touch();                     // causes loop
     }

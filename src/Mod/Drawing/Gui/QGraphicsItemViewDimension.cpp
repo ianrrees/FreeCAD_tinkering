@@ -33,6 +33,7 @@
   # include <QApplication>
   # include <QContextMenuEvent>
   # include <QGraphicsScene>
+  # include <QGraphicsSceneMouseEvent>
   # include <QGridLayout>
   # include <QScopedPointer>
   # include <QMenu>
@@ -153,7 +154,6 @@ void QGraphicsItemDatumLabel::mouseReleaseEvent( QGraphicsSceneMouseEvent * even
     QGraphicsItem::mouseReleaseEvent(event);
 }
 
-
 void QGraphicsItemDatumLabel::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     QStyleOptionGraphicsItem myOption(*option);
@@ -223,11 +223,10 @@ void QGraphicsItemViewDimension::setViewPartFeature(Drawing::FeatureViewDimensio
     setViewFeature(static_cast<Drawing::FeatureView *>(obj));
 
     // Set the QGraphicsItemGroup Properties based on the FeatureView
-    float x = obj->X.getValue();                                       //this only called at construction and X,Y is always (0,0)
+    float x = obj->X.getValue();
     float y = obj->Y.getValue();
 
     QGraphicsItemDatumLabel *dLabel = static_cast<QGraphicsItemDatumLabel *>(datumLabel);
-
     dLabel->setPosFromCenter(x, y);
 
     updateDim();
@@ -293,7 +292,8 @@ void QGraphicsItemViewDimension::updateDim()
 
     const Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(getViewObject());
 
-    QString labelText = QString::fromStdString(dim->getFormatedValue()); //QString::number((absolute) ? fabs(dim->getDimValue()) : dim->getDimValue(), 'f', dim->Precision.getValue());
+    QString labelText = QString::fromStdString(dim->getFormatedValue()); 
+    //QString::number((absolute) ? fabs(dim->getDimValue()) : dim->getDimValue(), 'f', dim->Precision.getValue());
 
     QGraphicsItemDatumLabel *dLabel = dynamic_cast<QGraphicsItemDatumLabel *>(datumLabel);
 
@@ -305,7 +305,7 @@ void QGraphicsItemViewDimension::updateDim()
 
     dLabel->setPlainText(labelText);
     dLabel->setFont(font);
-    dLabel->setLabelCenter();
+    dLabel->setPosFromCenter(dLabel->X(),dLabel->Y());
 }
 
 void QGraphicsItemViewDimension::datumLabelDragged()
@@ -395,6 +395,10 @@ void QGraphicsItemViewDimension::draw()
 
             DrawingGeometry::Vertex *v1 = refObj->getVertexGeomByRef(idx);
             DrawingGeometry::Vertex *v2 = refObj->getVertexGeomByRef(idx2);
+            if (!v1 || !v2) {
+                //Ugh. this is probably because the document is restoring. check log. 
+                return;
+            }
             distStart = Base::Vector3d (v1->pnt.fX, v1->pnt.fY, 0.);
             distEnd = Base::Vector3d (v2->pnt.fX, v2->pnt.fY, 0.);
 
@@ -537,8 +541,6 @@ void QGraphicsItemViewDimension::draw()
                 flipTriang = true;
             }
         }
-
-
 
         // Extension lines
         QPainterPath path;

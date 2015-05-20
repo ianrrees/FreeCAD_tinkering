@@ -104,7 +104,6 @@ using namespace DrawingGui;
 DrawingView::DrawingView(ViewProviderDrawingPage *pageVp, Gui::Document* doc, QWidget* parent)
   : Gui::MDIView(doc, parent), pageGui(pageVp)
 {
-  // Setup the Canvas View
     m_view = new CanvasView(pageVp);
 
     m_backgroundAction = new QAction(tr("&Background"), this);
@@ -152,8 +151,8 @@ DrawingView::DrawingView(ViewProviderDrawingPage *pageVp, Gui::Document* doc, QW
     connect(rendererGroup, SIGNAL(triggered(QAction *)),
             this, SLOT(setRenderer(QAction *)));
 
+    setWindowTitle(tr("dummy[*]"));      //Yuck. prevents "QWidget::setWindowModified: The window title does not contain a '[*]' placeholder"
     setCentralWidget(m_view);
-    //setWindowTitle(tr("SVG Viewer"));
 
     m_orientation = QPrinter::Landscape;
     m_pageSize = QPrinter::A4;

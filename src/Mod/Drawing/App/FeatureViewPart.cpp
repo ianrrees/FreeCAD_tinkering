@@ -254,6 +254,10 @@ DrawingGeometry::Vertex * FeatureViewPart::getVertex(int idx) const
 DrawingGeometry::Vertex* FeatureViewPart::getVertexGeomByRef(int ref) const 
 {
     const std::vector<DrawingGeometry::Vertex *> &verts = getVertexGeometry();
+    if (verts.empty()) {
+        Base::Console().Log("INFO - getVertexGeomByRef(%d) - no Vertex Geometry. Probably restoring?\n",ref);
+        return NULL;
+    }
     const std::vector<int> &vertRefs                    = getVertexReferences();
     std::vector<DrawingGeometry::Vertex *>::const_iterator vert = verts.begin();
     bool found = false;
@@ -266,13 +270,19 @@ DrawingGeometry::Vertex* FeatureViewPart::getVertexGeomByRef(int ref) const
     if (found) {
         return (*vert);
     } else {
-        throw Base::Exception("getVertexGeomByRef: no vertex geometry for ref");
+        std::stringstream error;
+        error << "getVertexGeomByRef: no vertex geometry for ref: " << ref;
+        throw Base::Exception(error.str().c_str());
     }
 }
 
 DrawingGeometry::BaseGeom* FeatureViewPart::getEdgeGeomByRef(int ref) const 
 {
     const std::vector<DrawingGeometry::BaseGeom *> &geoms = getEdgeGeometry();
+    if (geoms.empty()) {
+        Base::Console().Log("INFO - getEdgeGeomByRef(%d) - no Edge Geometry. Probably restoring?\n",ref);
+        return NULL;
+    }
     const std::vector<int> &refs = getEdgeReferences();
     std::vector<DrawingGeometry::BaseGeom*>::const_iterator it = geoms.begin();
     bool found = false;
@@ -285,7 +295,9 @@ DrawingGeometry::BaseGeom* FeatureViewPart::getEdgeGeomByRef(int ref) const
     if (found) {
         return (*it);
     } else {
-        throw Base::Exception("getEdgeGeomByRef: no edge geometry for ref");
+        std::stringstream error;
+        error << "getEdgeGeomByRef: no edge geometry for ref: " << ref;
+        throw Base::Exception(error.str().c_str());
     }
 }
 
