@@ -48,6 +48,8 @@
 
 using namespace DrawingGui;
 
+void _dumpPath(const char* text,QPainterPath path);
+
 const float lineScaleFactor = 1.;   // temp fiddle for devel
 const float vertexScaleFactor = 2.; // temp fiddle for devel
 
@@ -116,6 +118,7 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
           double y = geom->center.fY - geom->radius;
 
           path.addEllipse(x, y, geom->radius * 2, geom->radius * 2);            //topleft@(x,y) radx,rady
+          //Base::Console().Message("TRACE -drawPainterPath - making an CIRCLE @(%.3f,%.3f) R:%.3f\n",x, y, geom->radius);
 
         } break;
         case DrawingGeometry::ARCOFCIRCLE: {
@@ -129,6 +132,7 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
           pathArc(path, geom->radius, geom->radius, 0., geom->largeArc, geom->cw,
                   geom->endPnt.fX, geom->endPnt.fY,
                   geom->startPnt.fX, geom->startPnt.fY);
+          //Base::Console().Message("TRACE -drawPainterPath - making an ARCOFCIRCLE @(%.3f,%.3f) R:%.3f\n",x, y, geom->radius);
         } break;
         case DrawingGeometry::ELLIPSE: {
           DrawingGeometry::Ellipse *geom = static_cast<DrawingGeometry::Ellipse *>(baseGeom);
@@ -137,6 +141,7 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
           double y = geom->center.fY - geom->radius;
 
           path.addEllipse(x,y, geom->major * 2, geom->minor * 2);
+          //Base::Console().Message("TRACE -drawPainterPath - making an ELLIPSE @(%.3f,%.3f) R1:%.3f R2:%.3f\n",x, y, geom->major, geom->minor);
         } break;
         case DrawingGeometry::ARCOFELLIPSE: {
           DrawingGeometry::AOE *geom = static_cast<DrawingGeometry::AOE *>(baseGeom);
@@ -148,6 +153,7 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
           pathArc(path, geom->major, geom->minor, geom->angle, geom->largeArc, geom->cw,
                         geom->endPnt.fX, geom->endPnt.fY,
                         geom->startPnt.fX, geom->startPnt.fY);
+          //Base::Console().Message("TRACE -drawPainterPath - making an ARCOFELLIPSE R1:%.3f R2:%.3f From: (%.3f,%.3f) To: (%.3f,%.3f)\n",geom->major, geom->minor,geom->startPnt.fX, geom->startPnt.fY,geom->endPnt.fX, geom->endPnt.fY);
 
         } break;
         case DrawingGeometry::BSPLINE: {
@@ -157,11 +163,11 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
 
           // Move painter to the beginning of our first segment
           path.moveTo(it->pnts[0].fX, it->pnts[0].fY);
+          //Base::Console().Message("TRACE -drawPainterPath - making an BSPLINE From: (%.3f,%.3f)\n",it->pnts[0].fX,it->pnts[0].fY);
 
           for ( ; it != geom->segments.end(); ++it) {
               // At this point, the painter is either at the beginning
               // of the first segment, or end of the last
-
               if ( it->poles == 2 ) {
                   // Degree 1 bezier = straight line...
                   path.lineTo(it->pnts[1].fX, it->pnts[1].fY);
@@ -174,6 +180,9 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
                   path.cubicTo(it->pnts[1].fX, it->pnts[1].fY,
                                it->pnts[2].fX, it->pnts[2].fY,
                                it->pnts[3].fX, it->pnts[3].fY);
+              } else {                                                 //can only handle lines,quads,cubes
+                  Base::Console().Error("Bad pole count (%d) for BezierSegment of BSpline geometry\n",it->poles);
+                  path.lineTo(it->pnts[1].fX, it->pnts[1].fY);         //show something for debugging
               }
           }
         } break;
@@ -182,12 +191,14 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
 
           path.moveTo(geom->points[0].fX, geom->points[0].fY);
           std::vector<Base::Vector2D>::const_iterator it = geom->points.begin();
-
+          //Base::Console().Message("TRACE -drawPainterPath - making an GENERIC From: (%.3f,%.3f)\n",geom->points[0].fX, geom->points[0].fY); 
           for(++it; it != geom->points.end(); ++it) {
               path.lineTo((*it).fX, (*it).fY);
+              //Base::Console().Message(">>>> To: (%.3f,%.3f)\n",(*it).fX, (*it).fY);
           }
         } break;
         default:
+          Base::Console().Error("Error - drawPainterPath - UNKNOWN geomType: %d\n",baseGeom->geomType);
           break;
       }
 
@@ -267,26 +278,23 @@ void QGraphicsItemViewPart::drawViewPart()
     
     prepareGeometryChange();
 
-//TODO: QGraphicsItemFace disabled temporarily to ease selection of edges/vertices during devel. 
-#if 0
     // Draw Faces
-    QGraphicsItem *graphicsItem = 0;
     const std::vector<DrawingGeometry::Face *> &faceGeoms = part->getFaceGeometry();
     const std::vector<int> &faceRefs = part->getFaceReferences();
     std::vector<DrawingGeometry::Face *>::const_iterator fit = faceGeoms.begin();
-
+    QGraphicsItemFace* face;
     QPen facePen;
-    for(int i = 0 ; fit != faceGeoms.end(); ++fit, i++) {
+    for(int i = 0 ; fit != faceGeoms.end(); fit++, i++) {
         std::vector<DrawingGeometry::Wire *> faceWires = (*fit)->wires;
         QPainterPath facePath;
-        for(std::vector<DrawingGeometry::Wire *>::iterator wire = faceWires.begin(); wire != faceWires.end(); ++wire) {
+        for(std::vector<DrawingGeometry::Wire *>::iterator wire = faceWires.begin(); wire != faceWires.end(); wire++) {
             QPainterPath wirePath;
             QPointF shapePos;
             for(std::vector<DrawingGeometry::BaseGeom *>::iterator baseGeom = (*wire)->geoms.begin(); 
                 baseGeom != (*wire)->geoms.end();
-                ++baseGeom) {
+                baseGeom++) {
                 QPainterPath edgePath = drawPainterPath(*baseGeom);
-                // If the current end point matches the shape end point the new edge path needs reversing
+                //If the current end point matches the shape end point the new edge path needs reversing
                 QPointF shapePos = (wirePath.currentPosition()- edgePath.currentPosition());
                 if(sqrt(shapePos.x() * shapePos.x() + shapePos.y()*shapePos.y()) < 0.05) {
                     edgePath = edgePath.toReversed();
@@ -297,32 +305,31 @@ void QGraphicsItemViewPart::drawViewPart()
             facePath.addPath(wirePath);
         }
 
-        QGraphicsItemFace *item = new QGraphicsItemFace(-1);
-        item->setPath(facePath);
+        //debug a path
+        //std::stringstream faceId;
+        //faceId << "facePath" << i;
+        //_dumpPath(faceId.str().c_str(),facePath);
 
-        item->moveBy(x(), y());
-        QPointF posRef(0.,0.);
-        QPointF mapPos = item->mapToItem(this, posRef);
-        item->moveBy(-mapPos.x(), -mapPos.y());
-        graphicsItem = dynamic_cast<QGraphicsItem *>(item);
-        if(graphicsItem) {
-            // TODO: DrawingGeometry::Face has no easy method of determining hidden/visible!!!
-            //Base::Console().Message("DEBUG - QGraphicsItemViewPart::drawViewPart - face: %d extract: %d show: %d\n",
-            //    i,(*fit)->extractType,part->ShowHiddenLines.getValue());
-            // Hide any edges that are hidden if option is set.
-//             if((*fit)->extractType == DrawingGeometry::WithHidden && !part->ShowHiddenLines.getValue())
-//                 graphicsItem->hide();
-            addToGroup(graphicsItem);
-            graphicsItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
-        }
-    } 
-#endif
+        QGraphicsItemFace *fitem = new QGraphicsItemFace(-1);
+        // TODO: DrawingGeometry::Face has no easy method of determining hidden/visible???
+        // Hide any edges that are hidden if option is set.
+//      if((*fit)->extractType == DrawingGeometry::WithHidden && !part->ShowHiddenLines.getValue())
+//          graphicsItem->hide();
+        addToGroup(fitem);
+        fitem->setPos(0.0,0.0);
+        //QPainterPath simplePath = facePath.simplified();
+        //simplePath.setFillRule(Qt::WindingFill);
+        //fitem->setPath(simplePath);
+        fitem->setPath(facePath);
+        fitem->setFlag(QGraphicsItem::ItemIsSelectable, true);
+    }
 
     // Draw Edges
     const std::vector<DrawingGeometry::BaseGeom *> &geoms = part->getEdgeGeometry();
     const std::vector<int> &refs = part->getEdgeReferences();
     std::vector<DrawingGeometry::BaseGeom *>::const_iterator it = geoms.begin();
     QGraphicsItemEdge* item;
+
     for(int i = 0 ; it != geoms.end(); ++it, i++) {
         //TODO: investigate if an Edge can be both Hidden and Smooth???
         if(((*it)->extractType == DrawingGeometry::Plain)  ||
@@ -340,6 +347,14 @@ void QGraphicsItemViewPart::drawViewPart()
                 item->setSmoothEdge(true);
             }
             item->setPath(drawPainterPath(*it));
+
+            //debug a path
+            //QPainterPath edgePath=drawPainterPath(*it);
+            //item->setPath(edgePath);
+            //std::stringstream edgeId;
+            //edgeId << "edge" << i;
+            //_dumpPath(edgeId.str().c_str(),edgePath);
+
             if(refs.at(i) > 0) {
                 item->setFlag(QGraphicsItem::ItemIsSelectable, true);  //TODO: bug in App/GeometryObject? why no edge reference?
                 item->setAcceptHoverEvents(true);                      //TODO: verify that edge w/o ref is ineligible for selecting
@@ -541,6 +556,28 @@ QRectF QGraphicsItemViewPart::boundingRect() const
     //return childrenBoundingRect().adjusted(-2.,-2.,2.,6.);             //just a bit bigger than the children need
     return childrenBoundingRect();
 }
+
+void _dumpPath(const char* text,QPainterPath path)
+{
+        QPainterPath::Element elem;
+        Base::Console().Message(">>>%s has %d elements\n",text,path.elementCount());
+        char* typeName;
+        for(int iElem = 0; iElem < path.elementCount(); iElem++) {
+            elem = path.elementAt(iElem);
+            if(elem.isMoveTo()) {
+                typeName = "MoveTo";
+            } else if (elem.isLineTo()) {
+                typeName = "LineTo";
+            } else if (elem.isCurveTo()) {
+                typeName = "CurveTo";
+            } else {
+                typeName = "Unknown";
+            }
+            Base::Console().Message(">>>>> element %d: type:%d/%s pos(%.3f,%.3f) M:%d L:%d C:%d\n",iElem,
+                                    elem.type,typeName,elem.x,elem.y,elem.isMoveTo(),elem.isLineTo(),elem.isCurveTo());
+        }
+}
+
 
 #include "moc_QGraphicsItemViewPart.cpp"
 

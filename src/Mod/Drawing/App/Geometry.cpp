@@ -71,6 +71,7 @@
 #include <Geom2d_BSplineCurve.hxx>
 
 #include <Base/Console.h>
+#include <Base/Exception.h>
 #include <Base/Tools2D.h>
 #include <Base/Vector3D.h>
 
@@ -264,10 +265,12 @@ BSpline::BSpline(const BRepAdaptor_Curve &c)
         Standard_Integer maxDegree = 3, maxSegment = 10;
         Handle_BRepAdaptor_HCurve hCurve = new BRepAdaptor_HCurve(c);
         // approximate the curve using a tolerance
-        Approx_Curve3d approx(hCurve, tol3D, GeomAbs_C2, maxSegment, maxDegree);
+        //Approx_Curve3d approx(hCurve, tol3D, GeomAbs_C2, maxSegment, maxDegree);   //gives degree == 5  ==> too many poles ==> buffer overrun
+        Approx_Curve3d approx(hCurve, tol3D, GeomAbs_C0, maxSegment, maxDegree);
         if (approx.IsDone() && approx.HasResult()) {
-            // have the result
             spline = approx.Curve();
+        } else {
+            throw Base::Exception("Geometry::BSpline - could not approximate curve");
         }
     }
 
@@ -278,9 +281,10 @@ BSpline::BSpline(const BRepAdaptor_Curve &c)
 
     for (Standard_Integer i = 1; i <= crt.NbArcs(); ++i) {
         Handle_Geom_BezierCurve bezier = crt.Arc(i);
-
+        if (bezier->Degree() > 3) {
+            throw Base::Exception("Geometry::BSpline - converted curve degree > 3");
+        }
         tempSegment.poles = bezier->NbPoles();
-
         // Note: We really only need to keep the pnts[0] for the first Bezier segment,
         // assuming this only gets used as in QGraphicsItemViewPart::drawPainterPath
         for (int pole = 1; pole <= tempSegment.poles; ++pole) {

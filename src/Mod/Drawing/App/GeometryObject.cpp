@@ -52,6 +52,7 @@
 # include <TopoDS_Face.hxx>
 # include <TopoDS_Edge.hxx>
 # include <TopoDS_Vertex.hxx>
+# include <TopoDS_Wire.hxx>
 # include <TopExp.hxx>
 # include <TopExp_Explorer.hxx>
 # include <TopoDS_Shape.hxx>
@@ -86,6 +87,8 @@
 
 #include <ProjLib_Plane.hxx>
 #endif
+
+#include <algorithm>
 
 # include <Base/Console.h>
 # include <Base/Exception.h>
@@ -150,15 +153,19 @@ void GeometryObject::clear()
     edgeReferences.clear();
 }
 
-void GeometryObject::drawFace (const bool visible, const int typ, const int iface, Handle_HLRBRep_Data & DS, TopoDS_Shape& Result) const
+void GeometryObject::drawFace (const bool visible, const int type, const int iface, Handle_HLRBRep_Data & DS, TopoDS_Shape& Result) const
 {
 // add all the edges for this face(iface) to Result
     HLRBRep_FaceIterator Itf;
 
+    std::vector<int> used;
     for (Itf.InitEdge(DS->FDataArray().ChangeValue(iface)); Itf.MoreEdge(); Itf.NextEdge()) {
         int ie = Itf.Edge();
-        HLRBRep_EdgeData& edf = DS->EDataArray().ChangeValue(ie);
-        drawEdge(edf, Result, visible);
+        if (std::find(used.begin(),used.end(),ie) == used.end()) {              //only use an edge once
+            HLRBRep_EdgeData& edf = DS->EDataArray().ChangeValue(ie);
+            drawEdge(edf, Result, visible);
+            used.push_back(ie);
+        }
     }
 }
 
@@ -226,6 +233,7 @@ DrawingGeometry::Vertex * GeometryObject::projectVertex(const TopoDS_Shape &vert
     return myVert;
 }
 
+//only used by FeatureViewSection so far
 void GeometryObject::projectSurfaces(const TopoDS_Shape &face,
                                      const TopoDS_Shape &support,
                                      const Base::Vector3d &direction,
@@ -524,11 +532,11 @@ bool GeometryObject::shouldDraw(const bool inFace, const int typ, HLRBRep_EdgeDa
     if(inFace)
         todraw = true;
     else if (typ == 3)
-        todraw = ed.Rg1Line() && !ed.RgNLine();
+        todraw = ed.Rg1Line() && !ed.RgNLine();   //smooth + !contour?
     else if (typ == 4)
-        todraw = ed.RgNLine();
+        todraw = ed.RgNLine();                    //contour?
     else
-        todraw =!ed.Rg1Line();
+        todraw =!ed.Rg1Line();                    //!smooth?
 
     return todraw;
 }
@@ -800,9 +808,11 @@ bool GeometryObject::isSameCurve(const BRepAdaptor_Curve &c1, const BRepAdaptor_
     return false;
 }
 
+//only used by extractFaces 
 void GeometryObject::createWire(const TopoDS_Shape &input,
                                 std::vector<DrawingGeometry::Wire *> &wires) const
 {
+    //input is a compound of edges?  there is edgesToWire logic in Part?
     if (input.IsNull()) {
         Base::Console().Log("Drawing::GeometryObject::createWire input is NULL\n");
         return; // There is no OpenCascade Geometry to be calculated
@@ -810,14 +820,12 @@ void GeometryObject::createWire(const TopoDS_Shape &input,
 
     std::list<TopoDS_Edge> edgeList;
 
-    // Explore all edges of input and calculate base geometry representation
+    // make a list of all the edges in the input shape
     TopExp_Explorer edges(input, TopAbs_EDGE);
     while (edges.More()) {
         edgeList.push_back(TopoDS::Edge(edges.Current()));
         edges.Next();
     }
-
-
     // Combine connected edges into wires.
 
     // BRepBuilderAPI_MakeWire has an annoying behaviour where the only [sane]
@@ -836,15 +844,13 @@ void GeometryObject::createWire(const TopoDS_Shape &input,
         lastGoodAdd = edgeList.front();
         edgeList.pop_front();
 
-        // try to connect each edge to the wire, the wire is complete if no more egdes are connectible
+        // try to connect remaining edges to the wire, the wire is complete if no more egdes are connectible
         bool found;
         do {
             found = false;
             for (std::list<TopoDS_Edge>::iterator pE = edgeList.begin(); pE != edgeList.end(); ++pE) {
-
                 // Try adding edge - doesn't necessarily add it
                 mkWire.Add(*pE);
-
                 if (mkWire.Error() != BRepBuilderAPI_DisconnectedWire) {
                     // Edge added!  Remember it, 
                     lastAddFailed = false;
@@ -855,7 +861,7 @@ void GeometryObject::createWire(const TopoDS_Shape &input,
 
                     // ...and start searching for the next edge
                     found = true;
-                    break;
+                    break;           //exit for loop
                 } else {
                     lastAddFailed = true;
                 }
@@ -871,8 +877,10 @@ void GeometryObject::createWire(const TopoDS_Shape &input,
             DrawingGeometry::Wire *genWire = new DrawingGeometry::Wire();
 
             // If there are problems in this area, have a look at ShapeFix_Wire
-            BRepTools_WireExplorer explr(mkWire.Wire());
-            while (explr.More()) {
+            TopoDS_Wire tempWire = mkWire.Wire();
+            BRepTools_WireExplorer explr(tempWire);                    //for edge in wire
+            //BRepTools_WireExplorer explr(mkWire.Wire());             //for edge in wire
+            while (explr.More()) {                                     //in connection order. stops if next edge is not connected
                 BRep_Builder builder;
                 TopoDS_Compound comp;
                 builder.MakeCompound(comp);
@@ -881,6 +889,13 @@ void GeometryObject::createWire(const TopoDS_Shape &input,
                 calculateGeometry(comp, Plain, genWire->geoms);
                 explr.Next();
             }
+            //Problem: BRepTools_WireExplorer finds 1st n connected edges, TopExp_Explorer finds all edges
+            //         if edges are out of order, wire will be wrong
+            //TopExp_Explorer Ex(tempWire,TopAbs_EDGE);
+            //while (Ex.More()) {
+            //    Base::Console().Message("TRACE - GO::createWire - TopExp_Explorer finds an edge\n");
+            //    Ex.Next();
+            //}
             wires.push_back(genWire);
         } else if(mkWire.Error() == BRepBuilderAPI_DisconnectedWire) {
             Standard_Failure::Raise("Fatal error occurred in GeometryObject::createWire()");
@@ -961,12 +976,13 @@ void GeometryObject::extractGeometry(const TopoDS_Shape &input, const Base::Vect
     // extracting the result sets:
 
     //TODO: What is this? IR
-
-    // V  = shapes.VCompound       ();// hard edge visibly
-    // V1 = shapes.Rg1LineVCompound();// Smoth edges visibly
-    // VN = shapes.RgNLineVCompound();// contour edges visibly
-    // VO = shapes.OutLineVCompound();// contours apparents visibly
-    // VI = shapes.IsoLineVCompound();// isoparamtriques   visibly
+    // need HLRBRep_HLRToShape aHLRToShape(shapes);
+    // then TopoDS_Shape V = shapes.VCompound();   //V is a compound of edges
+    // V  = shapes.VCompound       ();// hard edge visibly    - real edges in original shape
+    // V1 = shapes.Rg1LineVCompound();// Smoth edges visibly  - "transition edges between two surfaces"
+    // VN = shapes.RgNLineVCompound();// contour edges visibly  - "sewn edges"?
+    // VO = shapes.OutLineVCompound();// contours apparents visibly  - ?edge in projection but not in original shape? 
+    // VI = shapes.IsoLineVCompound();// isoparamtriques   visibly   - ?constant u,v sort of like lat/long
     // H  = shapes.HCompound       ();// hard edge       invisibly
     // H1 = shapes.Rg1LineHCompound();// Smoth edges  invisibly
     // HN = shapes.RgNLineHCompound();// contour edges invisibly
@@ -980,19 +996,22 @@ void GeometryObject::extractGeometry(const TopoDS_Shape &input, const Base::Vect
 //     calculateGeometry(extractCompound(brep_hlr, invertShape, 3, false), (ExtractionType)(WithSmooth | WithHidden)); // Smooth
 
     // Extract Visible Edges
-    extractEdges(brep_hlr, transShape, 5, true, WithSmooth);  // Hard Edge
+    extractEdges(brep_hlr, transShape, 5, true, WithSmooth);  // Hard Edge  ???but also need Outline Edge??
+    // outlines (edges added to the topology in order to represent the contours visible in a particular projection)
+    // this is why torus doesn't work.
 
 //     calculateGeometry(extractCompound(brep_hlr, invertShape, 2, true), Plain);  // Outline
 //     calculateGeometry(extractCompound(brep_hlr, invertShape, 3, true), WithSmooth); // Smooth Edge
 
     // Extract Faces
+    //algorithm,shape,"type"(always 5? never used?),visible/hidden,smooth edges(show flat/curve transition,facewires,index of face in shape?
     extractFaces(brep_hlr, transShape, 5, true, WithSmooth, faceGeom, faceReferences);
 
     // House Keeping
     delete brep_hlr;
 }
 
-
+//translate all the edges in "input" into BaseGeoms
 int GeometryObject::calculateGeometry(const TopoDS_Shape &input,
                                       const ExtractionType extractionType,
                                       std::vector<BaseGeom *> &geom) const
@@ -1004,7 +1023,7 @@ int GeometryObject::calculateGeometry(const TopoDS_Shape &input,
 
     // build a mesh to explore the shape
     //BRepMesh::Mesh(input, Tolerance);   //OCC has removed BRepMesh::Mesh() as of v6.8.0.oce-0.17-dev
-    BRepMesh_IncrementalMesh(input, Tolerance);
+    BRepMesh_IncrementalMesh(input, Tolerance);    //making a mesh turns edges into multilines?
 
     int geomsAdded = 0;
 

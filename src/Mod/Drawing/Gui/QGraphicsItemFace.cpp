@@ -43,16 +43,14 @@
 
 using namespace DrawingGui;
 
-QGraphicsItemFace::QGraphicsItemFace(int ref, QGraphicsScene *scene  ) :
+QGraphicsItemFace::QGraphicsItemFace(int ref) :
     reference(ref),
-    m_fill(Qt::NoBrush)
+    //m_fill(Qt::NoBrush)
     //m_fill(Qt::CrossPattern)
+    m_fill(Qt::Dense3Pattern)
+    //m_fill(Qt::Dense6Pattern)
 {
-    if(scene) {
-        scene->addItem(this);
-    } else {
-        Base::Console().Log("PROBLEM? - QGraphicsItemFace(%d) has NO scene\n",ref);
-    }
+    setCacheMode(QGraphicsItem::NoCache);
     setAcceptHoverEvents(true);
 
     Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
@@ -64,6 +62,7 @@ QGraphicsItemFace::QGraphicsItemFace(int ref, QGraphicsScene *scene  ) :
     fcColor.setPackedValue(hGrp->GetUnsigned("PreSelectColor", 0x00080800));
     m_colPre = fcColor.asQColor();
 
+    //m_pen.setStyle(Qt::NoPen);
     m_brush.setStyle(m_fill);
     setPrettyNormal();
 }
@@ -76,7 +75,6 @@ QVariant QGraphicsItemFace::itemChange(GraphicsItemChange change, const QVariant
         } else {
             setPrettyNormal();
         }
-        update();
     }
     return QGraphicsItem::itemChange(change, value);
 }
@@ -84,7 +82,6 @@ QVariant QGraphicsItemFace::itemChange(GraphicsItemChange change, const QVariant
 void QGraphicsItemFace::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
     setPrettyPre();
-    update();
 }
 
 void QGraphicsItemFace::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
@@ -93,7 +90,6 @@ void QGraphicsItemFace::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 
     if(!isSelected() && !view->isSelected()) {
         setPrettyNormal();
-        update();
     }
 }
 
@@ -118,4 +114,13 @@ void QGraphicsItemFace::setPrettySel() {
     setBrush(m_brush);
 }
 
+void QGraphicsItemFace::paint ( QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget) {
+    QStyleOptionGraphicsItem myOption(*option);
+    //myOption.state &= ~QStyle::State_Selected;   //temp for debugging
+
+    //m_pen.setColor(m_colCurrent);
+    setPen(m_pen);
+    setBrush(m_brush);
+    QGraphicsPathItem::paint (painter, &myOption, widget);
+}
 

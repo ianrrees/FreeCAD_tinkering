@@ -41,11 +41,12 @@ namespace DrawingGui
 class QGraphicsItemFace : public QGraphicsPathItem
 {
 public:
-    explicit QGraphicsItemFace(int ref = -1, QGraphicsScene *scene = 0 );
+    explicit QGraphicsItemFace(int ref = -1);
     ~QGraphicsItemFace() {}
 
     enum {Type = QGraphicsItem::UserType + 104};
     int type() const { return Type;}
+    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 
 public:
 //      QPainterPath shape() const;
