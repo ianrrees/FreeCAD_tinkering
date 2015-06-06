@@ -86,8 +86,9 @@
 # include <Geom2d_BSplineCurve.hxx>
 
 #include <ProjLib_Plane.hxx>
-#endif
+#endif  // #ifndef _PreComp_
 
+//#include<QDebug>
 #include <algorithm>
 
 # include <Base/Console.h>
@@ -153,25 +154,36 @@ void GeometryObject::clear()
     edgeReferences.clear();
 }
 
-void GeometryObject::drawFace (const bool visible, const int type, const int iface, Handle_HLRBRep_Data & DS, TopoDS_Shape& Result) const
+void GeometryObject::drawFace (const bool visible, const int iface,
+                               Handle_HLRBRep_Data & DS,
+                               TopoDS_Shape& Result) const
 {
 // add all the edges for this face(iface) to Result
     HLRBRep_FaceIterator Itf;
 
-    std::vector<int> used;
+ //   std::vector<int> used;
+//    qDebug()<<"top of drawFace()";
     for (Itf.InitEdge(DS->FDataArray().ChangeValue(iface)); Itf.MoreEdge(); Itf.NextEdge()) {
         int ie = Itf.Edge();
-        if (std::find(used.begin(),used.end(),ie) == used.end()) {              //only use an edge once
+   //     if (std::find(used.begin(),used.end(),ie) == used.end()) {              //only use an edge once
             HLRBRep_EdgeData& edf = DS->EDataArray().ChangeValue(ie);
             drawEdge(edf, Result, visible);
-            used.push_back(ie);
-        }
+//            double first = edf.Geometry().FirstParameter();
+
+//            double last = edf.Geometry().LastParameter();
+
+//            gp_Pnt p0 = edf.Geometry().Value3D(first);
+
+//            gp_Pnt p1 = edf.Geometry().Value3D(last);
+
+//            qDebug()<<p0.X()<<','<<p0.Y()<<','<<p0.Z()<<"\t - \t"<<p1.X()<<','<<p1.Y()<<','<<p1.Z();
+ //           used.push_back(ie);
+ //       }
     }
 }
 
 void GeometryObject::drawEdge(HLRBRep_EdgeData& ed, TopoDS_Shape& Result, const bool visible) const
 {
-// add (visible) intervals of ed to Result as Edges
     double sta,end;
     float tolsta,tolend;
 
@@ -272,7 +284,7 @@ void GeometryObject::projectSurfaces(const TopoDS_Shape &face,
     // Extract Faces
     std::vector<int> projFaceRefs;
 
-    extractFaces(brep_hlr, mkTrfScale.Shape(), 5, true, WithSmooth, projFaces, projFaceRefs);
+    extractFaces(brep_hlr, mkTrfScale.Shape(), true, WithSmooth, projFaces, projFaceRefs);
     delete brep_hlr;
 }
 
@@ -455,13 +467,11 @@ DrawingGeometry::BaseGeom * GeometryObject::projectEdge(const TopoDS_Shape &edge
 
 void GeometryObject::extractFaces(HLRBRep_Algo *myAlgo,
                                   const TopoDS_Shape &S,
-                                  int type,
                                   bool visible,
                                   ExtractionType extractionType,
                                   std::vector<DrawingGeometry::Face *> &projFaces,
                                   std::vector<int> &faceRefs) const
 {
-
     if(!myAlgo)
         return;
 
@@ -473,20 +483,26 @@ void GeometryObject::extractFaces(HLRBRep_Algo *myAlgo,
 
     DS->Projector().Scaled(true);
 
-    int e1 = 1;
-    int e2 = DS->NbEdges();
     int f1 = 1;
     int f2 = DS->NbFaces();
 
+    /* This block seems to set f1 and f2 to indices using a HLRBRep_ShapeBounds
+     * object based that's based on myAlgo, but DS is also based on myAlgo too,
+     * so I don't think this is required. IR
     if (!S.IsNull()) {
+        int e1 = 1;
+        int e2 = DS->NbEdges();
+
         Standard_Integer v1,v2;
         Standard_Integer index = myAlgo->Index(S);
         if(index == 0)  {
             Base::Console().Log("Drawing::GeometryObject::extractFaces - myAlgo->Index(S) == 0\n");
             return;
         }
-        myAlgo->ShapeBounds(index).Bounds(v1,v2,e1,e2,f1,f2);
+
+        myAlgo->ShapeBounds(index).Bounds(v1, v2, e1, e2, f1, f2);
     }
+    */
 
     TopTools_IndexedMapOfShape anfIndices;
     TopTools_IndexedMapOfShape& Faces = DS->FaceMap();
@@ -499,7 +515,7 @@ void GeometryObject::extractFaces(HLRBRep_Algo *myAlgo,
         TopoDS_Shape face;
         B.MakeCompound(TopoDS::Compound(face));
 
-        drawFace(visible,5,iface,DS,face);
+        drawFace(visible, iface, DS, face);
 
         DrawingGeometry::Face *myFace = new DrawingGeometry::Face();
 
@@ -876,11 +892,18 @@ void GeometryObject::createWire(const TopoDS_Shape &input,
         if (mkWire.Error() == BRepBuilderAPI_WireDone) {
             DrawingGeometry::Wire *genWire = new DrawingGeometry::Wire();
 
-            // If there are problems in this area, have a look at ShapeFix_Wire
-            TopoDS_Wire tempWire = mkWire.Wire();
-            BRepTools_WireExplorer explr(tempWire);                    //for edge in wire
-            //BRepTools_WireExplorer explr(mkWire.Wire());             //for edge in wire
-            while (explr.More()) {                                     //in connection order. stops if next edge is not connected
+            // BRepTools_WireExplorer finds 1st n connected edges, while
+            // TopExp_Explorer finds all edges.  Since we built mkWire using
+            // TopExp_Explorer, and want to run BRepTools_WireExplorer over
+            // it, we need to reorder the wire.
+            ShapeFix_Wire fix;
+            fix.Load(mkWire.Wire());
+            fix.FixReorder();
+            fix.Perform();
+
+            BRepTools_WireExplorer explr(fix.Wire());
+
+            while (explr.More()) {
                 BRep_Builder builder;
                 TopoDS_Compound comp;
                 builder.MakeCompound(comp);
@@ -889,13 +912,6 @@ void GeometryObject::createWire(const TopoDS_Shape &input,
                 calculateGeometry(comp, Plain, genWire->geoms);
                 explr.Next();
             }
-            //Problem: BRepTools_WireExplorer finds 1st n connected edges, TopExp_Explorer finds all edges
-            //         if edges are out of order, wire will be wrong
-            //TopExp_Explorer Ex(tempWire,TopAbs_EDGE);
-            //while (Ex.More()) {
-            //    Base::Console().Message("TRACE - GO::createWire - TopExp_Explorer finds an edge\n");
-            //    Ex.Next();
-            //}
             wires.push_back(genWire);
         } else if(mkWire.Error() == BRepBuilderAPI_DisconnectedWire) {
             Standard_Failure::Raise("Fatal error occurred in GeometryObject::createWire()");
@@ -932,7 +948,10 @@ gp_Pnt GeometryObject::findCentroid(const TopoDS_Shape &shape,
     return gp_Pnt(x, y, z);
 }
 
-void GeometryObject::extractGeometry(const TopoDS_Shape &input, const Base::Vector3d &direction, bool extractHidden, const Base::Vector3d &xAxis)
+void GeometryObject::extractGeometry(const TopoDS_Shape &input,
+                                     const Base::Vector3d &direction,
+                                     bool extractHidden,
+                                     const Base::Vector3d &xAxis)
 {
     // Clear previous Geometry and References that may have been stored
     clear();
@@ -1004,8 +1023,8 @@ void GeometryObject::extractGeometry(const TopoDS_Shape &input, const Base::Vect
 //     calculateGeometry(extractCompound(brep_hlr, invertShape, 3, true), WithSmooth); // Smooth Edge
 
     // Extract Faces
-    //algorithm,shape,"type"(always 5? never used?),visible/hidden,smooth edges(show flat/curve transition,facewires,index of face in shape?
-    extractFaces(brep_hlr, transShape, 5, true, WithSmooth, faceGeom, faceReferences);
+    //algorithm,shape,visible/hidden,smooth edges(show flat/curve transition,facewires,index of face in shape?
+    extractFaces(brep_hlr, transShape, true, WithSmooth, faceGeom, faceReferences);
 
     // House Keeping
     delete brep_hlr;

@@ -94,8 +94,10 @@ protected:
     bool shouldDraw(const bool inFace, const int typ,HLRBRep_EdgeData& ed);
     bool isSameCurve(const BRepAdaptor_Curve &c1, const BRepAdaptor_Curve &c2) const;
 
-    // Reimplements HLRBRep Drawing Algorithms to satisfy Drawing Workbench requirements
-    void drawFace(const bool visible, const int typ, const int iface, Handle_HLRBRep_Data & DS, TopoDS_Shape& Result) const;
+    /// Reimplements HLRBRep Drawing Algorithms to satisfy Drawing Workbench requirements
+    void drawFace(const bool visible, const int iface, Handle_HLRBRep_Data & DS, TopoDS_Shape& Result) const;
+
+    /// Add (visible) intervals of ed to Result as Edges
     void drawEdge(HLRBRep_EdgeData& ed, TopoDS_Shape& Result, const bool visible) const;
 
     void extractVerts(HLRBRep_Algo *myAlgo, const TopoDS_Shape &S, HLRBRep_EdgeData& ed, int ie, ExtractionType extractionType);
@@ -103,7 +105,6 @@ protected:
 
     void extractFaces(HLRBRep_Algo *myAlgo,
                       const TopoDS_Shape &S,
-                      int type,
                       bool visible,
                       ExtractionType extractionType,
                       std::vector<DrawingGeometry::Face *> &projFaces,
