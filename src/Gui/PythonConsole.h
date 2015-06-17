@@ -159,6 +159,7 @@ private:
 
     friend class PythonStdout;
     friend class PythonStderr;
+    friend class MacroManager;
 
 private:
     PythonConsoleHighlighter* pythonSyntax;

@@ -207,6 +207,11 @@ void MacroManager::setModule(const char* sModule)
 }
 
 namespace Gui {
+
+    /// Redirects Python output while in scope
+    /*!
+     * Takes care of freeing parameter out.
+     */
     class PythonRedirector
     {
     public:
@@ -242,10 +247,21 @@ void MacroManager::run(MacroType eType, const char *sName)
             .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("OutputWindow");
         PyObject* pyout = hGrp->GetBool("RedirectPythonOutput",true) ? new OutputStdout : 0;
         PyObject* pyerr = hGrp->GetBool("RedirectPythonErrors",true) ? new OutputStderr : 0;
-        PythonRedirector std_out("stdout",pyout);
-        PythonRedirector std_err("stderr",pyerr);
-        //The given path name is expected to be Utf-8
-        Base::Interpreter().runFile(sName, this->localEnv);
+
+        PythonConsole *console = Gui::getMainWindow()->findChild<Gui::PythonConsole*>();
+        if (pyout == 0 && pyerr == 0 && console != 0) {
+            QString statement = QString::fromUtf8("execfile(\"") +
+                                QString::fromUtf8(sName) +
+                                QString::fromUtf8("\")");
+            console->printStatement( statement );
+            console->runSource(statement);
+        } else {
+            PythonRedirector std_out("stdout", pyout);
+            PythonRedirector std_err("stderr", pyerr);
+
+            //The given path name is expected to be Utf-8
+            Base::Interpreter().runFile(sName, this->localEnv);
+        }
     }
     catch (const Base::SystemExitException&) {
         throw;
