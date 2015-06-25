@@ -61,7 +61,7 @@ public:
 
     /// returns the type name of the ViewProvider
     virtual const char* getViewProviderName(void) const {
-        return "DrawingGui::ViewProviderDrawingViewSection";
+        return "DrawingGui::ViewProviderViewSection";
     }
 
 public:

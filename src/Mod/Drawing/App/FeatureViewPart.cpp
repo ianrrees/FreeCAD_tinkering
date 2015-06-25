@@ -322,7 +322,7 @@ namespace App {
 /// @cond DOXERR
 PROPERTY_SOURCE_TEMPLATE(Drawing::FeatureViewPartPython, Drawing::FeatureViewPart)
 template<> const char* Drawing::FeatureViewPartPython::getViewProviderName(void) const {
-    return "DrawingGui::ViewProviderDrawingView";
+    return "DrawingGui::ViewProviderView";
 }
 /// @endcond
 

@@ -99,7 +99,7 @@ protected:
     QColor m_colSel;
     QFont m_font;
     QGraphicsTextItem* m_label;
-    QGraphicsRectItem* m_frame;
+    QGraphicsRectItem* m_border;
     QPen m_decorPen;
 };
 

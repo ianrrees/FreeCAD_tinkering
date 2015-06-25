@@ -58,6 +58,7 @@ public:
     //@}
     
     int addView(App::DocumentObject *docObj);
+    int removeView(App::DocumentObject* docObj);
     short mustExecute() const;
 
     /// returns the type name of the ViewProvider

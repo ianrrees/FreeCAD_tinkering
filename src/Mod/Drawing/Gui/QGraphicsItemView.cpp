@@ -89,8 +89,8 @@ QGraphicsItemView::QGraphicsItemView(const QPoint &pos, QGraphicsScene *scene)
     addToGroup(m_label);
     m_label->setFont(m_font);
     
-    m_frame = new QGraphicsRectItem();
-    addToGroup(m_frame);
+    m_border = new QGraphicsRectItem();
+    addToGroup(m_border);
     m_decorPen.setStyle(Qt::DashLine);
     m_decorPen.setWidth(0); // 0 => 1px "cosmetic pen"
 }
@@ -273,7 +273,7 @@ void QGraphicsItemView::drawBorder()
     double margin = 2.0;
     prepareGeometryChange();
     m_label->hide();
-    m_frame->hide();
+    m_border->hide();
 
     m_label->setDefaultTextColor(m_colCurrent);
     m_label->setFont(m_font);
@@ -283,9 +283,9 @@ void QGraphicsItemView::drawBorder()
     double labelWidth = m_label->boundingRect().width();
     double labelHeight = m_label->boundingRect().height();
 
-    m_frame->hide();
+    m_border->hide();
     m_decorPen.setColor(m_colCurrent);
-    m_frame->setPen(m_decorPen);
+    m_border->setPen(m_decorPen);
 
     QRectF displayArea = customChildrenBoundingRect();
     double displayWidth = displayArea.width();
@@ -305,11 +305,11 @@ void QGraphicsItemView::drawBorder()
                               displayArea.top(),
                               frameWidth,
                               frameHeight);
-    m_frame->setRect(frameArea);
-    m_frame->setPos(0.,0.);
+    m_border->setRect(frameArea);
+    m_border->setPos(0.,0.);
 
     m_label->show();
-    m_frame->show();
+    m_border->show();
 }
 
 void QGraphicsItemView::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -319,7 +319,7 @@ void QGraphicsItemView::paint(QPainter *painter, const QStyleOptionGraphicsItem 
 
     if(!borderVisible){
          m_label->hide();
-         m_frame->hide();
+         m_border->hide();
     }
     QGraphicsItemGroup::paint(painter, &myOption, widget);
 }

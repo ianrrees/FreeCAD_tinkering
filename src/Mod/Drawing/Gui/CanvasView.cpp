@@ -57,6 +57,7 @@
 #include <Mod/Drawing/App/FeatureViewPart.h>
 #include <Mod/Drawing/App/FeatureViewAnnotation.h>
 #include <Mod/Drawing/App/FeatureViewSymbol.h>
+#include <Mod/Drawing/App/FeatureViewClip.h>
 
 #include "ViewProviderPage.h"
 
@@ -69,7 +70,7 @@
 #include "QGraphicsItemViewSection.h"
 #include "QGraphicsItemViewAnnotation.h"
 #include "QGraphicsItemViewSymbol.h"
-
+#include "QGraphicsItemViewClip.h"
 
 #include "CanvasView.h"
 
@@ -240,6 +241,16 @@ QGraphicsItemView * CanvasView::addFeatureViewSymbol(Drawing::FeatureViewSymbol 
     QPoint qp(view->X.getValue(),view->Y.getValue());
     // This essentially adds a null view feature to ensure view size is consistent
     QGraphicsItemViewSymbol *qview = new  QGraphicsItemViewSymbol(qp, scene());
+    qview->setViewFeature(view);
+
+    addView(qview);
+    return qview;
+}
+
+QGraphicsItemView * CanvasView::addFeatureViewClip(Drawing::FeatureViewClip *view)
+{
+    QPoint qp(view->X.getValue(),view->Y.getValue());
+    QGraphicsItemViewClip *qview = new  QGraphicsItemViewClip(qp, scene());
     qview->setViewFeature(view);
 
     addView(qview);

@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (c) Yorik van Havre <yorik@uncreated.net> 2012              *
+ *   Copyright (c) WandererFan <wandererfan@gmail.com> 2015                *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -21,34 +22,39 @@
  ***************************************************************************/
 
 
-#ifndef _FeatureClip_h_
-#define _FeatureClip_h_
+#ifndef _FeatureViewClip_h_
+#define _FeatureViewClip_h_
 
 
+#include <App/DocumentObject.h>
 #include <App/DocumentObjectGroup.h>
+#include <App/PropertyLinks.h>
 #include <App/PropertyStandard.h>
+#include "FeatureViewCollection.h"
+#include <App/FeaturePython.h>
 
 namespace Drawing
 {
 
-/** Base class of all View Features in the drawing module
- */
-class DrawingExport FeatureClip: public App::DocumentObjectGroup
+class DrawingExport FeatureViewClip: public Drawing::FeatureView
 {
-    PROPERTY_HEADER(Drawing::FeatureClip);
+    PROPERTY_HEADER(Drawing::FeatureViewClip);
 
 public:
     /// Constructor
-    FeatureClip(void);
-    virtual ~FeatureClip();
+    FeatureViewClip(void);
+    virtual ~FeatureViewClip();
 
-    App::PropertyFloat X;
-    App::PropertyFloat Y;
     App::PropertyFloat Width;
     App::PropertyFloat Height;
     App::PropertyBool ShowFrame;
-    App::PropertyString ViewResult;
+    App::PropertyBool ShowLabels;
     App::PropertyBool Visible;
+    App::PropertyLinkList Views;
+
+    int addView(FeatureView *view);
+    int removeView(FeatureView *view);
+    short mustExecute() const;
 
     /** @name methods overide Feature */
     //@{
@@ -60,11 +66,14 @@ public:
     virtual const char* getViewProviderName(void) const {
         return "DrawingGui::ViewProviderDrawingClip";
     }
+    std::vector<std::string> getChildViewNames();
+
 
 protected:
     void onChanged(const App::Property* prop);
 };
 
+typedef App::FeaturePythonT<FeatureViewClip> FeatureViewClipPython;
 
 } //namespace Drawing
 

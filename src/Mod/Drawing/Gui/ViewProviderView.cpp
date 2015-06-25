@@ -38,15 +38,15 @@
 #include <Gui/Selection.h>
 
 #include <Mod/Drawing/App/FeatureView.h>
-#include <Mod/Drawing/App/FeatureClip.h>
+#include <Mod/Drawing/App/FeatureViewClip.h>
 #include "ViewProviderView.h"
 
 
 using namespace DrawingGui;
 
-PROPERTY_SOURCE(DrawingGui::ViewProviderDrawingView, Gui::ViewProviderDocumentObject)
+PROPERTY_SOURCE(DrawingGui::ViewProviderView, Gui::ViewProviderDocumentObject)
 
-ViewProviderDrawingView::ViewProviderDrawingView()
+ViewProviderView::ViewProviderView()
 {
     sPixmap = "Page";
 
@@ -54,28 +54,28 @@ ViewProviderDrawingView::ViewProviderDrawingView()
     DisplayMode.StatusBits.set(3, true);
 }
 
-ViewProviderDrawingView::~ViewProviderDrawingView()
+ViewProviderView::~ViewProviderView()
 {
 }
 
-void ViewProviderDrawingView::attach(App::DocumentObject *pcFeat)
+void ViewProviderView::attach(App::DocumentObject *pcFeat)
 {
     // call parent attach method
     ViewProviderDocumentObject::attach(pcFeat);
 }
 
-void ViewProviderDrawingView::setDisplayMode(const char* ModeName)
+void ViewProviderView::setDisplayMode(const char* ModeName)
 {
     ViewProviderDocumentObject::setDisplayMode(ModeName);
 }
 
-std::vector<std::string> ViewProviderDrawingView::getDisplayModes(void) const
+std::vector<std::string> ViewProviderView::getDisplayModes(void) const
 {
     std::vector<std::string> StrList = ViewProviderDocumentObject::getDisplayModes();
     return StrList;
 }
 
-void ViewProviderDrawingView::show(void)
+void ViewProviderView::show(void)
 {
     ViewProviderDocumentObject::show();
 
@@ -92,7 +92,7 @@ void ViewProviderDrawingView::show(void)
     }
 }
 
-void ViewProviderDrawingView::hide(void)
+void ViewProviderView::hide(void)
 {
     ViewProviderDocumentObject::hide();
 
@@ -109,26 +109,26 @@ void ViewProviderDrawingView::hide(void)
     }
 }
 
-bool ViewProviderDrawingView::isShow(void) const
+bool ViewProviderView::isShow(void) const
 {
     return Visibility.getValue();
 }
 
-void ViewProviderDrawingView::startRestoring()
+void ViewProviderView::startRestoring()
 {
     // do nothing
 }
 
-void ViewProviderDrawingView::finishRestoring()
+void ViewProviderView::finishRestoring()
 {
     // do nothing
 }
 
-void ViewProviderDrawingView::updateData(const App::Property*)
+void ViewProviderView::updateData(const App::Property*)
 {
 }
 
-Drawing::FeatureView* ViewProviderDrawingView::getViewObject() const
+Drawing::FeatureView* ViewProviderView::getViewObject() const
 {
     return dynamic_cast<Drawing::FeatureView*>(pcObject);
 }

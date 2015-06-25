@@ -43,7 +43,7 @@
 
 using namespace DrawingGui;
 
-PROPERTY_SOURCE(DrawingGui::ViewProviderDimension, DrawingGui::ViewProviderDrawingView)
+PROPERTY_SOURCE(DrawingGui::ViewProviderDimension, DrawingGui::ViewProviderView)
 
 //**************************************************************************
 // Construction/Destruction
@@ -60,18 +60,18 @@ ViewProviderDimension::~ViewProviderDimension()
 void ViewProviderDimension::attach(App::DocumentObject *pcFeat)
 {
     // call parent attach method
-    ViewProviderDrawingView::attach(pcFeat);
+    ViewProviderView::attach(pcFeat);
 }
 
 void ViewProviderDimension::setDisplayMode(const char* ModeName)
 {
-    ViewProviderDrawingView::setDisplayMode(ModeName);
+    ViewProviderView::setDisplayMode(ModeName);
 }
 
 std::vector<std::string> ViewProviderDimension::getDisplayModes(void) const
 {
     // get the modes of the father
-    std::vector<std::string> StrList = ViewProviderDrawingView::getDisplayModes();
+    std::vector<std::string> StrList = ViewProviderView::getDisplayModes();
 
     return StrList;
 }

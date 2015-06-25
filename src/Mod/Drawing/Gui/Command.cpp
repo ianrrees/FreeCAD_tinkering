@@ -53,6 +53,9 @@
 #include <Mod/Drawing/App/FeatureProjGroupItem.h>
 #include <Mod/Drawing/App/FeatureProjGroup.h>
 #include <Mod/Drawing/App/FeatureViewDimension.h>
+#include <Mod/Drawing/App/FeatureViewClip.h>
+#include <Mod/Drawing/App/FeatureViewAnnotation.h>
+#include <Mod/Drawing/App/FeatureViewSymbol.h>
 #include <Mod/Drawing/Gui/CanvasView.h>
 
 
@@ -663,7 +666,7 @@ CmdDrawingClip::CmdDrawingClip()
     sGroup        = QT_TR_NOOP("Drawing");
     sMenuText     = QT_TR_NOOP("&Clip");
     sToolTipText  = QT_TR_NOOP("Inserts a clip group in the active drawing");
-    sWhatsThis    = "Drawing_Annotation";
+    sWhatsThis    = "Drawing_Clip";
     sStatusTip    = QT_TR_NOOP("Inserts a clip group in the active drawing");
     sPixmap       = "actions/drawing-clip";
 }
@@ -684,13 +687,157 @@ void CmdDrawingClip::activated(int iMsg)
     std::string PageName = pages.front()->getNameInDocument();
     std::string FeatName = getUniqueObjectName("Clip");
     openCommand("Create Clip");
-    doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureClip','%s')",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewClip','%s')",FeatName.c_str());
     doCommand(Doc,"App.activeDocument().%s.addObject(App.activeDocument().%s)",PageName.c_str(),FeatName.c_str());
+    Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
+    page->addView(page->getDocument()->getObject(FeatName.c_str()));
     updateActive();
     commitCommand();
 }
 
 bool CmdDrawingClip::isActive(void)
+{
+    return (getActiveGuiDocument() ? true : false);
+}
+
+//===========================================================================
+// Drawing_ClipPlus
+//===========================================================================
+
+DEF_STD_CMD_A(CmdDrawingClipPlus);
+
+CmdDrawingClipPlus::CmdDrawingClipPlus()
+  : Command("Drawing_ClipPlus")
+{
+    // seting the
+    sGroup        = QT_TR_NOOP("Drawing");
+    sMenuText     = QT_TR_NOOP("&ClipPlus");
+    sToolTipText  = QT_TR_NOOP("Add a View to a clip group in the active drawing");
+    sWhatsThis    = "Drawing_ClipPlus";
+    sStatusTip    = QT_TR_NOOP("Adds a View into a clip group in the active drawing");
+    sPixmap       = "actions/drawing-clipplus";
+}
+
+void CmdDrawingClipPlus::activated(int iMsg)
+{
+
+    std::vector<App::DocumentObject*> pages = getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+    if (pages.empty()) {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page found"),
+            QObject::tr("Create a page first."));
+        return;
+    }
+    
+    std::vector<App::DocumentObject*> views = getSelection().getObjectsOfType(Drawing::FeatureView::getClassTypeId());
+    if (views.size() != 2) {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
+            QObject::tr("Select exactly one Clip and one View object."));
+        return;
+    }
+
+    Drawing::FeatureViewClip* clip;
+    Drawing::FeatureView* view;
+    std::vector<App::DocumentObject*>::iterator it = views.begin();
+    for (; it != views.end(); it++) {
+        if ((*it)->isDerivedFrom(Drawing::FeatureViewClip::getClassTypeId())) {
+            clip = dynamic_cast<Drawing::FeatureViewClip*> ((*it));
+        } else {
+            view = dynamic_cast<Drawing::FeatureView*> ((*it));
+        }
+    }
+
+    if (!view) {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
+            QObject::tr("Select exactly one Drawing View object."));
+        return;
+    }
+    if (!clip) {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
+            QObject::tr("Select exactly one Clip object."));
+        return;
+    }
+
+    openCommand("ClipPlus");
+    //TODO: remove part view from page?? Document tree isn't right
+    //FeaturePage* page = clip->findParentPage();
+    //page->removeView(view);
+    int i = clip->addView(view);
+    updateActive();
+    commitCommand();
+}
+
+bool CmdDrawingClipPlus::isActive(void)
+{
+    return (getActiveGuiDocument() ? true : false);
+}
+
+//===========================================================================
+// Drawing_ClipMinus
+//===========================================================================
+
+DEF_STD_CMD_A(CmdDrawingClipMinus);
+
+CmdDrawingClipMinus::CmdDrawingClipMinus()
+  : Command("Drawing_ClipMinus")
+{
+    sGroup        = QT_TR_NOOP("Drawing");
+    sMenuText     = QT_TR_NOOP("&ClipMinus");
+    sToolTipText  = QT_TR_NOOP("Remove a View from a clip group in the active drawing");
+    sWhatsThis    = "Drawing_ClipMinus";
+    sStatusTip    = QT_TR_NOOP("Remove a View from a clip group in the active drawing");
+    sPixmap       = "actions/drawing-clipminus";
+}
+
+void CmdDrawingClipMinus::activated(int iMsg)
+{
+
+    std::vector<App::DocumentObject*> pages = getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
+    if (pages.empty()) {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page found"),
+            QObject::tr("Create a page first."));
+        return;
+    }
+
+    std::vector<App::DocumentObject*> views = getSelection().getObjectsOfType(Drawing::FeatureView::getClassTypeId());
+    if (views.size() != 2) {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
+            QObject::tr("Select exactly one Clip and one View object."));
+        return;
+    }
+
+    Drawing::FeatureViewClip* clip;
+    Drawing::FeatureView* view;
+    std::vector<App::DocumentObject*>::iterator it = views.begin();
+    for (; it != views.end(); it++) {
+        if ((*it)->isDerivedFrom(Drawing::FeatureViewClip::getClassTypeId())) {
+            clip = dynamic_cast<Drawing::FeatureViewClip*> ((*it));
+        } else {
+            view = dynamic_cast<Drawing::FeatureView*> ((*it));
+        }
+    }
+
+    if (!view) {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
+            QObject::tr("Select exactly one Drawing View object."));
+        return;
+    }
+    if (!clip) {
+        QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
+            QObject::tr("Select exactly one Clip object."));
+        return;
+    }
+
+    openCommand("ClipMinus");
+    int i = clip->removeView(view);
+    //return view to Page here or in FeatureViewClip??
+    //FeaturePage* page = clip->findParentPage();
+    //page->addView(view);
+
+    updateActive();
+    commitCommand();
+}
+
+bool CmdDrawingClipMinus::isActive(void)
 {
     return (getActiveGuiDocument() ? true : false);
 }
@@ -887,7 +1034,9 @@ void CreateDrawingCommands(void)
     rcCmdMgr.addCommand(new CmdDrawingProjGroup());
 //    rcCmdMgr.addCommand(new CmdDrawingOpenBrowserView());
     rcCmdMgr.addCommand(new CmdDrawingAnnotation());
-//    rcCmdMgr.addCommand(new CmdDrawingClip());
+    rcCmdMgr.addCommand(new CmdDrawingClip());
+    rcCmdMgr.addCommand(new CmdDrawingClipPlus());
+    rcCmdMgr.addCommand(new CmdDrawingClipMinus());
     rcCmdMgr.addCommand(new CmdDrawingSymbol());
     rcCmdMgr.addCommand(new CmdDrawingExportPage());
     rcCmdMgr.addCommand(new CmdDrawingProjectShape());

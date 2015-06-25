@@ -68,8 +68,10 @@ Gui::MenuItem* Workbench::setupMenuBar() const
     //*part << "Drawing_OpenBrowserView";
     *draw << "Drawing_NewViewSection";
     *draw << "Drawing_Annotation";
-    //*part << "Drawing_Clip";
     *draw << "Drawing_Symbol";
+    *draw << "Drawing_Clip";
+    *draw << "Drawing_ClipPlus";
+    *draw << "Drawing_ClipMinus";
     *draw << "Drawing_NewDimension";
     //*part << "Drawing_DraftView";
     *draw << "Drawing_ExportPage";
@@ -92,6 +94,12 @@ Gui::ToolBarItem* Workbench::setupToolBars() const
     *views << "Drawing_ProjGroup";
     *views << "Drawing_NewViewSection";
     *views << "Drawing_Annotation";
+
+    Gui::ToolBarItem *clips = new Gui::ToolBarItem(root);
+    clips->setCommand("Drawing Clips");
+    *clips << "Drawing_Clip";
+    *clips << "Drawing_ClipPlus";
+    *clips << "Drawing_ClipMinus";
 
     Gui::ToolBarItem *dims = new Gui::ToolBarItem(root);
     dims->setCommand("Drawing Dimensions");
@@ -124,6 +132,12 @@ Gui::ToolBarItem* Workbench::setupCommandBars() const
     *views << "Drawing_NewViewSection";
     *views << "Drawing_Annotation";
 
+    Gui::ToolBarItem *clips = new Gui::ToolBarItem(root);
+    clips->setCommand("Drawing Clips");
+    *clips << "Drawing_Clip";
+    *clips << "Drawing_ClipPlus";
+    *clips << "Drawing_ClipMinus";
+
     Gui::ToolBarItem *dims = new Gui::ToolBarItem(root);
     dims->setCommand("Drawing Dimensions");
 //    *dims << "Drawing_NewDimension";
@@ -140,7 +154,6 @@ Gui::ToolBarItem* Workbench::setupCommandBars() const
     *file << "Drawing_Symbol";
 
 //     *img << "Drawing_OpenBrowserView";
-//     *img << "Drawing_Clip";
 //     *img << "Drawing_DraftView";
 
     return root;

@@ -87,12 +87,13 @@
 #include <Mod/Drawing/App/FeatureTemplate.h>
 #include <Mod/Drawing/App/FeatureViewAnnotation.h>
 #include <Mod/Drawing/App/FeatureViewSymbol.h>
-
+#include <Mod/Drawing/App/FeatureViewClip.h>
 
 #include "QGraphicsItemDrawingTemplate.h"
 #include "QGraphicsItemView.h"
 #include "QGraphicsItemViewPart.h"
 #include "QGraphicsItemViewDimension.h"
+#include "QGraphicsItemViewClip.h"
 #include "ViewProviderPage.h"
 #include "CanvasView.h"
 
@@ -179,7 +180,7 @@ DrawingView::DrawingView(ViewProviderDrawingPage *pageVp, Gui::Document* doc, QW
             }
         }
     }
-    //it is possible for a Dimension to be loaded before the ViewPart it applies to (???)
+    //when restoring, it is possible for a Dimension to be loaded before the ViewPart it applies to
     //therefore we need to make sure parentage of the graphics representation is set properly. bit of a kludge. 
     setDimensionGroups();
 
@@ -328,6 +329,9 @@ int DrawingView::attachView(App::DocumentObject *obj)
     } else if(obj->getTypeId().isDerivedFrom(Drawing::FeatureViewSymbol::getClassTypeId()) ) {
         Drawing::FeatureViewSymbol *viewSym = dynamic_cast<Drawing::FeatureViewSymbol *>(obj);
         qview = m_view->addFeatureViewSymbol(viewSym);
+    } else if(obj->getTypeId().isDerivedFrom(Drawing::FeatureViewClip::getClassTypeId()) ) {
+        Drawing::FeatureViewClip *viewClip = dynamic_cast<Drawing::FeatureViewClip *>(obj);
+        qview = m_view->addFeatureViewClip(viewClip);
     }
 
     if(!qview)

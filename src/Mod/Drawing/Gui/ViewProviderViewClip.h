@@ -29,12 +29,12 @@
 #include "ViewProviderView.h"
 
 namespace Drawing{
-    class FeatureClip;
+    class FeatureViewClip;
 }
 
 namespace DrawingGui {
 
-class DrawingGuiExport ViewProviderDrawingClip : public ViewProviderDrawingView
+class DrawingGuiExport ViewProviderDrawingClip : public ViewProviderView
 {
     PROPERTY_HEADER(DrawingGui::ViewProviderDrawingClip);
 

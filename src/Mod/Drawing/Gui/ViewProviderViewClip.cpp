@@ -41,18 +41,18 @@
 //#include <Gui/SoFCSelection.h>
 #include <Gui/Selection.h>
 
-#include <Mod/Drawing/App/FeatureClip.h>
+#include <Mod/Drawing/App/FeatureViewClip.h>
 #include "ViewProviderView.h"
-#include "ViewProviderClip.h"
+#include "ViewProviderViewClip.h"
 
 
 using namespace DrawingGui;
 
-PROPERTY_SOURCE(DrawingGui::ViewProviderDrawingClip, DrawingGui::ViewProviderDrawingView)
+PROPERTY_SOURCE(DrawingGui::ViewProviderDrawingClip, DrawingGui::ViewProviderView)
 
 ViewProviderDrawingClip::ViewProviderDrawingClip()
 {
-    sPixmap = "Page";
+    sPixmap = "actions/drawing-clip";
 
     // Do not show in property editor
     DisplayMode.StatusBits.set(3, true);
@@ -82,15 +82,15 @@ std::vector<std::string> ViewProviderDrawingClip::getDisplayModes(void) const
 
 void ViewProviderDrawingClip::show(void)
 {
-    ViewProviderDrawingView::show();
+    ViewProviderView::show();
 
     App::DocumentObject* obj = getObject();
     if (!obj || obj->isRestoring())
         return;
-    if (obj->getTypeId().isDerivedFrom(Drawing::FeatureClip::getClassTypeId())) {
+    if (obj->getTypeId().isDerivedFrom(Drawing::FeatureViewClip::getClassTypeId())) {
         // The 'Visible' property is marked as 'Output'. To update the drawing on recompute
         // the parent page object is touched.
-        static_cast<Drawing::FeatureClip*>(obj)->Visible.setValue(true);
+        static_cast<Drawing::FeatureViewClip*>(obj)->Visible.setValue(true);
         std::vector<App::DocumentObject*> inp = obj->getInList();
         for (std::vector<App::DocumentObject*>::iterator it = inp.begin(); it != inp.end(); ++it)
             (*it)->touch();
@@ -99,15 +99,15 @@ void ViewProviderDrawingClip::show(void)
 
 void ViewProviderDrawingClip::hide(void)
 {
-    ViewProviderDrawingView::hide();
+    ViewProviderView::hide();
 
     App::DocumentObject* obj = getObject();
     if (!obj || obj->isRestoring())
         return;
-    if (obj->getTypeId().isDerivedFrom(Drawing::FeatureClip::getClassTypeId())) {
+    if (obj->getTypeId().isDerivedFrom(Drawing::FeatureViewClip::getClassTypeId())) {
         // The 'Visible' property is marked as 'Output'. To update the drawing on recompute
         // the parent page object is touched.
-        static_cast<Drawing::FeatureClip*>(obj)->Visible.setValue(false);
+        static_cast<Drawing::FeatureViewClip*>(obj)->Visible.setValue(false);
         std::vector<App::DocumentObject*> inp = obj->getInList();
         for (std::vector<App::DocumentObject*>::iterator it = inp.begin(); it != inp.end(); ++it)
             (*it)->touch();

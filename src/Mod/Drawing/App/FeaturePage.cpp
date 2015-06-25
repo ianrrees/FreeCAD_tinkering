@@ -40,7 +40,7 @@
 #include "FeaturePage.h"
 #include "FeatureView.h"
 #include "FeatureProjGroup.h"
-#include "FeatureClip.h"
+#include "FeatureViewClip.h"
 #include "FeatureTemplate.h"
 #include "FeatureViewCollection.h"
 
@@ -224,12 +224,35 @@ int FeaturePage::addView(App::DocumentObject *docObj)
     if(!docObj->isDerivedFrom(Drawing::FeatureView::getClassTypeId()))
         return -1;
 
-    const std::vector<App::DocumentObject *> vals = Views.getValues();
-    std::vector<App::DocumentObject *> newVals(vals);
-    newVals.push_back(docObj);
-    Views.setValues(newVals);
+    const std::vector<App::DocumentObject *> currViews = Views.getValues();
+    std::vector<App::DocumentObject *> newViews(currViews);
+    newViews.push_back(docObj);
+    Views.setValues(newViews);
     Views.touch();
     return Views.getSize();
 }
 
+int FeaturePage::removeView(App::DocumentObject *docObj)
+{
+    if(!docObj->isDerivedFrom(Drawing::FeatureView::getClassTypeId()))
+        return -1;
+
+    //1st: remove docObj from FeaturePage Views list
+    const std::vector<App::DocumentObject*> currViews = Views.getValues();
+    std::vector<App::DocumentObject*> newViews;
+    std::vector<App::DocumentObject*>::const_iterator it = currViews.begin();
+    for (; it != currViews.end(); it++) {
+        std::string viewName = docObj->getNameInDocument();
+        if (viewName.compare((*it)->getNameInDocument()) != 0) {
+            newViews.push_back((*it));
+        }
+    }
+    Views.setValues(newViews);
+    Views.touch();
+
+    //2nd: remove docObj from DocumentObjectGroup
+    //this->removeObject(docObj);      
+
+    return Views.getSize();
+}
 

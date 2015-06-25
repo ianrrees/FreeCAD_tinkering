@@ -47,7 +47,7 @@
 
 using namespace DrawingGui;
 
-PROPERTY_SOURCE(DrawingGui::ViewProviderViewPart, DrawingGui::ViewProviderDrawingView)
+PROPERTY_SOURCE(DrawingGui::ViewProviderViewPart, DrawingGui::ViewProviderView)
 
 //**************************************************************************
 // Construction/Destruction

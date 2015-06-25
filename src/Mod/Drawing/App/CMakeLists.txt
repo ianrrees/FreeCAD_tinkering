@@ -46,8 +46,8 @@ SET(Features_SRCS
     FeatureViewAnnotation.h
     FeatureViewSymbol.cpp
     FeatureViewSymbol.h
-    FeatureClip.cpp
-    FeatureClip.h
+    FeatureViewClip.cpp
+    FeatureViewClip.h
     PageGroup.cpp
     PageGroup.h
     FeatureProjGroup.cpp

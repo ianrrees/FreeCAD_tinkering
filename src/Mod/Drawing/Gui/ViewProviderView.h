@@ -35,15 +35,15 @@ namespace Drawing{
 namespace DrawingGui {
 
 
-class DrawingGuiExport ViewProviderDrawingView : public Gui::ViewProviderDocumentObject
+class DrawingGuiExport ViewProviderView : public Gui::ViewProviderDocumentObject
 {
-    PROPERTY_HEADER(DrawingGui::ViewProviderDrawingView);
+    PROPERTY_HEADER(DrawingGui::ViewProviderView);
 
 public:
     /// constructor
-    ViewProviderDrawingView();
+    ViewProviderView();
     /// destructor
-    virtual ~ViewProviderDrawingView();
+    virtual ~ViewProviderView();
 
 
     virtual void attach(App::DocumentObject *);

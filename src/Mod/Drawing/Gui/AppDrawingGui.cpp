@@ -43,6 +43,7 @@
 #include "ViewProviderViewSection.h"
 #include "ViewProviderAnnotation.h"
 #include "ViewProviderSymbol.h"
+#include "ViewProviderViewClip.h"
 //#include "resources/qrc_Drawing.cpp"
 
 // use a different name to CreateCommand()
@@ -85,15 +86,15 @@ void DrawingGuiExport initDrawingGui()
     fontDB.addApplicationFont(QString::fromAscii(":/fonts/osifont.ttf"));
 
     DrawingGui::ViewProviderDrawingPage::init();
-    DrawingGui::ViewProviderDrawingView::init();
+    DrawingGui::ViewProviderView::init();
 
     DrawingGui::ViewProviderTemplate::init();
     DrawingGui::ViewProviderDimension::init();
     DrawingGui::ViewProviderViewPart::init();
     DrawingGui::ViewProviderProjGroupItem::init();
     DrawingGui::ViewProviderProjGroup::init();
-    DrawingGui::ViewProviderDrawingViewSection::init();
-//    DrawingGui::ViewProviderDrawingClip::init();
+    DrawingGui::ViewProviderViewSection::init();
+    DrawingGui::ViewProviderDrawingClip::init();
     DrawingGui::ViewProviderAnnotation::init();
     DrawingGui::ViewProviderSymbol::init();
 

@@ -2,7 +2,7 @@
  *   Copyright (c) 2004 Jürgen Riegel <juergen.riegel@web.de>              *
  *   Copyright (c) 2012 Luke Parry <l.parry@warwick.ac.uk>                 *
  *                                                                         *
- *   This file is part of the FreeCAD CAx development system.           *
+ *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
  *   This library is free software; you can redistribute it and/or         *
  *   modify it under the terms of the GNU Library General Public           *
@@ -11,7 +11,7 @@
  *                                                                         *
  *   This library  is distributed in the hope that it will be useful,      *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU Library General Public License for more details.                  *
  *                                                                         *
  *   You should have received a copy of the GNU Library General Public     *
@@ -46,32 +46,32 @@
 
 using namespace DrawingGui;
 
-PROPERTY_SOURCE(DrawingGui::ViewProviderDrawingViewSection, Gui::ViewProviderDocumentObject)
+PROPERTY_SOURCE(DrawingGui::ViewProviderViewSection, Gui::ViewProviderDocumentObject)
 
 //**************************************************************************
 // Construction/Destruction
 
-ViewProviderDrawingViewSection::ViewProviderDrawingViewSection()
+ViewProviderViewSection::ViewProviderViewSection()
 {
     sPixmap = "Page";
 }
 
-ViewProviderDrawingViewSection::~ViewProviderDrawingViewSection()
+ViewProviderViewSection::~ViewProviderViewSection()
 {
 }
 
-void ViewProviderDrawingViewSection::attach(App::DocumentObject *pcFeat)
+void ViewProviderViewSection::attach(App::DocumentObject *pcFeat)
 {
     // call parent attach method
     ViewProviderDocumentObject::attach(pcFeat);
 }
 
-void ViewProviderDrawingViewSection::setDisplayMode(const char* ModeName)
+void ViewProviderViewSection::setDisplayMode(const char* ModeName)
 {
     ViewProviderDocumentObject::setDisplayMode(ModeName);
 }
 
-std::vector<std::string> ViewProviderDrawingViewSection::getDisplayModes(void) const
+std::vector<std::string> ViewProviderViewSection::getDisplayModes(void) const
 {
     // get the modes of the father
     std::vector<std::string> StrList = ViewProviderDocumentObject::getDisplayModes();
@@ -79,12 +79,12 @@ std::vector<std::string> ViewProviderDrawingViewSection::getDisplayModes(void) c
     return StrList;
 }
 
-void ViewProviderDrawingViewSection::updateData(const App::Property*)
+void ViewProviderViewSection::updateData(const App::Property*)
 {
     Base::Console().Log("Update View");
 }
 
-Drawing::FeatureView* ViewProviderDrawingViewSection::getViewObject() const
+Drawing::FeatureView* ViewProviderViewSection::getViewObject() const
 {
     return dynamic_cast<Drawing::FeatureView*>(pcObject);
 }

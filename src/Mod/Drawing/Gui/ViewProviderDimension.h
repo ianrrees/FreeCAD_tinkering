@@ -35,7 +35,7 @@ namespace Drawing{
 namespace DrawingGui {
 
 
-class DrawingGuiExport ViewProviderDimension : public ViewProviderDrawingView
+class DrawingGuiExport ViewProviderDimension : public ViewProviderView
 {
     PROPERTY_HEADER(DrawingGui::ViewProviderDimension);
 

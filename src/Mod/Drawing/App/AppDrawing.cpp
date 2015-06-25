@@ -30,7 +30,7 @@
 #include "FeatureProjGroup.h"
 #include "FeatureViewSymbol.h"
 #include "FeatureProjection.h"
-#include "FeatureClip.h"
+#include "FeatureViewClip.h"
 #include "PageGroup.h"
 
 extern struct PyMethodDef Drawing_methods[];
@@ -78,7 +78,7 @@ void DrawingExport initDrawing()
     Drawing::FeatureParametricTemplate::init();
     Drawing::FeatureSVGTemplate     ::init();
 
-    Drawing::FeatureClip            ::init();
+    Drawing::FeatureViewClip            ::init();
  
    // Python Types
     Drawing::FeatureViewPython      ::init();

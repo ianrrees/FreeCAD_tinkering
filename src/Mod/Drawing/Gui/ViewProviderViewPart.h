@@ -32,7 +32,7 @@ namespace Drawing{
 
 namespace DrawingGui {
 
-class DrawingGuiExport ViewProviderViewPart : public ViewProviderDrawingView
+class DrawingGuiExport ViewProviderViewPart : public ViewProviderView
 {
     PROPERTY_HEADER(DrawingGui::ViewProviderViewPart);
 

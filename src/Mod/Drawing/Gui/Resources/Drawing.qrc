@@ -25,6 +25,8 @@
         <file>icons/actions/drawing-openbrowser.svg</file>
         <file>icons/actions/drawing-annotation.svg</file>
         <file>icons/actions/drawing-clip.svg</file>
+        <file>icons/actions/drawing-clipplus.svg</file>
+        <file>icons/actions/drawing-clipminus.svg</file>
         <file>icons/actions/drawing-symbol.svg</file>
         <file>icons/actions/drawing-draft-view.svg</file>
         <file>icons/actions/saveSVG.svg</file>

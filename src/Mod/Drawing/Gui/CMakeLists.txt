@@ -41,6 +41,7 @@ set(DrawingGui_MOC_HDRS
     QGraphicsItemViewSection.h
     QGraphicsItemViewAnnotation.h
     QGraphicsItemViewSymbol.h
+    QGraphicsItemViewClip.h
     TaskProjGroup.h
     TemplateTextField.h
 )
@@ -80,8 +81,12 @@ SET(DrawingGuiView_SRCS
     CanvasView.h
     QGCustomText.cpp
     QGCustomText.h
+    QGCustomRect.cpp
+    QGCustomRect.h
     QGCustomSvg.cpp
     QGCustomSvg.h
+    QGCustomClip.cpp
+    QGCustomClip.h
     QGraphicsItemView.cpp
     QGraphicsItemView.h
     QGraphicsItemArrow.cpp
@@ -112,6 +117,8 @@ SET(DrawingGuiView_SRCS
     QGraphicsItemViewAnnotation.h
     QGraphicsItemViewSymbol.cpp
     QGraphicsItemViewSymbol.h
+    QGraphicsItemViewClip.cpp
+    QGraphicsItemViewClip.h
     TemplateTextField.cpp
     TemplateTextField.h
 )
@@ -136,8 +143,8 @@ SET(DrawingGuiViewProvider_SRCS
     ViewProviderAnnotation.h
     ViewProviderSymbol.cpp
     ViewProviderSymbol.h
-    ViewProviderClip.cpp
-    ViewProviderClip.h
+    ViewProviderViewClip.cpp
+    ViewProviderViewClip.h
 )
 
 SOURCE_GROUP("Mod" FILES ${DrawingGui_SRCS})
