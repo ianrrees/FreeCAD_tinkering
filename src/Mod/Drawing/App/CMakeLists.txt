@@ -50,8 +50,10 @@ SET(Features_SRCS
     FeatureClip.h
     PageGroup.cpp
     PageGroup.h
-    FeatureOrthoView.cpp
-    FeatureOrthoView.h
+    FeatureProjGroup.cpp
+    FeatureProjGroup.h
+    FeatureProjGroupItem.cpp
+    FeatureProjGroupItem.h
     FeatureParametricTemplate.cpp
     FeatureParametricTemplate.h
     FeatureSVGTemplate.cpp
@@ -62,8 +64,6 @@ SET(Features_SRCS
     FeatureViewCollection.h
     FeatureViewDimension.cpp
     FeatureViewDimension.h
-    FeatureViewOrthographic.cpp
-    FeatureViewOrthographic.h
     FeatureViewSection.cpp
     FeatureViewSection.h
 )

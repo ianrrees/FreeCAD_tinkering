@@ -39,7 +39,7 @@
 
 #include "FeaturePage.h"
 #include "FeatureView.h"
-#include "FeatureViewOrthographic.h"
+#include "FeatureProjGroup.h"
 #include "FeatureClip.h"
 #include "FeatureTemplate.h"
 #include "FeatureViewCollection.h"
@@ -56,7 +56,7 @@ PROPERTY_SOURCE(Drawing::FeaturePage, App::DocumentObjectGroup)
 
 const char *group = "Drawing view";
 
-const char* FeaturePage::OrthoProjectionTypeEnums[]= {"First Angle",
+const char* FeaturePage::ProjectionTypeEnums[]= {"First Angle",
                                                       "Third Angle",
                                                       NULL};
 
@@ -70,8 +70,8 @@ FeaturePage::FeaturePage(void) : numChildren(0)
     ADD_PROPERTY_TYPE(Views, (0), group, (App::PropertyType)(App::Prop_None),"Attached Views");
 
     // Projection Properties
-    OrthoProjectionType.setEnums(OrthoProjectionTypeEnums);
-    ADD_PROPERTY(OrthoProjectionType, ((long)0));
+    ProjectionType.setEnums(ProjectionTypeEnums);
+    ADD_PROPERTY(ProjectionType, ((long)0));
     ADD_PROPERTY_TYPE(Scale ,(1.0), group, App::Prop_None, "Scale factor for this Page");
 }
 
@@ -115,11 +115,11 @@ void FeaturePage::onChanged(const App::Property* prop)
               view->Scale.touch();
           }
       }
-    } else if (prop == &OrthoProjectionType) {
+    } else if (prop == &ProjectionType) {
       // touch all ortho views in the Page as they may be dependent on Projection Type
       const std::vector<App::DocumentObject*> &vals = Views.getValues();
       for(std::vector<App::DocumentObject *>::const_iterator it = vals.begin(); it < vals.end(); ++it) {
-          Drawing::FeatureViewOrthographic *view = dynamic_cast<Drawing::FeatureViewOrthographic *>(*it);
+          Drawing::FeatureProjGroup *view = dynamic_cast<Drawing::FeatureProjGroup *>(*it);
           if (view != NULL && view->ProjectionType.isValue("Document")) {
               view->ProjectionType.touch();
           }

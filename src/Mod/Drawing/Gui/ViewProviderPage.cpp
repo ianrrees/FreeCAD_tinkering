@@ -58,7 +58,7 @@
 #include "ViewProviderPage.h"
 #include <Mod/Drawing/App/FeaturePage.h>
 #include <Mod/Drawing/App/FeatureView.h>
-#include <Mod/Drawing/App/FeatureOrthoView.h>
+#include <Mod/Drawing/App/FeatureProjGroupItem.h>
 #include <Mod/Drawing/App/FeatureViewDimension.h>
 
 using namespace DrawingGui;
@@ -215,8 +215,8 @@ std::vector<App::DocumentObject*> ViewProviderDrawingPage::claimChildren(void) c
     try {
       for(std::vector<App::DocumentObject *>::const_iterator it = views.begin(); it != views.end(); ++it) {
           App::DocumentObject *docObj = *it;
-          // Don't collect if dimension or ortho view as these should be grouped elsewhere
-          if(docObj->isDerivedFrom(Drawing::FeatureOrthoView::getClassTypeId())    ||
+          // Don't collect if dimension or projection group as these should be grouped elsewhere
+          if(docObj->isDerivedFrom(Drawing::FeatureProjGroupItem::getClassTypeId())    ||
              docObj->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId())  )
               continue;
           else

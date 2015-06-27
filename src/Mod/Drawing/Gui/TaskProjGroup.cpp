@@ -38,15 +38,16 @@
 #include <Mod/Drawing/App/FeaturePage.h>
 #include <Mod/Drawing/App/FeatureViewPart.h>
 
-#include <Mod/Drawing/App/FeatureOrthoView.h>
-#include <Mod/Drawing/App/FeatureViewOrthographic.h>
+#include <Mod/Drawing/App/FeatureProjGroupItem.h>
+#include <Mod/Drawing/App/FeatureProjGroup.h>
 
-#include "TaskOrthographicViews.h"
-#include "ui_TaskOrthographicViews.h"
+#include "TaskProjGroup.h"
+#include "ui_TaskProjGroup.h"
 
 using namespace Gui;
 using namespace DrawingGui;
 
+//TODO: Look into this, seems we might be able to delete it now?  IR
 #if 0 // needed for Qt's lupdate utility
     qApp->translate("QObject", "Make axonometric...");
     qApp->translate("QObject", "Edit axonometric settings...");
@@ -54,7 +55,7 @@ using namespace DrawingGui;
 #endif
 
 
-TaskOrthographicViews::TaskOrthographicViews(Drawing::FeatureViewOrthographic* featView) : ui(new Ui_TaskOrthographicViews),
+TaskProjGroup::TaskProjGroup(Drawing::FeatureProjGroup* featView) : ui(new Ui_TaskProjGroup),
                                                                                            multiView(featView)
 {
     ui->setupUi(this);
@@ -88,12 +89,12 @@ TaskOrthographicViews::TaskOrthographicViews(Drawing::FeatureViewOrthographic* f
     connect(ui->projection, SIGNAL(currentIndexChanged(int)), this, SLOT(projectionTypeChanged(int)));
 }
 
-TaskOrthographicViews::~TaskOrthographicViews()
+TaskProjGroup::~TaskProjGroup()
 {
     delete ui;
 }
 
-void TaskOrthographicViews::viewToggled(bool toggle)
+void TaskProjGroup::viewToggled(bool toggle)
 {
     // Obtain name of checkbox
     QString viewName = sender()->objectName();
@@ -102,10 +103,10 @@ void TaskOrthographicViews::viewToggled(bool toggle)
 
     //Gui::Command::openCommand("Toggle orthographic view");    //TODO: Is this for undo?
 
-    if ( toggle && !multiView->hasOrthoView( viewNameCStr ) ) {
-        multiView->addOrthoView( viewNameCStr );
-    } else if ( !toggle && multiView->hasOrthoView( viewNameCStr ) ) {
-        multiView->removeOrthoView( viewNameCStr );
+    if ( toggle && !multiView->hasProjection( viewNameCStr ) ) {
+        multiView->addProjection( viewNameCStr );
+    } else if ( !toggle && multiView->hasProjection( viewNameCStr ) ) {
+        multiView->removeProjection( viewNameCStr );
     }
 
     /// Called to notify the GUI that the scale has changed
@@ -113,13 +114,13 @@ void TaskOrthographicViews::viewToggled(bool toggle)
     Gui::Command::updateActive();
 }
 
-void TaskOrthographicViews::rotateButtonClicked(void)
+void TaskProjGroup::rotateButtonClicked(void)
 {
     if ( multiView && ui ) {
         const QObject *clicked = sender();
 
         // Any translation/scale/etc applied here will be ignored, as
-        // FeatureViewOrthographic::setFrontViewOrientation() only
+        // FeatureProjGroup::setFrontViewOrientation() only
         // uses it to set Direction and XAxisDirection.
         Base::Matrix4D m = multiView->viewOrientationMatrix.getValue();
 
@@ -147,12 +148,12 @@ void TaskOrthographicViews::rotateButtonClicked(void)
     }
 }
 
-void TaskOrthographicViews::projectionTypeChanged(int index)
+void TaskProjGroup::projectionTypeChanged(int index)
 {
     if(blockUpdate)
         return;
 
-    Gui::Command::openCommand("Update orthographic projection type");
+    Gui::Command::openCommand("Update projection type");
     if(index == 0) {
         //layout per Page (Document)
         Gui::Command::doCommand(Gui::Command::Doc,
@@ -170,7 +171,7 @@ void TaskOrthographicViews::projectionTypeChanged(int index)
                                 multiView->getNameInDocument(), "Third Angle");
     } else {
         Gui::Command::abortCommand();
-        Base::Console().Log("Error - TaskOrthographicViews::projectionTypeChanged - unknown projection layout: %d\n",
+        Base::Console().Log("Error - TaskProjGroup::projectionTypeChanged - unknown projection layout: %d\n",
                             index);
         return;
     }
@@ -182,12 +183,12 @@ void TaskOrthographicViews::projectionTypeChanged(int index)
     Gui::Command::updateActive();
 }
 
-void TaskOrthographicViews::scaleTypeChanged(int index)
+void TaskProjGroup::scaleTypeChanged(int index)
 {
     if(blockUpdate)
         return;
 
-    Gui::Command::openCommand("Update orthographic scale type");
+    Gui::Command::openCommand("Update projection scale type");
     if(index == 0) {
         //Automatic Scale Type
         Gui::Command::doCommand(Gui::Command::Doc, "App.activeDocument().%s.ScaleType = '%s'", multiView->getNameInDocument()
@@ -202,7 +203,7 @@ void TaskOrthographicViews::scaleTypeChanged(int index)
                                                                                              , "Custom");
     } else {
         Gui::Command::abortCommand();
-        Base::Console().Log("Error - TaskOrthographicViews::scaleTypeChanged - unknown scale type: %d\n",index);
+        Base::Console().Log("Error - TaskProjGroup::scaleTypeChanged - unknown scale type: %d\n",index);
         return;
     }
     Gui::Command::commitCommand();
@@ -211,7 +212,7 @@ void TaskOrthographicViews::scaleTypeChanged(int index)
 
 // ** David Eppstein / UC Irvine / 8 Aug 1993
 // Reworked 2015 IR to add the power of logarithms!
-void TaskOrthographicViews::nearestFraction(double val, int &n, int &d) const
+void TaskProjGroup::nearestFraction(double val, int &n, int &d) const
 {
     int exponent = std::floor(std::log10(val));
     if (exponent > 1 || exponent < -1) {
@@ -240,7 +241,7 @@ void TaskOrthographicViews::nearestFraction(double val, int &n, int &d) const
     }
 }
 
-void TaskOrthographicViews::updateTask()
+void TaskProjGroup::updateTask()
 {
     // Update the scale type
     blockUpdate = true;
@@ -253,7 +254,7 @@ void TaskOrthographicViews::updateTask()
 }
 
 
-void TaskOrthographicViews::setFractionalScale(double newScale)
+void TaskProjGroup::setFractionalScale(double newScale)
 {
     blockUpdate = true;
     int num, den;
@@ -265,7 +266,7 @@ void TaskOrthographicViews::setFractionalScale(double newScale)
     blockUpdate = false;
 }
 
-void TaskOrthographicViews::scaleManuallyChanged(const QString & text)
+void TaskProjGroup::scaleManuallyChanged(const QString & text)
 {
     //TODO: See what this is about - shouldn't be simplifying the scale ratio while it's being edited... IR
     if(blockUpdate)
@@ -299,14 +300,14 @@ void TaskOrthographicViews::scaleManuallyChanged(const QString & text)
     }
 }
 
-void TaskOrthographicViews::changeEvent(QEvent *e)
+void TaskProjGroup::changeEvent(QEvent *e)
 {
     if (e->type() == QEvent::LanguageChange) {
         ui->retranslateUi(this);
     }
 }
 
-const char * TaskOrthographicViews::viewChkIndexToCStr(int index)
+const char * TaskProjGroup::viewChkIndexToCStr(int index)
 {
     //   Third Angle:  FTL  T  FTRight
     //                  L   F   Right   Rear
@@ -332,7 +333,7 @@ const char * TaskOrthographicViews::viewChkIndexToCStr(int index)
         default: return NULL;
     }
 }
-void TaskOrthographicViews::setupViewCheckboxes(bool addConnections)
+void TaskProjGroup::setupViewCheckboxes(bool addConnections)
 {
     if ( multiView == NULL ) {
         return;
@@ -358,7 +359,7 @@ void TaskOrthographicViews::setupViewCheckboxes(bool addConnections)
         }
         
         const char *viewStr = viewChkIndexToCStr(i);
-        if ( viewStr != NULL && multiView->hasOrthoView(viewStr) ) {
+        if ( viewStr != NULL && multiView->hasProjection(viewStr) ) {
             box->setCheckState(Qt::Checked);
         } else {
             box->setCheckState(Qt::Unchecked);
@@ -367,46 +368,46 @@ void TaskOrthographicViews::setupViewCheckboxes(bool addConnections)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//TODO: Do we really need to hang on to the TaskDlgOrthographicViews in this class? IR
-TaskDlgOrthographicViews::TaskDlgOrthographicViews(Drawing::FeatureViewOrthographic* featView) : TaskDialog(), 
+//TODO: Do we really need to hang on to the TaskDlgProjGroup in this class? IR
+TaskDlgProjGroup::TaskDlgProjGroup(Drawing::FeatureProjGroup* featView) : TaskDialog(), 
                                                                                                  multiView(featView)
 {
-    orthographicView = dynamic_cast<const ViewProviderViewOrthographic *>(featView);
-    widget  = new TaskOrthographicViews(featView);
-    taskbox = new Gui::TaskView::TaskBox(Gui::BitmapFactory().pixmap("actions/drawing-orthoviews"),
+    viewProvider = dynamic_cast<const ViewProviderProjGroup *>(featView);
+    widget  = new TaskProjGroup(featView);
+    taskbox = new Gui::TaskView::TaskBox(Gui::BitmapFactory().pixmap("actions/drawing-projgroup"),
                                          widget->windowTitle(), true, 0);
     taskbox->groupLayout()->addWidget(widget);
     Content.push_back(taskbox);
 }
 
-TaskDlgOrthographicViews::~TaskDlgOrthographicViews()
+TaskDlgProjGroup::~TaskDlgProjGroup()
 {
 }
 
-void TaskDlgOrthographicViews::update()
+void TaskDlgProjGroup::update()
 {
     widget->updateTask();
 }
 
 //==== calls from the TaskView ===============================================================
-void TaskDlgOrthographicViews::open()
+void TaskDlgProjGroup::open()
 {
 }
 
-void TaskDlgOrthographicViews::clicked(int)
+void TaskDlgProjGroup::clicked(int)
 {
 }
 
-bool TaskDlgOrthographicViews::accept()
+bool TaskDlgProjGroup::accept()
 {
     return true;//!widget->user_input();
 }
 
-bool TaskDlgOrthographicViews::reject()
+bool TaskDlgProjGroup::reject()
 {
     return true;
 }
 
 
-#include "moc_TaskOrthographicViews.cpp"
+#include "moc_TaskProjGroup.cpp"
 

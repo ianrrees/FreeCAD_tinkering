@@ -49,39 +49,39 @@
 #include <Gui/SoFCSelection.h>
 #include <Gui/ViewProviderDocumentObject.h>
 
-#include <Mod/Drawing/App/FeatureViewOrthographic.h>
+#include <Mod/Drawing/App/FeatureProjGroup.h>
 
-#include "TaskOrthographicViews.h"
-#include "ViewProviderViewOrthographic.h"
+#include "TaskProjGroup.h"
+#include "ViewProviderProjGroup.h"
 
 using namespace DrawingGui;
 
-PROPERTY_SOURCE(DrawingGui::ViewProviderViewOrthographic, Gui::ViewProviderDocumentObject)
+PROPERTY_SOURCE(DrawingGui::ViewProviderProjGroup, Gui::ViewProviderDocumentObject)
 
 //**************************************************************************
 // Construction/Destruction
 
-ViewProviderViewOrthographic::ViewProviderViewOrthographic()
+ViewProviderProjGroup::ViewProviderProjGroup()
 {
-    sPixmap = "OrthoCollection";
+    sPixmap = "ProjGroup";
 }
 
-ViewProviderViewOrthographic::~ViewProviderViewOrthographic()
+ViewProviderProjGroup::~ViewProviderProjGroup()
 {
 }
 
-void ViewProviderViewOrthographic::attach(App::DocumentObject *pcFeat)
+void ViewProviderProjGroup::attach(App::DocumentObject *pcFeat)
 {
     // call parent attach method
     ViewProviderDocumentObject::attach(pcFeat);
 }
 
-void ViewProviderViewOrthographic::setDisplayMode(const char* ModeName)
+void ViewProviderProjGroup::setDisplayMode(const char* ModeName)
 {
     ViewProviderDocumentObject::setDisplayMode(ModeName);
 }
 
-std::vector<std::string> ViewProviderViewOrthographic::getDisplayModes(void) const
+std::vector<std::string> ViewProviderProjGroup::getDisplayModes(void) const
 {
     // get the modes of the father
     std::vector<std::string> StrList = ViewProviderDocumentObject::getDisplayModes();
@@ -89,7 +89,7 @@ std::vector<std::string> ViewProviderViewOrthographic::getDisplayModes(void) con
     return StrList;
 }
 
-void ViewProviderViewOrthographic::updateData(const App::Property* prop)
+void ViewProviderProjGroup::updateData(const App::Property* prop)
 {
     Gui::ViewProviderDocumentObject::updateData(prop);
  
@@ -99,58 +99,57 @@ void ViewProviderViewOrthographic::updateData(const App::Property* prop)
        prop == &(getObject()->ProjectionType)) {
 
         Gui::TaskView::TaskDialog *dlg = Gui::Control().activeDialog();
-        TaskDlgOrthographicViews *orthoDlg = qobject_cast<TaskDlgOrthographicViews *>(dlg);
+        TaskDlgProjGroup *projDlg = qobject_cast<TaskDlgProjGroup *>(dlg);
 
-        if (orthoDlg && 
-            orthoDlg->getOrthographicView() == dynamic_cast<const ViewProviderViewOrthographic *>(getObject()) ) {
-            orthoDlg->update();
+        if (projDlg && 
+            projDlg->getViewProvider() == dynamic_cast<const ViewProviderProjGroup *>(getObject()) ) {
+            projDlg->update();
         }
     } 
 
  }
 
 
-void ViewProviderViewOrthographic::setupContextMenu(QMenu* menu, QObject* receiver, const char* member)
+void ViewProviderProjGroup::setupContextMenu(QMenu* menu, QObject* receiver, const char* member)
 {
     //QAction* act;
     //act = menu->addAction(QObject::tr("Show drawing"), receiver, member);
 }
 
-bool ViewProviderViewOrthographic::setEdit(int ModNum)
+bool ViewProviderProjGroup::setEdit(int ModNum)
 {
-
     // When double-clicking on the item for this sketch the
     // object unsets and sets its edit mode without closing
     // the task panel
     Gui::TaskView::TaskDialog *dlg = Gui::Control().activeDialog();
-    TaskDlgOrthographicViews *orthoDlg = qobject_cast<TaskDlgOrthographicViews *>(dlg);
-    if (orthoDlg && orthoDlg->getOrthographicView() != this)
-        orthoDlg = 0; // another sketch left open its task panel
+    TaskDlgProjGroup *projDlg = qobject_cast<TaskDlgProjGroup *>(dlg);
+    if (projDlg && projDlg->getViewProvider() != this)
+        projDlg = 0; // another sketch left open its task panel
 
     // clear the selection (convenience)
     Gui::Selection().clearSelection();
 
     // start the edit dialog
-    if (orthoDlg)
-        Gui::Control().showDialog(orthoDlg);
+    if (projDlg)
+        Gui::Control().showDialog(projDlg);
     else
-        Gui::Control().showDialog(new TaskDlgOrthographicViews(getObject()));
+        Gui::Control().showDialog(new TaskDlgProjGroup(getObject()));
 
     return true;
 }
 
-void ViewProviderViewOrthographic::unsetEdit(int ModNum)
+void ViewProviderProjGroup::unsetEdit(int ModNum)
 {
     Gui::Control().closeDialog();
 }
 
-bool ViewProviderViewOrthographic::doubleClicked(void)
+bool ViewProviderProjGroup::doubleClicked(void)
 {
     setEdit(0);
     return true;
 }
 
-std::vector<App::DocumentObject*> ViewProviderViewOrthographic::claimChildren(void) const
+std::vector<App::DocumentObject*> ViewProviderProjGroup::claimChildren(void) const
 {
     // Collect any child fields
     std::vector<App::DocumentObject*> temp;
@@ -167,7 +166,7 @@ std::vector<App::DocumentObject*> ViewProviderViewOrthographic::claimChildren(vo
 }
 
 
-Drawing::FeatureViewOrthographic* ViewProviderViewOrthographic::getObject() const
+Drawing::FeatureProjGroup* ViewProviderProjGroup::getObject() const
 {
-    return dynamic_cast<Drawing::FeatureViewOrthographic*>(pcObject);
+    return dynamic_cast<Drawing::FeatureProjGroup*>(pcObject);
 }

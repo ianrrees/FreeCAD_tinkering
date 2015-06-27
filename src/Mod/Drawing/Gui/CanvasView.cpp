@@ -53,7 +53,7 @@
 #include <Mod/Drawing/App/FeatureParametricTemplate.h>
 #include <Mod/Drawing/App/FeatureViewCollection.h>
 #include <Mod/Drawing/App/FeatureViewDimension.h>
-#include <Mod/Drawing/App/FeatureViewOrthographic.h>
+#include <Mod/Drawing/App/FeatureProjGroup.h>
 #include <Mod/Drawing/App/FeatureViewPart.h>
 #include <Mod/Drawing/App/FeatureViewAnnotation.h>
 #include <Mod/Drawing/App/FeatureViewSymbol.h>
@@ -64,7 +64,7 @@
 #include "QGraphicsItemSVGTemplate.h"
 #include "QGraphicsItemViewCollection.h"
 #include "QGraphicsItemViewDimension.h"
-#include "QGraphicsItemViewOrthographic.h"
+#include "QGraphicsItemProjGroup.h"
 #include "QGraphicsItemViewPart.h"
 #include "QGraphicsItemViewSection.h"
 #include "QGraphicsItemViewAnnotation.h"
@@ -201,8 +201,8 @@ QGraphicsItemView * CanvasView::addViewSection(Drawing::FeatureViewPart *part)
     return viewSection;
 }
 
-QGraphicsItemView * CanvasView::addViewOrthographic(Drawing::FeatureViewOrthographic *view) {
-    QGraphicsItemViewCollection *qview = new  QGraphicsItemViewOrthographic(QPoint(0,0), scene());
+QGraphicsItemView * CanvasView::addProjectionGroup(Drawing::FeatureProjGroup *view) {
+    QGraphicsItemViewCollection *qview = new  QGraphicsItemProjGroup(QPoint(0,0), scene());
     qview->setViewFeature(view);
     addView(qview);
     return qview;

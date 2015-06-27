@@ -20,8 +20,8 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef _DRAWING_FEATUREVIEWORTHOGRAPHIC_h_
-#define _DRAWING_FEATUREVIEWORTHOGRAPHIC_h_
+#ifndef _DRAWING_FEATUREVIEWGROUP_H_
+#define _DRAWING_FEATUREVIEWGROUP_H_
 
 #include <App/DocumentObject.h>
 #include <App/PropertyStandard.h>
@@ -30,23 +30,23 @@
 #include <Base/BoundBox.h>
 #include <Base/Matrix.h>
 #include "FeatureViewCollection.h"
-#include "FeatureOrthoView.h"
+#include "FeatureProjGroupItem.h"
 
 namespace Drawing
 {
 
 /**
- * Class super-container for managing a collection of FeatureOrthoView
+ * Class super-container for managing a collection of FeatureProjGroupItem
  * Page Features
  */
-class DrawingExport FeatureViewOrthographic : public Drawing::FeatureViewCollection
+class DrawingExport FeatureProjGroup : public Drawing::FeatureViewCollection
 {
-    PROPERTY_HEADER(Drawing::FeatureViewOrthographic);
+    PROPERTY_HEADER(Drawing::FeatureProjGroup);
 
 public:
     /// Constructor
-    FeatureViewOrthographic();
-    ~FeatureViewOrthographic();
+    FeatureProjGroup();
+    ~FeatureProjGroup();
 
     App::PropertyEnumeration ProjectionType;
 
@@ -63,20 +63,25 @@ public:
     Base::BoundBox3d getBoundingBox() const;
     double calculateAutomaticScale() const;
 
-    // Check if container has a view of a specific type
-    bool hasOrthoView(const char *viewProjType) const;
-    App::DocumentObject * getOrthoView(const char *viewProjType) const;
+    /// Check if container has a view of a specific type
+    bool hasProjection(const char *viewProjType) const;
 
-    App::DocumentObject * addOrthoView(const char *viewProjType);
+    App::DocumentObject * getProjObj(const char *viewProjType) const;
 
-    //! Removes an ortho view
+    //! Adds a projection to the group
     /*!
-     * \return number of ortho views remaining
+     * \return pointer to the new view
      */
-    int  removeOrthoView(const char *viewProjType);
+    App::DocumentObject * addProjection(const char *viewProjType);
+
+    //! Removes a projection from the group
+    /*!
+     * \return number of projections remaining
+     */
+    int removeProjection(const char *viewProjType);
 
     /// Automatically position child views
-    bool distributeOrthoViews(void);
+    bool distributeProjections(void);
 
     /// Changes child views' coordinate space
     /*!
@@ -94,7 +99,7 @@ public:
 
     /// returns the type name of the ViewProvider
     virtual const char* getViewProviderName(void) const {
-        return "DrawingGui::ViewProviderViewOrthographic";
+        return "DrawingGui::ViewProviderProjGroup";
     }
 
     /// Determines either "First Angle" or "Third Angle".
@@ -109,7 +114,7 @@ protected:
     //! Moves anchor view to keep our bounding box centre on the origin
     void moveToCentre();
 
-    /// Annoying helper - keep in sync with FeatureOrthoView::TypeEnums
+    /// Annoying helper - keep in sync with FeatureProjGroupItem::TypeEnums
     /*!
      * \TODO See note regarding App::PropertyEnumeration on my wiki page http://freecadweb.org/wiki/index.php?title=User:Ian.rees
      * \return true iff 'in' is a valid name for an orthographic/isometric view
@@ -120,9 +125,9 @@ protected:
     /*!
      * Applies viewOrientationMatrix to appropriate unit vectors depending on projType
      */
-    void setViewOrientation(FeatureOrthoView *v, const char *projType) const;
+    void setViewOrientation(FeatureProjGroupItem *v, const char *projType) const;
 
-    /// Populates an array of FeatureOrthoView*s arranged for drawing
+    /// Populates an array of FeatureProjGroupItem*s arranged for drawing
     /*!
      * Setup array of pointers to the views that we're displaying,
      * assuming front is in centre (index 4):
@@ -140,14 +145,14 @@ protected:
      *               FTRight  T  FTL
      * </pre>
      */
-    void arrangeViewPointers(FeatureOrthoView *viewPtrs[10]) const;
+    void arrangeViewPointers(FeatureProjGroupItem *viewPtrs[10]) const;
 
-    /// Populates array of 10 BoundBox3d's given FeatureOrthoView *s
+    /// Populates array of 10 BoundBox3d's given FeatureProjGroupItem *s
     /*!
      * If documentScale is set, then returned bounding boxes are scaled as in
      * the Drawing.  Otherwise, the dimensions are as in object space.
      */
-    void makeViewBbs(FeatureOrthoView *viewPtrs[10],
+    void makeViewBbs(FeatureProjGroupItem *viewPtrs[10],
                      Base::BoundBox3d bboxes[10],
                      bool documentScale = true) const;
 
@@ -156,16 +161,13 @@ protected:
      * Returns a width and height in object-space scale, for the enabled views
      * without accounting for their actual X and Y positions or borders.
      */
-    void minimumBbViews(FeatureOrthoView *viewPtrs[10],
+    void minimumBbViews(FeatureProjGroupItem *viewPtrs[10],
                        double &width, double &height) const;
 
     /// Returns pointer to our page, or NULL if it couldn't be located
     Drawing::FeaturePage * getPage(void) const;
-private:
-    static const char* OrthoViewNameEnumStrs[];
-
 };
 
 } //namespace Drawing
 
-#endif // _DRAWING_FEATUREVIEWORTHOGRAPHIC_h_
+#endif // _DRAWING_FEATUREVIEWGROUP_H_

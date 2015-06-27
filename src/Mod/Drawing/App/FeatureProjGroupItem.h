@@ -20,8 +20,8 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef _FeatureOrthoView_h_
-#define _FeatureOrthoView_h_
+#ifndef _FeatureProjGroupItem_h_
+#define _FeatureProjGroupItem_h_
 
 #include <App/DocumentObject.h>
 #include <App/PropertyStandard.h>
@@ -33,14 +33,14 @@ namespace Drawing
 
 /** Base class of all View Features in the drawing module
  */
-class DrawingExport FeatureOrthoView : public Drawing::FeatureViewPart
+class DrawingExport FeatureProjGroupItem : public Drawing::FeatureViewPart
 {
-    PROPERTY_HEADER(Drawing::FeatureOrthoView);
+    PROPERTY_HEADER(Drawing::FeatureProjGroupItem);
 
 public:
     /// Constructor
-    FeatureOrthoView();
-    ~FeatureOrthoView();
+    FeatureProjGroupItem();
+    ~FeatureProjGroupItem();
 
     App::PropertyEnumeration Type;
 
@@ -54,7 +54,7 @@ public:
 
     /// returns the type name of the ViewProvider
     virtual const char* getViewProviderName(void) const {
-        return "DrawingGui::ViewProviderOrthoView";
+        return "DrawingGui::ViewProviderProjGroupItem";
     }
 
 protected:

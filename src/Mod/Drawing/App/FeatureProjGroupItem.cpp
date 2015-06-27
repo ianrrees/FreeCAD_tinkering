@@ -30,11 +30,11 @@
 #include <Base/Console.h>
 #include <Base/Writer.h>
 
-#include "FeatureOrthoView.h"
+#include "FeatureProjGroupItem.h"
 
 using namespace Drawing;
 
-const char* FeatureOrthoView::TypeEnums[] = {"Front",
+const char* FeatureProjGroupItem::TypeEnums[] = {"Front",
                                              "Left",
                                              "Right",
                                              "Rear",
@@ -47,9 +47,9 @@ const char* FeatureOrthoView::TypeEnums[] = {"Front",
                                              NULL};
 
 
-PROPERTY_SOURCE(Drawing::FeatureOrthoView, Drawing::FeatureViewPart)
+PROPERTY_SOURCE(Drawing::FeatureProjGroupItem, Drawing::FeatureViewPart)
 
-FeatureOrthoView::FeatureOrthoView(void)
+FeatureProjGroupItem::FeatureProjGroupItem(void)
 {
     Type.setEnums(TypeEnums);
     ADD_PROPERTY(Type, ((long)0));
@@ -65,18 +65,18 @@ FeatureOrthoView::FeatureOrthoView(void)
     ScaleType.StatusBits.set(2);
 }
 
-short FeatureOrthoView::mustExecute() const
+short FeatureProjGroupItem::mustExecute() const
 {
     if (Type.isTouched())
         return 1;
     return Drawing::FeatureViewPart::mustExecute();
 }
 
-void FeatureOrthoView::onChanged(const App::Property *prop)
+void FeatureProjGroupItem::onChanged(const App::Property *prop)
 {
     Drawing::FeatureViewPart::onChanged(prop);
 
-    //TODO: Should we allow changes to the Type here?  Seems that should be handled through FeatureViewOrthographic
+    //TODO: Should we allow changes to the Type here?  Seems that should be handled through FeatureProjGroup
     if (prop == &Type && Type.isTouched()) {
         if (!isRestoring()) {
             execute();
@@ -85,11 +85,11 @@ void FeatureOrthoView::onChanged(const App::Property *prop)
 
 }
 
-FeatureOrthoView::~FeatureOrthoView()
+FeatureProjGroupItem::~FeatureProjGroupItem()
 {
 }
 
-void FeatureOrthoView::onDocumentRestored()
+void FeatureProjGroupItem::onDocumentRestored()
 {
     // Rebuild the view
     execute();
@@ -97,7 +97,7 @@ void FeatureOrthoView::onDocumentRestored()
 
 /*
 //TODO: Perhaps we don't need this anymore?
-App::DocumentObjectExecReturn *FeatureOrthoView::execute(void)
+App::DocumentObjectExecReturn *FeatureProjGroupItem::execute(void)
 {
     if(Type.isTouched()) {
         Type.purgeTouched();

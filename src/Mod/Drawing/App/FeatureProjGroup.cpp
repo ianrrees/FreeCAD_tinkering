@@ -38,18 +38,18 @@
 
 #include <Mod/Part/App/PartFeature.h>
 #include "FeaturePage.h"
-#include "FeatureViewOrthographic.h"
+#include "FeatureProjGroup.h"
 
 using namespace Drawing;
 
-const char* FeatureViewOrthographic::ProjectionTypeEnums[] = {"Document",
+const char* FeatureProjGroup::ProjectionTypeEnums[] = {"Document",
                                                               "First Angle",
                                                               "Third Angle",
                                                               NULL};
 
-PROPERTY_SOURCE(Drawing::FeatureViewOrthographic, Drawing::FeatureViewCollection)
+PROPERTY_SOURCE(Drawing::FeatureProjGroup, Drawing::FeatureViewCollection)
 
-FeatureViewOrthographic::FeatureViewOrthographic(void)
+FeatureProjGroup::FeatureProjGroup(void)
 {
     static const char *group = "Drawing view";
 
@@ -64,11 +64,11 @@ FeatureViewOrthographic::FeatureViewOrthographic(void)
     ADD_PROPERTY(viewOrientationMatrix, (Base::Matrix4D()));
 }
 
-FeatureViewOrthographic::~FeatureViewOrthographic()
+FeatureProjGroup::~FeatureProjGroup()
 {
 }
 
-short FeatureViewOrthographic::mustExecute() const
+short FeatureProjGroup::mustExecute() const
 {
     if(Views.isTouched() ||
        Source.isTouched()) {
@@ -80,12 +80,12 @@ short FeatureViewOrthographic::mustExecute() const
     return Drawing::FeatureViewCollection::mustExecute();
 }
 
-Base::BoundBox3d FeatureViewOrthographic::getBoundingBox() const
+Base::BoundBox3d FeatureProjGroup::getBoundingBox() const
 {
     Base::BoundBox3d bbox;
 
     std::vector<App::DocumentObject*> views = Views.getValues();
-    Drawing::FeatureOrthoView *anchorView = dynamic_cast<Drawing::FeatureOrthoView *>(Anchor.getValue());
+    Drawing::FeatureProjGroupItem *anchorView = dynamic_cast<Drawing::FeatureProjGroupItem *>(Anchor.getValue());
     for (std::vector<App::DocumentObject*>::const_iterator it = views.begin(); it != views.end(); ++it) {
          if ((*it)->getTypeId().isDerivedFrom(FeatureViewPart::getClassTypeId())) {
             FeatureViewPart *part = static_cast<FeatureViewPart *>(*it);
@@ -113,7 +113,7 @@ Base::BoundBox3d FeatureViewOrthographic::getBoundingBox() const
     return bbox;
 }
 
-Drawing::FeaturePage * FeatureViewOrthographic::getPage(void) const
+Drawing::FeaturePage * FeatureProjGroup::getPage(void) const
 {
     Drawing::FeaturePage *ret = NULL;
 
@@ -128,7 +128,7 @@ Drawing::FeaturePage * FeatureViewOrthographic::getPage(void) const
 }
 
 // Function provided by Joe Dowsett, 2014
-double FeatureViewOrthographic::calculateAutomaticScale() const
+double FeatureProjGroup::calculateAutomaticScale() const
 {
     Drawing::FeaturePage *page = getPage();
 
@@ -138,7 +138,7 @@ double FeatureViewOrthographic::calculateAutomaticScale() const
     if(!page->hasValidTemplate())
         throw Base::Exception("Page template isn't valid");
 
-    FeatureOrthoView *viewPtrs[10];
+    FeatureProjGroupItem *viewPtrs[10];
 
     arrangeViewPointers(viewPtrs);
     double width, height;
@@ -176,7 +176,7 @@ double FeatureViewOrthographic::calculateAutomaticScale() const
     return valid_scales[(exponent >= 0)][i] * pow(10, exponent);
 }
 
-void FeatureViewOrthographic::minimumBbViews(FeatureOrthoView *viewPtrs[10],
+void FeatureProjGroup::minimumBbViews(FeatureProjGroupItem *viewPtrs[10],
                                             double &width, double &height) const
 {
     // Get bounding boxes in object scale
@@ -196,7 +196,7 @@ void FeatureViewOrthographic::minimumBbViews(FeatureOrthoView *viewPtrs[10],
     height = row0h + row1h + row2h;
 }
 
-void FeatureViewOrthographic::onChanged(const App::Property* prop)
+void FeatureProjGroup::onChanged(const App::Property* prop)
 {
     //TODO: For some reason, when the projection type is changed, the isometric views show change appropriately, but the orthographic ones dont... Or vice-versa.
     if ( prop == &ProjectionType ||
@@ -210,27 +210,27 @@ void FeatureViewOrthographic::onChanged(const App::Property* prop)
     Drawing::FeatureViewCollection::onChanged(prop);
 }
 
-void FeatureViewOrthographic::moveToCentre(void) 
+void FeatureProjGroup::moveToCentre(void) 
 {
     // Update the anchor view's X and Y to keep the bounding box centred on the origin
     Base::BoundBox3d tempbbox = getBoundingBox();
-    FeatureOrthoView *anchorView = dynamic_cast<FeatureOrthoView *>(Anchor.getValue());
+    FeatureProjGroupItem *anchorView = dynamic_cast<FeatureProjGroupItem *>(Anchor.getValue());
     if (anchorView) {
         anchorView->X.setValue((tempbbox.MinX + tempbbox.MaxX) / -2.0);
         anchorView->Y.setValue((tempbbox.MinY + tempbbox.MaxY) / -2.0);
     }
 }
 
-App::DocumentObject * FeatureViewOrthographic::getOrthoView(const char *viewProjType) const
+App::DocumentObject * FeatureProjGroup::getProjObj(const char *viewProjType) const
 {
     const std::vector<App::DocumentObject *> &views = Views.getValues();
     for(std::vector<App::DocumentObject *>::const_iterator it = views.begin(); it != views.end(); ++it) {
 
         FeatureView *view = dynamic_cast<FeatureView *>(*it);
-        if(view->getTypeId() == FeatureOrthoView::getClassTypeId()) {
-            FeatureOrthoView *orthoView = dynamic_cast<FeatureOrthoView *>(*it);
+        if(view->getTypeId() == FeatureProjGroupItem::getClassTypeId()) {
+            FeatureProjGroupItem *projPtr = dynamic_cast<FeatureProjGroupItem *>(*it);
 
-            if( strcmp(viewProjType, orthoView->Type.getValueAsString()) == 0 )
+            if( strcmp(viewProjType, projPtr->Type.getValueAsString()) == 0 )
                 return *it;
         }
     }
@@ -238,17 +238,17 @@ App::DocumentObject * FeatureViewOrthographic::getOrthoView(const char *viewProj
     return 0;
 }
 
-bool FeatureViewOrthographic::hasOrthoView(const char *viewProjType) const
+bool FeatureProjGroup::hasProjection(const char *viewProjType) const
 {
     const std::vector<App::DocumentObject *> &views = Views.getValues();
 
     for(std::vector<App::DocumentObject *>::const_iterator it = views.begin(); it != views.end(); ++it) {
 
         Drawing::FeatureView *view = dynamic_cast<Drawing::FeatureView *>(*it);
-        if(view->getTypeId() == Drawing::FeatureOrthoView::getClassTypeId()) {
-            Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(*it);
+        if(view->getTypeId() == Drawing::FeatureProjGroupItem::getClassTypeId()) {
+            Drawing::FeatureProjGroupItem *projPtr = dynamic_cast<Drawing::FeatureProjGroupItem *>(*it);
 
-            if( strcmp(viewProjType, orthoView->Type.getValueAsString()) == 0 ) {
+            if( strcmp(viewProjType, projPtr->Type.getValueAsString()) == 0 ) {
                 return true;
             }
         }
@@ -256,7 +256,7 @@ bool FeatureViewOrthographic::hasOrthoView(const char *viewProjType) const
     return false;
 }
 
-bool FeatureViewOrthographic::checkViewProjType(const char *in)
+bool FeatureProjGroup::checkViewProjType(const char *in)
 {
     if ( strcmp(in, "Front") == 0 ||
          strcmp(in, "Left") == 0 ||
@@ -273,20 +273,16 @@ bool FeatureViewOrthographic::checkViewProjType(const char *in)
     return false;
 }
 
-App::DocumentObject * FeatureViewOrthographic::addOrthoView(const char *viewProjType)
+App::DocumentObject * FeatureProjGroup::addProjection(const char *viewProjType)
 {
-    FeatureOrthoView *view = NULL;
+    FeatureProjGroupItem *view = NULL;
 
-    if ( checkViewProjType(viewProjType) ) {
-        if(hasOrthoView(viewProjType)) {
-            throw Base::Exception("The Projection is already used in this group");
-        }
-
-        std::string FeatName = getDocument()->getUniqueObjectName("OrthoView");
-        App::DocumentObject *docObj = getDocument()->addObject("Drawing::FeatureOrthoView",
+    if ( checkViewProjType(viewProjType) && !hasProjection(viewProjType) ) {
+        std::string FeatName = getDocument()->getUniqueObjectName("ProjGroup");
+        App::DocumentObject *docObj = getDocument()->addObject("Drawing::FeatureProjGroupItem",
                                                                FeatName.c_str());
 
-        view = dynamic_cast<Drawing::FeatureOrthoView *>( docObj );
+        view = dynamic_cast<Drawing::FeatureProjGroupItem *>( docObj );
         view->Source.setValue( Source.getValue() );
         view->ScaleType.setValue( ScaleType.getValue() );
         view->Scale.setValue( Scale.getValue() );
@@ -301,7 +297,7 @@ App::DocumentObject * FeatureViewOrthographic::addOrthoView(const char *viewProj
     return view;
 }
 
-void FeatureViewOrthographic::setViewOrientation(FeatureOrthoView *v, const char *projType) const
+void FeatureProjGroup::setViewOrientation(FeatureProjGroupItem *v, const char *projType) const
 {
     Base::Vector3d dir, xDir;
 
@@ -348,7 +344,7 @@ void FeatureViewOrthographic::setViewOrientation(FeatureOrthoView *v, const char
         xDir.Set(sqrt(2)/2.0, sqrt(2.0)/2.0, 0);
 
     } else {
-        throw Base::Exception("Unknown view type in FeatureViewOrthographic::setViewOrientation()");
+        throw Base::Exception("Unknown view type in FeatureProjGroup::setViewOrientation()");
     }
 
     dir = viewOrientationMatrix.getValue() * dir;
@@ -358,11 +354,11 @@ void FeatureViewOrthographic::setViewOrientation(FeatureOrthoView *v, const char
     v->XAxisDirection.setValue(xDir);
 }
 
-int FeatureViewOrthographic::removeOrthoView(const char *viewProjType)
+int FeatureProjGroup::removeProjection(const char *viewProjType)
 {
     if ( checkViewProjType(viewProjType) ) {
-        if(!hasOrthoView(viewProjType)) {
-            throw Base::Exception("The orthographic projection doesn't exist in the group");
+        if(!hasProjection(viewProjType)) {
+            throw Base::Exception("The projection doesn't exist in the group");
         }
 
         // Iterate through the child views and find the projection type
@@ -370,10 +366,10 @@ int FeatureViewOrthographic::removeOrthoView(const char *viewProjType)
         for(std::vector<App::DocumentObject *>::const_iterator it = views.begin(); it != views.end(); ++it) {
 
             Drawing::FeatureView *view = dynamic_cast<Drawing::FeatureView *>(*it);
-            if(view->getTypeId() == Drawing::FeatureOrthoView::getClassTypeId()) {
-                Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(*it);
+            if(view->getTypeId() == Drawing::FeatureProjGroupItem::getClassTypeId()) {
+                Drawing::FeatureProjGroupItem *projPtr = dynamic_cast<Drawing::FeatureProjGroupItem *>(*it);
 
-                if ( strcmp(viewProjType, orthoView->Type.getValueAsString()) == 0 ) {
+                if ( strcmp(viewProjType, projPtr->Type.getValueAsString()) == 0 ) {
                     // Remove from the document
                     getDocument()->remObject((*it)->getNameInDocument());
                     moveToCentre();
@@ -386,28 +382,28 @@ int FeatureViewOrthographic::removeOrthoView(const char *viewProjType)
     return -1;
 }
 
-void FeatureViewOrthographic::arrangeViewPointers(FeatureOrthoView *viewPtrs[10]) const
+void FeatureProjGroup::arrangeViewPointers(FeatureProjGroupItem *viewPtrs[10]) const
 {
     for (int i=0; i<10; ++i) {
         viewPtrs[i] = NULL;
     }
 
-    FeatureOrthoView *anchorView = dynamic_cast<FeatureOrthoView *>(Anchor.getValue());
+    FeatureProjGroupItem *anchorView = dynamic_cast<FeatureProjGroupItem *>(Anchor.getValue());
 
     if (!anchorView) {  //TODO: Consider not requiring an anchor view, or allowing ones other than "Front"
-        throw Base::Exception("No anchor view set in FeatureViewOrthographic::arrangeViewPointers()");
+        throw Base::Exception("No anchor view set in FeatureProjGroup::arrangeViewPointers()");
     }
 
     // Determine layout - should be either "First Angle" or "Third Angle"
     const char* projType;
     if (ProjectionType.isValue("Document")) {
-        projType = findParentPage()->OrthoProjectionType.getValueAsString();
+        projType = findParentPage()->ProjectionType.getValueAsString();
     } else {
         projType = ProjectionType.getValueAsString();
     }
 
     // Iterate through views and populate viewPtrs
-    FeatureOrthoView* oView;
+    FeatureProjGroupItem* oView;
     std::vector<App::DocumentObject *> views = Views.getValues();
     if ( strcmp(projType, "Third Angle") == 0 ||
          strcmp(projType, "First Angle") == 0    ) {
@@ -420,8 +416,8 @@ void FeatureViewOrthographic::arrangeViewPointers(FeatureOrthoView *viewPtrs[10]
         //                 FTRight  T  FTL
         bool thirdAngle = (strcmp(projType, "Third Angle") == 0);
         for (std::vector<App::DocumentObject*>::const_iterator it = views.begin(); it != views.end(); ++it) {
-            if ((*it)->getTypeId().isDerivedFrom(FeatureOrthoView::getClassTypeId())) {
-                oView = dynamic_cast<FeatureOrthoView *>(*it);
+            if ((*it)->getTypeId().isDerivedFrom(FeatureProjGroupItem::getClassTypeId())) {
+                oView = dynamic_cast<FeatureProjGroupItem *>(*it);
 
                 const char *viewTypeCStr = oView->Type.getValueAsString();
                 if (strcmp(viewTypeCStr, "Front") == 0) {
@@ -445,16 +441,16 @@ void FeatureViewOrthographic::arrangeViewPointers(FeatureOrthoView *viewPtrs[10]
                 } else if (strcmp(viewTypeCStr, "FrontBottomRight") == 0) {
                     viewPtrs[thirdAngle ? 9 : 0] = oView;
                 } else {
-                    throw Base::Exception("Unknown view type in FeatureViewOrthographic::arrangeViewPointers()");
+                    throw Base::Exception("Unknown view type in FeatureProjGroup::arrangeViewPointers()");
                 }
             }
         }
     } else {
-        throw Base::Exception("Unknown view type in FeatureViewOrthographic::arrangeViewPointers()");
+        throw Base::Exception("Unknown view type in FeatureProjGroup::arrangeViewPointers()");
     }
 }
 
-void FeatureViewOrthographic::makeViewBbs(FeatureOrthoView *viewPtrs[10],
+void FeatureProjGroup::makeViewBbs(FeatureProjGroupItem *viewPtrs[10],
                                           Base::BoundBox3d bboxes[10],
                                           bool documentScale) const
 {
@@ -475,9 +471,9 @@ void FeatureViewOrthographic::makeViewBbs(FeatureOrthoView *viewPtrs[10],
         }
 }
 
-bool FeatureViewOrthographic::distributeOrthoViews()
+bool FeatureProjGroup::distributeProjections()
 {
-    FeatureOrthoView *viewPtrs[10];
+    FeatureProjGroupItem *viewPtrs[10];
 
     arrangeViewPointers(viewPtrs);
 
@@ -543,22 +539,22 @@ bool FeatureViewOrthographic::distributeOrthoViews()
 }
 
 //TODO: Turn this into a command so it can be issued from python
-void FeatureViewOrthographic::setFrontViewOrientation(const Base::Matrix4D &newMat)
+void FeatureProjGroup::setFrontViewOrientation(const Base::Matrix4D &newMat)
 {
     viewOrientationMatrix.setValue(newMat);
 
-    FeatureOrthoView *view;
+    FeatureProjGroupItem *view;
     std::vector<App::DocumentObject *> views = Views.getValues();
     for (std::vector<App::DocumentObject*>::const_iterator it = views.begin(); it != views.end(); ++it) {
-        if ((*it)->getTypeId().isDerivedFrom(FeatureOrthoView::getClassTypeId())) {
-            view = dynamic_cast<FeatureOrthoView *>(*it);
+        if ((*it)->getTypeId().isDerivedFrom(FeatureProjGroupItem::getClassTypeId())) {
+            view = dynamic_cast<FeatureProjGroupItem *>(*it);
             setViewOrientation(view, view->Type.getValueAsString());
             view->touch();
         }
     }
 }
 
-App::DocumentObjectExecReturn *FeatureViewOrthographic::execute(void)
+App::DocumentObjectExecReturn *FeatureProjGroup::execute(void)
 {
     if (ScaleType.isValue("Automatic")) {
 
@@ -589,27 +585,27 @@ App::DocumentObjectExecReturn *FeatureViewOrthographic::execute(void)
 
     // recalculate positions for children
     if (Views.getSize()) {
-        distributeOrthoViews();
+        distributeProjections();
     }
     //touch();
 
     return FeatureViewCollection::execute();
 }
 
-App::Enumeration FeatureViewOrthographic::usedProjectionType(void)
+App::Enumeration FeatureProjGroup::usedProjectionType(void)
 {
     //TODO: Would've been nice to have an Enumeration(const PropertyEnumeration &) constructor
     App::Enumeration ret(ProjectionTypeEnums, ProjectionType.getValueAsString());
     if (ret.isValue("Document")) {
         Drawing::FeaturePage * page = getPage();
         if ( page != NULL ) {
-            ret.setValue(page->OrthoProjectionType.getValueAsString());
+            ret.setValue(page->ProjectionType.getValueAsString());
         }
     }
     return ret;
 }
 
-void FeatureViewOrthographic::onDocumentRestored()
+void FeatureProjGroup::onDocumentRestored()
 {
     execute();
 }

@@ -64,7 +64,7 @@ Gui::MenuItem* Workbench::setupMenuBar() const
     //*part << "Drawing_NewA3Landscape";
     *draw << "Drawing_NewPage";
     *draw << "Drawing_NewView";
-    *draw << "Drawing_OrthoViews";
+    *draw << "Drawing_ProjGroup";
     //*part << "Drawing_OpenBrowserView";
     *draw << "Drawing_NewViewSection";
     *draw << "Drawing_Annotation";
@@ -89,7 +89,7 @@ Gui::ToolBarItem* Workbench::setupToolBars() const
     Gui::ToolBarItem *views = new Gui::ToolBarItem(root);
     views->setCommand("Drawing Views");
     *views << "Drawing_NewView";
-    *views << "Drawing_OrthoViews";
+    *views << "Drawing_ProjGroup";
     *views << "Drawing_NewViewSection";
     *views << "Drawing_Annotation";
 
@@ -120,7 +120,7 @@ Gui::ToolBarItem* Workbench::setupCommandBars() const
     Gui::ToolBarItem *views = new Gui::ToolBarItem(root);
     views->setCommand("Views");
     *views << "Drawing_NewView";
-    *views << "Drawing_OrthoViews";
+    *views << "Drawing_ProjGroup";
     *views << "Drawing_NewViewSection";
     *views << "Drawing_Annotation";
 

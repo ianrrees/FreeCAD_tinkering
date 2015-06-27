@@ -54,7 +54,7 @@
 # include <QWheelEvent>
 # include <strstream>
 # include <cmath>
-#endif
+#endif  // #ifndef _PreComp_
 
 #include "DrawingView.h"
 
@@ -80,7 +80,7 @@
 #include <Mod/Drawing/App/FeaturePage.h>
 #include <Mod/Drawing/App/FeatureView.h>
 #include <Mod/Drawing/App/FeatureViewCollection.h>
-#include <Mod/Drawing/App/FeatureViewOrthographic.h>
+#include <Mod/Drawing/App/FeatureProjGroup.h>
 #include <Mod/Drawing/App/FeatureViewPart.h>
 #include <Mod/Drawing/App/FeatureViewSection.h>
 #include <Mod/Drawing/App/FeatureViewDimension.h>
@@ -313,9 +313,9 @@ int DrawingView::attachView(App::DocumentObject *obj)
     } else if (obj->getTypeId().isDerivedFrom(Drawing::FeatureViewPart::getClassTypeId()) ) {
         Drawing::FeatureViewPart *viewPart = dynamic_cast<Drawing::FeatureViewPart *>(obj);
         qview = m_view->addViewPart(viewPart);
-    } else if (obj->getTypeId().isDerivedFrom(Drawing::FeatureViewOrthographic::getClassTypeId()) ) {
-        Drawing::FeatureViewOrthographic *view = dynamic_cast<Drawing::FeatureViewOrthographic *>(obj);
-        qview = m_view->addViewOrthographic(view);
+    } else if (obj->getTypeId().isDerivedFrom(Drawing::FeatureProjGroup::getClassTypeId()) ) {
+        Drawing::FeatureProjGroup *view = dynamic_cast<Drawing::FeatureProjGroup *>(obj);
+        qview = m_view->addProjectionGroup(view);
     } else if (obj->getTypeId().isDerivedFrom(Drawing::FeatureViewCollection::getClassTypeId()) ) {
         Drawing::FeatureViewCollection *collection = dynamic_cast<Drawing::FeatureViewCollection *>(obj);
         qview =  m_view->addFeatureView(collection);

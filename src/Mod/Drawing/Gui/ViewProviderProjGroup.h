@@ -20,8 +20,8 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef DRAWINGGUI_VIEWPROVIDERVIEWORTHOGRAPHIC_H
-#define DRAWINGGUI_VIEWPROVIDERVIEWORTHOGRAPHIC_H
+#ifndef DRAWINGGUI_VIEWPROVIDERVIEWGROUP_H
+#define DRAWINGGUI_VIEWPROVIDERVIEWGROUP_H
 
 #include <Gui/ViewProviderFeature.h>
 #include <Gui/ViewProviderDocumentObject.h>
@@ -29,20 +29,20 @@
 #include <QPointer>
 
 namespace Drawing{
-    class FeatureViewOrthographic;
+    class FeatureProjGroup;
 }
 
 namespace DrawingGui {
 
 
-class DrawingGuiExport ViewProviderViewOrthographic : public Gui::ViewProviderDocumentObject
+class DrawingGuiExport ViewProviderProjGroup : public Gui::ViewProviderDocumentObject
 {
-    PROPERTY_HEADER(DrawingGui::ViewProviderViewOrthographic);
+    PROPERTY_HEADER(DrawingGui::ViewProviderProjGroup);
 
 public:
 
-     ViewProviderViewOrthographic();  /// constructor
-     ~ViewProviderViewOrthographic(); /// destructor
+     ViewProviderProjGroup();  /// constructor
+     ~ViewProviderProjGroup(); /// destructor
 
     virtual void attach(App::DocumentObject *);
     virtual void setDisplayMode(const char* ModeName);
@@ -58,7 +58,7 @@ public:
     void setupContextMenu(QMenu*, QObject*, const char*);
     virtual void updateData(const App::Property*);
 
-    Drawing::FeatureViewOrthographic* getObject() const;
+    Drawing::FeatureProjGroup* getObject() const;
     void unsetEdit(int ModNum);
 
 protected:
@@ -68,4 +68,4 @@ protected:
 
 } // namespace DrawingGui
 
-#endif // DRAWINGGUI_VIEWPROVIDERVIEWORTHOGRAPHIC_H
+#endif // DRAWINGGUI_VIEWPROVIDERVIEWGROUP_H

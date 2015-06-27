@@ -20,8 +20,8 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef DRAWINGGUI_QGraphicsItemViewOrthographic_H
-#define DRAWINGGUI_QGraphicsItemViewOrthographic_H
+#ifndef DRAWINGGUI_QGraphicsItemProjGroup_H
+#define DRAWINGGUI_QGraphicsItemProjGroup_H
 
 #include <QGraphicsItemGroup>
 #include <QObject>
@@ -42,18 +42,18 @@ class FeatureView;
 namespace DrawingGui
 {
 
-class DrawingGuiExport QGraphicsItemViewOrthographic : public QGraphicsItemViewCollection
+class DrawingGuiExport QGraphicsItemProjGroup : public QGraphicsItemViewCollection
 {
     Q_OBJECT
 
 public:
-    QGraphicsItemViewOrthographic(const QPoint &position, QGraphicsScene *scene);
-    ~QGraphicsItemViewOrthographic();
+    QGraphicsItemProjGroup(const QPoint &position, QGraphicsScene *scene);
+    ~QGraphicsItemProjGroup();
 
     enum {Type = QGraphicsItem::UserType + 113};
     int type() const { return Type;}
 
-    void alignTo(QGraphicsItemViewOrthographic *, const QString &alignment);
+    void alignTo(QGraphicsItemProjGroup *, const QString &alignment);
 
     virtual void updateView(bool update = false);
     virtual void drawBorder(void);
@@ -72,7 +72,7 @@ protected:
 
 private:
     /// Convenience function
-    Drawing::FeatureViewOrthographic * getFeatureView(void) const;
+    Drawing::FeatureProjGroup * getFeatureView(void) const;
 
     QGraphicsRectItem * m_backgroundItem;
     QGraphicsItem *origin;
@@ -81,4 +81,4 @@ private:
 
 } // namespace DrawingViewGui
 
-#endif // DRAWINGGUI_QGraphicsItemViewOrthographic_H
+#endif // DRAWINGGUI_QGraphicsItemProjGroup_H

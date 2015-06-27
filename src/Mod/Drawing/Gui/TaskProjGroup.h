@@ -21,20 +21,20 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef GUI_TASKVIEW_TASKORTHOGRAPHICVIEWS_H
-#define GUI_TASKVIEW_TASKORTHOGRAPHICVIEWS_H
+#ifndef GUI_TASKVIEW_TASKVIEWGROUP_H
+#define GUI_TASKVIEW_TASKVIEWGROUP_H
 
 #include <Base/BoundBox.h>
 #include <Gui/TaskView/TaskView.h>
 #include <Gui/TaskView/TaskDialog.h>
 
-#include "ui_TaskOrthographicViews.h"
+#include "ui_TaskProjGroup.h"
 
-#include "ViewProviderViewOrthographic.h"
-#include "../App/FeatureViewOrthographic.h"
+#include "ViewProviderProjGroup.h"
+#include "../App/FeatureProjGroup.h"
 
 
-class Ui_TaskOrthographicViews;
+class Ui_TaskProjGroup;
 
 namespace App {
   class Document;
@@ -43,19 +43,19 @@ namespace App {
 
 namespace Drawing {
   class FeatureViewPart;
-  class FeatureViewOrthographic;
+  class FeatureProjGroup;
 }
 
 namespace DrawingGui
 {
 
-class TaskOrthographicViews : public QWidget
+class TaskProjGroup : public QWidget
 {
     Q_OBJECT
 
 public:
-    TaskOrthographicViews(Drawing::FeatureViewOrthographic* featView);
-    ~TaskOrthographicViews();
+    TaskProjGroup(Drawing::FeatureProjGroup* featView);
+    ~TaskProjGroup();
 
 public:
     void updateTask();
@@ -66,7 +66,7 @@ public:
 protected Q_SLOTS:
     void viewToggled(bool toggle);
 
-    /// Requests appropriate rotation of our FeatureViewOrthographic
+    /// Requests appropriate rotation of our FeatureProjGroup
     void rotateButtonClicked(void);
 
     void projectionTypeChanged(int index);
@@ -85,27 +85,27 @@ protected:
 
 private:
     //class Private;
-    Ui_TaskOrthographicViews * ui;
+    Ui_TaskProjGroup * ui;
     bool blockUpdate;
     /// Translate a view checkbox index into represented view string, depending on projection type
     const char * viewChkIndexToCStr(int index);
 
 protected:
-  ViewProviderViewOrthographic *orthographicView;
-  Drawing::FeatureViewOrthographic* multiView;
+  ViewProviderProjGroup *viewProvider;
+  Drawing::FeatureProjGroup* multiView;
 };
 
 /// Simulation dialog for the TaskView
-class TaskDlgOrthographicViews : public Gui::TaskView::TaskDialog
+class TaskDlgProjGroup : public Gui::TaskView::TaskDialog
 {
     Q_OBJECT
 
 public:
-    TaskDlgOrthographicViews(Drawing::FeatureViewOrthographic* featView);
-    ~TaskDlgOrthographicViews();
+    TaskDlgProjGroup(Drawing::FeatureProjGroup* featView);
+    ~TaskDlgProjGroup();
 
-    const ViewProviderViewOrthographic * getOrthographicView() const { return orthographicView; }
-    Drawing::FeatureViewOrthographic * getMultiView() const { return multiView; }
+    const ViewProviderProjGroup * getViewProvider() const { return viewProvider; }
+    Drawing::FeatureProjGroup * getMultiView() const { return multiView; }
 public:
     /// is called the TaskView when the dialog is opened
     virtual void open();
@@ -123,14 +123,15 @@ public:
     void update();
 
 protected:
-    const ViewProviderViewOrthographic *orthographicView;
-    Drawing::FeatureViewOrthographic *multiView;
+    const ViewProviderProjGroup *viewProvider;
+    Drawing::FeatureProjGroup *multiView;
     
 private:
-    TaskOrthographicViews * widget;
+    TaskProjGroup * widget;
     Gui::TaskView::TaskBox* taskbox;
 };
 
 } //namespace DrawingGui
 
-#endif // GUI_TASKVIEW_OrthographicViews_H
+#endif // #ifndef GUI_TASKVIEW_TASKVIEWGROUP_H
+

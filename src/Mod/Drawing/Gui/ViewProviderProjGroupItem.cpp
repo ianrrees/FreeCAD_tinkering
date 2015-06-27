@@ -44,38 +44,38 @@
 #include <Gui/SoFCSelection.h>
 
 
-#include <Mod/Drawing/App/FeatureOrthoView.h>
+#include <Mod/Drawing/App/FeatureProjGroupItem.h>
 
-#include "ViewProviderOrthoView.h"
+#include "ViewProviderProjGroupItem.h"
 
 using namespace DrawingGui;
 
-PROPERTY_SOURCE(DrawingGui::ViewProviderOrthoView, DrawingGui::ViewProviderViewPart)
+PROPERTY_SOURCE(DrawingGui::ViewProviderProjGroupItem, DrawingGui::ViewProviderViewPart)
 
 //**************************************************************************
 // Construction/Destruction
 
-ViewProviderOrthoView::ViewProviderOrthoView()
+ViewProviderProjGroupItem::ViewProviderProjGroupItem()
 {
 
 }
 
-ViewProviderOrthoView::~ViewProviderOrthoView()
+ViewProviderProjGroupItem::~ViewProviderProjGroupItem()
 {
 }
 
-void ViewProviderOrthoView::attach(App::DocumentObject *pcFeat)
+void ViewProviderProjGroupItem::attach(App::DocumentObject *pcFeat)
 {
     // call parent attach method
     ViewProviderViewPart::attach(pcFeat);
 }
 
-void ViewProviderOrthoView::setDisplayMode(const char* ModeName)
+void ViewProviderProjGroupItem::setDisplayMode(const char* ModeName)
 {
     ViewProviderDocumentObject::setDisplayMode(ModeName);
 }
 
-std::vector<std::string> ViewProviderOrthoView::getDisplayModes(void) const
+std::vector<std::string> ViewProviderProjGroupItem::getDisplayModes(void) const
 {
     // get the modes of the father
     std::vector<std::string> StrList = ViewProviderDocumentObject::getDisplayModes();
@@ -83,63 +83,65 @@ std::vector<std::string> ViewProviderOrthoView::getDisplayModes(void) const
     return StrList;
 }
 
-void ViewProviderOrthoView::updateData(const App::Property* prop)
+void ViewProviderProjGroupItem::updateData(const App::Property* prop)
 {
     Gui::ViewProviderDocumentObject::updateData(prop);
-    Drawing::FeatureOrthoView* ortho = getObject();
+    Drawing::FeatureProjGroupItem* proj = getObject();
 
-    if(ortho) {
+    if(proj) {
         // Set the icon pixmap depending on the orientation
-        std::string projType = ortho->Type.getValueAsString();
+        std::string projType = proj->Type.getValueAsString();
+
+        //TODO: Once we know that ProjType is valid, sPixMap = "Proj" + projType
 
         if(strcmp(projType.c_str(), "Front") == 0) {
-            sPixmap = "OrthoFront";
+            sPixmap = "ProjFront";
         } else if(strcmp(projType.c_str(), "Rear") == 0) {
-            sPixmap = "OrthoRear";
+            sPixmap = "ProjRear";
         } else if(strcmp(projType.c_str(), "Right") == 0) {
-            sPixmap = "OrthoRight";
+            sPixmap = "ProjRight";
         } else if(strcmp(projType.c_str(), "Left") == 0) {
-           sPixmap = "OrthoLeft";
+           sPixmap = "ProjLeft";
         } else if(strcmp(projType.c_str(), "Top") == 0) {
-           sPixmap = "OrthoTop";
+           sPixmap = "ProjTop";
         } else if(strcmp(projType.c_str(), "Bottom") == 0) {
-           sPixmap = "OrthoBottom";
+           sPixmap = "ProjBottom";
         } else if(strcmp(projType.c_str(), "FrontTopLeft") == 0) {
-           sPixmap = "IsoFrontTopLeft";
+           sPixmap = "ProjFrontTopLeft";
         } else if(strcmp(projType.c_str(), "FrontTopRight") == 0) {
-           sPixmap = "IsoFrontTopRight";
+           sPixmap = "ProjFrontTopRight";
         } else if(strcmp(projType.c_str(), "FrontBottomRight") == 0) {
-           sPixmap = "IsoFrontBottomRight";
+           sPixmap = "ProjFrontBottomRight";
         } else if(strcmp(projType.c_str(), "FrontBottomLeft") == 0) {
-           sPixmap = "IsoFrontBottomLeft";
+           sPixmap = "ProjFrontBottomLeft";
         }
     }
  }
 
 
-void ViewProviderOrthoView::setupContextMenu(QMenu* menu, QObject* receiver, const char* member)
+void ViewProviderProjGroupItem::setupContextMenu(QMenu* menu, QObject* receiver, const char* member)
 {
     //QAction* act;
     //act = menu->addAction(QObject::tr("Show drawing"), receiver, member);
 }
 
-bool ViewProviderOrthoView::setEdit(int ModNum)
+bool ViewProviderProjGroupItem::setEdit(int ModNum)
 {
     doubleClicked();
     return true;
 }
 
-void ViewProviderOrthoView::unsetEdit(int ModNum)
+void ViewProviderProjGroupItem::unsetEdit(int ModNum)
 {
     Gui::Control().closeDialog();
 }
 
-bool ViewProviderOrthoView::doubleClicked(void)
+bool ViewProviderProjGroupItem::doubleClicked(void)
 {
     return true;
 }
 
-bool ViewProviderOrthoView::onDelete(const std::vector<std::string> &subList)
+bool ViewProviderProjGroupItem::onDelete(const std::vector<std::string> &subList)
 {
 
     Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.removeObject(\"%s\")"
@@ -150,7 +152,7 @@ bool ViewProviderOrthoView::onDelete(const std::vector<std::string> &subList)
 
 }
 
-Drawing::FeatureOrthoView* ViewProviderOrthoView::getObject() const
+Drawing::FeatureProjGroupItem* ViewProviderProjGroupItem::getObject() const
 {
-    return dynamic_cast<Drawing::FeatureOrthoView*>(pcObject);
+    return dynamic_cast<Drawing::FeatureProjGroupItem*>(pcObject);
 }

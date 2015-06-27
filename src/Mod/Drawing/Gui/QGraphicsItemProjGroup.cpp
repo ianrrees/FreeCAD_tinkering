@@ -39,14 +39,14 @@
 #include <Gui/Selection.h>
 #include <Gui/Command.h>
 
-#include <Mod/Drawing/App/FeatureOrthoView.h>
-#include <Mod/Drawing/App/FeatureViewOrthographic.h>
+#include <Mod/Drawing/App/FeatureProjGroupItem.h>
+#include <Mod/Drawing/App/FeatureProjGroup.h>
 
-#include "QGraphicsItemViewOrthographic.h"
+#include "QGraphicsItemProjGroup.h"
 
 using namespace DrawingGui;
 
-QGraphicsItemViewOrthographic::QGraphicsItemViewOrthographic(const QPoint &pos, QGraphicsScene *scene)
+QGraphicsItemProjGroup::QGraphicsItemProjGroup(const QPoint &pos, QGraphicsScene *scene)
     :QGraphicsItemViewCollection(pos, scene)
 {
     setPos(pos);
@@ -64,18 +64,18 @@ QGraphicsItemViewOrthographic::QGraphicsItemViewOrthographic(const QPoint &pos, 
     borderVisible = false;
 }
 
-QGraphicsItemViewOrthographic::~QGraphicsItemViewOrthographic()
+QGraphicsItemProjGroup::~QGraphicsItemProjGroup()
 {
 //TODO: if the QGIVO is deleted, should we clean up any remaining QGIVParts??
 }
 
-Drawing::FeatureViewOrthographic * QGraphicsItemViewOrthographic::getFeatureView(void) const
+Drawing::FeatureProjGroup * QGraphicsItemProjGroup::getFeatureView(void) const
 {
     App::DocumentObject *obj = getViewObject();
-    return dynamic_cast<Drawing::FeatureViewOrthographic *>(obj);
+    return dynamic_cast<Drawing::FeatureProjGroup *>(obj);
 }
 
-bool QGraphicsItemViewOrthographic::sceneEventFilter(QGraphicsItem * watched, QEvent *event)
+bool QGraphicsItemProjGroup::sceneEventFilter(QGraphicsItem * watched, QEvent *event)
 {
 // i want to handle events before the child item that would ordinarily receive them
     if(event->type() == QEvent::GraphicsSceneMousePress ||
@@ -110,23 +110,23 @@ bool QGraphicsItemViewOrthographic::sceneEventFilter(QGraphicsItem * watched, QE
 
     return false;
 }
-QVariant QGraphicsItemViewOrthographic::itemChange(GraphicsItemChange change, const QVariant &value)
+QVariant QGraphicsItemProjGroup::itemChange(GraphicsItemChange change, const QVariant &value)
 {
     if(change == ItemChildAddedChange && scene()) {
          QGraphicsItem *childItem = value.value<QGraphicsItem*>();
          QGraphicsItemView* gView = dynamic_cast<QGraphicsItemView *>(childItem);
          if(gView) {
             Drawing::FeatureView *fView = gView->getViewObject();
-            if(fView->getTypeId().isDerivedFrom(Drawing::FeatureOrthoView::getClassTypeId())) {
-                Drawing::FeatureOrthoView *orthoView = static_cast<Drawing::FeatureOrthoView *>(fView);
-                QString type = QString::fromAscii(orthoView->Type.getValueAsString());
+            if(fView->getTypeId().isDerivedFrom(Drawing::FeatureProjGroupItem::getClassTypeId())) {
+                Drawing::FeatureProjGroupItem *projItemPtr = static_cast<Drawing::FeatureProjGroupItem *>(fView);
+                QString type = QString::fromAscii(projItemPtr->Type.getValueAsString());
 
                 if (type == QString::fromAscii("Front")) {
                     gView->setLocked(true);
                     installSceneEventFilter(gView);
                     App::DocumentObject *docObj = getViewObject();
-                    Drawing::FeatureViewOrthographic *viewOrthographic = dynamic_cast<Drawing::FeatureViewOrthographic *>(docObj);
-                    viewOrthographic->Anchor.setValue(fView);
+                    Drawing::FeatureProjGroup *projectionGroup = dynamic_cast<Drawing::FeatureProjGroup *>(docObj);
+                    projectionGroup->Anchor.setValue(fView);
                     updateView();
                 } else if ( type == QString::fromAscii("Top") ||
                     type == QString::fromAscii("Bottom")) {
@@ -149,7 +149,7 @@ QVariant QGraphicsItemViewOrthographic::itemChange(GraphicsItemChange change, co
 }
 
 
-void QGraphicsItemViewOrthographic::mousePressEvent(QGraphicsSceneMouseEvent * event)
+void QGraphicsItemProjGroup::mousePressEvent(QGraphicsSceneMouseEvent * event)
 {
     QGraphicsItemView *qAnchor = getAnchorQItem();
     if(qAnchor) {
@@ -162,7 +162,7 @@ void QGraphicsItemViewOrthographic::mousePressEvent(QGraphicsSceneMouseEvent * e
     event->accept();
 }
 
-void QGraphicsItemViewOrthographic::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
+void QGraphicsItemProjGroup::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
 {
     QGraphicsItemView *qAnchor = getAnchorQItem();
     if(scene() && qAnchor && (qAnchor == scene()->mouseGrabberItem())) {
@@ -174,7 +174,7 @@ void QGraphicsItemViewOrthographic::mouseMoveEvent(QGraphicsSceneMouseEvent * ev
     event->accept();
 }
 
-void QGraphicsItemViewOrthographic::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
+void QGraphicsItemProjGroup::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 {
      if(scene()) {
        QGraphicsItemView *qAnchor = getAnchorQItem();
@@ -184,7 +184,7 @@ void QGraphicsItemViewOrthographic::mouseReleaseEvent(QGraphicsSceneMouseEvent *
             }
         } else if(scene() && qAnchor && (qAnchor == scene()->mouseGrabberItem())) {
             // End of Drag
-            Gui::Command::openCommand("Drag Orthographic Collection");
+            Gui::Command::openCommand("Drag Projection Group");
             //TODO: See if these commands actually handle the horizontal/vertical constraints properly...
             Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.X = %f",
                                     getViewObject()->getNameInDocument(), x());
@@ -198,7 +198,7 @@ void QGraphicsItemViewOrthographic::mouseReleaseEvent(QGraphicsSceneMouseEvent *
 }
 
 
-QGraphicsItemView * QGraphicsItemViewOrthographic::getAnchorQItem() const
+QGraphicsItemView * QGraphicsItemProjGroup::getAnchorQItem() const
 {
     // Get the currently assigned anchor view
     App::DocumentObject *anchorObj = getFeatureView()->Anchor.getValue();
@@ -216,16 +216,16 @@ QGraphicsItemView * QGraphicsItemViewOrthographic::getAnchorQItem() const
     return 0;
 }
 
-void QGraphicsItemViewOrthographic::updateView(bool update)
+void QGraphicsItemProjGroup::updateView(bool update)
 {
     m_backgroundItem->setRect(boundingRect());
     return QGraphicsItemViewCollection::updateView(update);
 }
 
-void QGraphicsItemViewOrthographic::drawBorder()
+void QGraphicsItemProjGroup::drawBorder()
 {
-//QGraphicsItemViewOrthographic does not have a border!
-//    Base::Console().Message("TRACE - QGraphicsItemViewOrthographic::drawBorder - doing nothing!!\n");
+//QGraphicsItemProjGroup does not have a border!
+//    Base::Console().Message("TRACE - QGraphicsItemProjGroup::drawBorder - doing nothing!!\n");
 }
 
-#include "moc_QGraphicsItemViewOrthographic.cpp"
+#include "moc_QGraphicsItemProjGroup.cpp"

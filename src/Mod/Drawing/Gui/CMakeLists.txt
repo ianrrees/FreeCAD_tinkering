@@ -36,12 +36,12 @@ set(DrawingGui_MOC_HDRS
     QGraphicsItemView.h
     QGraphicsItemViewCollection.h
     QGraphicsItemViewDimension.h
-    QGraphicsItemViewOrthographic.h
+    QGraphicsItemProjGroup.h
     QGraphicsItemViewPart.h
     QGraphicsItemViewSection.h
     QGraphicsItemViewAnnotation.h
     QGraphicsItemViewSymbol.h
-    TaskOrthographicViews.h
+    TaskProjGroup.h
     TemplateTextField.h
 )
 
@@ -51,7 +51,7 @@ SOURCE_GROUP("Moc" FILES ${DrawingGui_MOC_SRCS})
 qt4_add_resources(DrawingGui_SRCS Resources/Drawing.qrc)
 
 set(DrawingGui_UIC_SRCS
-    TaskOrthographicViews.ui
+    TaskProjGroup.ui
 )
 
 qt4_wrap_ui(DrawingGui_UIC_HDRS ${DrawingGui_UIC_SRCS})
@@ -69,9 +69,9 @@ SET(DrawingGui_SRCS
     TaskDialog.h
     Workbench.cpp
     Workbench.h
-    TaskOrthographicViews.ui
-    TaskOrthographicViews.cpp
-    TaskOrthographicViews.h
+    TaskProjGroup.ui
+    TaskProjGroup.cpp
+    TaskProjGroup.h
 )
 SET(DrawingGuiView_SRCS
     DrawingView.cpp
@@ -102,8 +102,8 @@ SET(DrawingGuiView_SRCS
     QGraphicsItemViewCollection.h
     QGraphicsItemViewDimension.cpp
     QGraphicsItemViewDimension.h
-    QGraphicsItemViewOrthographic.cpp
-    QGraphicsItemViewOrthographic.h
+    QGraphicsItemProjGroup.cpp
+    QGraphicsItemProjGroup.h
     QGraphicsItemViewPart.cpp
     QGraphicsItemViewPart.h
     QGraphicsItemViewSection.cpp
@@ -120,16 +120,16 @@ SET(DrawingGuiViewProvider_SRCS
     ViewProviderPage.h
     ViewProviderView.cpp
     ViewProviderView.h
-    ViewProviderOrthoView.cpp
-    ViewProviderOrthoView.h
+    ViewProviderProjGroupItem.cpp
+    ViewProviderProjGroupItem.h
     ViewProviderTemplate.cpp
     ViewProviderTemplate.h
     ViewProviderDimension.cpp
     ViewProviderDimension.h
     ViewProviderViewPart.cpp
     ViewProviderViewPart.h
-    ViewProviderViewOrthographic.cpp
-    ViewProviderViewOrthographic.h
+    ViewProviderProjGroup.cpp
+    ViewProviderProjGroup.h
     ViewProviderViewSection.cpp
     ViewProviderViewSection.h
     ViewProviderAnnotation.cpp
@@ -145,7 +145,7 @@ SOURCE_GROUP("SVG-View" FILES ${DrawingGuiView_SRCS})
 SOURCE_GROUP("ViewProvider" FILES ${DrawingGuiViewProvider_SRCS})
 
 SET(DrawingGuiTaskDlgs_SRCS
-    TaskOrthographicViews.ui
+    TaskProjGroup.ui
 )
 SOURCE_GROUP("TaskDialogs" FILES ${DrawingGuiTaskDlgs_SRCS})
 

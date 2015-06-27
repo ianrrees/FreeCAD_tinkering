@@ -46,14 +46,13 @@
 # include <Mod/Part/App/PartFeature.h>
 
 # include <Mod/Drawing/App/FeatureViewPart.h>
-# include <Mod/Drawing/App/FeatureOrthoView.h>
-# include <Mod/Drawing/App/FeatureViewOrthographic.h>
+# include <Mod/Drawing/App/FeatureProjGroupItem.h>
+# include <Mod/Drawing/App/FeatureProjGroup.h>
 # include <Mod/Drawing/App/FeatureViewDimension.h>
 # include <Mod/Drawing/App/FeaturePage.h>
 
 # include "DrawingView.h"
 # include "TaskDialog.h"
-//# include "TaskOrthoViews.h"
 # include "ViewProviderPage.h"
 
 using namespace DrawingGui;
@@ -183,9 +182,9 @@ void CmdDrawingNewDimension::activated(int iMsg)
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
 
-    // Check if the part is an orthographic view;  TODO: shouldn't this be Feature logic?
-    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
-    if(orthoView) {
+    // Check if the part is a projection group item;  TODO: shouldn't this be Feature logic?
+    Drawing::FeatureProjGroupItem *projItem = dynamic_cast<Drawing::FeatureProjGroupItem *>(objFeat);
+    if(projItem) {
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
     }
 
@@ -266,9 +265,9 @@ void CmdDrawingNewRadiusDimension::activated(int iMsg)
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
 
-    // Check if the part is an orthographic view;  TODO: shouldn't this be Feature logic?
-    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
-    if(orthoView) {
+    // Check if the part is a projection group item;  TODO: shouldn't this be Feature logic?
+    Drawing::FeatureProjGroupItem *projItem = dynamic_cast<Drawing::FeatureProjGroupItem *>(objFeat);
+    if(projItem) {
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
     }
 
@@ -349,9 +348,9 @@ void CmdDrawingNewDiameterDimension::activated(int iMsg)
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
 
-    // Check if the part is an orthographic view;  TODO: shouldn't this be Feature logic?
-    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
-    if(orthoView) {
+    // Check if the part is a projection group item;  TODO: shouldn't this be Feature logic?
+    Drawing::FeatureProjGroupItem *projItem = dynamic_cast<Drawing::FeatureProjGroupItem *>(objFeat);
+    if(projItem) {
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
     }
 
@@ -436,9 +435,9 @@ void CmdDrawingNewLengthDimension::activated(int iMsg)
 
     doCommand(Doc, "App.activeDocument().%s.FormatSpec = '%%value%%'", FeatName.c_str());
 
-    // Check if the part is an orthographic view;  TODO: shouldn't this be Feature logic?
-    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
-    if(orthoView) {
+    // Check if the part is a projection group item;  TODO: shouldn't this be Feature logic?
+    Drawing::FeatureProjGroupItem *projItem = dynamic_cast<Drawing::FeatureProjGroupItem *>(objFeat);
+    if(projItem) {
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'", FeatName.c_str());
     }
 
@@ -519,9 +518,9 @@ void CmdDrawingNewDistanceXDimension::activated(int iMsg)
 
     doCommand(Doc, "App.activeDocument().%s.FormatSpec = '%%value%%'", FeatName.c_str());
 
-    // Check if the part is an orthographic view;  TODO: shouldn't this be Feature logic?
-    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
-    if(orthoView) {
+    // Check if the part is a projection group item;  TODO: shouldn't this be Feature logic?
+    Drawing::FeatureProjGroupItem *projItem = dynamic_cast<Drawing::FeatureProjGroupItem *>(objFeat);
+    if(projItem) {
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
     }
 
@@ -602,9 +601,9 @@ void CmdDrawingNewDistanceYDimension::activated(int iMsg)
 
     doCommand(Doc, "App.activeDocument().%s.FormatSpec = '%%value%%'", FeatName.c_str());
 
-    // Check if the part is an orthographic view;  TODO: shouldn't this be Feature logic?
-    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
-    if(orthoView) {
+    // Check if the part is a projection group item;  TODO: shouldn't this be Feature logic?
+    Drawing::FeatureProjGroupItem *projItem = dynamic_cast<Drawing::FeatureProjGroupItem *>(objFeat);
+    if(projItem) {
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
     }
 
@@ -678,7 +677,6 @@ void CmdDrawingNewAngleDimension::activated(int iMsg)
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
 
-    Drawing::FeatureOrthoView *orthoView = dynamic_cast<Drawing::FeatureOrthoView *>(objFeat);
     doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
 
     dim->execute();

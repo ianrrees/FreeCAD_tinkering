@@ -1,5 +1,5 @@
 <RCC>
-    <qresource> 
+    <qresource prefix="/">
         <file>icons/Dimension.svg</file>
         <file>icons/Dimension_Angle.svg</file>
         <file>icons/Dimension_Diameter.svg</file>
@@ -7,13 +7,6 @@
         <file>icons/Dimension_Length.svg</file>
         <file>icons/Dimension_Radius.svg</file>
         <file>icons/Dimension_Vertical.svg</file>
-        <file>icons/OrthoBottom.svg</file>
-        <file>icons/OrthoCollection.svg</file>
-        <file>icons/OrthoFront.svg</file>
-        <file>icons/OrthoLeft.svg</file>
-        <file>icons/OrthoRear.svg</file>
-        <file>icons/OrthoRight.svg</file>
-        <file>icons/OrthoTop.svg</file>
         <file>icons/Page.svg</file>
         <file>icons/Pages.svg</file>
         <file>icons/View.svg</file>
@@ -29,7 +22,6 @@
         <file>icons/actions/drawing-landscape.svg</file>
         <file>icons/actions/drawing-portrait-A4.svg</file>
         <file>icons/actions/drawing-view.svg</file>
-        <file>icons/actions/drawing-orthoviews.svg</file>
         <file>icons/actions/drawing-openbrowser.svg</file>
         <file>icons/actions/drawing-annotation.svg</file>
         <file>icons/actions/drawing-clip.svg</file>
@@ -61,5 +53,13 @@
         <file>translations/Drawing_zh-CN.qm</file>
         <file>translations/Drawing_zh-TW.qm</file>
         <file>translations/Drawing_sr.qm</file>
+        <file>icons/ProjBottom.svg</file>
+        <file>icons/ProjFront.svg</file>
+        <file>icons/ProjGroup.svg</file>
+        <file>icons/ProjLeft.svg</file>
+        <file>icons/ProjRear.svg</file>
+        <file>icons/ProjRight.svg</file>
+        <file>icons/ProjTop.svg</file>
+        <file>icons/actions/drawing-projgroup.svg</file>
     </qresource>
-</RCC> 
+</RCC>

@@ -26,8 +26,8 @@
 #include "FeatureViewSection.h"
 #include "FeatureViewAnnotation.h"
 #include "FeatureViewDimension.h"
-#include "FeatureOrthoView.h"
-#include "FeatureViewOrthographic.h"
+#include "FeatureProjGroupItem.h"
+#include "FeatureProjGroup.h"
 #include "FeatureViewSymbol.h"
 #include "FeatureProjection.h"
 #include "FeatureClip.h"
@@ -72,8 +72,8 @@ void DrawingExport initDrawing()
 
     Drawing::FeatureViewSection     ::init();
     Drawing::FeatureViewDimension   ::init();
-    Drawing::FeatureViewOrthographic::init();
-    Drawing::FeatureOrthoView       ::init();
+    Drawing::FeatureProjGroup       ::init();
+    Drawing::FeatureProjGroupItem   ::init();
     Drawing::FeatureTemplate        ::init();
     Drawing::FeatureParametricTemplate::init();
     Drawing::FeatureSVGTemplate     ::init();

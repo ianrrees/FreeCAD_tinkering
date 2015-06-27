@@ -27,7 +27,7 @@
 
 namespace Drawing {
 class FeatureViewPart;
-class FeatureViewOrthographic;
+class FeatureProjGroup;
 class FeatureViewDimension;
 class FeaturePage;
 class FeatureTemplate;
@@ -56,7 +56,7 @@ public:
     void drawBackground(QPainter *p, const QRectF &rect);
 
     QGraphicsItemView * addViewDimension(Drawing::FeatureViewDimension *dim);
-    QGraphicsItemView * addViewOrthographic(Drawing::FeatureViewOrthographic *view);
+    QGraphicsItemView * addProjectionGroup(Drawing::FeatureProjGroup *view);
     QGraphicsItemView * addViewPart(Drawing::FeatureViewPart *part);
     QGraphicsItemView * addViewSection(Drawing::FeatureViewPart *part);
     QGraphicsItemView * addFeatureView(Drawing::FeatureView *view);

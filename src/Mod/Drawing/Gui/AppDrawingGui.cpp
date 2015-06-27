@@ -36,10 +36,10 @@
 #include "ViewProviderPage.h"
 #include "ViewProviderView.h"
 #include "ViewProviderDimension.h"
-#include "ViewProviderOrthoView.h"
+#include "ViewProviderProjGroup.h"
+#include "ViewProviderProjGroupItem.h"
 #include "ViewProviderTemplate.h"
 #include "ViewProviderViewPart.h"
-#include "ViewProviderViewOrthographic.h"
 #include "ViewProviderViewSection.h"
 #include "ViewProviderAnnotation.h"
 #include "ViewProviderSymbol.h"
@@ -90,8 +90,8 @@ void DrawingGuiExport initDrawingGui()
     DrawingGui::ViewProviderTemplate::init();
     DrawingGui::ViewProviderDimension::init();
     DrawingGui::ViewProviderViewPart::init();
-    DrawingGui::ViewProviderOrthoView::init();
-    DrawingGui::ViewProviderViewOrthographic::init();
+    DrawingGui::ViewProviderProjGroupItem::init();
+    DrawingGui::ViewProviderProjGroup::init();
     DrawingGui::ViewProviderDrawingViewSection::init();
 //    DrawingGui::ViewProviderDrawingClip::init();
     DrawingGui::ViewProviderAnnotation::init();
@@ -102,3 +102,4 @@ void DrawingGuiExport initDrawingGui()
 }
 
 } // extern "C" {
+

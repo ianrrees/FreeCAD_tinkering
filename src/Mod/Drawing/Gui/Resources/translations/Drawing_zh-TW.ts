@@ -161,7 +161,7 @@
     </message>
 </context>
 <context>
-    <name>CmdDrawingOrthoViews</name>
+    <name>CmdDrawingProjGroup</name>
     <message>
         <location line="-53"/>
         <source>Drawing</source>

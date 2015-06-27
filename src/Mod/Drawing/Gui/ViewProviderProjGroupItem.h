@@ -20,26 +20,26 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef DRAWINGGUI_VIEWPROVIDERORTHOVIEW_H
-#define DRAWINGGUI_VIEWPROVIDERORTHOVIEW_H
+#ifndef DRAWINGGUI_VIEWPROVIDERVIEWGROUPITEM_H
+#define DRAWINGGUI_VIEWPROVIDERVIEWGROUPITEM_H
 
 #include "ViewProviderViewPart.h"
 
 namespace Drawing{
-    class FeatureOrthoView;
+    class FeatureProjGroupItem;
 }
 
 namespace DrawingGui {
 
 
-class DrawingGuiExport ViewProviderOrthoView: public ViewProviderViewPart
+class DrawingGuiExport ViewProviderProjGroupItem: public ViewProviderViewPart
 {
-    PROPERTY_HEADER(DrawingGui::ViewProviderOrthoView);
+    PROPERTY_HEADER(DrawingGui::ViewProviderProjGroupItem);
 
 public:
 
-     ViewProviderOrthoView();
-     ~ViewProviderOrthoView();
+     ViewProviderProjGroupItem();
+     ~ViewProviderProjGroupItem();
 
     virtual void attach(App::DocumentObject *);
     virtual void setDisplayMode(const char* ModeName);
@@ -54,7 +54,7 @@ public:
 
     bool onDelete(const std::vector<std::string> &subList);
 
-    Drawing::FeatureOrthoView* getObject() const;
+    Drawing::FeatureProjGroupItem* getObject() const;
     void unsetEdit(int ModNum);
 
 protected:
@@ -64,4 +64,4 @@ protected:
 
 } // namespace DrawingGui
 
-#endif // DRAWINGGUI_VIEWPROVIDERORTHOVIEW_H
+#endif // DRAWINGGUI_VIEWPROVIDERVIEWGROUPITEM_H

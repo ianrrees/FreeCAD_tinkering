@@ -50,15 +50,15 @@
 #include <Mod/Part/App/PartFeature.h>
 #include <Mod/Drawing/App/FeaturePage.h>
 #include <Mod/Drawing/App/FeatureViewPart.h>
-#include <Mod/Drawing/App/FeatureOrthoView.h>
-#include <Mod/Drawing/App/FeatureViewOrthographic.h>
+#include <Mod/Drawing/App/FeatureProjGroupItem.h>
+#include <Mod/Drawing/App/FeatureProjGroup.h>
 #include <Mod/Drawing/App/FeatureViewDimension.h>
 #include <Mod/Drawing/Gui/CanvasView.h>
 
 
 #include "DrawingView.h"
 #include "TaskDialog.h"
-#include "TaskOrthographicViews.h"
+#include "TaskProjGroup.h"
 #include "ViewProviderPage.h"
 
 using namespace DrawingGui;
@@ -485,24 +485,24 @@ void CmdDrawingNewViewSection::activated(int iMsg)
 
 
 //===========================================================================
-// Drawing_OrthoView
+// Drawing_ProjGroup
 //===========================================================================
 
-DEF_STD_CMD_A(CmdDrawingOrthoViews);
+DEF_STD_CMD_A(CmdDrawingProjGroup);
 
-CmdDrawingOrthoViews::CmdDrawingOrthoViews()
-  : Command("Drawing_OrthoViews")
+CmdDrawingProjGroup::CmdDrawingProjGroup()
+  : Command("Drawing_ProjGroup")
 {
     sAppModule      = "Drawing";
     sGroup          = QT_TR_NOOP("Drawing");
-    sMenuText       = QT_TR_NOOP("Insert orthographic views");
-    sToolTipText    = QT_TR_NOOP("Insert orthographic projections of a part into the active drawing");
-    sWhatsThis      = "Drawing_OrthoView";
+    sMenuText       = QT_TR_NOOP("Insert Projection Group");
+    sToolTipText    = QT_TR_NOOP("Insert 2D Projections of a 3D part into the active drawing");
+    sWhatsThis      = "Drawing_ProjGroup";
     sStatusTip      = sToolTipText;
-    sPixmap         = "actions/drawing-orthoviews";
+    sPixmap         = "actions/drawing-projgroup";
 }
 
-void CmdDrawingOrthoViews::activated(int iMsg)
+void CmdDrawingProjGroup::activated(int iMsg)
 {
     // Check that a Part::Feature is in the Selection
     std::vector<App::DocumentObject*> shapes = getSelection().getObjectsOfType(Part::Feature::getClassTypeId());
@@ -531,25 +531,25 @@ void CmdDrawingOrthoViews::activated(int iMsg)
 // TODO: is there a way to use "Active Page" instead of pages.front? if a second page is in the document, we will always
 //       use page#1 if there isn't a page in the selection.
 
-    openCommand("Create Orthographic View");
+    openCommand("Create Projection Group");
     std::string multiViewName = getUniqueObjectName("cView");
     std::string SourceName = (*shapes.begin())->getNameInDocument();
-    doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewOrthographic','%s')",multiViewName.c_str());
+    doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureProjGroup','%s')",multiViewName.c_str());
     doCommand(Doc,"App.activeDocument().%s.Source = App.activeDocument().%s",multiViewName.c_str(),SourceName.c_str());
     doCommand(Doc,"App.activeDocument().%s.X = %f",     multiViewName.c_str(), page->getPageWidth() / 2);
     doCommand(Doc,"App.activeDocument().%s.Y = %f",     multiViewName.c_str(), page->getPageHeight() / 2);
     doCommand(Doc,"App.activeDocument().%s.Scale = 1.0",multiViewName.c_str());
 
     App::DocumentObject *docObj = getDocument()->getObject(multiViewName.c_str());
-    Drawing::FeatureViewOrthographic *multiView = dynamic_cast<Drawing::FeatureViewOrthographic *>(docObj);
+    Drawing::FeatureProjGroup *multiView = dynamic_cast<Drawing::FeatureProjGroup *>(docObj);
 
     // set the anchor
-    App::DocumentObject* anchorView = multiView->addOrthoView("Front");
+    App::DocumentObject* anchorView = multiView->addProjection("Front");
     std::string anchorName = anchorView->getNameInDocument();
     doCommand(Doc,"App.activeDocument().%s.Anchor = App.activeDocument().%s",multiViewName.c_str(),anchorName.c_str());
 
     // create the rest of the desired views
-    Gui::Control().showDialog(new TaskDlgOrthographicViews(multiView));
+    Gui::Control().showDialog(new TaskDlgProjGroup(multiView));
 
     // add the multiView to the page
     page->addView(getDocument()->getObject(multiViewName.c_str()));
@@ -558,7 +558,7 @@ void CmdDrawingOrthoViews::activated(int iMsg)
     commitCommand();
 }
 
-bool CmdDrawingOrthoViews::isActive(void)
+bool CmdDrawingProjGroup::isActive(void)
 {
     if (Gui::Control().activeDialog())
         return false;
@@ -884,7 +884,7 @@ void CreateDrawingCommands(void)
     rcCmdMgr.addCommand(new CmdDrawingNewA3Landscape());
     rcCmdMgr.addCommand(new CmdDrawingNewView());
     rcCmdMgr.addCommand(new CmdDrawingNewViewSection());
-    rcCmdMgr.addCommand(new CmdDrawingOrthoViews());
+    rcCmdMgr.addCommand(new CmdDrawingProjGroup());
 //    rcCmdMgr.addCommand(new CmdDrawingOpenBrowserView());
     rcCmdMgr.addCommand(new CmdDrawingAnnotation());
 //    rcCmdMgr.addCommand(new CmdDrawingClip());

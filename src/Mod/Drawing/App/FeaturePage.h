@@ -49,7 +49,7 @@ public:
     App::PropertyLink Template;
 
     App::PropertyFloat Scale;
-    App::PropertyEnumeration OrthoProjectionType; // First or Third Angle
+    App::PropertyEnumeration ProjectionType; // First or Third Angle
     
     /** @name methods overide Feature */
     //@{
@@ -89,7 +89,7 @@ protected:
 
 private:
     int numChildren;
-    static const char* OrthoProjectionTypeEnums[];
+    static const char* ProjectionTypeEnums[];
 };
 
 
