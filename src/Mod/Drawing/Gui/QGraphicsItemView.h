@@ -60,6 +60,8 @@ public:
     /// Methods to ensure that Y-Coordinates are orientated correctly.
     void setPosition(qreal x, qreal y);
     inline qreal getY() { return y() * -1; }
+    bool isInnerView() { return m_innerView; }
+    void isInnerView(bool state) { m_innerView = state; }
 
     void alignTo(QGraphicsItem *, const QString &alignment);
     void setLocked(bool state = true) { locked = true; }
@@ -90,6 +92,7 @@ protected:
     QHash<QString, QGraphicsItem *> alignHash;
     bool locked;
     bool borderVisible;
+    bool m_innerView;                                                  //View is inside another View
 
     QPen m_pen;
     QBrush m_brush;

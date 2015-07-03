@@ -136,9 +136,10 @@ void QGraphicsItemViewClip::drawClip()
             if (qgiv->group() != m_cliparea) {
                 QPointF posRef = qgiv->pos();
                 m_cliparea->addToGroup(qgiv);
+                qgiv->isInnerView(true);
                 double x = qgiv->getViewObject()->X.getValue();
                 double y = qgiv->getViewObject()->Y.getValue();
-                qgiv->setPos(x,y);                                     //TODO: this position isn't right. origin sb transposed to left bottom
+                qgiv->setPosition(x,y);                                //TODO: this position isn't right. origin sb transposed to left bottom
                 if (viewClip->ShowLabels.getValue()) {
                     qgiv->toggleBorder(true);
                 } else {
@@ -160,6 +161,7 @@ void QGraphicsItemViewClip::drawClip()
             if (std::find(childNames.begin(),childNames.end(),qvName) == childNames.end()) {
                 m_cliparea->removeFromGroup(qv);
                 removeFromGroup(qv);
+                qv->isInnerView(false);
                 qv->toggleBorder(true);
             }
         }

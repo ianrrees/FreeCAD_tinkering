@@ -49,6 +49,7 @@
 
 #include "../App/FeatureView.h"
 #include "QGraphicsItemView.h"
+#include "QGCustomClip.h"
 
 using namespace DrawingGui;
 
@@ -57,7 +58,8 @@ void _debugRect(char* text, QRectF r);
 QGraphicsItemView::QGraphicsItemView(const QPoint &pos, QGraphicsScene *scene)
     :QGraphicsItemGroup(),
      locked(false),
-     borderVisible(true)
+     borderVisible(true),
+     m_innerView(false)
 {
     setFlag(QGraphicsItem::ItemIsSelectable,true);
     setFlag(QGraphicsItem::ItemSendsScenePositionChanges, true);
@@ -171,10 +173,15 @@ void QGraphicsItemView::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
 void QGraphicsItemView::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 {
     if(!locked && isSelected()) {
-        double tempX = x(),
-               tempY = getY();
-        getViewObject()->X.setValue(tempX);
-        getViewObject()->Y.setValue(tempY);
+        if (!isInnerView()) {
+            double tempX = x(),
+                   tempY = getY();
+            getViewObject()->X.setValue(tempX);
+            getViewObject()->Y.setValue(tempY);
+        } else {
+            getViewObject()->X.setValue(x());
+            getViewObject()->Y.setValue(y());
+        }
     }
     QGraphicsItem::mouseReleaseEvent(event);
 }
@@ -207,7 +214,16 @@ void QGraphicsItemView::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 
 void QGraphicsItemView::setPosition(qreal x, qreal y)
 {
-    setPos(x, -y);
+    if (!isInnerView()) {
+        setPos(x,-y);
+    } else {
+        QGraphicsItem* parent = parentItem();
+        QGCustomClip* parentClip = dynamic_cast<QGCustomClip*>(parent);
+        if (parentClip) {
+            double newY = parentClip->rect().height() - y;
+            setPos(x,newY);
+        }
+    }
 }
 
 void QGraphicsItemView::updateView(bool update)

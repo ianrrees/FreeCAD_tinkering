@@ -173,7 +173,7 @@ int CanvasView::addView(QGraphicsItemView * view) {
         // Transfer the child vierw to the parent
         QPointF posRef(0.,0.);
 
-        QPointF mapPos = view->mapToItem(parent, posRef);
+        QPointF mapPos = view->mapToItem(parent, posRef);              //setPos is called later.  this doesn't do anything?
         view->moveBy(-mapPos.x(), -mapPos.y());
 
         parent->addToGroup(view);
