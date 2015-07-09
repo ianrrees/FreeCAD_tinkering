@@ -39,6 +39,7 @@
 #include "FeatureView.h"
 #include "FeaturePage.h"
 #include "FeatureViewCollection.h"
+#include "FeatureViewClip.h"
 
 using namespace Drawing;
 
@@ -156,6 +157,16 @@ FeaturePage* FeatureView::findParentPage() const
     return page;
 }
 
+bool FeatureView::isInClip()
+{
+    std::vector<App::DocumentObject*> parent = getInList();
+    for (std::vector<App::DocumentObject*>::iterator it = parent.begin(); it != parent.end(); ++it) {
+        if ((*it)->getTypeId().isDerivedFrom(FeatureViewClip::getClassTypeId())) {
+            return true;
+        }
+    }
+    return false;
+}
 
 // Python Drawing feature ---------------------------------------------------------
 

@@ -52,21 +52,17 @@ using namespace std;
 // FeaturePage
 //===========================================================================
 
-PROPERTY_SOURCE(Drawing::FeaturePage, App::DocumentObjectGroup)
-
-const char *group = "Drawing view";
+PROPERTY_SOURCE(Drawing::FeaturePage, App::DocumentObject)
 
 const char* FeaturePage::ProjectionTypeEnums[]= {"First Angle",
-                                                      "Third Angle",
-                                                      NULL};
+                                                 "Third Angle",
+                                                 NULL};
 
 FeaturePage::FeaturePage(void) : numChildren(0)
 {
     static const char *group = "Page";
 
-//obs    ADD_PROPERTY_TYPE(PageResult ,(0),group,App::Prop_Output,"Resulting SVG document of that page");
     ADD_PROPERTY_TYPE(Template, (0), group, (App::PropertyType)(App::Prop_None), "Attached Template");
-//obs    ADD_PROPERTY_TYPE(EditableTexts,(""),group,App::Prop_None,"Substitution values for the editable strings in the template");
     ADD_PROPERTY_TYPE(Views, (0), group, (App::PropertyType)(App::Prop_None),"Attached Views");
 
     // Projection Properties
@@ -81,14 +77,9 @@ FeaturePage::~FeaturePage()
 
 void FeaturePage::onBeforeChange(const App::Property* prop)
 {
-    if (prop == &Group) {
-        numChildren = Group.getSize();
-    }
-
-    App::DocumentObjectGroup::onBeforeChange(prop);
+    App::DocumentObject::onBeforeChange(prop);
 }
 
-/// get called by the container when a Property was changed
 void FeaturePage::onChanged(const App::Property* prop)
 {
     if (prop == &Template) {
@@ -100,11 +91,6 @@ void FeaturePage::onChanged(const App::Property* prop)
         if (!isRestoring()) {
             //TODO: reload if Views prop changes (ie adds/deletes)
             //touch();
-        }
-    } else if (prop == &Group) {
-        if (Group.getSize() != numChildren) {
-            numChildren = Group.getSize();
-            touch();
         }
     } else if(prop == &Scale) {
         // touch all views in the Page as they may be dependent on this scale
@@ -128,7 +114,7 @@ void FeaturePage::onChanged(const App::Property* prop)
       // TODO: Also update Template graphic.
 
     }
-    App::DocumentObjectGroup::onChanged(prop);
+    App::DocumentObject::onChanged(prop);
 }
 
 App::DocumentObjectExecReturn *FeaturePage::execute(void)
@@ -137,9 +123,9 @@ App::DocumentObjectExecReturn *FeaturePage::execute(void)
     Views.touch();
     return App::DocumentObject::StdReturn;
 }
+
 short FeaturePage::mustExecute() const
 {
-    // If Tolerance Property is touched
     if(Scale.isTouched())
         return 1;
 
@@ -157,7 +143,7 @@ short FeaturePage::mustExecute() const
         }
     }
 
-    return (ViewsTouched) ? 1 : App::DocumentObjectGroup::mustExecute();
+    return (ViewsTouched) ? 1 : App::DocumentObject::mustExecute();
 }
 bool FeaturePage::hasValidTemplate() const
 {
@@ -237,7 +223,6 @@ int FeaturePage::removeView(App::DocumentObject *docObj)
     if(!docObj->isDerivedFrom(Drawing::FeatureView::getClassTypeId()))
         return -1;
 
-    //1st: remove docObj from FeaturePage Views list
     const std::vector<App::DocumentObject*> currViews = Views.getValues();
     std::vector<App::DocumentObject*> newViews;
     std::vector<App::DocumentObject*>::const_iterator it = currViews.begin();
@@ -249,9 +234,6 @@ int FeaturePage::removeView(App::DocumentObject *docObj)
     }
     Views.setValues(newViews);
     Views.touch();
-
-    //2nd: remove docObj from DocumentObjectGroup
-    //this->removeObject(docObj);      
 
     return Views.getSize();
 }

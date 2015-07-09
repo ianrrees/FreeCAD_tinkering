@@ -48,7 +48,7 @@ PROPERTY_SOURCE(DrawingGui::ViewProviderView, Gui::ViewProviderDocumentObject)
 
 ViewProviderView::ViewProviderView()
 {
-    sPixmap = "Page";
+    sPixmap = "View";
 
     // Do not show in property editor
     DisplayMode.StatusBits.set(3, true);

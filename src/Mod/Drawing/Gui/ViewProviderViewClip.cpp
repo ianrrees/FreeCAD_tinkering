@@ -80,6 +80,14 @@ std::vector<std::string> ViewProviderDrawingClip::getDisplayModes(void) const
     return StrList;
 }
 
+std::vector<App::DocumentObject*> ViewProviderDrawingClip::claimChildren(void) const
+{
+    // Collect any child views
+    // for Clip, valid children are any View in Views
+    const std::vector<App::DocumentObject *> &views = getObject()->Views.getValues();
+    return views;
+}
+
 void ViewProviderDrawingClip::show(void)
 {
     ViewProviderView::show();
@@ -131,4 +139,9 @@ void ViewProviderDrawingClip::finishRestoring()
 
 void ViewProviderDrawingClip::updateData(const App::Property*)
 {
+}
+
+Drawing::FeatureViewClip* ViewProviderDrawingClip::getObject() const
+{
+    return dynamic_cast<Drawing::FeatureViewClip*>(pcObject);
 }

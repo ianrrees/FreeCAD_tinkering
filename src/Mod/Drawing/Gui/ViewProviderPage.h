@@ -44,7 +44,7 @@ namespace DrawingGui {
 
 class DrawingView;
 
-class DrawingGuiExport ViewProviderDrawingPage : public Gui::ViewProviderDocumentObjectGroup,
+class DrawingGuiExport ViewProviderDrawingPage : public Gui::ViewProviderDocumentObject,
                                                  public Gui::SelectionObserver
 {
     PROPERTY_HEADER(DrawingGui::ViewProviderDrawingPage);

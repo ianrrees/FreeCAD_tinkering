@@ -51,6 +51,7 @@
 #include <Gui/Selection.h>
 #include <Gui/MainWindow.h>
 #include <Gui/BitmapFactory.h>
+#include <Gui/ViewProviderDocumentObject.h>
 #include <Gui/ViewProviderDocumentObjectGroup.h>
 
 
@@ -63,7 +64,7 @@
 
 using namespace DrawingGui;
 
-PROPERTY_SOURCE(DrawingGui::ViewProviderDrawingPage, Gui::ViewProviderDocumentObjectGroup)
+PROPERTY_SOURCE(DrawingGui::ViewProviderDrawingPage, Gui::ViewProviderDocumentObject)
 
 
 //**************************************************************************
@@ -90,7 +91,7 @@ ViewProviderDrawingPage::~ViewProviderDrawingPage()
 void ViewProviderDrawingPage::attach(App::DocumentObject *pcFeat)
 {
     // call parent attach method
-    ViewProviderDocumentObjectGroup::attach(pcFeat);
+    ViewProviderDocumentObject::attach(pcFeat);
 }
 
 void ViewProviderDrawingPage::setDisplayMode(const char* ModeName)
@@ -133,7 +134,7 @@ void ViewProviderDrawingPage::updateData(const App::Property* prop)
         }
     }
 
-    Gui::ViewProviderDocumentObjectGroup::updateData(prop);
+    Gui::ViewProviderDocumentObject::updateData(prop);
 }
 
 bool ViewProviderDrawingPage::onDelete(const std::vector<std::string> &items)
@@ -149,7 +150,7 @@ bool ViewProviderDrawingPage::onDelete(const std::vector<std::string> &items)
         Base::Console().Log("INFO - ViewProviderDrawingPage::onDelete - Page object deleted when viewer not displayed\n");
     }
     Gui::Selection().clearSelection();
-    return ViewProviderDocumentObjectGroup::onDelete(items);
+    return ViewProviderDocumentObject::onDelete(items);
 }
 
 void ViewProviderDrawingPage::setupContextMenu(QMenu* menu, QObject* receiver, const char* member)
@@ -165,7 +166,7 @@ bool ViewProviderDrawingPage::setEdit(int ModNum)
         Gui::getMainWindow()->setActiveWindow(view);
         return false;
     } else {
-        Gui::ViewProviderDocumentObjectGroup::setEdit(ModNum);
+        Gui::ViewProviderDocumentObject::setEdit(ModNum);
     }
     return true;
 }
@@ -210,14 +211,20 @@ std::vector<App::DocumentObject*> ViewProviderDrawingPage::claimChildren(void) c
     }
 
     // Collect any child views
+    // for Page, valid children are any View except: FeatureProjGroupItem
+    //                                               FeatureViewDimension
+    //                                               any FeatuerView in a FeatureViewClip
+
     const std::vector<App::DocumentObject *> &views = getPageObject()->Views.getValues();
 
     try {
       for(std::vector<App::DocumentObject *>::const_iterator it = views.begin(); it != views.end(); ++it) {
+          Drawing::FeatureView* featView = dynamic_cast<Drawing::FeatureView*> (*it);
           App::DocumentObject *docObj = *it;
-          // Don't collect if dimension or projection group as these should be grouped elsewhere
+          // Don't collect if dimension, projection group item or member of ClipGroup as these should be grouped elsewhere
           if(docObj->isDerivedFrom(Drawing::FeatureProjGroupItem::getClassTypeId())    ||
-             docObj->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId())  )
+             docObj->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId())    ||
+             (featView && featView->isInClip()) )
               continue;
           else
               temp.push_back(*it);
@@ -320,7 +327,7 @@ void ViewProviderDrawingPage::onChanged(const App::Property *prop)
         }
     }
 
-    Gui::ViewProviderDocumentObjectGroup::onChanged(prop);
+    Gui::ViewProviderDocumentObject::onChanged(prop);
 }
 
 void ViewProviderDrawingPage::finishRestoring()

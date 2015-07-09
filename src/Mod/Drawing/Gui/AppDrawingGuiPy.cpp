@@ -158,7 +158,7 @@ exporter(PyObject *self, PyObject *args)
                         break;
                     }
                     else if (fi_out.hasExtension("dxf")) {
-                        const std::vector<App::DocumentObject*>& views = static_cast<Drawing::FeaturePage*>(obj)->Group.getValues();
+                        const std::vector<App::DocumentObject*>& views = static_cast<Drawing::FeaturePage*>(obj)->Views.getValues();
                         for (std::vector<App::DocumentObject*>::const_iterator it = views.begin(); it != views.end(); ++it) {
                             if ((*it)->getTypeId().isDerivedFrom(Drawing::FeatureViewPart::getClassTypeId())) {
                                 Drawing::FeatureViewPart* view = static_cast<Drawing::FeatureViewPart*>(*it);

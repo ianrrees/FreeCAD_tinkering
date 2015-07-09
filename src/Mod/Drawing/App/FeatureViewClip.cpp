@@ -59,12 +59,12 @@ FeatureViewClip::FeatureViewClip(void)
     ADD_PROPERTY_TYPE(Width      ,(10),group,App::Prop_None,"The width of the view area of this clip");
     ADD_PROPERTY_TYPE(ShowFrame  ,(0) ,group,App::Prop_None,"Specifies if the clip frame appears on the page or not");
     ADD_PROPERTY_TYPE(ShowLabels ,(0) ,group,App::Prop_None,"Specifies if View labels appear within the clip area");
-    ADD_PROPERTY_TYPE(Views      ,(0) ,group,App::Prop_None,"Attached Views");
+    ADD_PROPERTY_TYPE(Views      ,(0) ,group,App::Prop_None,"The Views in this Clip group");
 
     // The 'Visible' property is handled by the view provider exclusively. It has the 'Output' flag set to
     // avoid to call the execute() method. The view provider touches the page object, instead.
     App::PropertyType propType = static_cast<App::PropertyType>(App::Prop_Hidden|App::Prop_Output);
-    ADD_PROPERTY_TYPE(Visible, (true),group,propType,"Control whether Group is visible in page object");
+    ADD_PROPERTY_TYPE(Visible, (true),group,propType,"Control whether Clip is visible in page object");
 
     // hide N/A properties
     int bitReadOnly = 2;
@@ -95,18 +95,11 @@ void FeatureViewClip::onChanged(const App::Property* prop)
 
 int FeatureViewClip::addView(FeatureView *view)
 {
-    //FeaturePage* page = findParentPage();
-    //if (page) {                                                        //if no page we have a big problem!
-        //1st: remove View from FeaturePage
-        //page->removeView(view);
-        //2nd: add View to FeatureViewClip
     const std::vector<App::DocumentObject*> currViews = Views.getValues();
     std::vector<App::DocumentObject *> newViews(currViews);
     newViews.push_back(view);
     Views.setValues(newViews);
     Views.touch();
-    //}
-
 
     return Views.getSize();
 }
@@ -125,10 +118,6 @@ int FeatureViewClip::removeView(FeatureView *view)
     Views.setValues(newViews);
     touch();
 
-//    FeaturePage* page = findParentPage();
-//    if (page) {                                                        //if no page we have a big problem!
-//        page->addView(view);
-//    }
     return Views.getSize();
 }
 

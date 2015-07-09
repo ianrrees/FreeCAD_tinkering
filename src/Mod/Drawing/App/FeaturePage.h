@@ -24,7 +24,7 @@
 #ifndef _FeaturePage_h_
 #define _FeaturePage_h_
 
-
+#include <App/DocumentObject.h>
 #include <App/DocumentObjectGroup.h>
 #include <App/PropertyStandard.h>
 #include <App/PropertyFile.h>
@@ -34,9 +34,7 @@ namespace Drawing
 {
 
 
-/** Base class of all View Features in the drawing module
- */
-class DrawingExport FeaturePage: public App::DocumentObjectGroup
+class DrawingExport FeaturePage: public App::DocumentObject
 {
     PROPERTY_HEADER(Drawing::FeaturePage);
 

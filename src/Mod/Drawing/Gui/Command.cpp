@@ -677,18 +677,15 @@ void CmdDrawingClip::activated(int iMsg)
 //    std::vector<App::DocumentObject*> pages = getSelection().getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     std::vector<App::DocumentObject*> pages = getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     if (pages.empty()) {
-//        pages = getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
-//        if (pages.empty()){
         QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No page found"),
             QObject::tr("Create a page first."));
         return;
-//        }
     }
+
     std::string PageName = pages.front()->getNameInDocument();
     std::string FeatName = getUniqueObjectName("Clip");
     openCommand("Create Clip");
     doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureViewClip','%s')",FeatName.c_str());
-    doCommand(Doc,"App.activeDocument().%s.addObject(App.activeDocument().%s)",PageName.c_str(),FeatName.c_str());
     Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
     page->addView(page->getDocument()->getObject(FeatName.c_str()));
     updateActive();
@@ -758,9 +755,6 @@ void CmdDrawingClipPlus::activated(int iMsg)
     }
 
     openCommand("ClipPlus");
-    //TODO: remove part view from page?? Document tree isn't right
-    //FeaturePage* page = clip->findParentPage();
-    //page->removeView(view);
     int i = clip->addView(view);
     updateActive();
     commitCommand();
@@ -829,10 +823,6 @@ void CmdDrawingClipMinus::activated(int iMsg)
 
     openCommand("ClipMinus");
     int i = clip->removeView(view);
-    //return view to Page here or in FeatureViewClip??
-    //FeaturePage* page = clip->findParentPage();
-    //page->addView(view);
-
     updateActive();
     commitCommand();
 }

@@ -58,6 +58,8 @@ public:
     virtual App::DocumentObjectExecReturn *execute(void);
     virtual void onDocumentRestored();
     //@}
+    
+    bool isInClip();
 
     /// returns the type name of the ViewProvider
     virtual const char* getViewProviderName(void) const {
