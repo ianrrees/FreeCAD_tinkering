@@ -113,7 +113,7 @@ protected:
     int calculateGeometry(const TopoDS_Shape &input, ExtractionType extractionType, std::vector<BaseGeom *> &geoms) const;
 
     /// Accumulate edges from input and store them in wires
-    void createWire(const TopoDS_Shape &input, std::vector<DrawingGeometry::Wire *> &wires) const;
+    void createWire(const TopoDS_Shape &input, std::vector<TopoDS_Wire> &wiresOut) const;
 
 protected:
     // Geometry

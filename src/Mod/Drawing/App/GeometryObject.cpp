@@ -33,6 +33,7 @@
 # include <Bnd_Box.hxx>
 # include <BRepBndLib.hxx>
 # include <BRepBuilderAPI_Transform.hxx>
+# include <BRepBuilderAPI_MakeFace.hxx>
 
 # include <HLRTopoBRep_OutLiner.hxx>
 # include <HLRBRep.hxx>
@@ -88,7 +89,6 @@
 #include <ProjLib_Plane.hxx>
 #endif  // #ifndef _PreComp_
 
-//#include<QDebug>
 #include <algorithm>
 
 # include <Base/Console.h>
@@ -161,13 +161,13 @@ void GeometryObject::drawFace (const bool visible, const int iface,
 // add all the edges for this face(iface) to Result
     HLRBRep_FaceIterator Itf;
 
- //   std::vector<int> used;
-//    qDebug()<<"top of drawFace()";
     for (Itf.InitEdge(DS->FDataArray().ChangeValue(iface)); Itf.MoreEdge(); Itf.NextEdge()) {
         int ie = Itf.Edge();
    //     if (std::find(used.begin(),used.end(),ie) == used.end()) {              //only use an edge once
             HLRBRep_EdgeData& edf = DS->EDataArray().ChangeValue(ie);
-            drawEdge(edf, Result, visible);
+            if(edf.Status().NbVisiblePart() > 0) {
+                drawEdge(edf, Result, visible);
+            }
 //            double first = edf.Geometry().FirstParameter();
 
 //            double last = edf.Geometry().LastParameter();
@@ -488,7 +488,7 @@ void GeometryObject::extractFaces(HLRBRep_Algo *myAlgo,
 
     /* This block seems to set f1 and f2 to indices using a HLRBRep_ShapeBounds
      * object based that's based on myAlgo, but DS is also based on myAlgo too,
-     * so I don't think this is required. IR
+     * so I don't think this is required. IR 
     if (!S.IsNull()) {
         int e1 = 1;
         int e2 = DS->NbEdges();
@@ -501,8 +501,7 @@ void GeometryObject::extractFaces(HLRBRep_Algo *myAlgo,
         }
 
         myAlgo->ShapeBounds(index).Bounds(v1, v2, e1, e2, f1, f2);
-    }
-    */
+    } */
 
     TopTools_IndexedMapOfShape anfIndices;
     TopTools_IndexedMapOfShape& Faces = DS->FaceMap();
@@ -512,17 +511,53 @@ void GeometryObject::extractFaces(HLRBRep_Algo *myAlgo,
 
     /* ----------------- Extract Faces ------------------ */
     for (int iface = f1; iface <= f2; iface++) {
+        // Why oh why does Hiding() == true mean that a face is visible...
+        if (! DS->FDataArray().ChangeValue(iface).Hiding()) {
+            continue;
+        }
+
         TopoDS_Shape face;
         B.MakeCompound(TopoDS::Compound(face));
 
+        // Generate a set of new wires based on face
+        // TODO: Do these end up with input face's geometry as a base? hmmm
         drawFace(visible, iface, DS, face);
+        std::vector<TopoDS_Wire> possibleFaceWires;
+        createWire(face, possibleFaceWires);
 
-        DrawingGeometry::Face *myFace = new DrawingGeometry::Face();
+        DrawingGeometry::Face *myFace = NULL;
 
-        createWire(face, myFace->wires);
+        // Process each wire - if we can make at least one face with it, then
+        // send it down the road toward rendering
+        for (std::vector<TopoDS_Wire>::iterator wireIt = possibleFaceWires.begin();
+            wireIt != possibleFaceWires.end(); ++wireIt) {
 
-        // Proces each wire
-        projFaces.push_back(myFace);
+            // Try making a face out of the wire, before doing anything else with it
+            BRepBuilderAPI_MakeFace testFace(*wireIt);
+            if (testFace.IsDone()) {
+                if (myFace == NULL) {
+                   myFace = new DrawingGeometry::Face();
+                }
+                DrawingGeometry::Wire *genWire = new DrawingGeometry::Wire();
+
+                // See createWire regarding BRepTools_WireExplorer vs TopExp_Explorer 
+                BRepTools_WireExplorer explr(*wireIt);
+                while (explr.More()) {
+                    BRep_Builder builder;
+                    TopoDS_Compound comp;
+                    builder.MakeCompound(comp);
+                    builder.Add(comp, explr.Current());
+
+                    calculateGeometry(comp, Plain, genWire->geoms);
+                    explr.Next();
+                }
+                myFace->wires.push_back(genWire);
+            }
+        }
+
+        if (myFace != NULL) {
+            projFaces.push_back(myFace);
+        }
 
         int idxFace;
         for (int i = 1; i <= anfIndices.Extent(); i++) {
@@ -826,7 +861,7 @@ bool GeometryObject::isSameCurve(const BRepAdaptor_Curve &c1, const BRepAdaptor_
 
 //only used by extractFaces 
 void GeometryObject::createWire(const TopoDS_Shape &input,
-                                std::vector<DrawingGeometry::Wire *> &wires) const
+                                std::vector<TopoDS_Wire> &wiresOut) const 
 {
     //input is a compound of edges?  there is edgesToWire logic in Part?
     if (input.IsNull()) {
@@ -890,8 +925,6 @@ void GeometryObject::createWire(const TopoDS_Shape &input,
         }
 
         if (mkWire.Error() == BRepBuilderAPI_WireDone) {
-            DrawingGeometry::Wire *genWire = new DrawingGeometry::Wire();
-
             // BRepTools_WireExplorer finds 1st n connected edges, while
             // TopExp_Explorer finds all edges.  Since we built mkWire using
             // TopExp_Explorer, and want to run BRepTools_WireExplorer over
@@ -901,18 +934,7 @@ void GeometryObject::createWire(const TopoDS_Shape &input,
             fix.FixReorder();
             fix.Perform();
 
-            BRepTools_WireExplorer explr(fix.Wire());
-
-            while (explr.More()) {
-                BRep_Builder builder;
-                TopoDS_Compound comp;
-                builder.MakeCompound(comp);
-                builder.Add(comp, explr.Current());
-
-                calculateGeometry(comp, Plain, genWire->geoms);
-                explr.Next();
-            }
-            wires.push_back(genWire);
+            wiresOut.push_back(fix.Wire());
         } else if(mkWire.Error() == BRepBuilderAPI_DisconnectedWire) {
             Standard_Failure::Raise("Fatal error occurred in GeometryObject::createWire()");
         }
