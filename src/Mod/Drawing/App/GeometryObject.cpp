@@ -50,13 +50,14 @@
 # include <Poly_PolygonOnTriangulation.hxx>
 
 # include <TopoDS.hxx>
-# include <TopoDS_Face.hxx>
-# include <TopoDS_Edge.hxx>
+# include <TopoDS_Shape.hxx>
 # include <TopoDS_Vertex.hxx>
+# include <TopoDS_Edge.hxx>
 # include <TopoDS_Wire.hxx>
+# include <TopoDS_Face.hxx>
+# include <TopoDS_Builder.hxx>
 # include <TopExp.hxx>
 # include <TopExp_Explorer.hxx>
-# include <TopoDS_Shape.hxx>
 # include <TopTools_ListIteratorOfListOfShape.hxx>
 # include <TopTools_IndexedMapOfShape.hxx>
 # include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
@@ -99,6 +100,8 @@
 # include <Mod/Part/App/PartFeature.h>
 
 # include "GeometryObject.h"
+
+//#include <QDebug>
 
 using namespace DrawingGeometry;
 
@@ -169,14 +172,11 @@ void GeometryObject::drawFace (const bool visible, const int iface,
                 drawEdge(edf, Result, visible);
             }
 //            double first = edf.Geometry().FirstParameter();
-
 //            double last = edf.Geometry().LastParameter();
-
 //            gp_Pnt p0 = edf.Geometry().Value3D(first);
-
 //            gp_Pnt p1 = edf.Geometry().Value3D(last);
-
 //            qDebug()<<p0.X()<<','<<p0.Y()<<','<<p0.Z()<<"\t - \t"<<p1.X()<<','<<p1.Y()<<','<<p1.Z();
+//
  //           used.push_back(ie);
  //       }
     }
@@ -465,6 +465,14 @@ DrawingGeometry::BaseGeom * GeometryObject::projectEdge(const TopoDS_Shape &edge
     }
 }
 
+/* TODO: Clean this up when faces are actually working properly...
+void debugEdge(const TopoDS_Edge &e)
+{   
+    gp_Pnt p0 = BRep_Tool::Pnt(TopExp::FirstVertex(e));
+    gp_Pnt p1 = BRep_Tool::Pnt(TopExp::LastVertex(e));
+    qDebug()<<p0.X()<<','<<p0.Y()<<','<<p0.Z()<<"\t - \t"<<p1.X()<<','<<p1.Y()<<','<<p1.Z();
+}*/
+
 void GeometryObject::extractFaces(HLRBRep_Algo *myAlgo,
                                   const TopoDS_Shape &S,
                                   bool visible,
@@ -521,6 +529,19 @@ void GeometryObject::extractFaces(HLRBRep_Algo *myAlgo,
 
         // Generate a set of new wires based on face
         // TODO: Do these end up with input face's geometry as a base? hmmm
+        //
+        // There seems to be a problem in this logic - in some cases, we can
+        // compress faces and turn them into holes.  HLRBRep_EdgeData will
+        // hopefully be useful...
+        // 
+        //    Start      Projects to        Which OCE Renders as
+        //      |               |                |
+        //     _|               |                |
+        //    |                 |
+        //    |_                |
+        //      |               |                |
+        //      |               |                |
+        //
         drawFace(visible, iface, DS, face);
         std::vector<TopoDS_Wire> possibleFaceWires;
         createWire(face, possibleFaceWires);
@@ -883,13 +904,18 @@ void GeometryObject::createWire(const TopoDS_Shape &input,
     // way to test whether an edge connects to a wire is to attempt adding
     // the edge.  But, if the last added edge was not connected to the wire,
     // BRepBuilderAPI_MakeWire::Wire() will throw an exception.  So, we need
-    // to hang on to the last successfully added edge to "reset" mkWire.
+    // to hang on to the last successfully added edge to "reset" scapegoat.
+    //
+    // ...and why do we need scapegoat?  Because the resetting adds a duplicate
+    // edge (which can be problematic down the road), but it's not easy to
+    // remove the edge from the BRepBuilderAPI_MakeWire.
     bool lastAddFailed;
     TopoDS_Edge lastGoodAdd;
 
     while (edgeList.size() > 0) {
         // add and erase first edge
-        BRepBuilderAPI_MakeWire mkWire;
+        BRepBuilderAPI_MakeWire scapegoat, mkWire;
+        scapegoat.Add(edgeList.front());
         mkWire.Add(edgeList.front());
         lastAddFailed = false;
         lastGoodAdd = edgeList.front();
@@ -900,10 +926,11 @@ void GeometryObject::createWire(const TopoDS_Shape &input,
         do {
             found = false;
             for (std::list<TopoDS_Edge>::iterator pE = edgeList.begin(); pE != edgeList.end(); ++pE) {
-                // Try adding edge - doesn't necessarily add it
-                mkWire.Add(*pE);
-                if (mkWire.Error() != BRepBuilderAPI_DisconnectedWire) {
-                    // Edge added!  Remember it, 
+                // Try adding edge - this doesn't necessarily add it
+                scapegoat.Add(*pE);
+                if (scapegoat.Error() != BRepBuilderAPI_DisconnectedWire) {
+                    mkWire.Add(*pE);
+                    // Edge added!  Remember it, so we can reset scapegoat
                     lastAddFailed = false;
                     lastGoodAdd = *pE;
 
@@ -921,10 +948,10 @@ void GeometryObject::createWire(const TopoDS_Shape &input,
 
         // See note above re: BRepBuilderAPI_MakeWire annoying behaviour
         if (lastAddFailed) {
-            mkWire.Add(lastGoodAdd);
+            scapegoat.Add(lastGoodAdd);
         }
 
-        if (mkWire.Error() == BRepBuilderAPI_WireDone) {
+        if (scapegoat.Error() == BRepBuilderAPI_WireDone) {
             // BRepTools_WireExplorer finds 1st n connected edges, while
             // TopExp_Explorer finds all edges.  Since we built mkWire using
             // TopExp_Explorer, and want to run BRepTools_WireExplorer over
@@ -935,7 +962,7 @@ void GeometryObject::createWire(const TopoDS_Shape &input,
             fix.Perform();
 
             wiresOut.push_back(fix.Wire());
-        } else if(mkWire.Error() == BRepBuilderAPI_DisconnectedWire) {
+        } else if(scapegoat.Error() == BRepBuilderAPI_DisconnectedWire) {
             Standard_Failure::Raise("Fatal error occurred in GeometryObject::createWire()");
         }
     }

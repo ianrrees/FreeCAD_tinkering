@@ -23,6 +23,8 @@
 #include "PreCompiled.h"
 #ifndef _PreComp_
 #include <cmath>
+#include <qmath.h>
+#include <strstream>
 #include <QAction>
 #include <QApplication>
 #include <QContextMenuEvent>
@@ -33,10 +35,8 @@
 #include <QPainterPathStroker>
 #include <QPainter>
 #include <QTextOption>
-#include <strstream>
-#endif
+#endif // #ifndef _PreComp_
 
-#include <qmath.h>
 
 #include <App/Application.h>
 #include <App/Material.h>
