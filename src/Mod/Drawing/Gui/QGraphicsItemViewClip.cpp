@@ -128,18 +128,17 @@ void QGraphicsItemViewClip::drawClip()
     m_cliparea->setRect(r.adjusted(-1,-1,1,1));                        //TODO: clip just outside frame or just inside??
 
     std::vector<std::string> childNames = viewClip->getChildViewNames();
-    //for all child Views in Clip, add the graphics representation to the group
+    //for all child Views in Clip, add the graphics representation of the View to the Clip group
     for(std::vector<std::string>::iterator it = childNames.begin(); it != childNames.end(); it++) {
         QGraphicsItemView* qgiv = getQGIVByName((*it));
         if (qgiv) {
             //TODO: why is qgiv never already in a group? 
             if (qgiv->group() != m_cliparea) {
-                QPointF posRef = qgiv->pos();
-                m_cliparea->addToGroup(qgiv);
-                qgiv->isInnerView(true);
                 double x = qgiv->getViewObject()->X.getValue();
                 double y = qgiv->getViewObject()->Y.getValue();
-                qgiv->setPosition(x,y);                                //TODO: this position isn't right. origin sb transposed to left bottom
+                m_cliparea->addToGroup(qgiv);
+                qgiv->isInnerView(true);
+                qgiv->setPosition(x,y);
                 if (viewClip->ShowLabels.getValue()) {
                     qgiv->toggleBorder(true);
                 } else {

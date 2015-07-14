@@ -48,8 +48,10 @@
 #include <Gui/Command.h>
 
 #include "../App/FeatureView.h"
+#include "../App/FeatureViewClip.h"
 #include "QGraphicsItemView.h"
 #include "QGCustomClip.h"
+#include "QGraphicsItemViewClip.h"
 
 using namespace DrawingGui;
 
@@ -180,7 +182,7 @@ void QGraphicsItemView::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
             getViewObject()->Y.setValue(tempY);
         } else {
             getViewObject()->X.setValue(x());
-            getViewObject()->Y.setValue(y());
+            getViewObject()->Y.setValue(getYInClip(y()));
         }
     }
     QGraphicsItem::mouseReleaseEvent(event);
@@ -215,15 +217,24 @@ void QGraphicsItemView::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 void QGraphicsItemView::setPosition(qreal x, qreal y)
 {
     if (!isInnerView()) {
-        setPos(x,-y);
+        setPos(x,-y);                                                 //position on page
     } else {
-        QGraphicsItem* parent = parentItem();
-        QGCustomClip* parentClip = dynamic_cast<QGCustomClip*>(parent);
-        if (parentClip) {
-            double newY = parentClip->rect().height() - y;
-            setPos(x,newY);
-        }
+        setPos(x,getYInClip(y));                                      //position in Clip
     }
+}
+
+double QGraphicsItemView::getYInClip(double y)
+{
+    QGCustomClip* parentClip = dynamic_cast<QGCustomClip*>(parentItem());
+    if (parentClip) {
+        QGraphicsItemViewClip* parentView = dynamic_cast<QGraphicsItemViewClip*>(parentClip->parentItem());
+        Drawing::FeatureViewClip* parentFeat = dynamic_cast<Drawing::FeatureViewClip*>(parentView->getViewObject());
+        double newY = parentFeat->Height.getValue() - y;
+        return newY;
+    } else {
+        Base::Console().Log("Logic Error - getYInClip called for child (%s) not in Clip\n",getViewName());
+    }
+    return 0;
 }
 
 void QGraphicsItemView::updateView(bool update)
@@ -238,7 +249,7 @@ void QGraphicsItemView::updateView(bool update)
 
     if (update ||
         getViewObject()->Rotation.isTouched()) {
-        //NOTE: QPainterPaths have to be rotated individually. This transform handles everything else.  TODO: verify this. 
+        //NOTE: QPainterPaths have to be rotated individually. This transform handles everything else.
         double rot = getViewObject()->Rotation.getValue();
         QPointF centre = boundingRect().center();
         setTransform(QTransform().translate(centre.x(), centre.y()).rotate(-rot).translate(-centre.x(), -centre.y()));

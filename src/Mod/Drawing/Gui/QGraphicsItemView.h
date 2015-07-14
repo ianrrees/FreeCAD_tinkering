@@ -62,6 +62,7 @@ public:
     inline qreal getY() { return y() * -1; }
     bool isInnerView() { return m_innerView; }
     void isInnerView(bool state) { m_innerView = state; }
+    double getYInClip(double y);
 
     void alignTo(QGraphicsItem *, const QString &alignment);
     void setLocked(bool state = true) { locked = true; }
