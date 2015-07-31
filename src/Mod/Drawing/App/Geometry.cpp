@@ -74,7 +74,6 @@
 #include <Base/Exception.h>
 #include <Base/Tools2D.h>
 #include <Base/Vector3D.h>
-
 #include "Geometry.h"
 
 using namespace DrawingGeometry;
@@ -127,7 +126,6 @@ Ellipse::Ellipse(const BRepAdaptor_Curve& c)
 
     gp_Dir xaxis = ellp.XAxis().Direction();
     angle = xaxis.AngleWithRef(gp_Dir(1, 0, 0), gp_Dir(0, 0, -1));
-    angle *= 180 / M_PI;
 }
 
 AOE::AOE()
@@ -179,9 +177,6 @@ AOE::AOE(const BRepAdaptor_Curve& c) : Ellipse(c)
 //     float range = l-f;
 // 
 //     endAngle = startAngle + range;
-
-    startAngle *= 180 / M_PI;
-    endAngle   *= 180 / M_PI;
 }
 
 Circle::Circle()
@@ -227,9 +222,6 @@ AOC::AOC(const BRepAdaptor_Curve& c) : Circle(c)
     
     startPnt = Base::Vector2D(s.X(), s.Y());
     endPnt = Base::Vector2D(e.X(), e.Y());
-              
-    startAngle *= 180 / M_PI;
-    endAngle   *= 180 / M_PI;
 }
 
 Generic::Generic()
@@ -287,11 +279,12 @@ BSpline::BSpline(const BRepAdaptor_Curve &c)
         tempSegment.poles = bezier->NbPoles();
         // Note: We really only need to keep the pnts[0] for the first Bezier segment,
         // assuming this only gets used as in QGraphicsItemViewPart::drawPainterPath
+        // ...it also gets used in GeometryObject::calcBoundingBox(), similar note applies
         for (int pole = 1; pole <= tempSegment.poles; ++pole) {
             controlPoint = bezier->Pole(pole);
             tempSegment.pnts[pole - 1] = Base::Vector2D(controlPoint.X(), controlPoint.Y());
         }
         segments.push_back(tempSegment);
-    }    
+    }
 }
 

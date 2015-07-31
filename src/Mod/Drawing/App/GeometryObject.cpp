@@ -288,48 +288,295 @@ void GeometryObject::projectSurfaces(const TopoDS_Shape &face,
     delete brep_hlr;
 }
 
+Base::BoundBox3d GeometryObject::boundingBoxOfBspline(const BSpline *spline) const
+{
+    Base::BoundBox3d bb;
+    for (std::vector<BezierSegment>::const_iterator segItr( spline->segments.begin() ); 
+         segItr != spline->segments.end(); ++segItr) {
+        switch (segItr->poles) {
+            case 0:   // Degenerate, but safe ignore
+                break;
+            case 2:   // Degenerate - straight line
+                bb.Add(Base::Vector3d( segItr->pnts[1].fX,
+                                       segItr->pnts[1].fY,
+                                       0 ));
+                // fall through
+            case 1:   // Degenerate - just a point
+                bb.Add(Base::Vector3d( segItr->pnts[0].fX,
+                                       segItr->pnts[0].fY,
+                                       0 ));
+                break;
+            case 3: {
+                double
+                    px[3] = { segItr->pnts[0].fX,
+                              segItr->pnts[1].fX,
+                              segItr->pnts[2].fX },
+                    py[3] = { segItr->pnts[0].fY,
+                              segItr->pnts[1].fY,
+                              segItr->pnts[2].fY },
+                    slns[4] = { 0, 1 }; // Consider the segment's end points
+
+                // if's are to prevent problems with divide-by-0
+                if ((2 * px[1] - px[0] - px[2]) == 0) {
+                    slns[2] = -1;
+                } else {
+                    slns[2] = (px[1] - px[0]) / (2 * px[1] - px[0] - px[2]);
+                }
+                if ((2 * py[1] - py[0] - py[2]) == 0) {
+                    slns[3] = -1;
+                } else {
+                    slns[3] = (py[1] - py[0]) / (2 * py[1] - py[0] - py[2]);
+                }
+
+                // evaluate B(t) at the endpoints and zeros
+                for (int s(0); s < 4; ++s) {
+                    double t( slns[s] );
+                    if (t < 0 || t > 1) {
+                        continue;
+                    }
+                    double tx( px[0] * (1 - t) * (1 - t) +
+                               px[1] * 2 * (1 - t) * t +
+                               px[2] * t * t ),
+                           ty( py[0] * (1 - t) * (1 - t) +
+                               py[1] * 2 * (1 - t) * t +
+                               py[2] * t * t );
+                    bb.Add( Base::Vector3d(tx, ty, 0) );
+                }
+                    } break;
+            case 4: {
+                double
+                    px[4] = { segItr->pnts[0].fX,
+                              segItr->pnts[1].fX,
+                              segItr->pnts[2].fX,
+                              segItr->pnts[3].fX },
+                    py[4] = { segItr->pnts[0].fY,
+                              segItr->pnts[1].fY,
+                              segItr->pnts[2].fY,
+                              segItr->pnts[3].fY },
+                    // If B(t) is the cubic Bezier, find t where B'(t) == 0
+                    //
+                    // For control points P0-P3, B'(t) works out to be:
+                    // B'(t) = t^2 * (-3P0 + 9P1 - 9P2 + 3P3) +
+                    //          t  * (6P0 - 12P1 + 6P2) +
+                    //          3  * (P1 - P0)
+                    //
+                    // So, we use the quadratic formula!
+                    ax = -3 * px[0] + 9 * px[1] - 9 * px[2] + 3 * px[3],
+                    ay = -3 * py[0] + 9 * py[1] - 9 * py[2] + 3 * py[3],
+                    bx = 6 * px[0] - 12 * px[1] + 6 * px[2],
+                    by = 6 * py[0] - 12 * py[1] + 6 * py[2],
+                    cx = 3 * px[1] - 3 * px[0],
+                    cy = 3 * py[1] - 3 * py[0],
+
+                    slns[6] = { 0, 1 }; // Consider the segment's end points
+
+                // if's are to prevent problems with divide-by-0 and NaN
+                if ( (2 * ax) == 0 || (bx * bx - 4 * ax * cx) < 0 ) {
+                    slns[2] = -1;
+                    slns[3] = -1;
+                } else {
+                    slns[2] = (-bx + sqrt(bx * bx - 4 * ax * cx)) / (2 * ax);
+                    slns[3] = (-bx - sqrt(bx * bx - 4 * ax * cx)) / (2 * ax);
+                }
+                if ((2 * ay) == 0 || (by * by - 4 * ay * cy) < 0 ) {
+                    slns[4] = -1;
+                    slns[5] = -1;
+                } else {
+                    slns[4] = (-by + sqrt(by * by - 4 * ay * cy)) / (2 * ay);
+                    slns[5] = (-by - sqrt(by * by - 4 * ay * cy)) / (2 * ay);
+                }
+
+                // evaluate B(t) at the endpoints and zeros
+                for (int s(0); s < 6; ++s) {
+                    double t( slns[s] );
+                    if (t < 0 || t > 1) {
+                        continue;
+                    }
+                    double tx( px[0] * (1 - t) * (1 - t) * (1 - t) +
+                               px[1] * 3 * (1 - t) * (1 - t) * t +
+                               px[2] * 3 * (1 - t) * t * t +
+                               px[3] * t * t * t ),
+                           ty( py[0] * (1 - t) * (1 - t) * (1 - t) +
+                               py[1] * 3 * (1 - t) * (1 - t) * t +
+                               py[2] * 3 * (1 - t) * t * t +
+                               py[3] * t * t * t );
+                    bb.Add( Base::Vector3d(tx, ty, 0) );
+                }
+
+                } break;
+            default:
+                throw Base::Exception("Invalid degree bezier segment in GeometryObject::calcBoundingBox");
+        }
+    }
+    return bb;
+}
+
+Base::BoundBox3d GeometryObject::boundingBoxOfAoe(const Ellipse *aoe,
+                                                  double start,
+                                                  double end, bool cw) const
+{
+    // Using the ellipse form:
+    // (xc, yc) = centre of ellipse
+    // phi = angle of ellipse major axis off X axis
+    // a, b = half of major, minor axes
+    //
+    // x(theta) = xc + a*cos(theta)*cos(phi) - b*sin(theta)*sin(phi)
+    // y(theta) = yc + a*cos(theta)*sin(phi) + b*sin(theta)*cos(phi)
+
+    double a (aoe->major / 2.0),
+           b (aoe->minor / 2.0),
+           phi (aoe->angle),
+           xc (aoe->center.fX),
+           yc (aoe->center.fY);
+
+    if (a == 0 || b == 0) {
+        // Degenerate case - TODO: handle as line instead of throwing
+        throw Base::Exception("Ellipse with invalid major axis in GeometryObject::boundingBoxOfAoe()");
+    }
+
+    // Calculate points of interest for the bounding box.  These are points
+    // where d(x)/d(theta) and d(y)/d(theta) = 0 (where the x and y extremes
+    // of the ellipse would be if it were complete), and arc endpoints.
+    double testAngles[6] = { atan(tan(phi) * (-b / a)),
+                             testAngles[0] + M_PI };
+    if (tan(phi) == 0) {
+        testAngles[2] = M_PI / 2.0;
+        testAngles[3] = 3.0 * M_PI / 2.0;
+    } else {
+        testAngles[2] = atan((1.0 / tan(phi)) * (b / a));
+        testAngles[3] = testAngles[2] + M_PI;
+    }
+    testAngles[4] = start;
+    testAngles[5] = end;
+
+    // Add extremes to bounding box, if they are within the arc
+    Base::BoundBox3d bb;
+    for (int ai(0); ai < 6; ++ai) {
+        double theta(testAngles[ai]);
+        if (isWithinArc(theta, start, end, cw) ) {
+            bb.Add( Base::Vector3d(xc + a*cos(theta)*cos(phi) - b*sin(theta)*sin(phi),
+                                   yc + a*cos(theta)*sin(phi) - b*sin(theta)*cos(phi),
+                                   0) );
+        }
+    }
+
+    return bb;
+}
+
+bool GeometryObject::isWithinArc(double theta, double first,
+                                 double last, bool cw) const
+{
+    if (fabs(last - first) >= 2 * M_PI) {
+        return true;
+    }
+
+    // Put params within [0, 2*pi) - not totally sure this is necessary
+    theta = fmod(theta, 2 * M_PI);
+    if (theta < 0) {
+        theta += 2 * M_PI;
+    }
+
+    first = fmod(first, 2 * M_PI);
+    if (first < 0) {
+        first += 2 * M_PI;
+    }
+
+    last = fmod(last, 2 * M_PI);
+    if (last < 0) {
+        last += 2 * M_PI;
+    }
+
+    if (cw) {
+        if (first > last) {
+            return theta <= first && theta >= last;
+        } else {
+            return theta <= first || theta >= last;
+        }
+    } else {
+        if (first > last) {
+            return theta >= first || theta <= last;
+        } else {
+            return theta >= first && theta <= last;
+        }
+    }
+}
+
 Base::BoundBox3d GeometryObject::calcBoundingBox() const
 {
     Base::BoundBox3d bbox;
 
-    // BoundBox3d defaults to limits at +/-FLOAT_MAX
-    bbox.ScaleX(0);
-    bbox.ScaleY(0);
-    bbox.ScaleZ(0);
-
-    const std::vector<Vertex *> verts = vertexGeom;
-    const std::vector<BaseGeom *> edges = edgeGeom;
-
     // First calculate bounding box based on vertices
-    for(std::vector<Vertex *>::const_iterator it = verts.begin(); it != verts.end(); ++it) {
-        bbox.Add(Base::Vector3d((*it)->pnt.fX, (*it)->pnt.fY, 0.));
+    for(std::vector<Vertex *>::const_iterator it( vertexGeom.begin() );
+            it != vertexGeom.end(); ++it) {
+        bbox.Add( Base::Vector3d((*it)->pnt.fX, (*it)->pnt.fY, 0.) );
     }
 
     // Now, consider geometry where vertices don't define bounding box eg circles
-    for(std::vector<BaseGeom *>::const_iterator it = edges.begin(); it != edges.end(); ++it) {
-        Base::BoundBox3d bb;
+    for (std::vector<BaseGeom *>::const_iterator it( edgeGeom.begin() );
+            it != edgeGeom.end(); ++it) {
         switch ((*it)->geomType) {
           case CIRCLE: {
-              Circle *circ = static_cast<Circle *>(*it);
-              bb = Base::BoundBox3d(0., 0., 0, circ->radius*2., circ->radius*2, 0.);
-              bb.MoveX(circ->center.fX);
-              bb.MoveY(circ->center.fY);
-
+              Circle *c = static_cast<Circle *>(*it);
+              bbox.Add( Base::BoundBox3d(-c->radius + c->center.fX,
+                                         -c->radius + c->center.fY,
+                                         0,
+                                         c->radius + c->center.fX,
+                                         c->radius + c->center.fY,
+                                         0) );
           } break;
+
+          case ARCOFCIRCLE: {
+              AOC *arc = static_cast<AOC *>(*it);
+
+              // Endpoints of arc
+              bbox.Add( Base::Vector3d(arc->radius * cos(arc->startAngle),
+                                       arc->radius * sin(arc->startAngle),
+                                       0.0) );
+              bbox.Add( Base::Vector3d(arc->radius * cos(arc->endAngle),
+                                       arc->radius * sin(arc->endAngle),
+                                       0.0) );
+
+              // Extreme X and Y values if they're within the arc
+              for (double theta = 0.0; theta < 6.5; theta += M_PI / 2.0) {
+                  if (isWithinArc(theta, arc->startAngle, arc->endAngle, arc->cw)) {
+                      bbox.Add( Base::Vector3d(arc->radius * cos(theta),
+                                arc->radius * sin(theta),
+                                0.0) );
+                  }
+              }
+          } break;
+
           case ELLIPSE: {
-              Ellipse *circ = static_cast<Ellipse *>(*it);
-                // TODO: double check this - seems like it should have a MoveX, MoveY
-              bb = Base::BoundBox3d(0., 0., 0, circ->minor*2., circ->major*2, 0.);
+              bbox.Add( boundingBoxOfAoe(static_cast<Ellipse *>(*it)) );
           } break;
-          default:
-              break;
-        }
 
-        bbox.Add(bb);
+          case ARCOFELLIPSE: {
+              AOE *aoe = static_cast<AOE *>(*it);
+              double start = aoe->startAngle,
+                     end = aoe->endAngle;
+              bool cw = aoe->cw;
+              bbox.Add( boundingBoxOfAoe(static_cast<Ellipse *>(*it), start, end, cw) );
+          } break;
+
+          case BSPLINE: {
+              bbox.Add( boundingBoxOfBspline(static_cast<BSpline *>(*it)) );
+          } break;
+
+          case GENERIC: {
+              // this case ends up just drawing line segments between points
+              Generic *gen = static_cast<Generic *>(*it);
+              for (std::vector<Base::Vector2D>::const_iterator segIt = gen->points.begin();
+                      segIt != gen->points.end(); ++segIt) {
+                  bbox.Add( Base::Vector3d(segIt->fX, segIt->fY, 0) );
+              }
+          } break;
+
+          default:
+              throw Base::Exception("Unknown geomType in GeometryObject::calcBoundingBox()");
+        }
     }
     return bbox;
 }
-
 
 DrawingGeometry::BaseGeom * GeometryObject::projectEdge(const TopoDS_Shape &edge,
                                                         const TopoDS_Shape &support,
@@ -361,7 +608,6 @@ DrawingGeometry::BaseGeom * GeometryObject::projectEdge(const TopoDS_Shape &edge
     projector.Scaled(true);
 
     if (refCurve.GetType() == GeomAbs_Line) {
-
         // Use the simpler algorithm for lines
         gp_Pnt p1 = refCurve.Value(refCurve.FirstParameter());
         gp_Pnt p2 = refCurve.Value(refCurve.LastParameter());
@@ -388,7 +634,7 @@ DrawingGeometry::BaseGeom * GeometryObject::projectEdge(const TopoDS_Shape &edge
         DrawingGeometry::BaseGeom *result = 0;
         switch(HLRBRep_BCurveTool::GetType(curve.Curve()))
         {
-            case GeomAbs_Line: {
+        case GeomAbs_Line: {
               DrawingGeometry::Generic *line = new DrawingGeometry::Generic();
 
               gp_Pnt2d pnt1 = curve.Value(curve.FirstParameter());
@@ -426,12 +672,10 @@ DrawingGeometry::BaseGeom * GeometryObject::projectEdge(const TopoDS_Shape &edge
                       float range = atan2(-ay*bx+ax*by, ax*bx+ay*by);
 
                       aoc->endAngle = aoc->startAngle + range;
-                      aoc->startAngle *= 180 / M_PI;
-                      aoc->endAngle   *= 180 / M_PI;
                       result = aoc;
                 }
               } break;
-              case GeomAbs_Ellipse: {
+        case GeomAbs_Ellipse: {
                 gp_Elips2d prjEllipse = curve.Ellipse();
 
                 double f = curve.FirstParameter();
@@ -443,21 +687,25 @@ DrawingGeometry::BaseGeom * GeometryObject::projectEdge(const TopoDS_Shape &edge
                       Ellipse *ellipse = new Ellipse();
                       ellipse->major = prjEllipse.MajorRadius();
                       ellipse->minor = prjEllipse.MinorRadius();
-                      ellipse->center = Base::Vector2D(prjEllipse.Location().X(),prjEllipse.Location().Y());
+                      ellipse->center = Base::Vector2D(prjEllipse.Location().X(),
+                                                       prjEllipse.Location().Y());
                       result = ellipse;
+                      // TODO: Finish implementing ellipsey stuff
                 } else {
                       // TODO implement this correctly
                       AOE *aoe = new AOE();
                       aoe->major = prjEllipse.MajorRadius();
                       aoe->minor = prjEllipse.MinorRadius();
-                      aoe->center = Base::Vector2D(prjEllipse.Location().X(),prjEllipse.Location().Y());
+                      aoe->center = Base::Vector2D(prjEllipse.Location().X(),
+                                                   prjEllipse.Location().Y());
                       result =  aoe;
                 }
               } break;
-              case GeomAbs_BSplineCurve: {
+        case GeomAbs_BSplineCurve: {
+                  // TODO: Project BSpline here?
               } break;
 
-            default:
+        default:
               break;
         }
 

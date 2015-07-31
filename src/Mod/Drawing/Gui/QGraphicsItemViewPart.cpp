@@ -124,9 +124,6 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
         case DrawingGeometry::ARCOFCIRCLE: {
           DrawingGeometry::AOC  *geom = static_cast<DrawingGeometry::AOC *>(baseGeom);
 
-          double startAngle = (geom->startAngle);
-          double spanAngle =  (geom->endAngle - startAngle);
-
           double x = geom->center.fX - geom->radius;
           double y = geom->center.fY - geom->radius;
           pathArc(path, geom->radius, geom->radius, 0., geom->largeArc, geom->cw,
@@ -137,18 +134,14 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
         case DrawingGeometry::ELLIPSE: {
           DrawingGeometry::Ellipse *geom = static_cast<DrawingGeometry::Ellipse *>(baseGeom);
 
-          double x = geom->center.fX - geom->radius;
-          double y = geom->center.fY - geom->radius;
+          double x = geom->center.fX - geom->major;
+          double y = geom->center.fY - geom->minor;
 
-          path.addEllipse(x,y, geom->major * 2, geom->minor * 2);
+          path.addEllipse(x, y, geom->major * 2, geom->minor * 2);
           //Base::Console().Message("TRACE -drawPainterPath - making an ELLIPSE @(%.3f,%.3f) R1:%.3f R2:%.3f\n",x, y, geom->major, geom->minor);
         } break;
         case DrawingGeometry::ARCOFELLIPSE: {
           DrawingGeometry::AOE *geom = static_cast<DrawingGeometry::AOE *>(baseGeom);
-
-          double startAngle = (geom->startAngle);
-          double spanAngle =  (startAngle - geom->endAngle);
-          double endAngle = geom->endAngle;
 
           pathArc(path, geom->major, geom->minor, geom->angle, geom->largeArc, geom->cw,
                         geom->endPnt.fX, geom->endPnt.fY,
@@ -381,6 +374,10 @@ void QGraphicsItemViewPart::drawViewPart()
      }
 }
 
+// As called by arc of ellipse case:
+// pathArc(path, geom->major, geom->minor, geom->angle, geom->largeArc, geom->cw,
+//         geom->endPnt.fX, geom->endPnt.fY,
+//         geom->startPnt.fX, geom->startPnt.fY);
 void QGraphicsItemViewPart::pathArc(QPainterPath &path, double rx, double ry, double x_axis_rotation,
                                     bool large_arc_flag, bool sweep_flag,
                                     double x, double y,
@@ -397,8 +394,8 @@ void QGraphicsItemViewPart::pathArc(QPainterPath &path, double rx, double ry, do
     rx = qAbs(rx);
     ry = qAbs(ry);
 
-    sin_th = qSin(x_axis_rotation * (M_PI / 180.0));
-    cos_th = qCos(x_axis_rotation * (M_PI / 180.0));
+    sin_th = qSin(x_axis_rotation);
+    cos_th = qCos(x_axis_rotation);
 
     dx = (curx - x) / 2.0;
     dy = (cury - y) / 2.0;
@@ -474,8 +471,8 @@ void QGraphicsItemViewPart::pathArcSegment(QPainterPath &path,
     double t;
     double thHalf;
 
-    sinTh = qSin(xAxisRotation * (M_PI / 180.0));
-    cosTh = qCos(xAxisRotation * (M_PI / 180.0));
+    sinTh = qSin(xAxisRotation);
+    cosTh = qCos(xAxisRotation);
 
     a00 =  cosTh * rx;
     a01 = -sinTh * ry;

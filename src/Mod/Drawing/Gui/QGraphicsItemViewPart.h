@@ -73,7 +73,17 @@ protected:
     QGraphicsItemEdge * findRefEdge(int i);
     QGraphicsItemVertex * findRefVertex(int idx);
 
-    void pathArcSegment(QPainterPath &path,double xc, double yc, double th0, double th1,double rx, double ry, double xAxisRotation) const;
+    /// Helper for pathArc()
+    /*!
+     * x_axis_rotation is in radian
+     */
+    void pathArcSegment(QPainterPath &path, double xc, double yc, double th0,
+                        double th1,double rx, double ry, double xAxisRotation) const;
+
+    /// Draws an arc using QPainterPath path
+    /*!
+     * x_axis_rotation is in radian
+     */
     void pathArc(QPainterPath &path, double rx, double ry, double x_axis_rotation,
                                      bool large_arc_flag, bool sweep_flag,
                                      double x, double y,

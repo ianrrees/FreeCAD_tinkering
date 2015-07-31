@@ -72,10 +72,10 @@ public:
   ~Ellipse() {}
 public:
   Base::Vector2D center;
-  double radius;
   double minor;
   double major;
-  double angle;
+  /// Angle between the major axis of the ellipse and the X axis, in radian
+  double angle; 
 };
 
 class DrawingExport AOE: public Ellipse
@@ -85,10 +85,13 @@ public:
   AOE();
   ~AOE() {}
 public:
-  Base::Vector2D startPnt;
+  Base::Vector2D startPnt;  //TODO: The points are used for drawing, the angles for bounding box calcs - seems redundant
   Base::Vector2D endPnt;
+  /// Angle in radian
   double startAngle;
+  /// Angle in radian
   double endAngle;
+  /// Arc is drawn clockwise from startAngle to endAngle if true, counterclockwise if false
   bool cw;
   bool largeArc;
 };
@@ -102,9 +105,12 @@ public:
 public:
   Base::Vector2D startPnt;
   Base::Vector2D endPnt;
+  /// Angle in radian
   double startAngle;
+  /// Angle in radian
   double endAngle;
-  bool cw;
+  /// Arc is drawn clockwise from startAngle to endAngle if true, counterclockwise if false
+  bool cw;  // TODO: Instead of this (and similar one in AOE), why not reorder startAngle and endAngle?
   bool largeArc;
 };
 

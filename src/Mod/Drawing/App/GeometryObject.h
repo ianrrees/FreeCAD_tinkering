@@ -100,6 +100,27 @@ protected:
     /// Add (visible) intervals of ed to Result as Edges
     void drawEdge(HLRBRep_EdgeData& ed, TopoDS_Shape& Result, const bool visible) const;
 
+    /// Helper for calcBoundingBox()
+    /*! Note that the name of this function isn't totally accurate due to
+     *  Drawing::Bsplines being composed of BezierSegments.
+     */
+    Base::BoundBox3d boundingBoxOfBspline(const BSpline *spline) const;
+
+    /// Helper for calcBoundingBox()
+    /*!
+     * AOE = arc of ellipse.  Defaults allow this to be used for regular
+     * ellipses as well as arcs.
+     */
+    Base::BoundBox3d boundingBoxOfAoe(const Ellipse *aoe, double start = 0,
+                                      double end = 2 * M_PI, bool cw = false) const;
+
+    /// Helper for boundingBoxOf(Aoc|Aoe)()
+    /*!
+     * Returns true iff angle theta is in [first, last], where the arc goes
+     * clockwise (cw=true) or counterclockwise (cw=false) from first to last.
+     */
+    bool isWithinArc(double theta, double first, double last, bool cw) const;
+
     void extractVerts(HLRBRep_Algo *myAlgo, const TopoDS_Shape &S, HLRBRep_EdgeData& ed, int ie, ExtractionType extractionType);
     void extractEdges(HLRBRep_Algo *myAlgo, const TopoDS_Shape &S, int type, bool visible, ExtractionType extractionType);
 
@@ -115,7 +136,6 @@ protected:
     /// Accumulate edges from input and store them in wires
     void createWire(const TopoDS_Shape &input, std::vector<TopoDS_Wire> &wiresOut) const;
 
-protected:
     // Geometry
     std::vector<BaseGeom *> edgeGeom;
     std::vector<Vertex *> vertexGeom;
