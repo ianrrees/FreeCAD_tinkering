@@ -134,10 +134,18 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
         case DrawingGeometry::ELLIPSE: {
           DrawingGeometry::Ellipse *geom = static_cast<DrawingGeometry::Ellipse *>(baseGeom);
 
-          double x = geom->center.fX - geom->major;
-          double y = geom->center.fY - geom->minor;
+          // Calculate start and end points as ellipse with theta = 0 and pi
+          double startX = geom->center.fX + geom->major * cos(geom->angle),
+                 startY = geom->center.fY + geom->major * sin(geom->angle),
+                 endX = geom->center.fX - geom->major * cos(geom->angle),
+                 endY = geom->center.fY - geom->major * sin(geom->angle);
 
-          path.addEllipse(x, y, geom->major * 2, geom->minor * 2);
+          pathArc(path, geom->major, geom->minor, geom->angle, false, false,
+                  endX, endY, startX, startY);
+
+          pathArc(path, geom->major, geom->minor, geom->angle, false, false,
+                  startX, startY, endX, endY);
+
           //Base::Console().Message("TRACE -drawPainterPath - making an ELLIPSE @(%.3f,%.3f) R1:%.3f R2:%.3f\n",x, y, geom->major, geom->minor);
         } break;
         case DrawingGeometry::ARCOFELLIPSE: {
