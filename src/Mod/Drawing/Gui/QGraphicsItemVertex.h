@@ -40,7 +40,8 @@ namespace DrawingGui
 class DrawingGuiExport QGraphicsItemVertex : public QGraphicsEllipseItem
 {
 public:
-    explicit QGraphicsItemVertex(int ref = -1);
+    //explicit QGraphicsItemVertex(int ref = -1);
+    explicit QGraphicsItemVertex(int index);
     ~QGraphicsItemVertex() {}
 
     enum {Type = QGraphicsItem::UserType + 105};
@@ -48,6 +49,8 @@ public:
     virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 
     int getReference() const { return reference; }
+    void setReference(int ref) {reference = ref; }
+    int getProjIndex() const { return projIndex; }
     
     float getRadius() { return m_radius; }
     void setRadius(float r) { m_radius = r; }
@@ -64,6 +67,7 @@ protected:
     void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
+    int projIndex;                                                     //index of vertex in Projection. must exist. 
     int reference;                                                     //index of vertex in FeatureView Source. may not exist(-1).
 
     bool isHighlighted;

@@ -40,7 +40,8 @@ namespace DrawingGui
 class DrawingGuiExport QGraphicsItemEdge : public QGraphicsPathItem
 {
 public:
-    explicit QGraphicsItemEdge(int ref = -1);
+//    explicit QGraphicsItemEdge(int ref = -1);
+    explicit QGraphicsItemEdge(int index);
     ~QGraphicsItemEdge() {}
 
     enum {Type = QGraphicsItem::UserType + 103};
@@ -50,6 +51,8 @@ public:
     virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 
     int getReference() const { return reference; }
+    void setReference(int ref) {reference = ref; }
+    int getProjIndex() const { return projIndex; }
 
     void setHighlighted(bool state);
     void setCosmetic(bool state);
@@ -67,7 +70,8 @@ protected:
     void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
-    int reference;                                                     //index of edge in FeatureView Source. may not exist(-1).
+    int projIndex;                                                     //index of edge in Projection. must exist. 
+    int reference;                                                     //index of edge in FeatureViewPart Source. may not exist(-1).
 
     bool isHighlighted;
     bool isCosmetic;

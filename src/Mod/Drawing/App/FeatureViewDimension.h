@@ -36,8 +36,6 @@ class Measurement;
 namespace Drawing
 {
 
-/** Base class of all View Features in the drawing module
- */
 class DrawingExport FeatureViewDimension : public Drawing::FeatureView
 {
     PROPERTY_HEADER(Drawing::FeatureViewDimension);
@@ -47,12 +45,11 @@ public:
     FeatureViewDimension();
     virtual ~FeatureViewDimension();
 
-  //     App::PropertyLinkSubList View;
-    App::PropertyEnumeration ProjectionType;
-    App::PropertyVector ProjDirection;
-    App::PropertyLinkSubList References;
-    App::PropertyEnumeration Type;
-    App::PropertyVector XAxisDirection;
+    App::PropertyEnumeration ProjectionType;                           //True/Projected
+    App::PropertyVector ProjDirection;                                 //??why would dim have different projDir from View?
+    App::PropertyLinkSubList References;                               //Points to Projection SubFeatures
+    App::PropertyEnumeration Type;                                     //DistanceX,DistanceY,Diameter, etc
+    App::PropertyVector XAxisDirection;                                //??always equal to View??
 
     /// Properties for Visualisation
     App::PropertyInteger Precision;
@@ -80,13 +77,21 @@ public:
 
 protected:
     void onChanged(const App::Property* prop);
-    
+    int getIndexFromName(std::string geomName) const;
+    int getRefType() const;                                                     //Vertex-Vertex, Edge, Edge-Edge
+    int get3DRef(int refIndex, std::string geomType) const;
+    //std::string FromName(std::string geomName) const;
+
 protected:
     Measure::Measurement *measurement;
-
+    double dist2Segs(Base::Vector2D s1,
+                                           Base::Vector2D e1,
+                                           Base::Vector2D s2,
+                                           Base::Vector2D e2) const;
 private:
     static const char* TypeEnums[];
     static const char* ProjTypeEnums[];
+    void dumpRefs(char* text) const;
 };
 
 } //namespace Drawing

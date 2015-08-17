@@ -214,6 +214,8 @@ const std::vector<int> & FeatureViewPart::getEdgeReferences() const
 
 DrawingGeometry::BaseGeom *FeatureViewPart::getCompleteEdge(int idx) const
 {
+   //NOTE: idx is in fact a Reference to an Edge in Source?
+   //returns projection of ref'd Edge as BaseGeom. Why not just use existing BaseGeom(idx)?
    //## Get the Part Link ##/
     App::DocumentObject* link = Source.getValue();
 
@@ -223,11 +225,29 @@ DrawingGeometry::BaseGeom *FeatureViewPart::getCompleteEdge(int idx) const
     const Part::TopoShape &topoShape = static_cast<Part::Feature*>(link)->Shape.getShape();
     std::stringstream str;
     str << "Edge" << idx;
-    const TopoDS_Shape shape = topoShape.getSubShape(str.str().c_str());
+    TopoDS_Shape shape = topoShape.getSubShape(str.str().c_str());
+
 
     const TopoDS_Shape &support = static_cast<Part::Feature*>(link)->Shape.getValue();
     //TODO: make sure prjShape gets deleted
-    DrawingGeometry::BaseGeom* prjShape = geometryObject->projectEdge(shape, support, Direction.getValue(), _getValidXDir(this));
+
+    DrawingGeometry::BaseGeom* prjShape = 0;
+    try {
+        prjShape = geometryObject->projectEdge(shape, support, Direction.getValue(), _getValidXDir(this));
+    }
+    catch(Standard_Failure) {
+        Base::Console().Error("getCompleteEdge - OCC Error - could not project Edge: %d\n",idx);
+        return 0;
+    }
+    catch (exception& e) {
+        Base::Console().Error("getCompleteEdge - unknown exception on Edge: %d - %s\n",idx,e.what());
+        return 0;
+    }
+    catch(...) {
+        Base::Console().Error("getCompleteEdge - unknown error on Edge: %d\n",idx);
+        return 0;
+    }
+    
     return prjShape;
 }
 
@@ -276,6 +296,7 @@ DrawingGeometry::Vertex* FeatureViewPart::getVertexGeomByRef(int ref) const
     }
 }
 
+//! returns existing BaseGeom of Edge with 3D Reference = ref
 DrawingGeometry::BaseGeom* FeatureViewPart::getEdgeGeomByRef(int ref) const 
 {
     const std::vector<DrawingGeometry::BaseGeom *> &geoms = getEdgeGeometry();
@@ -301,6 +322,48 @@ DrawingGeometry::BaseGeom* FeatureViewPart::getEdgeGeomByRef(int ref) const
     }
 }
 
+//! returns existing BaseGeom of 2D Edge(idx)
+DrawingGeometry::BaseGeom* FeatureViewPart::getProjEdgeByIndex(int idx) const
+{
+    const std::vector<DrawingGeometry::BaseGeom *> &geoms = getEdgeGeometry();
+    if (geoms.empty()) {
+        Base::Console().Log("INFO - getProjEdgeByIndex(%d) - no Edge Geometry. Probably restoring?\n",idx);
+        return NULL;
+    }
+    return geoms[idx];
+}
+
+//! returns existing BaseGeom of 2D Vertex(idx)
+DrawingGeometry::Vertex* FeatureViewPart::getProjVertexByIndex(int idx) const
+{
+    const std::vector<DrawingGeometry::Vertex *> &geoms = getVertexGeometry();
+    if (geoms.empty()) {
+        Base::Console().Log("INFO - getProjVertexByIndex(%d) - no Vertex Geometry. Probably restoring?\n",idx);
+        return NULL;
+    }
+    return geoms[idx];
+}
+
+int FeatureViewPart::getEdgeRefByIndex(int idx) const
+{
+    const std::vector<int> &refs = getEdgeReferences();
+    if (refs.empty()) {
+        Base::Console().Log("INFO - getEdgeRefByIndex(%d) - no Edge Geometry. Probably restoring?\n",idx);
+        return -1;
+    }
+    return refs[idx];
+}
+
+int FeatureViewPart::getVertexRefByIndex(int idx) const
+{
+    const std::vector<int> &refs = getVertexReferences();
+    if (refs.empty()) {
+        Base::Console().Log("INFO - getVertexRefByIndex(%d) - no Vertex Geometry. Probably restoring?\n",idx);
+        return -1;
+    }
+    return refs[idx];
+}
+
 Base::BoundBox3d FeatureViewPart::getBoundingBox() const
 {
     return bbox;
@@ -314,6 +377,17 @@ Base::Vector3d _getValidXDir(const FeatureViewPart *me)
         xDir = Base::Vector3d(1.0,0.0,0.0);
     }
     return xDir;
+}
+
+void FeatureViewPart::dumpVertexRefs(char* text) const
+{
+    Base::Console().Message("DUMP - %s\n",text);
+    const std::vector<int> &refs = getVertexReferences();
+    std::vector<int>::const_iterator it = refs.begin();
+    int i = 0;
+    for( ; it != refs.end(); it++, i++) {
+        Base::Console().Message("DUMP - Vertex: %d ref: %d\n",i,(*it));
+    }
 }
 
 // Python Drawing feature ---------------------------------------------------------

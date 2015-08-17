@@ -863,6 +863,8 @@ bool GeometryObject::shouldDraw(const bool inFace, const int typ, HLRBRep_EdgeDa
 
 void GeometryObject::extractVerts(HLRBRep_Algo *myAlgo, const TopoDS_Shape &S, HLRBRep_EdgeData& ed, int ie, ExtractionType extractionType)
 {
+//TODO: extractVerts only considers vertices that exist in the 3D shape.  Vertexes in the Projection are ignored. They should be added to 
+//      GO with ref = -1??
     if(!myAlgo)
         return;
 
@@ -963,7 +965,6 @@ void GeometryObject::extractEdges(HLRBRep_Algo *myAlgo, const TopoDS_Shape &S, i
 {
     if (!myAlgo)
       return;
-
     Handle_HLRBRep_Data DS = myAlgo->DataStructure();
 
     if (DS.IsNull())
@@ -979,8 +980,10 @@ void GeometryObject::extractEdges(HLRBRep_Algo *myAlgo, const TopoDS_Shape &S, i
     if (!S.IsNull()) {
         int v1,v2;
         int index = myAlgo->Index(S);
-        if(index == 0)
+        if(index == 0) {
+            Base::Console().Log("Drawing::GeometryObject::extractEdges - myAlgo->Index(S) == 0\n");
             return;
+        }
         myAlgo->ShapeBounds(index).Bounds(v1,v2,e1,e2,f1,f2);
     }
 

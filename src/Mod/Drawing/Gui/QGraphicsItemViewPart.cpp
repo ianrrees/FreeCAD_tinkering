@@ -339,7 +339,9 @@ void QGraphicsItemViewPart::drawViewPart()
           (((*it)->extractType == DrawingGeometry::WithHidden) && part->ShowHiddenLines.getValue()) ||
           ((*it)->extractType == DrawingGeometry::WithSmooth)) {
 //          (((*it)->extractType == DrawingGeometry::WithSmooth) && part->ShowSmoothLines.getValue())) {
-            item = new QGraphicsItemEdge(refs.at(i));
+            //item = new QGraphicsItemEdge(refs.at(i));
+            item = new QGraphicsItemEdge(i);
+            item->setReference(refs.at(i));
             addToGroup(item);                                                   //item is at scene(0,0), not group(0,0)
             item->setPos(0.0,0.0);
             item->setStrokeWidth(lineWidth);
@@ -358,10 +360,11 @@ void QGraphicsItemViewPart::drawViewPart()
             //edgeId << "edge" << i;
             //_dumpPath(edgeId.str().c_str(),edgePath);
 
-            if(refs.at(i) > 0) {
+            //TEMP - allow selection of edge w/o reference to original shape
+            //if(refs.at(i) > 0) {
                 item->setFlag(QGraphicsItem::ItemIsSelectable, true);  //TODO: bug in App/GeometryObject? why no edge reference?
                 item->setAcceptHoverEvents(true);                      //TODO: verify that edge w/o ref is ineligible for selecting
-            }
+            //}
          }
     }
 
@@ -371,14 +374,16 @@ void QGraphicsItemViewPart::drawViewPart()
     std::vector<DrawingGeometry::Vertex *>::const_iterator vert = verts.begin();
 
     for(int i = 0 ; vert != verts.end(); ++vert, i++) {
-        QGraphicsItemVertex *item = new QGraphicsItemVertex(vertRefs.at(i));
+        QGraphicsItemVertex *item = new QGraphicsItemVertex(i);
+        item->setReference(refs.at(i));
         addToGroup(item);
         item->setPos((*vert)->pnt.fX, (*vert)->pnt.fY);                //this is in ViewPart coords
         item->setRadius(lineWidth * vertexScaleFactor);
-        if(vertRefs.at(i) > 0) {
+        //TEMP - allow selection of vertex w/o reference to original shape
+        //if(vertRefs.at(i) > 0) {
             item->setFlag(QGraphicsItem::ItemIsSelectable, true);
             item->setAcceptHoverEvents(true);                      //TODO: verify that vertex w/o ref is ineligible for selecting
-        }
+        //}
      }
 }
 

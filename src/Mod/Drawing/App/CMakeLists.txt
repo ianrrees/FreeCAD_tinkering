@@ -71,6 +71,8 @@ SET(Features_SRCS
 SET(Drawing_SRCS
     AppDrawing.cpp
     AppDrawingPy.cpp
+    DrawUtil.cpp
+    DrawUtil.h
     PreCompiled.cpp
     PreCompiled.h
 )

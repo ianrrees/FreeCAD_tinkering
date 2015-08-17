@@ -141,7 +141,7 @@ protected:
     std::vector<Vertex *> vertexGeom;
     std::vector<Face *> faceGeom;
 
-    // Linked Edges and Faces to base object
+    // indexes to geometry in Source object
     std::vector<int> vertexReferences;
     std::vector<int> edgeReferences;
     std::vector<int> faceReferences;

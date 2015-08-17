@@ -363,7 +363,8 @@ void DrawingView::preSelectionChanged(const QPoint &pos)
 
         Drawing::FeatureView *viewObj = viewItem->getViewObject();
         std::stringstream ss;
-        ss << "Edge" << edge->getReference();
+        //ss << "Edge" << edge->getReference();
+        ss << "Edge" << edge->getProjIndex();
         bool accepted =
         Gui::Selection().setPreselect(viewObj->getDocument()->getName()
                                      ,viewObj->getNameInDocument()
@@ -374,6 +375,7 @@ void DrawingView::preSelectionChanged(const QPoint &pos)
 
     } else if(vert) {
               // Find the parent view that this edges is contained within
+              //WF: sb Vertex??
         QGraphicsItem *parent = vert->parentItem();
         if(!parent)
             return;
@@ -384,7 +386,7 @@ void DrawingView::preSelectionChanged(const QPoint &pos)
 
         Drawing::FeatureView *viewObj = viewItem->getViewObject();
         std::stringstream ss;
-        ss << "Edge" << vert->getReference();
+        ss << "Edge" << vert->getReference();   //WF: sb Vertex??
         bool accepted =
         Gui::Selection().setPreselect(viewObj->getDocument()->getName()
                                      ,viewObj->getNameInDocument()
@@ -394,6 +396,7 @@ void DrawingView::preSelectionChanged(const QPoint &pos)
                                      ,0);
     } else {
             // Check if an edge was preselected
+            //WF: sb View?
         QGraphicsItemView *view = qobject_cast<QGraphicsItemView *>(obj);
 
         if(!view)
@@ -471,7 +474,8 @@ void DrawingView::selectionChanged()
                 Drawing::FeatureView *viewObj = viewItem->getViewObject();
 
                 std::stringstream ss;
-                ss << "Edge" << edge->getReference();
+                //ss << "Edge" << edge->getReference();
+                ss << "Edge" << edge->getProjIndex();
                 bool accepted =
                 Gui::Selection().addSelection(viewObj->getDocument()->getName(),
                                               viewObj->getNameInDocument(),
@@ -481,6 +485,7 @@ void DrawingView::selectionChanged()
             QGraphicsItemVertex *vert = dynamic_cast<QGraphicsItemVertex *>(*it);
             if(vert) {
               // Find the parent view that this edges is contained within
+              //WF: sb Vertex
                 QGraphicsItem *parent = vert->parentItem();
                 if(!parent)
                     return;
@@ -492,7 +497,7 @@ void DrawingView::selectionChanged()
                 Drawing::FeatureView *viewObj = viewItem->getViewObject();
 
                 std::stringstream ss;
-                ss << "Vertex" << vert->getReference();
+                ss << "Vertex" << vert->getProjIndex();
                 bool accepted =
                 Gui::Selection().addSelection(viewObj->getDocument()->getName(),
                                               viewObj->getNameInDocument(),

@@ -41,8 +41,8 @@
 
 using namespace DrawingGui;
 
-QGraphicsItemEdge::QGraphicsItemEdge(int ref) :
-    reference(ref)
+QGraphicsItemEdge::QGraphicsItemEdge(int index) :
+    projIndex(index)
 {
     setCacheMode(QGraphicsItem::NoCache);
 
@@ -50,7 +50,8 @@ QGraphicsItemEdge::QGraphicsItemEdge(int ref) :
 
     isCosmetic    = false;
     isHighlighted = false;
-    //TODO: investigate if an Edge can be both Hidden and Smooth???
+    //TODO: investigate if an Edge can be both Hidden and Smooth??? 
+    //wf: yes it can, but we on distinguish graphical representation by visible/hidden
     isHiddenEdge = false;
     isSmoothEdge = false;
 
@@ -74,7 +75,6 @@ QGraphicsItemEdge::QGraphicsItemEdge(int ref) :
 
 QRectF QGraphicsItemEdge::boundingRect() const
 {
-    //return shape().controlPointRect().adjusted(-2.,-2.,2.,2.);         //a bit bigger than the controlPointRect - for ease of selecting?
     return shape().controlPointRect();
 }
 
@@ -150,6 +150,7 @@ void QGraphicsItemEdge::setHiddenEdge(bool b) {
     if (b) m_colCurrent = m_colHid;
     update();
     //TODO: need some fiddling here so hidden edges don't get selected?? is it ok to select a hidden edge?
+    //wf: probably bad drafing practice to dimension a hidden line
 }
 
 void QGraphicsItemEdge::paint ( QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget) {

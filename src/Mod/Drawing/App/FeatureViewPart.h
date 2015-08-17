@@ -59,8 +59,14 @@ public:
     const std::vector<DrawingGeometry::BaseGeom  *> & getEdgeGeometry() const;
     const std::vector<DrawingGeometry::Face *> & getFaceGeometry() const;
 
-    DrawingGeometry::BaseGeom * getCompleteEdge(int idx) const;
-    DrawingGeometry::Vertex   * getVertex(int idx) const;
+    DrawingGeometry::BaseGeom* getProjEdgeByIndex(int idx) const;               //get existing geom for edge idx in projection
+    DrawingGeometry::Vertex* getProjVertexByIndex(int idx) const;               //get existing geom for vertex idx in projection
+
+    int getEdgeRefByIndex(int idx) const;                                       //get reference to Source edge for Projected edge idx
+    int getVertexRefByIndex(int idx) const;                                     //get reference to Source Vertex for Projected Vertex idx
+
+    DrawingGeometry::BaseGeom * getCompleteEdge(int idx) const;                 //project source edge idx
+    DrawingGeometry::Vertex   * getVertex(int idx) const;                       //project source vertex
     DrawingGeometry::Vertex*    getVertexGeomByRef(int ref) const;
     DrawingGeometry::BaseGeom*  getEdgeGeomByRef(int ref) const;
 
@@ -84,6 +90,8 @@ public:
         return "DrawingGui::ViewProviderViewPart";
     }
 
+    void dumpVertexRefs(char* text) const;
+
 protected:
     void onChanged(const App::Property* prop);
 
@@ -92,6 +100,7 @@ protected:
 
 private:
     static App::PropertyFloatConstraint::Constraints floatRange;
+
 };
 
 typedef App::FeaturePythonT<FeatureViewPart> FeatureViewPartPython;

@@ -40,8 +40,8 @@
 
 using namespace DrawingGui;
 
-QGraphicsItemVertex::QGraphicsItemVertex(int ref) : 
-    reference(ref),
+QGraphicsItemVertex::QGraphicsItemVertex(int index) : 
+    projIndex(index),
     m_radius(2),
     m_fill(Qt::SolidPattern)
 {
