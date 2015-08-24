@@ -210,6 +210,7 @@ void GeometryObject::drawEdge(HLRBRep_EdgeData& ed, TopoDS_Shape& Result, const 
     }
 }
 
+//! only ever called from FVP::getVertex
 DrawingGeometry::Vertex * GeometryObject::projectVertex(const TopoDS_Shape &vert,
                                                         const TopoDS_Shape &support,
                                                         const Base::Vector3d &direction,
@@ -578,6 +579,7 @@ Base::BoundBox3d GeometryObject::calcBoundingBox() const
     return bbox;
 }
 
+//! only ever called from fvp::getCompleteEdge
 DrawingGeometry::BaseGeom * GeometryObject::projectEdge(const TopoDS_Shape &edge,
                                                         const TopoDS_Shape &support,
                                                         const Base::Vector3d &direction,
@@ -655,7 +657,6 @@ DrawingGeometry::BaseGeom * GeometryObject::projectEdge(const TopoDS_Shape &edge
                 gp_Pnt2d e = curve.Value(l);
 
                 if (fabs(l-f) > 1.0 && s.SquareDistance(e) < 0.001) {
-                      Circle *geom = new Circle();
                       circle->radius = prjCirc.Radius();
                       circle->center = Base::Vector2D(prjCirc.Location().X(), prjCirc.Location().Y());
                       result = circle;
@@ -853,8 +854,6 @@ bool GeometryObject::shouldDraw(const bool inFace, const int typ, HLRBRep_EdgeDa
 
 void GeometryObject::extractVerts(HLRBRep_Algo *myAlgo, const TopoDS_Shape &S, HLRBRep_EdgeData& ed, int ie, ExtractionType extractionType)
 {
-//TODO: extractVerts only considers vertices that exist in the 3D shape.  Vertexes in the Projection are ignored. They should be added to 
-//      GO with ref = -1??
     if(!myAlgo)
         return;
 
@@ -871,7 +870,6 @@ void GeometryObject::extractVerts(HLRBRep_Algo *myAlgo, const TopoDS_Shape &S, H
     TopExp::MapShapes(S, TopAbs_EDGE, anIndices);
     TopExp::MapShapes(S, TopAbs_VERTEX, anvIndices);
 
-    int edgeNum = anIndices.Extent();
     // Load the edge
     if(ie < 0) {
 
@@ -1013,7 +1011,7 @@ void GeometryObject::extractEdges(HLRBRep_Algo *myAlgo, const TopoDS_Shape &S, i
 
                     drawEdge(ed, result, visible);
 
-                    // Extract and Project Vertices
+                    // Extract and Project Vertices for current Edge
                     extractVerts(myAlgo, S, ed, i, extractionType);
 
                     int edgesAdded = calculateGeometry(result, extractionType, edgeGeom);
@@ -1033,7 +1031,6 @@ void GeometryObject::extractEdges(HLRBRep_Algo *myAlgo, const TopoDS_Shape &S, i
 
 
     // Add any remaining edges that couldn't be found
-    HLRBRep_EdgeData* edge = &(DS->EDataArray().ChangeValue(e1 - 1));
     int edgeIdx = -1; // Negative index for edge references
     for (int ie = e1; ie <= e2; ie++) {
       // Co
@@ -1305,10 +1302,33 @@ void GeometryObject::extractGeometry(const TopoDS_Shape &input,
 //     calculateGeometry(extractCompound(brep_hlr, invertShape, 3, false), (ExtractionType)(WithSmooth | WithHidden)); // Smooth
 
     // Extract Visible Edges
-    extractEdges(brep_hlr, transShape, 5, true, WithSmooth);  // Hard Edge  ???but also need Outline Edge??
-    // outlines (edges added to the topology in order to represent the contours visible in a particular projection)
-    // this is why torus doesn't work.
+    extractEdges(brep_hlr, transShape, 5, true, WithSmooth);  // Hard Edge
 
+    //get endpoints of visible projected edges and add to vertexGeom with ref = -1
+    //this could get slow for big models?
+    const std::vector<BaseGeom *> &edgeGeom = getEdgeGeometry();
+    std::vector<BaseGeom*>::const_iterator iEdge = edgeGeom.begin();
+    for (; iEdge != edgeGeom.end(); iEdge++) {
+        if ((*iEdge)->extractType == DrawingGeometry::WithHidden) {               //only use visible edges
+            continue;
+        }
+        std::vector<Base::Vector2D> ends = (*iEdge)->findEndPoints();
+        if (!ends.empty()) {
+            if (!findVertex(ends[0])) {
+                Vertex* v0 = new Vertex(ends[0]);
+                v0->extractType = DrawingGeometry::Plain;
+                vertexGeom.push_back(v0);
+                vertexReferences.push_back(-1);
+            }
+            if (!findVertex(ends[1])) {
+                Vertex* v1 = new Vertex(ends[1]);
+                v1->extractType = DrawingGeometry::Plain;
+                vertexGeom.push_back(v1);
+                vertexReferences.push_back(-1);
+            }
+        }
+    }
+   
 //     calculateGeometry(extractCompound(brep_hlr, invertShape, 2, true), Plain);  // Outline
 //     calculateGeometry(extractCompound(brep_hlr, invertShape, 3, true), WithSmooth); // Smooth Edge
 
@@ -1397,4 +1417,19 @@ int GeometryObject::calculateGeometry(const TopoDS_Shape &input,
         geomsAdded++;
     }
     return geomsAdded;
+}
+
+//! does this GeometryObject already have this vertex
+bool GeometryObject::findVertex(Base::Vector2D v)
+{
+    bool found = false;
+    std::vector<Vertex*>::iterator it = vertexGeom.begin();
+    for (; it != vertexGeom.end(); it++) {
+        double dist = (v - (*it)->pnt).Length();
+        if (dist < Precision::Confusion()) {
+            found = true;
+            break;
+        }
+    }
+    return found;
 }

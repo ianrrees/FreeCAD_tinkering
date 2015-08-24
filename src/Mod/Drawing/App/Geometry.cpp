@@ -107,6 +107,44 @@ Face::~Face()
     wires.clear();
 }
 
+//! ugh. yuck. 
+std::vector<Base::Vector2D> BaseGeom::findEndPoints()
+{
+    std::vector<Base::Vector2D> result;
+    switch(this->geomType) {
+        case DrawingGeometry::CIRCLE: {
+          //DrawingGeometry::Circle *geom = static_cast<DrawingGeometry::Circle *>(this);
+        } break;
+        case DrawingGeometry::ARCOFCIRCLE: {
+          DrawingGeometry::AOC  *geom = static_cast<DrawingGeometry::AOC *>(this);
+          result.push_back(geom->startPnt);
+          result.push_back(geom->endPnt);
+        } break;
+        case DrawingGeometry::ELLIPSE: {
+          //DrawingGeometry::Ellipse *geom = static_cast<DrawingGeometry::Ellipse *>(this);
+        } break;
+        case DrawingGeometry::ARCOFELLIPSE: {
+          DrawingGeometry::AOE *geom = static_cast<DrawingGeometry::AOE *>(this);
+          result.push_back(geom->startPnt);
+          result.push_back(geom->endPnt);
+        } break;
+        case DrawingGeometry::BSPLINE: {
+          DrawingGeometry::BSpline *geom = static_cast<DrawingGeometry::BSpline *>(this);
+          result.push_back(geom->segments.front().pnts[0]);
+          DrawingGeometry::BezierSegment tempSeg = geom->segments.back();
+          result.push_back(tempSeg.pnts[tempSeg.poles - 1]);
+        } break;
+        case DrawingGeometry::GENERIC: {
+          DrawingGeometry::Generic *geom = static_cast<DrawingGeometry::Generic *>(this);
+          result.push_back(geom->points.front());
+          result.push_back(geom->points.back());
+        } break;
+        default:
+          break;
+    }
+    return result;
+}
+
 Ellipse::Ellipse()
 {
     geomType = ELLIPSE;

@@ -51,6 +51,7 @@ public:
 public:
    GeomType geomType;
    ExtractionType extractType;
+   std::vector<Base::Vector2D> findEndPoints();
 };
 
 class DrawingExport Circle: public BaseGeom
@@ -172,6 +173,7 @@ struct DrawingExport Face
 struct DrawingExport Vertex
 {
   Vertex(double x, double y) { pnt = Base::Vector2D(x, y); }
+  Vertex(Base::Vector2D v) { pnt = v; }
   ~Vertex() {}
   Base::Vector2D pnt;
   ExtractionType extractType;  

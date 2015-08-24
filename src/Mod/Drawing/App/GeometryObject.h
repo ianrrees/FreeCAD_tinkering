@@ -141,14 +141,16 @@ protected:
     std::vector<Vertex *> vertexGeom;
     std::vector<Face *> faceGeom;
 
+    bool findVertex(Base::Vector2D v);
+
     // indexes to geometry in Source object
     std::vector<int> vertexReferences;
     std::vector<int> edgeReferences;
     std::vector<int> faceReferences;
 
+    HLRBRep_Algo *brep_hlr;
     double Tolerance;
     double Scale;
-    HLRBRep_Algo *brep_hlr;
 
     /// Returns the centroid of shape, as viewed according to direction and xAxis
     gp_Pnt findCentroid(const TopoDS_Shape &shape,

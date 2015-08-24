@@ -212,6 +212,7 @@ const std::vector<int> & FeatureViewPart::getEdgeReferences() const
     return geometryObject->getEdgeRefs();
 }
 
+//! project Source Edge(idx) to 2D BaseGeom
 DrawingGeometry::BaseGeom *FeatureViewPart::getCompleteEdge(int idx) const
 {
    //NOTE: idx is in fact a Reference to an Edge in Source?
@@ -251,6 +252,7 @@ DrawingGeometry::BaseGeom *FeatureViewPart::getCompleteEdge(int idx) const
     return prjShape;
 }
 
+//! project Source Vertex(idx) to 2D geometry
 DrawingGeometry::Vertex * FeatureViewPart::getVertex(int idx) const
 {
    //## Get the Part Link ##/
@@ -333,7 +335,7 @@ DrawingGeometry::BaseGeom* FeatureViewPart::getProjEdgeByIndex(int idx) const
     return geoms[idx];
 }
 
-//! returns existing BaseGeom of 2D Vertex(idx)
+//! returns existing geometry of 2D Vertex(idx)
 DrawingGeometry::Vertex* FeatureViewPart::getProjVertexByIndex(int idx) const
 {
     const std::vector<DrawingGeometry::Vertex *> &geoms = getVertexGeometry();
