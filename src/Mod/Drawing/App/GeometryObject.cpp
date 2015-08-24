@@ -728,6 +728,7 @@ void GeometryObject::extractFaces(HLRBRep_Algo *myAlgo,
                                   std::vector<DrawingGeometry::Face *> &projFaces,
                                   std::vector<int> &faceRefs) const
 {
+#if MOD_DRAWING_HANDLE_FACES
     if(!myAlgo)
         return;
 
@@ -776,20 +777,7 @@ void GeometryObject::extractFaces(HLRBRep_Algo *myAlgo,
         B.MakeCompound(TopoDS::Compound(face));
 
         // Generate a set of new wires based on face
-        // TODO: Do these end up with input face's geometry as a base? hmmm
-        //
-        // There seems to be a problem in this logic - in some cases, we can
-        // compress faces and turn them into holes.  HLRBRep_EdgeData will
-        // hopefully be useful...
-        // 
-        //    Start      Projects to        Which OCE Renders as
-        //      |               |                |
-        //     _|               |                |
-        //    |                 |
-        //    |_                |
-        //      |               |                |
-        //      |               |                |
-        //
+        // TODO: Do these end up with input face's geometry as a base?
         drawFace(visible, iface, DS, face);
         std::vector<TopoDS_Wire> possibleFaceWires;
         createWire(face, possibleFaceWires);
@@ -828,6 +816,7 @@ void GeometryObject::extractFaces(HLRBRep_Algo *myAlgo,
             projFaces.push_back(myFace);
         }
 
+        // I'm pretty sure this doesn't do what it's intended to do.  IR
         int idxFace;
         for (int i = 1; i <= anfIndices.Extent(); i++) {
             idxFace = Faces.FindIndex(anfIndices(iface));
@@ -844,6 +833,7 @@ void GeometryObject::extractFaces(HLRBRep_Algo *myAlgo,
     }
 
     DS->Projector().Scaled(false);
+#endif //#if MOD_DRAWING_HANDLE_FACES
 }
 
 bool GeometryObject::shouldDraw(const bool inFace, const int typ, HLRBRep_EdgeData& ed)

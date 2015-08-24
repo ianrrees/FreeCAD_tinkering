@@ -1,4 +1,6 @@
 
+add_definitions(-DMOD_DRAWING_HANDLE_FACES=0)
+
 add_subdirectory(App)
 if(BUILD_GUI)
     add_subdirectory(Gui)

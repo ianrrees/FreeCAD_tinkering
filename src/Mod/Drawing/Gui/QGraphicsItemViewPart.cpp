@@ -279,7 +279,7 @@ void QGraphicsItemViewPart::drawViewPart()
     
     prepareGeometryChange();
 
-#if 0
+#if MOD_DRAWING_HANDLE_FACES
     // Draw Faces
     const std::vector<DrawingGeometry::Face *> &faceGeoms = part->getFaceGeometry();
     const std::vector<int> &faceRefs = part->getFaceReferences();
@@ -325,7 +325,7 @@ void QGraphicsItemViewPart::drawViewPart()
         fitem->setPath(facePath);
         fitem->setFlag(QGraphicsItem::ItemIsSelectable, true);
     }
-#endif
+#endif //#if MOD_DRAWING_HANDLE_FACES
 
     // Draw Edges
     const std::vector<DrawingGeometry::BaseGeom *> &geoms = part->getEdgeGeometry();
