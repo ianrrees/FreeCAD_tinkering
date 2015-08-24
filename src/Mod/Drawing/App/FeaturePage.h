@@ -24,15 +24,14 @@
 #ifndef _FeaturePage_h_
 #define _FeaturePage_h_
 
-#include <App/DocumentObject.h>
-#include <App/DocumentObjectGroup.h>
-#include <App/PropertyStandard.h>
-#include <App/PropertyFile.h>
-
+#include "App/DocumentObject.h"
+#include "App/DocumentObjectGroup.h"
+#include "App/PropertyStandard.h"
+#include "App/PropertyFile.h"
+//#include "App/FeaturePython.h"
 
 namespace Drawing
 {
-
 
 class DrawingExport FeaturePage: public App::DocumentObject
 {
@@ -63,6 +62,9 @@ public:
     virtual const char* getViewProviderName(void) const {
         return "DrawingGui::ViewProviderDrawingPage";
     }
+
+    PyObject *getPyObject(void);
+
 //App::DocumentObjectExecReturn * recompute(void);
 
     /// Check whether we've got a valid template
@@ -87,10 +89,8 @@ protected:
     void onChanged(const App::Property* prop);
 
 private:
-    int numChildren;
     static const char* ProjectionTypeEnums[];
 };
-
 
 } //namespace Drawing
 

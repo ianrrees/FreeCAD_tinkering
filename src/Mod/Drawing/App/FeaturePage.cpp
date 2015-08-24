@@ -25,8 +25,9 @@
 
 #ifndef _PreComp_
 # include <sstream>
+# include <iostream>
+# include <iterator>
 #endif
-
 
 #include <Base/Exception.h>
 #include <Base/Console.h>
@@ -34,8 +35,6 @@
 #include <App/Application.h>
 #include <App/Document.h>
 #include <boost/regex.hpp>
-#include <iostream>
-#include <iterator>
 
 #include "FeaturePage.h"
 #include "FeatureView.h"
@@ -43,6 +42,8 @@
 #include "FeatureViewClip.h"
 #include "FeatureTemplate.h"
 #include "FeatureViewCollection.h"
+
+#include "FeaturePagePy.h"  // generated from FeaturePagePy.xml
 
 using namespace Drawing;
 using namespace std;
@@ -58,7 +59,7 @@ const char* FeaturePage::ProjectionTypeEnums[]= {"First Angle",
                                                  "Third Angle",
                                                  NULL};
 
-FeaturePage::FeaturePage(void) : numChildren(0)
+FeaturePage::FeaturePage(void)
 {
     static const char *group = "Page";
 
@@ -145,6 +146,17 @@ short FeaturePage::mustExecute() const
 
     return (ViewsTouched) ? 1 : App::DocumentObject::mustExecute();
 }
+
+PyObject *FeaturePage::getPyObject(void)
+{
+    if (PythonObject.is(Py::_None())){
+        // ref counter is set to 1
+        PythonObject = Py::Object(new FeaturePagePy(this),true);
+    }
+
+    return Py::new_reference_to(PythonObject); 
+}
+
 bool FeaturePage::hasValidTemplate() const
 {
     App::DocumentObject *obj = 0;
@@ -172,7 +184,6 @@ double FeaturePage::getPageWidth() const
     }
 
     throw Base::Exception("Template not set for Page");
-
 }
 
 double FeaturePage::getPageHeight() const
@@ -237,4 +248,3 @@ int FeaturePage::removeView(App::DocumentObject *docObj)
 
     return Views.getSize();
 }
-

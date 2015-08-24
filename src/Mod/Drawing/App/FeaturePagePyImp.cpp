@@ -18,7 +18,6 @@ std::string FeaturePagePy::representation(void) const
     return std::string("<FeaturePage object>");
 }
 
-//    int addView(App::DocumentObject *docObj);
 PyObject* FeaturePagePy::addView(PyObject* args)
 {
     PyObject *pcFeatView;
