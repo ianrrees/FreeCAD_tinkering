@@ -140,12 +140,14 @@ public:
   BSpline();
   ~BSpline(){}
 public:
+  bool isLine(void);
   std::vector<BezierSegment> segments;
 };
 
 class Generic: public BaseGeom
 {
 public:
+  Generic(Base::Vector2D start, Base::Vector2D end);
   Generic(const BRepAdaptor_Curve& c);
   Generic();
   ~Generic() {}

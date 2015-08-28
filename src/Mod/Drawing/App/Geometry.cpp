@@ -175,8 +175,6 @@ AOE::AOE(const BRepAdaptor_Curve& c) : Ellipse(c)
 {
     geomType = ARCOFELLIPSE;
 
-    gp_Elips ellp = c.Ellipse();
-
     double f = c.FirstParameter();
     double l = c.LastParameter();
     gp_Pnt s = c.Value(f);
@@ -281,6 +279,13 @@ Generic::Generic(const BRepAdaptor_Curve& c)
     }
 }
 
+Generic::Generic(Base::Vector2D start, Base::Vector2D end)
+{
+    geomType = GENERIC;
+    points.push_back(start);
+    points.push_back(end);
+}
+
 BSpline::BSpline()
 {
     geomType = BSPLINE;
@@ -324,5 +329,29 @@ BSpline::BSpline(const BRepAdaptor_Curve &c)
         }
         segments.push_back(tempSegment);
     }
+}
+
+//! can this BSpline be represented by a straight line?
+bool BSpline::isLine()
+{
+    bool result = true;
+    std::vector<BezierSegment>::iterator iSeg = segments.begin();
+    double slope;
+    if ((*iSeg).poles == 2) {
+        slope = ((*iSeg).pnts[1].fY - (*iSeg).pnts[0].fY) /
+                ((*iSeg).pnts[1].fX - (*iSeg).pnts[0].fX);  //always at least 2 points?
+    }
+    for (; iSeg != segments.end(); iSeg++) {
+        if ((*iSeg).poles != 2) {
+            result = false;
+            break;
+        }
+        double newSlope = ((*iSeg).pnts[1].fY - (*iSeg).pnts[0].fY) / ((*iSeg).pnts[1].fX - (*iSeg).pnts[0].fX);
+        if (fabs(newSlope - slope) > Precision::Confusion()) {
+            result = false;
+            break;
+        }
+    }
+    return result;
 }
 

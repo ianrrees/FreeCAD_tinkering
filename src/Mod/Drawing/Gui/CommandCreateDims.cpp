@@ -862,9 +862,6 @@ int _isValidSingleEdge(Gui::Command* cmd, bool trueDim) {
                     return isInvalid;
                 }
                 Base::Vector2D line = gen1->points.at(1) - gen1->points.at(0);
-                Base::Vector2D start = gen1->points.at(0);
-                Base::Vector2D end = gen1->points.at(1);
-                
                 if(fabs(line.fY) < FLT_EPSILON ) {
                     edgeType = isHorizontal;
                 } else if(fabs(line.fX) < FLT_EPSILON) {

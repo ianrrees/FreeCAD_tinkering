@@ -1396,14 +1396,26 @@ int GeometryObject::calculateGeometry(const TopoDS_Shape &input,
           } break;
           case GeomAbs_BSplineCurve: {
             BSpline *bspline = 0;
+            Generic* gen = NULL;
             try {
                 bspline = new BSpline(adapt);
                 bspline->extractType = extractionType;
-                geom.push_back(bspline);
+                if (bspline->isLine()) {
+                    Base::Vector2D start,end;
+                    start = bspline->segments.front().pnts[0];
+                    end = bspline->segments.back().pnts[1];
+                    gen = new Generic(start,end);
+                    gen->extractType = extractionType;
+                    geom.push_back(gen);
+                    delete bspline;
+                } else {
+                    geom.push_back(bspline);
+                }
                 break;
             }
             catch (Standard_Failure) {
                 delete bspline;
+                delete gen;
                 bspline = 0;
                 // Move onto generating a primitive
             }
