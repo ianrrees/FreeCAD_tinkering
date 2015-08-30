@@ -45,13 +45,15 @@ QGraphicsItemEdge::QGraphicsItemEdge(int index) :
     projIndex(index)
 {
     setCacheMode(QGraphicsItem::NoCache);
+    setFlag(QGraphicsItem::ItemIsSelectable, true);
+    setFlag(QGraphicsItem::ItemSendsScenePositionChanges, true);
+    setFlag(QGraphicsItem::ItemSendsGeometryChanges,true);
+    setAcceptHoverEvents(true);
 
     strokeWidth = 1.;
 
     isCosmetic    = false;
     isHighlighted = false;
-    //TODO: investigate if an Edge can be both Hidden and Smooth??? 
-    //wf: yes it can, but we on distinguish graphical representation by visible/hidden
     isHiddenEdge = false;
     isSmoothEdge = false;
 

@@ -287,6 +287,7 @@ void CanvasView::addDimToParent(QGraphicsItemViewDimension* dim, QGraphicsItemVi
     QPointF mapPos = dim->mapToItem(parent, posRef);
     dim->moveBy(-mapPos.x(), -mapPos.y());
     parent->addToGroup(dim);
+    dim->setZValue(50.0);
 }
 
 QGraphicsItemView * CanvasView::findView(App::DocumentObject *obj) const

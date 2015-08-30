@@ -352,6 +352,8 @@ void QGraphicsItemViewPart::drawViewPart()
                 item->setSmoothEdge(true);
             }
             item->setPath(drawPainterPath(*it));
+            item->setFlag(QGraphicsItem::ItemIsSelectable, true);
+            item->setAcceptHoverEvents(true);
 
             //debug a path
             //QPainterPath edgePath=drawPainterPath(*it);
@@ -359,12 +361,6 @@ void QGraphicsItemViewPart::drawViewPart()
             //std::stringstream edgeId;
             //edgeId << "edge" << i;
             //_dumpPath(edgeId.str().c_str(),edgePath);
-
-            //TEMP - allow selection of edge w/o reference to original shape
-            //if(refs.at(i) > 0) {
-                item->setFlag(QGraphicsItem::ItemIsSelectable, true);  //TODO: bug in App/GeometryObject? why no edge reference?
-                item->setAcceptHoverEvents(true);                      //TODO: verify that edge w/o ref is ineligible for selecting
-            //}
          }
     }
 
@@ -379,11 +375,6 @@ void QGraphicsItemViewPart::drawViewPart()
         addToGroup(item);
         item->setPos((*vert)->pnt.fX, (*vert)->pnt.fY);                //this is in ViewPart coords
         item->setRadius(lineWidth * vertexScaleFactor);
-        //TEMP - allow selection of vertex w/o reference to original shape
-        //if(vertRefs.at(i) > 0) {
-            item->setFlag(QGraphicsItem::ItemIsSelectable, true);
-            item->setAcceptHoverEvents(true);                      //TODO: verify that vertex w/o ref is ineligible for selecting
-        //}
      }
 }
 

@@ -46,6 +46,10 @@ QGraphicsItemVertex::QGraphicsItemVertex(int index) :
     m_fill(Qt::SolidPattern)
 {
     setCacheMode(QGraphicsItem::NoCache);
+    setFlag(QGraphicsItem::ItemIsSelectable, true);
+    setFlag(QGraphicsItem::ItemSendsScenePositionChanges, true);
+    setFlag(QGraphicsItem::ItemSendsGeometryChanges,true);
+    setAcceptHoverEvents(true);
 
     Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
         .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors");
