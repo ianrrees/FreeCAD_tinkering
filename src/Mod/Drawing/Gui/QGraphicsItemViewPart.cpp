@@ -124,8 +124,8 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
         case DrawingGeometry::ARCOFCIRCLE: {
           DrawingGeometry::AOC  *geom = static_cast<DrawingGeometry::AOC *>(baseGeom);
 
-          double x = geom->center.fX - geom->radius;
-          double y = geom->center.fY - geom->radius;
+          //double x = geom->center.fX - geom->radius;
+          //double y = geom->center.fY - geom->radius;
           pathArc(path, geom->radius, geom->radius, 0., geom->largeArc, geom->cw,
                   geom->endPnt.fX, geom->endPnt.fY,
                   geom->startPnt.fX, geom->startPnt.fY);
@@ -366,7 +366,7 @@ void QGraphicsItemViewPart::drawViewPart()
 
     // Draw Vertexs:
     const std::vector<DrawingGeometry::Vertex *> &verts = part->getVertexGeometry();
-    const std::vector<int> &vertRefs                    = part->getVertexReferences();
+    //const std::vector<int> &vertRefs                    = part->getVertexReferences();
     std::vector<DrawingGeometry::Vertex *>::const_iterator vert = verts.begin();
 
     for(int i = 0 ; vert != verts.end(); ++vert, i++) {

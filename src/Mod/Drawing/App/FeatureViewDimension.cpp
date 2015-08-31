@@ -173,7 +173,6 @@ App::DocumentObjectExecReturn *FeatureViewDimension::execute(void)
 
     if (ProjectionType.isValue("True")) {
         //Update Dimension.measurement with 3D References
-        const std::vector<App::DocumentObject*> &objects = References.getValues();
         const std::vector<std::string> &subElements = References.getSubValues();
         ProjDirection.setValue(getViewPart()->Direction.getValue());
         XAxisDirection.setValue(getViewPart()->XAxisDirection.getValue());
@@ -221,30 +220,32 @@ std::string  FeatureViewDimension::getFormatedValue() const
 
 double FeatureViewDimension::getDimValue() const
 {
+    double result = 0.0;
     if (ProjectionType.isValue("True")) {
         // True Values
         if(Type.isValue("Distance")) {
             //dumpRefs("getDimValue - True Distance Dim Refs");
             //TODO: measurement->length() is the sum of the lengths of the edges in the References. is this what we want here?
             //return measurement->length();
-            return measurement->delta().Length();
+            result = measurement->delta().Length();
         } else if(Type.isValue("DistanceX")){
             Base::Vector3d delta = measurement->delta();
-            return delta.x;
+            result = delta.x;
         } else if(Type.isValue("DistanceY")){
             Base::Vector3d delta = measurement->delta();
-            return delta.y;
+            result = delta.y;
         } else if(Type.isValue("DistanceZ")){
             Base::Vector3d delta = measurement->delta();
-            return delta.z;
+            result = delta.z;
         } else if(Type.isValue("Radius")){
-            return measurement->radius();
+            result =  measurement->radius();
         } else if(Type.isValue("Diameter")){
-            return measurement->radius() * 2.0;
+            result =  measurement->radius() * 2.0;
         } else if(Type.isValue("Angle")){
-            return measurement->angle();
+            result = measurement->angle();
+        } else {
+            throw Base::Exception("getDimValue() - Unknown Dimension Type");
         }
-        throw Base::Exception("getDimValue() - Unknown Dimension Type");
     } else {
         // Projected Values
         const std::vector<App::DocumentObject*> &objects = References.getValues();
@@ -257,7 +258,7 @@ double FeatureViewDimension::getDimValue() const
             Base::Vector2D start = gen->points[0];
             Base::Vector2D end = gen->points[1];
             Base::Vector2D line = end - start;
-            return line.Length() / getViewPart()->Scale.getValue();
+            result = line.Length() / getViewPart()->Scale.getValue();
         } else if (Type.isValue("Distance") && getRefType() == twoEdge) {
             //only works for straight line edges
             int idx0 = DrawUtil::getIndexFromName(subElements[0]);
@@ -270,7 +271,7 @@ double FeatureViewDimension::getDimValue() const
             Base::Vector2D e0 = gen0->points[1];
             Base::Vector2D s1 = gen1->points[0];
             Base::Vector2D e1 = gen1->points[1];
-            return dist2Segs(s0,e0,s1,e1) / getViewPart()->Scale.getValue();
+            result = dist2Segs(s0,e0,s1,e1) / getViewPart()->Scale.getValue();
         } else if (Type.isValue("Distance") && getRefType() == twoVertex) {
             int idx0 = DrawUtil::getIndexFromName(subElements[0]);
             int idx1 = DrawUtil::getIndexFromName(subElements[1]);
@@ -279,7 +280,7 @@ double FeatureViewDimension::getDimValue() const
             Base::Vector2D start = v0->pnt;
             Base::Vector2D end = v1->pnt;
             Base::Vector2D line = end - start;
-            return line.Length() / getViewPart()->Scale.getValue();
+            result = line.Length() / getViewPart()->Scale.getValue();
         } else if (Type.isValue("DistanceX") && getRefType() == oneEdge) {
             int idx = DrawUtil::getIndexFromName(subElements[0]);
             DrawingGeometry::BaseGeom* geom = getViewPart()->getProjEdgeByIndex(idx);
@@ -295,7 +296,7 @@ double FeatureViewDimension::getDimValue() const
             Base::Vector2D start = gen->points[0];
             Base::Vector2D end = gen->points[1];
             Base::Vector2D line = end - start;
-            return fabs(line.fY) / getViewPart()->Scale.getValue();
+            result = fabs(line.fY) / getViewPart()->Scale.getValue();
         } else if (Type.isValue("DistanceX") && getRefType() == twoVertex) {
             int idx0 = DrawUtil::getIndexFromName(subElements[0]);
             int idx1 = DrawUtil::getIndexFromName(subElements[1]);
@@ -304,7 +305,7 @@ double FeatureViewDimension::getDimValue() const
             Base::Vector2D start = v0->pnt;
             Base::Vector2D end = v1->pnt;
             Base::Vector2D line = end - start;
-            return fabs(line.fX) / getViewPart()->Scale.getValue();
+            result = fabs(line.fX) / getViewPart()->Scale.getValue();
         } else if (Type.isValue("DistanceY") && getRefType() == twoVertex) {
             int idx0 = DrawUtil::getIndexFromName(subElements[0]);
             int idx1 = DrawUtil::getIndexFromName(subElements[1]);
@@ -313,19 +314,19 @@ double FeatureViewDimension::getDimValue() const
             Base::Vector2D start = v0->pnt;
             Base::Vector2D end = v1->pnt;
             Base::Vector2D line = end - start;
-            return fabs(line.fY) / getViewPart()->Scale.getValue();
+            result = fabs(line.fY) / getViewPart()->Scale.getValue();
         } else if(Type.isValue("Radius")){
             //only 1 reference for a Radius
             int idx = DrawUtil::getIndexFromName(subElements[0]);
             DrawingGeometry::BaseGeom* base = getViewPart()->getProjEdgeByIndex(idx);
             DrawingGeometry::Circle* circle = static_cast<DrawingGeometry::Circle*> (base);
-            return circle->radius / getViewPart()->Scale.getValue();            //Projected BaseGeom is scaled for drawing
+            result = circle->radius / getViewPart()->Scale.getValue();            //Projected BaseGeom is scaled for drawing
         } else if(Type.isValue("Diameter")){
             //only 1 reference for a Diameter
             int idx = DrawUtil::getIndexFromName(subElements[0]);
             DrawingGeometry::BaseGeom* base = getViewPart()->getProjEdgeByIndex(idx);
             DrawingGeometry::Circle* circle = static_cast<DrawingGeometry::Circle*> (base);
-            return (circle->radius  * 2.0) / getViewPart()->Scale.getValue();   //Projected BaseGeom is scaled for drawing
+            result = (circle->radius  * 2.0) / getViewPart()->Scale.getValue();   //Projected BaseGeom is scaled for drawing
         } else if(Type.isValue("Angle")){
             // Must project lines to 2D so cannot use measurement framework this time
             //Relcalculate the measurement based on references stored.
@@ -369,9 +370,7 @@ double FeatureViewDimension::getDimValue() const
                 Base::Vector3d p0 = Base::Vector3d(x,y,0);
 
                 Base::Vector3d lPos((double) X.getValue(), (double) Y.getValue(), 0.);
-                Base::Vector3d delta = lPos - p0;
-
-                double angle = lPos.GetAngle(delta);
+                //Base::Vector3d delta = lPos - p0;
 
                 // Create vectors point towards intersection always
                 Base::Vector3d a = -p0, b = -p0;
@@ -379,12 +378,13 @@ double FeatureViewDimension::getDimValue() const
                 b += ((p2S - p0).Length() < FLT_EPSILON) ? p2E : p2S;
 
                 double angle2 = atan2( a.x*b.y - a.y*b.x, a.x*b.x + a.y*b.y );
-                return angle2 * 180. / M_PI;
+                result = angle2 * 180. / M_PI;
             } else {
                 throw Base::Exception("Invalid selection");
             }
-        }
-    }
+        }  //endif Angle
+    } //endif Projected
+    return result;
 }
 
 FeatureViewPart* FeatureViewDimension::getViewPart() const
@@ -395,7 +395,6 @@ FeatureViewPart* FeatureViewDimension::getViewPart() const
 int FeatureViewDimension::getRefType() const
 {
     int refType = invalidRef;
-    const std::vector<App::DocumentObject*> &objects = References.getValues();
     const std::vector<std::string> &subElements      = References.getSubValues();
     if ((subElements.size() == 1) && (DrawUtil::getGeomTypeFromName(subElements[0]).compare("Edge") == 0)) {
         refType = oneEdge;

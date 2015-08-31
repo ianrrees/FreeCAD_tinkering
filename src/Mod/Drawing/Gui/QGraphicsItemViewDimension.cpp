@@ -286,7 +286,7 @@ void QGraphicsItemViewDimension::updateView(bool update)
 void QGraphicsItemViewDimension::updateDim()
 {
     // For now assume only show absolute dimension values
-    bool absolute = true;
+    //bool absolute = true;
 
     if(getViewObject() == 0 || !getViewObject()->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId()))
         return;
@@ -298,7 +298,7 @@ void QGraphicsItemViewDimension::updateDim()
 
     QGraphicsItemDatumLabel *dLabel = dynamic_cast<QGraphicsItemDatumLabel *>(datumLabel);
 
-    const char *dimType = dim->Type.getValueAsString();
+    //const char *dimType = dim->Type.getValueAsString();
 
     QFont font = dLabel->font();
     font.setPointSizeF(dim->Fontsize.getValue());            //scene units (mm), not points
@@ -477,13 +477,13 @@ void QGraphicsItemViewDimension::draw()
 
         // Get magnitude of angle between dir and horizontal
         float angle = atan2f(dir.y,dir.x);
-        bool flip=false;
+        //bool flip=false;
         if (angle > M_PI_2+M_PI/12) {
             angle -= (float)M_PI;
-            flip = true;
+            //flip = true;
         } else if (angle <= -M_PI_2+M_PI/12) {
             angle += (float)M_PI;
-            flip = true;
+            //flip = true;
         }
 
         // when the datum line(dimension line??) is not parallel to (distStart-distEnd) the projection of
@@ -492,11 +492,11 @@ void QGraphicsItemViewDimension::draw()
         float normproj12 = (distEnd-distStart).x * norm.x + (distEnd-distStart).y * norm.y;
         Base::Vector3d distStart_ = distStart + norm * normproj12;
 
-        Base::Vector3d midpos = (distStart_ + distEnd) / 2;
+        //Base::Vector3d midpos = (distStart_ + distEnd) / 2;
 
         QFontMetrics fm(lbl->font());
         int w = fm.width(labelText);
-        int h = fm.height();
+        //int h = fm.height();
 
         Base::Vector3d vec = lblCenter - distEnd;
         float length = vec.x * norm.x + vec.y * norm.y;
@@ -662,19 +662,20 @@ void QGraphicsItemViewDimension::draw()
 //         lblCenter += 0.5 * Base::Vector3d(bbX, bbY, 0.f);
         dirDimLine = (lblCenter - centre).Normalize();
 
+#if 0
         // Get magnitude of angle between horizontal
         float angle = atan2f(dirDimLine.x,dirDimLine.y);
-        bool flip=false;
+        //bool flip=false;
         if (angle > M_PI_2+M_PI/12) {                                  //90 + 15 = 105
             angle -= (float)M_PI;
-            flip = true;
+            //flip = true;
         } else if (angle <= -M_PI_2+M_PI/12) {                         //-90 + 15 = -75
             angle += (float)M_PI;
-            flip = true;
+            //flip = true;
         }
 
-        float s = sin(angle);
-        float c = cos(angle);
+        //float s = sin(angle);
+        //float c = cos(angle);
 
         //Base::Console().Log("angle (%f, %f), bbx %f, bby %f", s,c,bbX, bbY);
         // Note QGraphicsTextItem takes coordinate system from TOP LEFT - transfer to center
@@ -684,13 +685,14 @@ void QGraphicsItemViewDimension::draw()
 //
 //         angle = atan2f(dirDimLine.x,dirDimLine.y);
 //
+#endif
         arrow1Tip = centre - dirDimLine * radius;                                    //endpoint of diameter arrowhead1
         arrow2Tip = centre + dirDimLine * radius;                                    //endpoint of diameter arrowhead2
 
         QFontMetrics fm(label->font());
 
         int w = fm.width(labelText);
-        int h = fm.height();
+        //int h = fm.height();
 
         float margin = 5.f;
 
@@ -881,7 +883,7 @@ void QGraphicsItemViewDimension::draw()
         QGraphicsItemArrow *ar1 = dynamic_cast<QGraphicsItemArrow *>(arw.at(0));
         QGraphicsItemArrow *ar2 = dynamic_cast<QGraphicsItemArrow *>(arw.at(1));
 
-        Base::Vector3d ar1Pos = arrow1Tip + dirDimLine * radius;
+        //Base::Vector3d ar1Pos = arrow1Tip + dirDimLine * radius;
         float arAngle = atan2(dirDimLine.y, dirDimLine.x) * 180 / M_PI;
 
         ar1->setHighlighted(isSelected() || hasHover);
@@ -958,17 +960,17 @@ void QGraphicsItemViewDimension::draw()
 
         // Get magnitude of angle between horizontal
         float angle = atan2f(dirDimLine.y,dirDimLine.x);
-        bool flip=false;
+        //bool flip=false;
         if (angle > M_PI_2+M_PI/12) {
             angle -= (float)M_PI;
-            flip = true;
+            //flip = true;
         } else if (angle <= -M_PI_2+M_PI/12) {
             angle += (float)M_PI;
-            flip = true;
+            //flip = true;
         }
 
-        float s = sin(angle);
-        float c = cos(angle);
+        //float s = sin(angle);
+        //float c = cos(angle);
 
         //for inner placement
         //arrow1 is from label centre(+ margin) to circle edge
@@ -980,7 +982,7 @@ void QGraphicsItemViewDimension::draw()
         QFontMetrics fm(label->font());
 
         int w = fm.width(labelText);
-        int h = fm.height();
+        //int h = fm.height();
 
         float margin = 5.f;
 

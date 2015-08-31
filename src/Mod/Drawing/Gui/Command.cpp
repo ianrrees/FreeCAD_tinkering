@@ -759,7 +759,7 @@ void CmdDrawingClipPlus::activated(int iMsg)
     }
 
     openCommand("ClipPlus");
-    int i = clip->addView(view);
+    clip->addView(view);
     updateActive();
     commitCommand();
 }
@@ -826,7 +826,7 @@ void CmdDrawingClipMinus::activated(int iMsg)
     }
 
     openCommand("ClipMinus");
-    int i = clip->removeView(view);
+    clip->removeView(view);
     updateActive();
     commitCommand();
 }

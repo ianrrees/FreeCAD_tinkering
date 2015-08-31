@@ -53,7 +53,7 @@ PROPERTY_SOURCE(Drawing::FeatureViewClip, Drawing::FeatureView)
 FeatureViewClip::FeatureViewClip(void) 
 {
     static const char *group = "Clip Group";
-    App::PropertyType hidden = (App::PropertyType)(App::Prop_Hidden);
+    //App::PropertyType hidden = (App::PropertyType)(App::Prop_Hidden);
 
     ADD_PROPERTY_TYPE(Height     ,(10),group,App::Prop_None,"The height of the view area of this clip");
     ADD_PROPERTY_TYPE(Width      ,(10),group,App::Prop_None,"The width of the view area of this clip");
@@ -93,18 +93,16 @@ void FeatureViewClip::onChanged(const App::Property* prop)
     FeatureView::onChanged(prop);
 }
 
-int FeatureViewClip::addView(FeatureView *view)
+void FeatureViewClip::addView(FeatureView *view)
 {
     const std::vector<App::DocumentObject*> currViews = Views.getValues();
     std::vector<App::DocumentObject *> newViews(currViews);
     newViews.push_back(view);
     Views.setValues(newViews);
     Views.touch();
-
-    return Views.getSize();
 }
 
-int FeatureViewClip::removeView(FeatureView *view)
+void FeatureViewClip::removeView(FeatureView *view)
 {
     std::vector<App::DocumentObject *> currViews = Views.getValues();
     std::vector<App::DocumentObject *> newViews;
@@ -117,8 +115,6 @@ int FeatureViewClip::removeView(FeatureView *view)
     }
     Views.setValues(newViews);
     touch();
-
-    return Views.getSize();
 }
 
 App::DocumentObjectExecReturn *FeatureViewClip::execute(void)

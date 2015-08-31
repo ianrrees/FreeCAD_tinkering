@@ -222,7 +222,7 @@ void TaskProjGroup::nearestFraction(double val, int &n, int &d) const
     n = 1;  // numerator
     d = 1;  // denominator
     double fraction = n / d;
-    double m = fabs(fraction - val);
+    //double m = fabs(fraction - val);
 
     while (fabs(fraction - val) > 0.001) {
         if (fraction < val) {

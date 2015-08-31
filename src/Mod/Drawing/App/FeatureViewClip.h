@@ -52,8 +52,8 @@ public:
     App::PropertyBool Visible;
     App::PropertyLinkList Views;
 
-    int addView(FeatureView *view);
-    int removeView(FeatureView *view);
+    void addView(FeatureView *view);
+    void removeView(FeatureView *view);
     short mustExecute() const;
 
     /** @name methods overide Feature */

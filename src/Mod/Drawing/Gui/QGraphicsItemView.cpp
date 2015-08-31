@@ -297,7 +297,7 @@ void QGraphicsItemView::drawBorder()
         return;
     }
 
-    double margin = 2.0;
+    //double margin = 2.0;
     prepareGeometryChange();
     m_label->hide();
     m_border->hide();

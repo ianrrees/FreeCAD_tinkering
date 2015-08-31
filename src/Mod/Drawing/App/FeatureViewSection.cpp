@@ -88,7 +88,6 @@ PROPERTY_SOURCE(Drawing::FeatureViewSection, Drawing::FeatureViewPart)
 FeatureViewSection::FeatureViewSection()
 {
     static const char *group = "Shape view";
-    static const char *vgroup = "Drawing view";
 
     ADD_PROPERTY_TYPE(SectionNormal ,(0,0,1.0)    ,group,App::Prop_None,"Section Plane normal direction");
     ADD_PROPERTY_TYPE(SectionOrigin ,(0,0,0) ,group,App::Prop_None,"Section Plane Origin");

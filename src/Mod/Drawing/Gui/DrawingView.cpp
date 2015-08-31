@@ -365,13 +365,13 @@ void DrawingView::preSelectionChanged(const QPoint &pos)
         std::stringstream ss;
         //ss << "Edge" << edge->getReference();
         ss << "Edge" << edge->getProjIndex();
-        bool accepted =
-        Gui::Selection().setPreselect(viewObj->getDocument()->getName()
+        //bool accepted =
+        static_cast<void> (Gui::Selection().setPreselect(viewObj->getDocument()->getName()
                                      ,viewObj->getNameInDocument()
                                      ,ss.str().c_str()
                                      ,pos.x()
                                      ,pos.y()
-                                     ,0);
+                                     ,0));
 
     } else if(vert) {
               // Find the parent view that this edges is contained within
@@ -387,13 +387,13 @@ void DrawingView::preSelectionChanged(const QPoint &pos)
         Drawing::FeatureView *viewObj = viewItem->getViewObject();
         std::stringstream ss;
         ss << "Edge" << vert->getReference();   //WF: sb Vertex??
-        bool accepted =
-        Gui::Selection().setPreselect(viewObj->getDocument()->getName()
+        //bool accepted =
+        static_cast<void> (Gui::Selection().setPreselect(viewObj->getDocument()->getName()
                                      ,viewObj->getNameInDocument()
                                      ,ss.str().c_str()
                                      ,pos.x()
                                      ,pos.y()
-                                     ,0);
+                                     ,0));
     } else {
             // Check if an edge was preselected
             //WF: sb View?
@@ -476,10 +476,10 @@ void DrawingView::selectionChanged()
                 std::stringstream ss;
                 //ss << "Edge" << edge->getReference();
                 ss << "Edge" << edge->getProjIndex();
-                bool accepted =
-                Gui::Selection().addSelection(viewObj->getDocument()->getName(),
+                //bool accepted =
+                static_cast<void> (Gui::Selection().addSelection(viewObj->getDocument()->getName(),
                                               viewObj->getNameInDocument(),
-                                              ss.str().c_str());
+                                              ss.str().c_str()));
             }
 
             QGraphicsItemVertex *vert = dynamic_cast<QGraphicsItemVertex *>(*it);
@@ -498,10 +498,10 @@ void DrawingView::selectionChanged()
 
                 std::stringstream ss;
                 ss << "Vertex" << vert->getProjIndex();
-                bool accepted =
-                Gui::Selection().addSelection(viewObj->getDocument()->getName(),
+                //bool accepted =
+                static_cast<void> (Gui::Selection().addSelection(viewObj->getDocument()->getName(),
                                               viewObj->getNameInDocument(),
-                                              ss.str().c_str());
+                                              ss.str().c_str()));
 
             }
 
@@ -521,8 +521,8 @@ void DrawingView::selectionChanged()
 
                 Drawing::FeatureView *dimObj = dimItem->getViewObject();
 
-                bool accepted =
-                Gui::Selection().addSelection(dimObj->getDocument()->getName(),dimObj->getNameInDocument());
+                //bool accepted =
+                static_cast<void> (Gui::Selection().addSelection(dimObj->getDocument()->getName(),dimObj->getNameInDocument()));
 
             }
             continue;
@@ -578,7 +578,7 @@ void DrawingView::updateDrawing(bool forceUpdate)
     const std::vector<App::DocumentObject*> &pageChildren  = pageGui->getPageObject()->Views.getValues();
 
     // Count total # DocumentObjects in Page 
-    int docObjCount = 0;
+    unsigned int docObjCount = 0;
     for(std::vector<App::DocumentObject*>::const_iterator it = pageChildren.begin(); it != pageChildren.end(); ++it) {
         App::DocumentObject *docObj = *it;
         if(docObj->getTypeId().isDerivedFrom(Drawing::FeatureViewCollection::getClassTypeId())) {
@@ -934,7 +934,8 @@ void DrawingView::print(QPrinter* printer)
         rect = printer->pageRect();
 #endif
 
-    bool block = blockConnection(true); // avoid to be notified by itself
+    //bool block = 
+    static_cast<void> (blockConnection(true)); // avoid to be notified by itself
     Gui::Selection().clearSelection();
 
     m_view->toggleEdit(false);
@@ -1014,7 +1015,7 @@ void DrawingView::onSelectionChanged(const Gui::SelectionChanges& msg)
     }
     else if (msg.Type == Gui::SelectionChanges::AddSelection ||
              msg.Type == Gui::SelectionChanges::RmvSelection) {
-        bool select = (msg.Type == Gui::SelectionChanges::AddSelection);
+        //bool select = (msg.Type == Gui::SelectionChanges::AddSelection);
         // Check if it is a view object
     }
     else if (msg.Type == Gui::SelectionChanges::SetSelection) {
@@ -1041,8 +1042,8 @@ void DrawingView::saveSVG()
                              tr(" exported from FreeCAD document: ") +
                              docName;
 
-    int width  =  page->getPageWidth();
-    int height =  page->getPageHeight();
+    //int width  =  page->getPageWidth();
+    //int height =  page->getPageHeight();
     //Base::Console().Message("TRACE - saveSVG - page width: %d height: %d\n",width,height);    //A4 297x210
     QSvgGenerator svgGen;
     svgGen.setFileName(fn);
@@ -1060,7 +1061,8 @@ void DrawingView::saveSVG()
     svgGen.setTitle(QObject::tr("FreeCAD SVG Export"));
     svgGen.setDescription(svgDescription);
 
-    bool block = blockConnection(true); // avoid to be notified by itself
+    //bool block = 
+    static_cast<void> (blockConnection(true)); // avoid to be notified by itself
     Gui::Selection().clearSelection();
 
     m_view->toggleEdit(false);             //fiddle cache, cosmetic lines, vertices, etc

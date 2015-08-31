@@ -77,13 +77,13 @@
 using namespace DrawingGui;
 
 CanvasView::CanvasView(ViewProviderDrawingPage *vp, QWidget *parent)
-    : pageGui(0)
-    , QGraphicsView(parent)
+    : QGraphicsView(parent)
+    , pageTemplate(0)
     , m_renderer(Native)
+    , drawBkg(true)
     , m_backgroundItem(0)
     , m_outlineItem(0)
-    , drawBkg(true)
-    , pageTemplate(0)
+    , pageGui(0)
 {
     assert(vp);
     pageGui = vp;
@@ -385,11 +385,11 @@ void CanvasView::setPageTemplate(Drawing::FeatureTemplate *obj)
     removeTemplate();
 
     if(obj->isDerivedFrom(Drawing::FeatureParametricTemplate::getClassTypeId())) {
-        Drawing::FeatureParametricTemplate *dwgTemplate = static_cast<Drawing::FeatureParametricTemplate *>(obj);
+        //Drawing::FeatureParametricTemplate *dwgTemplate = static_cast<Drawing::FeatureParametricTemplate *>(obj);
         QGraphicsItemDrawingTemplate *qTempItem = new QGraphicsItemDrawingTemplate(scene());
         pageTemplate = qTempItem;
     } else if(obj->isDerivedFrom(Drawing::FeatureSVGTemplate::getClassTypeId())) {
-        Drawing::FeatureSVGTemplate *dwgTemplate = static_cast<Drawing::FeatureSVGTemplate *>(obj);
+        //Drawing::FeatureSVGTemplate *dwgTemplate = static_cast<Drawing::FeatureSVGTemplate *>(obj);
         QGraphicsItemSVGTemplate *qTempItem = new QGraphicsItemSVGTemplate(scene());
         pageTemplate = qTempItem;
     }
