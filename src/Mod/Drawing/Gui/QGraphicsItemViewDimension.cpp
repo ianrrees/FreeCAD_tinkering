@@ -48,6 +48,8 @@
   # include <QGraphicsTextItem>
 #endif
 
+#include <Precision.hxx>
+
 #include <App/Application.h>
 #include <App/Material.h>
 #include <Base/Console.h>
@@ -477,13 +479,10 @@ void QGraphicsItemViewDimension::draw()
 
         // Get magnitude of angle between dir and horizontal
         float angle = atan2f(dir.y,dir.x);
-        //bool flip=false;
         if (angle > M_PI_2+M_PI/12) {
             angle -= (float)M_PI;
-            //flip = true;
         } else if (angle <= -M_PI_2+M_PI/12) {
             angle += (float)M_PI;
-            //flip = true;
         }
 
         // when the datum line(dimension line??) is not parallel to (distStart-distEnd) the projection of
@@ -618,7 +617,7 @@ void QGraphicsItemViewDimension::draw()
     } else if(strcmp(dimType, "Diameter") == 0) {
         // Not sure whether to treat radius and diameter as the same
         // terminology: Dimension Text, Dimension Line(s), Extension Lines, Arrowheads
-        // not datumLabel, datum line/parallel line, perpendicular line, arw
+        // was datumLabel, datum line/parallel line, perpendicular line, arw
         Base::Vector3d arrow1Tip, arrow2Tip, dirDimLine, centre; //was p1,p2,dir
         QGraphicsItemDatumLabel *label = dynamic_cast<QGraphicsItemDatumLabel *>(datumLabel);
         Base::Vector3d lblCenter(label->X(), label->Y(), 0);
@@ -631,12 +630,12 @@ void QGraphicsItemViewDimension::draw()
             const Drawing::FeatureViewPart *refObj = static_cast<const Drawing::FeatureViewPart*>(objects[0]);
             int idx = std::atoi(SubNames[0].substr(4,4000).c_str());
 
-            // Use the cached value if available otherwise load this
+            // Use the cached value if available otherwise load this  //WF: caching geometry here makes for difficulties at load of saved doc?
             if(projGeom.size() != 1) {
                 projGeom.clear();
                 DrawingGeometry::BaseGeom *geom = refObj->getProjEdgeByIndex(idx);
                 if(!geom)
-                    throw Base::Exception("Edge couldn't be found for radius / diameter dimension");
+                    throw Base::Exception("Edge couldn't be found for diameter dimension");
 
                 projGeom.push_back(geom);
             }
@@ -658,34 +657,12 @@ void QGraphicsItemViewDimension::draw()
         float bbX  = label->boundingRect().width();
         float bbY = label->boundingRect().height();
 
-        // Orientate Position to be at the center of the datumLabel
-//         lblCenter += 0.5 * Base::Vector3d(bbX, bbY, 0.f);
-        dirDimLine = (lblCenter - centre).Normalize();
-
-#if 0
-        // Get magnitude of angle between horizontal
-        float angle = atan2f(dirDimLine.x,dirDimLine.y);
-        //bool flip=false;
-        if (angle > M_PI_2+M_PI/12) {                                  //90 + 15 = 105
-            angle -= (float)M_PI;
-            //flip = true;
-        } else if (angle <= -M_PI_2+M_PI/12) {                         //-90 + 15 = -75
-            angle += (float)M_PI;
-            //flip = true;
+        dirDimLine = (lblCenter - centre).Normalize();                          //if lblCenter == centre, this is (0,0,0)??
+        if (fabs(dirDimLine.Length()) < (Precision::Confusion())) {
+            dirDimLine = Base::Vector3d(-1.0,0.0,0.0);
         }
 
-        //float s = sin(angle);
-        //float c = cos(angle);
-
-        //Base::Console().Log("angle (%f, %f), bbx %f, bby %f", s,c,bbX, bbY);
-        // Note QGraphicsTextItem takes coordinate system from TOP LEFT - transfer to center
-        // Create new coordinate system based around x,y
-//         lblCenter += 0.5 * Base::Vector3d(bbX * c - bbY * s, bbX * s + bbY * c, 0.f);
-//         dirDimLine = (lblCenter - arrow1Tip).Normalize();
-//
-//         angle = atan2f(dirDimLine.x,dirDimLine.y);
-//
-#endif
+        //this is for inner placement only?  recalced for outer?
         arrow1Tip = centre - dirDimLine * radius;                                    //endpoint of diameter arrowhead1
         arrow2Tip = centre + dirDimLine * radius;                                    //endpoint of diameter arrowhead2
 
@@ -696,7 +673,8 @@ void QGraphicsItemViewDimension::draw()
 
         float margin = 5.f;
 
-        // Calculate the points
+        // Calculate the dimension line endpoints
+        // recalced for vert & horizontal snap & inner placement.  not used for nosnap outer?
         Base::Vector3d dLine1Tail = lblCenter - dirDimLine * (margin + w / 2);   //position of tail of 1st dimension line
         Base::Vector3d dLine2Tail = lblCenter + dirDimLine * (margin + w / 2);
 
@@ -816,8 +794,8 @@ void QGraphicsItemViewDimension::draw()
                 label->setRotation(0.);
             }
         } else {                                                       //NOT outerplacement ie dimLines are inside circle
-            double angle = M_PI + atan2(arrow1Tip.y, arrow1Tip.x);
-            label->setRotation(angle * 180 / M_PI);
+            //text always rightside up inside circle
+            label->setRotation(0);
             dLine1Tail = centre - dirDimLine * margin;
             dLine2Tail = centre + dirDimLine * margin;
 
@@ -883,7 +861,6 @@ void QGraphicsItemViewDimension::draw()
         QGraphicsItemArrow *ar1 = dynamic_cast<QGraphicsItemArrow *>(arw.at(0));
         QGraphicsItemArrow *ar2 = dynamic_cast<QGraphicsItemArrow *>(arw.at(1));
 
-        //Base::Vector3d ar1Pos = arrow1Tip + dirDimLine * radius;
         float arAngle = atan2(dirDimLine.y, dirDimLine.x) * 180 / M_PI;
 
         ar1->setHighlighted(isSelected() || hasHover);
@@ -932,7 +909,7 @@ void QGraphicsItemViewDimension::draw()
                 projGeom.clear();
                 DrawingGeometry::BaseGeom *geom = refObj->getProjEdgeByIndex(idx);
                 if(!geom)
-                    throw Base::Exception("Edge couldn't be found for radius / diameter dimension");
+                    throw Base::Exception("Edge couldn't be found for radius dimension");
 
                 projGeom.push_back(geom);
             }
@@ -954,35 +931,28 @@ void QGraphicsItemViewDimension::draw()
         float bbX  = label->boundingRect().width();
         float bbY = label->boundingRect().height();
 
-        // Orientate Position to be at the center of the datumLabel
-//         lblCenter += 0.5 * Base::Vector3d(bbX, bbY, 0.f);
         dirDimLine = (lblCenter - centre).Normalize();
+        if (fabs(dirDimLine.Length()) < (Precision::Confusion())) {
+            dirDimLine = Base::Vector3d(-1.0,0.0,0.0);
+        }
 
         // Get magnitude of angle between horizontal
         float angle = atan2f(dirDimLine.y,dirDimLine.x);
-        //bool flip=false;
         if (angle > M_PI_2+M_PI/12) {
             angle -= (float)M_PI;
-            //flip = true;
         } else if (angle <= -M_PI_2+M_PI/12) {
             angle += (float)M_PI;
-            //flip = true;
         }
 
-        //float s = sin(angle);
-        //float c = cos(angle);
-
         //for inner placement
-        //arrow1 is from label centre(+ margin) to circle edge
-        //arrow1 is from label centre to circle centre
-        //arrow2Tip = centre + dirDimLine * radius;
-        arrow1Tip = centre;
-        arrow2Tip = centre + dirDimLine * radius;
+        //dimension line should go from centre to curve or from lblCenter to curve
+        //currently draws a diameter (curve to curve) for innerPlacement
+        arrow1Tip = centre - dirDimLine * radius;                                    //endpoint of radius arrowhead1
+        arrow2Tip = centre + dirDimLine * radius;                                    //endpoint of radius arrowhead2
 
         QFontMetrics fm(label->font());
 
         int w = fm.width(labelText);
-        //int h = fm.height();
 
         float margin = 5.f;
 
