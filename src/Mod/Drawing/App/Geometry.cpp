@@ -113,7 +113,10 @@ std::vector<Base::Vector2D> BaseGeom::findEndPoints()
     std::vector<Base::Vector2D> result;
     switch(this->geomType) {
         case DrawingGeometry::CIRCLE: {
-          //DrawingGeometry::Circle *geom = static_cast<DrawingGeometry::Circle *>(this);
+          DrawingGeometry::Circle *geom = static_cast<DrawingGeometry::Circle *>(this);
+          double x = geom->center.fX + geom->radius;
+          result.push_back(Base::Vector2D(x,geom->center.fY));
+          result.push_back(Base::Vector2D(x,geom->center.fY));
         } break;
         case DrawingGeometry::ARCOFCIRCLE: {
           DrawingGeometry::AOC  *geom = static_cast<DrawingGeometry::AOC *>(this);
@@ -121,7 +124,9 @@ std::vector<Base::Vector2D> BaseGeom::findEndPoints()
           result.push_back(geom->endPnt);
         } break;
         case DrawingGeometry::ELLIPSE: {
-          //DrawingGeometry::Ellipse *geom = static_cast<DrawingGeometry::Ellipse *>(this);
+          DrawingGeometry::Ellipse *geom = static_cast<DrawingGeometry::Ellipse *>(this);
+          result.push_back(geom->center + Base::Vector2D(geom->major * cos(geom->angle), geom->major * sin(geom->angle)));
+          result.push_back(geom->center + Base::Vector2D(geom->major * cos(geom->angle), geom->major * sin(geom->angle)));
         } break;
         case DrawingGeometry::ARCOFELLIPSE: {
           DrawingGeometry::AOE *geom = static_cast<DrawingGeometry::AOE *>(this);
