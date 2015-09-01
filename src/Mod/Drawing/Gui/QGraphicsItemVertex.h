@@ -79,8 +79,8 @@ private:
     QColor m_colNormal;
     QColor m_colPre;
     QColor m_colSel;
-    Qt::BrushStyle m_fill;
     float m_radius;
+    Qt::BrushStyle m_fill;
 };
 
 } // namespace DrawingViewGui
