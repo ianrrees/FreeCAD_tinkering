@@ -95,7 +95,7 @@ FeatureViewDimension::FeatureViewDimension(void)
 
     ProjectionType.setEnums(ProjTypeEnums);
     ADD_PROPERTY(ProjectionType, ((long)0));                           //True or Projected measurement
-    
+
     //hide the FeatureView properties that don't apply to Dimensions
     //App::PropertyType propType = static_cast<App::PropertyType>(App::Prop_Hidden|App::Prop_Output);
     int bitReadOnly = 2;
@@ -106,7 +106,7 @@ FeatureViewDimension::FeatureViewDimension(void)
     Scale.StatusBits.set(bitHidden,true);
     Rotation.StatusBits.set(bitReadOnly, true);
     Rotation.StatusBits.set(bitHidden, true);
-    //TODO: hide Dimension X,Y? 
+    //TODO: hide Dimension X,Y?
 
     measurement = new Measure::Measurement();
 }
@@ -421,14 +421,15 @@ int FeatureViewDimension::getRefType() const
 {
     int refType = invalidRef;
     const std::vector<std::string> &subElements      = References.getSubValues();
-    if ((subElements.size() == 1) && (DrawUtil::getGeomTypeFromName(subElements[0]).compare("Edge") == 0)) {
+    if ((subElements.size() == 1) &&
+        (DrawUtil::getGeomTypeFromName(subElements[0]) == "Edge")) {
         refType = oneEdge;
     } else if (subElements.size() == 2) {
-        if ((DrawUtil::getGeomTypeFromName(subElements[0]).compare("Edge") == 0) &&
-            (DrawUtil::getGeomTypeFromName(subElements[1]).compare("Edge") == 0)) {
+        if ((DrawUtil::getGeomTypeFromName(subElements[0]) == "Edge") &&
+            (DrawUtil::getGeomTypeFromName(subElements[1]) == "Edge")) {
             refType = twoEdge;
-        } else if ((DrawUtil::getGeomTypeFromName(subElements[0]).compare("Vertex") == 0) &&
-                   (DrawUtil::getGeomTypeFromName(subElements[1]).compare("Vertex") == 0)) {
+        } else if ((DrawUtil::getGeomTypeFromName(subElements[0]) == "Vertex") &&
+                   (DrawUtil::getGeomTypeFromName(subElements[1]) == "Vertex")) {
             refType = twoVertex;
         }
     //} else add different types here - Vertex-Edge, Vertex-Face, ...
@@ -503,5 +504,3 @@ bool FeatureViewDimension::hasReferences(void) const
     }
     return result;
 }
-
-

@@ -50,6 +50,7 @@
 # include <Mod/Drawing/App/FeatureProjGroup.h>
 # include <Mod/Drawing/App/FeatureViewDimension.h>
 # include <Mod/Drawing/App/FeaturePage.h>
+# include <Mod/Drawing/App/DrawUtil.h>
 
 # include "DrawingView.h"
 # include "TaskDialog.h"
@@ -63,8 +64,6 @@ bool _checkSelection(Gui::Command* cmd);
 int _isValidSingleEdge(Gui::Command* cmd, bool trueDim=true);
 bool _isValidVertexes(Gui::Command* cmd);
 int _isValidEdgeToEdge(Gui::Command* cmd, bool trueDim=true);
-int _getIndexFromName(std::string geomName);
-bool _checkGeomType(std::string geomType, std::string objName);
 bool _isTrueAllowed(Drawing::FeatureViewPart* objFeat, const std::vector<std::string> &SubNames);
 
 enum EdgeType{
@@ -188,11 +187,6 @@ void CmdDrawingNewDimension::activated(int iMsg)
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
 
-//    // Check if the part is a projection group item;  TODO: shouldn't this be Feature logic?
-//    Drawing::FeatureProjGroupItem *projItem = dynamic_cast<Drawing::FeatureProjGroupItem *>(objFeat);
-//    if(projItem) {
-//        doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
-//    }
     // make a True dimension if you can, Projected otherwise
     if (trueDimAllowed) {
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'True'",FeatName.c_str());
@@ -280,12 +274,6 @@ void CmdDrawingNewRadiusDimension::activated(int iMsg)
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
 
-//    // Check if the part is a projection group item;  TODO: shouldn't this be Feature logic?
-//    Drawing::FeatureProjGroupItem *projItem = dynamic_cast<Drawing::FeatureProjGroupItem *>(objFeat);
-//    if(projItem) {
-//        doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
-//    }
- 
     if (trueDimAllowed) {
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'True'",FeatName.c_str());
     } else {
@@ -343,15 +331,6 @@ void CmdDrawingNewDiameterDimension::activated(int iMsg)
     //selected edge(s) must have valid reference to Source edge for True Dimension
     //otherwise Dimension must be Projected
     bool trueDimAllowed = _isTrueAllowed(objFeat,SubNames);
-//    std::vector<std::string>::const_iterator it = SubNames.begin();
-//    bool trueDimAllowed = true;
-//    for (; it != SubNames.end(); it++) {
-//        int idx = _getIndexFromName((*it));
-//        int ref = objFeat->getEdgeRefByIndex(idx);
-//        if (ref < 0) {
-//            trueDimAllowed = false;
-//        }
-//    }
 
     int edgeType = _isValidSingleEdge(this,trueDimAllowed);
     if (edgeType == isCircle) {
@@ -382,11 +361,6 @@ void CmdDrawingNewDiameterDimension::activated(int iMsg)
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
 
-    // Check if the part is a projection group item;  TODO: shouldn't this be Feature logic?
-    //Drawing::FeatureProjGroupItem *projItem = dynamic_cast<Drawing::FeatureProjGroupItem *>(objFeat);
-    //if(projItem) {
-    //    doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
-    //}
     // make a True dimension if you can, Projected otherwise
     if (trueDimAllowed) {
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'True'",FeatName.c_str());
@@ -481,12 +455,6 @@ void CmdDrawingNewLengthDimension::activated(int iMsg)
 
     doCommand(Doc, "App.activeDocument().%s.FormatSpec = '%%value%%'", FeatName.c_str());
 
-//    // Check if the part is a projection group item;  TODO: shouldn't this be Feature logic?
-//    Drawing::FeatureProjGroupItem *projItem = dynamic_cast<Drawing::FeatureProjGroupItem *>(objFeat);
-//    if(projItem) {
-//        doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'", FeatName.c_str());
-//    }
-
     // make a True dimension if you can, Projected otherwise
     if (trueDimAllowed) {
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'True'",FeatName.c_str());
@@ -577,12 +545,6 @@ void CmdDrawingNewDistanceXDimension::activated(int iMsg)
     dim->References.setValues(objs, subs);
 
     doCommand(Doc, "App.activeDocument().%s.FormatSpec = '%%value%%'", FeatName.c_str());
-
-//    // Check if the part is a projection group item;  TODO: shouldn't this be Feature logic?
-//    Drawing::FeatureProjGroupItem *projItem = dynamic_cast<Drawing::FeatureProjGroupItem *>(objFeat);
-//    if(projItem) {
-//        doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
-//    }
 
     // make a True dimension if you can, Projected otherwise
     if (trueDimAllowed) {
@@ -675,12 +637,6 @@ void CmdDrawingNewDistanceYDimension::activated(int iMsg)
 
     doCommand(Doc, "App.activeDocument().%s.FormatSpec = '%%value%%'", FeatName.c_str());
 
-//    // Check if the part is a projection group item;  TODO: shouldn't this be Feature logic?
-//    Drawing::FeatureProjGroupItem *projItem = dynamic_cast<Drawing::FeatureProjGroupItem *>(objFeat);
-//    if(projItem) {
-//        doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
-//    }
-
     // make a True dimension if you can, Projected otherwise
     if (trueDimAllowed) {
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'True'",FeatName.c_str());
@@ -762,9 +718,6 @@ void CmdDrawingNewAngleDimension::activated(int iMsg)
     dim = dynamic_cast<Drawing::FeatureViewDimension *>(getDocument()->getObject(FeatName.c_str()));
     dim->References.setValues(objs, subs);
 
-//TODO: why are angles only projected??WF
-//    doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'Projected'",FeatName.c_str());
-
     // make a True dimension if you can, Projected otherwise
     if (trueDimAllowed) {
         doCommand(Doc,"App.activeDocument().%s.ProjectionType = 'True'",FeatName.c_str());
@@ -836,14 +789,13 @@ bool _checkSelection(Gui::Command* cmd) {
 
 //! verify that Selection contains a valid Geometry for a single Edge Dimension (True or Projected)
 int _isValidSingleEdge(Gui::Command* cmd, bool trueDim) {
- 
     int edgeType = isInvalid;
     std::vector<Gui::SelectionObject> selection = cmd->getSelection().getSelectionEx();
     Drawing::FeatureViewPart * objFeat = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
     const std::vector<std::string> &SubNames = selection[0].getSubNames();
     if (SubNames.size() == 1) {                                                 //only 1 subshape selected
-        if (_checkGeomType("Edge",SubNames[0])) {                                //the Name starts with "Edge"
-            int GeoId = _getIndexFromName(SubNames[0]);
+        if (DrawUtil::getGeomTypeFromName(SubNames[0]) == "Edge") {                                //the Name starts with "Edge"
+            int GeoId = DrawUtil::getIndexFromName(SubNames[0]);
             DrawingGeometry::BaseGeom* geom = NULL;
             if (trueDim) {
                 int ref = objFeat->getEdgeRefByIndex(GeoId);
@@ -889,8 +841,8 @@ bool _isValidVertexes(Gui::Command* cmd) {
     std::vector<Gui::SelectionObject> selection = cmd->getSelection().getSelectionEx();
     const std::vector<std::string> &SubNames = selection[0].getSubNames();
     if(SubNames.size() == 2) {                                         //there are 2
-        if (_checkGeomType("Vertex",SubNames[0]) &&                    //they both start with "Vertex"
-            _checkGeomType("Vertex",SubNames[1])) {
+        if (DrawUtil::getGeomTypeFromName(SubNames[0]) == "Vertex" &&                    //they both start with "Vertex"
+            DrawUtil::getGeomTypeFromName(SubNames[1]) == "Vertex") {
             return true;
         }
     }
@@ -902,47 +854,47 @@ int _isValidEdgeToEdge(Gui::Command* cmd, bool trueDim) {
 //TODO: can the edges be in 2 different features??
     int edgeType = isInvalid;
     std::vector<Gui::SelectionObject> selection = cmd->getSelection().getSelectionEx();
-    Drawing::FeatureViewPart* objFeat1 = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
-    //Drawing::FeatureViewPart* objFeat2 = dynamic_cast<Drawing::FeatureViewPart *>(selection[1].getObject());
+    Drawing::FeatureViewPart* objFeat0 = dynamic_cast<Drawing::FeatureViewPart *>(selection[0].getObject());
+    //Drawing::FeatureViewPart* objFeat1 = dynamic_cast<Drawing::FeatureViewPart *>(selection[1].getObject());
     const std::vector<std::string> &SubNames = selection[0].getSubNames();
     if(SubNames.size() == 2) {                                         //there are 2
-        if (_checkGeomType("Edge",SubNames[0]) &&                      //they both start with "Edge"
-            _checkGeomType("Edge",SubNames[1])) {
-            int GeoId1 = _getIndexFromName(SubNames[0]);
-            int GeoId2 = _getIndexFromName(SubNames[1]);
+        if (DrawUtil::getGeomTypeFromName(SubNames[0]) == "Edge" &&                      //they both start with "Edge"
+            DrawUtil::getGeomTypeFromName(SubNames[1]) == "Edge") {
+            int GeoId0 = DrawUtil::getIndexFromName(SubNames[0]);
+            int GeoId1 = DrawUtil::getIndexFromName(SubNames[1]);
+            DrawingGeometry::BaseGeom* geom0 = NULL;
             DrawingGeometry::BaseGeom* geom1 = NULL;
-            DrawingGeometry::BaseGeom* geom2 = NULL;
             if (trueDim) {
-                int ref1 = objFeat1->getEdgeRefByIndex(GeoId1);
-                int ref2 = objFeat1->getEdgeRefByIndex(GeoId2);
-                geom1 = objFeat1->getCompleteEdge(ref1);
-                geom2 = objFeat1->getCompleteEdge(ref2);
+                int ref0 = objFeat0->getEdgeRefByIndex(GeoId0);
+                int ref1 = objFeat0->getEdgeRefByIndex(GeoId1);
+                geom0 = objFeat0->getCompleteEdge(ref0);
+                geom1 = objFeat0->getCompleteEdge(ref1);
             } else {
-                geom1 = objFeat1->getProjEdgeByIndex(GeoId1);
-                geom2 = objFeat1->getProjEdgeByIndex(GeoId2);
+                geom0 = objFeat0->getProjEdgeByIndex(GeoId0);
+                geom1 = objFeat0->getProjEdgeByIndex(GeoId1);
             }
-            if ((!geom1) || (!geom2)) {
-                Base::Console().Error("Logic Error: no geometry for GeoId: %d or GeoId: %d\n",GeoId1,GeoId2);
+            if ((!geom0) || (!geom1)) {
+                Base::Console().Error("Logic Error: no geometry for GeoId: %d or GeoId: %d\n",GeoId0,GeoId1);
                 return isInvalid;
             }
-            
-            if(geom1->geomType == DrawingGeometry::GENERIC &&
-               geom2->geomType == DrawingGeometry::GENERIC) {
+
+            if(geom0->geomType == DrawingGeometry::GENERIC &&
+               geom1->geomType == DrawingGeometry::GENERIC) {
+                DrawingGeometry::Generic *gen0 = static_cast<DrawingGeometry::Generic *>(geom0);
                 DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(geom1);
-                DrawingGeometry::Generic *gen2 = static_cast<DrawingGeometry::Generic *>(geom2);
-                if(gen1->points.size() > 2 ||
-                   gen2->points.size() > 2) {                          //the edge is a polyline
+                if(gen0->points.size() > 2 ||
+                   gen1->points.size() > 2) {                          //the edge is a polyline
                     return isInvalid;
                 }
-                Base::Vector2D lin1 = gen1->points.at(1) - gen1->points.at(0);
-                Base::Vector2D lin2 = gen2->points.at(1) - gen2->points.at(0);
-                double xprod = fabs(lin1.fX * lin2.fY - lin1.fY * lin2.fX);
+                Base::Vector2D line0 = gen0->points.at(1) - gen0->points.at(0);
+                Base::Vector2D line1 = gen1->points.at(1) - gen1->points.at(0);
+                double xprod = fabs(line0.fX * line1.fY - line0.fY * line1.fX);
                 if(xprod > FLT_EPSILON) {                              //edges are not parallel
                     return isAngle;
                 }
-                if(fabs(lin1.fX) < FLT_EPSILON && fabs(lin2.fX) < FLT_EPSILON) {
+                if(fabs(line0.fX) < FLT_EPSILON && fabs(line1.fX) < FLT_EPSILON) {
                     edgeType = isHorizontal;
-                } else if(fabs(lin1.fY) < FLT_EPSILON && fabs(lin2.fY) < FLT_EPSILON) {
+                } else if(fabs(line0.fY) < FLT_EPSILON && fabs(line1.fY) < FLT_EPSILON) {
                     edgeType = isVertical;
                 } else {
                     edgeType = isDiagonal;
@@ -955,43 +907,13 @@ int _isValidEdgeToEdge(Gui::Command* cmd, bool trueDim) {
     return edgeType;
 }
 
-int _getIndexFromName(std::string geomName) {
-   boost::regex re("\\d+$");                                           //one of more digits at end of string
-   boost::match_results<std::string::const_iterator> what;
-   boost::match_flag_type flags = boost::match_default;
-   char* endChar;
-   string::const_iterator begin = geomName.begin();
-   string::const_iterator end = geomName.end();
-   std::stringstream ErrorMsg;
-
-   if (!geomName.empty()) {
-      if (boost::regex_search(begin, end, what, re, flags)) {
-         return int (std::strtol(what.str().c_str(), &endChar, 10));         //TODO: use std::stoi() in c++11
-      } else {
-         ErrorMsg << "In _getIndexFromName: malformed geometry name - " << geomName;
-         throw Base::Exception(ErrorMsg.str());
-      }
-   } else {
-         throw Base::Exception("In _getIndexFromName: empty geometry name");    
-   }
-}
-
-//! verify that objName(Edge1) describes a geometry of type geomType(Edge)
-bool _checkGeomType(std::string geomType, std::string objName) {
-    if (objName.compare(0,geomType.length(),geomType) == 0) {                //the Name starts with geomType
-        return true;
-    } else {
-        return false;
-    }
-}
-
-//! verify that each SubName has a corresponding geometry in objFeat->Source
+//! verify that each SubName has a corresponding Edge geometry in objFeat->Source
 bool _isTrueAllowed(Drawing::FeatureViewPart* objFeat, const std::vector<std::string> &SubNames)
 {
     std::vector<std::string>::const_iterator it = SubNames.begin();
     bool trueDimAllowed = true;
     for (; it != SubNames.end(); it++) {
-        int idx = _getIndexFromName((*it));
+        int idx = DrawUtil::getIndexFromName((*it));
         int ref = objFeat->getEdgeRefByIndex(idx);
         if (ref < 0) {
             trueDimAllowed = false;
@@ -999,4 +921,3 @@ bool _isTrueAllowed(Drawing::FeatureViewPart* objFeat, const std::vector<std::st
     }
     return trueDimAllowed;
 }
-

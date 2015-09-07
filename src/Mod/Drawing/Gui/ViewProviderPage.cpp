@@ -61,6 +61,7 @@
 #include <Mod/Drawing/App/FeatureView.h>
 #include <Mod/Drawing/App/FeatureProjGroupItem.h>
 #include <Mod/Drawing/App/FeatureViewDimension.h>
+#include <Mod/Drawing/App/DrawUtil.h>
 
 using namespace DrawingGui;
 
@@ -141,7 +142,7 @@ bool ViewProviderDrawingPage::onDelete(const std::vector<std::string> &items)
 {
     if (!view.isNull()) {
         // TODO: if DrawingPage has children, they should be deleted too, since they are useless without the page.
-        //       logic is in the "this object has links are you sure" dialog 
+        //       logic is in the "this object has links are you sure" dialog
         Gui::getMainWindow()->removeWindow(view);
         Gui::getMainWindow()->activatePreviousWindow();
         view->deleteLater(); // Delete the drawing view;
@@ -183,7 +184,7 @@ bool ViewProviderDrawingPage::showDrawingView()
     if (isRestoring()) {
         return true;
     }
-    
+
     if (view.isNull()){
         Gui::Document* doc = Gui::Application::Instance->getDocument
             (pcObject->getDocument());
@@ -272,11 +273,14 @@ void ViewProviderDrawingPage::onSelectionChanged(const Gui::SelectionChanges& ms
 
                 std::string str = msg.pSubName;
                 // If it's a subfeature, dont select feature
-                if(strcmp(str.substr(0,4).c_str(), "Edge") == 0||
-                  strcmp(str.substr(0,6).c_str(), "Vertex") == 0){
-                    // TODO implement me
-                } else {
-                    view->selectFeature(selObj.pObject, true);
+                if (!str.empty()) {
+                    if (DrawUtil::getGeomTypeFromName(str) == "Edge" ||
+                        DrawUtil::getGeomTypeFromName(str) == "Vertex") {
+                        //TODO: handle Faces
+                        // TODO implement me
+                    } else {
+                        view->selectFeature(selObj.pObject, true);
+                    }
                 }
 
             }
@@ -288,11 +292,13 @@ void ViewProviderDrawingPage::onSelectionChanged(const Gui::SelectionChanges& ms
 
                 std::string str = msg.pSubName;
                 // If it's a subfeature, dont select feature
-                if(strcmp(str.substr(0,4).c_str(), "Edge") == 0||
-                  strcmp(str.substr(0,6).c_str(), "Vertex") == 0){
-                    // TODO implement me
-                } else {
-                    view->selectFeature(obj, selectState);
+                if (!str.empty()) {
+                    if (DrawUtil::getGeomTypeFromName(str) == "Edge" ||
+                        DrawUtil::getGeomTypeFromName(str) == "Vertex") {
+                        // TODO implement me
+                    } else {
+                        view->selectFeature(obj, selectState);
+                    }
                 }
             }
         }
