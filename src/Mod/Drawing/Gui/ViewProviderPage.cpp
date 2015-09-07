@@ -139,7 +139,7 @@ void ViewProviderDrawingPage::updateData(const App::Property* prop)
 
 bool ViewProviderDrawingPage::onDelete(const std::vector<std::string> &items)
 {
-    if (view) {
+    if (!view.isNull()) {
         // TODO: if DrawingPage has children, they should be deleted too, since they are useless without the page.
         //       logic is in the "this object has links are you sure" dialog 
         Gui::getMainWindow()->removeWindow(view);
@@ -180,7 +180,11 @@ bool ViewProviderDrawingPage::doubleClicked(void)
 
 bool ViewProviderDrawingPage::showDrawingView()
 {
-    if (!view){
+    if (isRestoring()) {
+        return true;
+    }
+    
+    if (view.isNull()){
         Gui::Document* doc = Gui::Application::Instance->getDocument
             (pcObject->getDocument());
         view = new DrawingView(this, doc, Gui::getMainWindow());
@@ -238,33 +242,14 @@ std::vector<App::DocumentObject*> ViewProviderDrawingPage::claimChildren(void) c
 
 void ViewProviderDrawingPage::unsetEdit(int ModNum)
 {
-    if (!view){
-        Gui::Document* doc = Gui::Application::Instance->getDocument
-            (pcObject->getDocument());
-        view = new DrawingView(this, doc, Gui::getMainWindow());
-        view->setWindowIcon(Gui::BitmapFactory().pixmap("actions/drawing-landscape"));
-
-//        const char* objname = pcObject->Label.getValue();
-//        view->setObjectName(QString::fromUtf8(objname));
-//        view->onRelabel(doc);
-//        view->setDocumentObject(pcObject->getNameInDocument());
-        view->setWindowTitle(QObject::tr("Drawing viewer") + QString::fromAscii("[*]"));
-        view->updateDrawing();
-        view->updateTemplate(true);
-        Gui::getMainWindow()->addWindow(view);
-        view->viewAll();
-    } else {
-        view->updateDrawing();
-        view->updateTemplate(true);
-    }
-
+    static_cast<void>(showDrawingView());
     return;
 }
 
 
 DrawingView* ViewProviderDrawingPage::getDrawingView()
 {
-    if (!view) {
+    if (view.isNull()) {
         Base::Console().Log("INFO - ViewProviderDrawingPage::getDrawingView has no view!\n");
         return 0;
     } else {
@@ -274,8 +259,7 @@ DrawingView* ViewProviderDrawingPage::getDrawingView()
 
 void ViewProviderDrawingPage::onSelectionChanged(const Gui::SelectionChanges& msg)
 {
-
-    if(view) {
+    if(!view.isNull()) {
         if(msg.Type == Gui::SelectionChanges::SetSelection) {
             view->clearSelection();
             std::vector<Gui::SelectionSingleton::SelObj> objs = Gui::Selection().getSelection(msg.pDocName);
@@ -330,11 +314,16 @@ void ViewProviderDrawingPage::onChanged(const App::Property *prop)
     Gui::ViewProviderDocumentObject::onChanged(prop);
 }
 
+void ViewProviderDrawingPage::startRestoring()
+{
+    restoreState = true;
+    Gui::ViewProviderDocumentObject::startRestoring();
+}
+
 void ViewProviderDrawingPage::finishRestoring()
 {
-    if (view) {
-        view->updateDrawing(true);
-    }
+    restoreState = false;
+    static_cast<void>(showDrawingView());
     Gui::ViewProviderDocumentObject::finishRestoring();
 }
 

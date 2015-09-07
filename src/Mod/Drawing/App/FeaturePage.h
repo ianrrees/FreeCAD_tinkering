@@ -87,6 +87,7 @@ public:
 protected:
     void onBeforeChange(const App::Property* prop);
     void onChanged(const App::Property* prop);
+    virtual void onDocumentRestored();
 
 private:
     static const char* ProjectionTypeEnums[];

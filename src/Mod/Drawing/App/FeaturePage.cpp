@@ -42,6 +42,8 @@
 #include "FeatureViewClip.h"
 #include "FeatureTemplate.h"
 #include "FeatureViewCollection.h"
+#include "FeatureViewPart.h"
+#include "FeatureViewDimension.h"
 
 #include "FeaturePagePy.h"  // generated from FeaturePagePy.xml
 
@@ -248,3 +250,26 @@ int FeaturePage::removeView(App::DocumentObject *docObj)
 
     return Views.getSize();
 }
+
+void FeaturePage::onDocumentRestored()
+{
+    std::vector<App::DocumentObject*> featViews = Views.getValues();
+    std::vector<App::DocumentObject*>::const_iterator it = featViews.begin();
+    //first, make sure all the Parts have been executed so GeometryObjects exist
+    for(; it != featViews.end(); ++it) {
+        Drawing::FeatureViewPart *part = dynamic_cast<Drawing::FeatureViewPart *>(*it);
+        if (part != NULL) {
+            part->execute();
+        }
+    }
+    //second, make sure all the Dimensions have been executed so Measurements have References
+    for(it = featViews.begin(); it != featViews.end(); ++it) {
+        Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(*it);
+        if (dim != NULL) {
+            dim->execute();
+        }
+    }
+    recompute();
+    App::DocumentObject::onDocumentRestored();
+}
+

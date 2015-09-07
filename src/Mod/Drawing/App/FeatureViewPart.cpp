@@ -64,6 +64,7 @@
 #include "Geometry.h"
 #include "FeatureViewPart.h"
 #include "ProjectionAlgos.h"
+//#include "FeatureViewDimension.h"
 
 using namespace Drawing;
 using namespace std;
@@ -85,7 +86,7 @@ FeatureViewPart::FeatureViewPart(void) : geometryObject(0)
     static const char *vgroup = "Drawing view";
 
     ADD_PROPERTY_TYPE(Direction ,(0,0,1.0)    ,group,App::Prop_None,"Projection normal direction");
-    ADD_PROPERTY_TYPE(Source ,(0),group,App::Prop_None,"Shape to view");
+    ADD_PROPERTY_TYPE(Source ,(0),group,App::Prop_None,"3D Shape to view");
     ADD_PROPERTY_TYPE(ShowHiddenLines ,(false),group,App::Prop_None,"Control the appearance of the dashed hidden lines");
     ADD_PROPERTY_TYPE(ShowSmoothLines ,(false),group,App::Prop_None,"Control the appearance of the smooth lines");
     ADD_PROPERTY_TYPE(LineWidth,(0.7f),vgroup,App::Prop_None,"The thickness of the resulting lines");
@@ -105,21 +106,18 @@ FeatureViewPart::~FeatureViewPart()
 
 App::DocumentObjectExecReturn *FeatureViewPart::execute(void)
 {
-    //## Get the Part Link ##/
     App::DocumentObject *link = Source.getValue();
-
-    //Base::Console().Log("execute view feat");
     if (!link) {
-        return new App::DocumentObjectExecReturn("No object linked");
+        return new App::DocumentObjectExecReturn("FVP - No Source object linked");
     }
 
     if (!link->getTypeId().isDerivedFrom(Part::Feature::getClassTypeId())) {
-        return new App::DocumentObjectExecReturn("Linked object is not a Part object");
+        return new App::DocumentObjectExecReturn("FVP - Linked object is not a Part object");
     }
 
     TopoDS_Shape shape = static_cast<Part::Feature*>(link)->Shape.getShape()._Shape;
     if (shape.IsNull()) {
-        return new App::DocumentObjectExecReturn("Linked shape object is empty");
+        return new App::DocumentObjectExecReturn("FVP - Linked shape object is empty");
     }
 
     try {
@@ -140,7 +138,7 @@ App::DocumentObjectExecReturn *FeatureViewPart::execute(void)
 
 
     // There is a guaranteed change so check any references linked to this and touch
-    // We need to update all annotations referencing this
+    // We need to update all views pointing at this (ProjectionGroup, ClipGroup, etc)
     std::vector<App::DocumentObject*> parent = getInList();
     for (std::vector<App::DocumentObject*>::iterator it = parent.begin(); it != parent.end(); ++it) {
         if ((*it)->getTypeId().isDerivedFrom(FeatureView::getClassTypeId())) {
@@ -154,32 +152,36 @@ App::DocumentObjectExecReturn *FeatureViewPart::execute(void)
 
 short FeatureViewPart::mustExecute() const
 {
-    // If Tolerance Property is touched
-    return (Direction.isTouched() ||
+    short result  = (Direction.isTouched() ||
             XAxisDirection.isTouched() ||
             Source.isTouched() ||
             Scale.isTouched() ||
             ScaleType.isTouched() ||
             ShowHiddenLines.isTouched());
+    return result; 
 }
 
 void FeatureViewPart::onChanged(const App::Property* prop)
 {
+    if (!isRestoring()) {
+        if (prop == &Direction ||
+            prop == &XAxisDirection ||
+            prop == &Source ||
+            prop == &Scale ||
+            prop == &ScaleType ||
+            prop == &ShowHiddenLines) {
+            try {
+                App::DocumentObjectExecReturn *ret = recompute();
+                delete ret;
+            }
+            catch (...) {
+            }
+        }
+    }
     FeatureView::onChanged(prop);
 
 //TODO: when scale changes, any Dimensions for this View sb recalculated.  
-    if (prop == &Direction ||
-        prop == &XAxisDirection ||
-        prop == &Source ||
-        prop == &Scale ||
-        prop == &ScaleType ||
-        prop == &ShowHiddenLines) {
-          if (!isRestoring()) {
-              if(prop->isTouched()) {
-                  FeatureViewPart::execute();            // TODO: sb execute() for derived classes (ex Section) with execute override??
-              }
-          }
-    }
+
 }
 
 const std::vector<DrawingGeometry::Vertex *> & FeatureViewPart::getVertexGeometry() const
@@ -215,9 +217,8 @@ const std::vector<int> & FeatureViewPart::getEdgeReferences() const
 //! project Source Edge(idx) to 2D BaseGeom
 DrawingGeometry::BaseGeom *FeatureViewPart::getCompleteEdge(int idx) const
 {
-   //NOTE: idx is in fact a Reference to an Edge in Source?
+   //NOTE: idx is in fact a Reference to an Edge in Source
    //returns projection of ref'd Edge as BaseGeom. Why not just use existing BaseGeom(idx)?
-   //## Get the Part Link ##/
     App::DocumentObject* link = Source.getValue();
 
     if (!link || !link->getTypeId().isDerivedFrom(Part::Feature::getClassTypeId()))
@@ -369,6 +370,20 @@ int FeatureViewPart::getVertexRefByIndex(int idx) const
 Base::BoundBox3d FeatureViewPart::getBoundingBox() const
 {
     return bbox;
+}
+
+bool FeatureViewPart::hasGeometry(void) const
+{
+    bool result = false;
+    const std::vector<DrawingGeometry::Vertex*> &verts = getVertexGeometry();
+    const std::vector<DrawingGeometry::BaseGeom*> &edges = getEdgeGeometry();
+    if (verts.empty() &&
+        edges.empty() ) {
+        result = false;
+    } else {
+        result = true;
+    }
+    return result;
 }
 
 Base::Vector3d _getValidXDir(const FeatureViewPart *me)

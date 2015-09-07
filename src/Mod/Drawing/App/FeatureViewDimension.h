@@ -59,6 +59,7 @@ public:
     App::PropertyString  FormatSpec;
 
     short mustExecute() const;
+    bool hasReferences(void) const;
 
     /** @name methods overide Feature */
     //@{
@@ -80,14 +81,13 @@ protected:
     int getIndexFromName(std::string geomName) const;
     int getRefType() const;                                                     //Vertex-Vertex, Edge, Edge-Edge
     int get3DRef(int refIndex, std::string geomType) const;
-    //std::string FromName(std::string geomName) const;
 
 protected:
     Measure::Measurement *measurement;
     double dist2Segs(Base::Vector2D s1,
-                                           Base::Vector2D e1,
-                                           Base::Vector2D s2,
-                                           Base::Vector2D e2) const;
+                     Base::Vector2D e1,
+                     Base::Vector2D s2,
+                     Base::Vector2D e2) const;
 private:
     static const char* TypeEnums[];
     static const char* ProjTypeEnums[];

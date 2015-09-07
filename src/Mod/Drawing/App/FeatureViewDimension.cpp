@@ -119,51 +119,63 @@ FeatureViewDimension::~FeatureViewDimension()
 
 void FeatureViewDimension::onChanged(const App::Property* prop)
 {
-    if (prop == &References  ||
-        prop == &Precision   ||
-        prop == &Font        ||
-        prop == &Fontsize    ||
-        prop == &CentreLines ||
-        prop == &FormatSpec) {
-        touch();
-        return;
-    }
-    if (prop == &ProjectionType) {
-        const std::vector<std::string> &subElements = References.getSubValues();
-        if (subElements.empty()) {
-            Base::Console().Log("INFO - FeatureViewDimension::onChanged - no References yet\n");
-            return;
-    }
-
-        std::vector<std::string>::const_iterator subIt = subElements.begin();
-        bool trueAllowed = true;
-        for(; subIt != subElements.end(); subIt++) {
-            std::string geomType = DrawUtil::getGeomTypeFromName((*subIt));
-            int refIndex = DrawUtil::getIndexFromName((*subIt));
-            int ref = get3DRef(refIndex,geomType);
-            if (ref < 0) {                                             //-1 => no reference
-                trueAllowed = false;
-                break;
+    if (!isRestoring()) {
+        if (prop == &References  ||
+            prop == &Precision   ||
+            prop == &Font        ||
+            prop == &Fontsize    ||
+            prop == &CentreLines ||
+            prop == &FormatSpec) {
+            try {
+                App::DocumentObjectExecReturn *ret = recompute();
+                delete ret;
+            }
+            catch (...) {
             }
         }
-        if (ProjectionType.isValue("True") && !trueAllowed) {
-            Base::Console().Warning("Dimension %s missing Reference to 3D model. Must be Projected.\n", getNameInDocument());
-            ProjectionType.setValue("Projected");
+        if (prop == &ProjectionType) {
+            const std::vector<std::string> &subElements = References.getSubValues();
+            if (subElements.empty()) {
+                Base::Console().Log("INFO - FeatureViewDimension::onChanged - no References yet\n");
+                return;
+            }
+            std::vector<std::string>::const_iterator subIt = subElements.begin();
+            bool trueAllowed = true;
+            for(; subIt != subElements.end(); subIt++) {
+                std::string geomType = DrawUtil::getGeomTypeFromName((*subIt));
+                int refIndex = DrawUtil::getIndexFromName((*subIt));
+                int ref = get3DRef(refIndex,geomType);
+                if (ref < 0) {                                             //-1 => no reference
+                    trueAllowed = false;
+                    break;
+                }
+            }
+            if (ProjectionType.isValue("True") && !trueAllowed) {
+                Base::Console().Warning("Dimension %s missing Reference to 3D model. Must be Projected.\n", getNameInDocument());
+                ProjectionType.setValue("Projected");
+            }
+            try {
+                App::DocumentObjectExecReturn *ret = recompute();
+                delete ret;
+            }
+            catch (...) {
+            }
         }
-        touch();
-        return;
+    FeatureView::onChanged(prop);
     }
 }
 
 short FeatureViewDimension::mustExecute() const
 {
+    bool result = 0;
     if (References.isTouched() ||
         Type.isTouched() ||
         ProjectionType.isTouched()) {
-        return 1;
+        result =  1;
     } else {
-        return 0;
+        result = 0;
     }
+    return result;
 }
 
 App::DocumentObjectExecReturn *FeatureViewDimension::execute(void)
@@ -181,11 +193,16 @@ App::DocumentObjectExecReturn *FeatureViewDimension::execute(void)
         std::vector<std::string>::const_iterator subEl = subElements.begin();
         for(; subEl != subElements.end(); subEl++) {
             //figure out which 3D geometry belongs to the 2D geometry in Dimension.References
+            //and update the Measurement.References
             std::string geomType = DrawUtil::getGeomTypeFromName((*subEl));
             int refIndex = DrawUtil::getIndexFromName((*subEl));
             int ref = get3DRef(refIndex,geomType);
             std::string newName = DrawUtil::makeGeomName(geomType, ref);
-            measurement->addReference(docObj,newName.c_str());
+            if (ref < 0) {
+                Base::Console().Log("INFO - FVD::execute - no 3D ref yet. Probably loading document.\n");
+            } else {
+                measurement->addReference(docObj,newName.c_str());
+            }
         }
     }
     //TODO: if ProjectionType = Projected and the Projected shape changes, the Dimension may become invalid (see tilted Cube example)
@@ -221,10 +238,15 @@ std::string  FeatureViewDimension::getFormatedValue() const
 double FeatureViewDimension::getDimValue() const
 {
     double result = 0.0;
+    if (!getViewPart()->hasGeometry()) {                               //happens when loading saved document
+        return result;
+    }
     if (ProjectionType.isValue("True")) {
         // True Values
+        if (!measurement->hasReferences()) {
+            return result;
+        }
         if(Type.isValue("Distance")) {
-            //dumpRefs("getDimValue - True Distance Dim Refs");
             //TODO: measurement->length() is the sum of the lengths of the edges in the References. is this what we want here?
             //return measurement->length();
             result = measurement->delta().Length();
@@ -244,7 +266,7 @@ double FeatureViewDimension::getDimValue() const
         } else if(Type.isValue("Angle")){
             result = measurement->angle();
         } else {
-            throw Base::Exception("getDimValue() - Unknown Dimension Type");
+            throw Base::Exception("getDimValue() - Unknown Dimension Type (1)");
         }
     } else {
         // Projected Values
@@ -330,22 +352,25 @@ double FeatureViewDimension::getDimValue() const
         } else if(Type.isValue("Angle")){
             // Must project lines to 2D so cannot use measurement framework this time
             //Relcalculate the measurement based on references stored.
-            //WF: why not just use projected geom in GeomObject and Vector2D.GetAngle?
-            if(subElements.size() != 2) {
-                throw Base::Exception("Two references required for angle measurement");
+            //WF: why not use projected geom in GeomObject and Vector2D.GetAngle? intersection pt & direction issues?
+            //TODO: do we need to distinguish inner vs outer angle? -wf
+//            if(subElements.size() != 2) {
+//                throw Base::Exception("FVD - Two references required for angle measurement");
+//            }
+            if (getRefType() != twoEdge) {
+                throw Base::Exception("FVD - Two edge references required for angle measurement");
             }
-            DrawingGeometry::BaseGeom * projGeoms[2];
             int idx0 = DrawUtil::getIndexFromName(subElements[0]);
             int idx1 = DrawUtil::getIndexFromName(subElements[1]);
             Drawing::FeatureViewPart *viewPart = dynamic_cast<Drawing::FeatureViewPart *>(objects[0]);
-            projGeoms[0] = viewPart->getProjEdgeByIndex(idx0);
-            projGeoms[1] = viewPart->getProjEdgeByIndex(idx1);
+            DrawingGeometry::BaseGeom* edge0 = viewPart->getProjEdgeByIndex(idx0);
+            DrawingGeometry::BaseGeom* edge1 = viewPart->getProjEdgeByIndex(idx1);
 
             // Only can find angles with straight line edges
-            if(projGeoms[0]->geomType == DrawingGeometry::GENERIC &&
-               projGeoms[1]->geomType == DrawingGeometry::GENERIC) {
-                DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(projGeoms[0]);
-                DrawingGeometry::Generic *gen2 = static_cast<DrawingGeometry::Generic *>(projGeoms[1]);
+            if(edge0->geomType == DrawingGeometry::GENERIC &&
+               edge1->geomType == DrawingGeometry::GENERIC) {
+                DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(edge0);
+                DrawingGeometry::Generic *gen2 = static_cast<DrawingGeometry::Generic *>(edge1);
 
                 Base::Vector3d p1S(gen1->points.at(0).fX, gen1->points.at(0).fY, 0.);
                 Base::Vector3d p1E(gen1->points.at(1).fX, gen1->points.at(1).fY, 0.);
@@ -380,7 +405,7 @@ double FeatureViewDimension::getDimValue() const
                 double angle2 = atan2( a.x*b.y - a.y*b.x, a.x*b.x + a.y*b.y );
                 result = angle2 * 180. / M_PI;
             } else {
-                throw Base::Exception("Invalid selection");
+                throw Base::Exception("getDimValue() - Unknown Dimension Type (2)");
             }
         }  //endif Angle
     } //endif Projected
@@ -456,7 +481,7 @@ double FeatureViewDimension::dist2Segs(Base::Vector2D s1,
 
     BRepExtrema_DistShapeShape extss(edge1, edge2);
     if (!extss.IsDone()) {
-        throw Base::Exception("BRepExtrema_DistShapeShape failed");
+        throw Base::Exception("FVD - BRepExtrema_DistShapeShape failed");
     }
     int count = extss.NbSolution();
     double minDist = 0.0;
@@ -466,3 +491,17 @@ double FeatureViewDimension::dist2Segs(Base::Vector2D s1,
 
     return minDist;
 }
+
+bool FeatureViewDimension::hasReferences(void) const
+{
+    bool result = false;
+    const std::vector<App::DocumentObject*> &refs = References.getValues();
+    if (refs.empty()) {
+        result = false;
+    } else {
+        result = true;
+    }
+    return result;
+}
+
+

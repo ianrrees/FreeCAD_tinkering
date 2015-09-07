@@ -80,7 +80,9 @@ public:
     virtual bool onDelete(const std::vector<std::string> &);
     virtual void onChanged(const App::Property *prop);
     virtual void updateData(const App::Property* prop);
+    virtual void startRestoring();
     virtual void finishRestoring();
+    bool isRestoring(void) {return restoreState;}
 
     Drawing::FeaturePage* getPageObject() const;
     void unsetEdit(int ModNum);
@@ -92,6 +94,7 @@ protected:
 
 private:
     QPointer<DrawingView> view;
+    bool restoreState;
 };
 
 } // namespace DrawingGui

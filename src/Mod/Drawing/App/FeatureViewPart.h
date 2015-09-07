@@ -58,6 +58,7 @@ public:
     const std::vector<DrawingGeometry::Vertex *> & getVertexGeometry() const;
     const std::vector<DrawingGeometry::BaseGeom  *> & getEdgeGeometry() const;
     const std::vector<DrawingGeometry::Face *> & getFaceGeometry() const;
+    bool hasGeometry(void) const;
 
     DrawingGeometry::BaseGeom* getProjEdgeByIndex(int idx) const;               //get existing geom for edge idx in projection
     DrawingGeometry::Vertex* getProjVertexByIndex(int idx) const;               //get existing geom for vertex idx in projection

@@ -164,7 +164,9 @@ void QGraphicsItemDatumLabel::paint(QPainter *painter, const QStyleOptionGraphic
     QGraphicsTextItem::paint(painter, &myOption, widget);
 }
 
-QGraphicsItemViewDimension::QGraphicsItemViewDimension(const QPoint &pos, QGraphicsScene *scene) :QGraphicsItemView(pos, scene)
+QGraphicsItemViewDimension::QGraphicsItemViewDimension(const QPoint &pos, QGraphicsScene *scene) :
+    QGraphicsItemView(pos, scene),
+    hasHover(false)
 {
     setHandlesChildEvents(false);
     setFlag(QGraphicsItem::ItemIsMovable, false);
@@ -210,7 +212,7 @@ QGraphicsItemViewDimension::QGraphicsItemViewDimension(const QPoint &pos, QGraph
     addToGroup(arrows);
     addToGroup(datumLabel);
     addToGroup(centreLines);
-    
+
     toggleBorder(false);
 }
 
@@ -287,20 +289,14 @@ void QGraphicsItemViewDimension::updateView(bool update)
 
 void QGraphicsItemViewDimension::updateDim()
 {
-    // For now assume only show absolute dimension values
-    //bool absolute = true;
-
     if(getViewObject() == 0 || !getViewObject()->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId()))
         return;
 
     const Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(getViewObject());
 
-    QString labelText = QString::fromStdString(dim->getFormatedValue()); 
-    //QString::number((absolute) ? fabs(dim->getDimValue()) : dim->getDimValue(), 'f', dim->Precision.getValue());
+    QString labelText = QString::fromStdString(dim->getFormatedValue());
 
     QGraphicsItemDatumLabel *dLabel = dynamic_cast<QGraphicsItemDatumLabel *>(datumLabel);
-
-    //const char *dimType = dim->Type.getValueAsString();
 
     QFont font = dLabel->font();
     font.setPointSizeF(dim->Fontsize.getValue());            //scene units (mm), not points
@@ -340,7 +336,10 @@ void QGraphicsItemViewDimension::draw()
 
     Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(getViewObject());
     QGraphicsItemDatumLabel *lbl = dynamic_cast<QGraphicsItemDatumLabel *>(datumLabel);
-
+    const Drawing::FeatureViewPart *refObj = dim->getViewPart();
+    if(!refObj->hasGeometry()) {                                       //nothing to draw yet
+        return;
+    }
     pen.setStyle(Qt::SolidLine);
 
     // Crude method of determining state [TODO] improve
@@ -355,10 +354,8 @@ void QGraphicsItemViewDimension::draw()
     QString labelText = lbl->toPlainText();
     Base::Vector3d lblCenter(lbl->X(), lbl->Y(), 0);
 
-    //Relcalculate the measurement based on references stored.
-    //WF: no. we always draw based on Projected geometry. FeatureViewDimension supplies value based on True/Projected.
-    //the "Reference" could be a Source Edge or a Projection Edge.
-    const std::vector<App::DocumentObject*> &objects = dim->References.getValues();
+    //we always draw based on Projected geometry.
+    //const std::vector<App::DocumentObject*> &objects = dim->References.getValues();
     const std::vector<std::string> &SubNames         = dim->References.getSubValues();
 
     const char *dimType = dim->Type.getValueAsString();
@@ -366,82 +363,68 @@ void QGraphicsItemViewDimension::draw()
     if(strcmp(dimType, "Distance") == 0 ||
        strcmp(dimType, "DistanceX") == 0 ||
        strcmp(dimType, "DistanceY") == 0) {
-
         Base::Vector3d distStart, distEnd;
-        if(dim->References.getValues().size() == 1 && SubNames[0].substr(0,4) == "Edge") {
-
-            const Drawing::FeatureViewPart *refObj = static_cast<const Drawing::FeatureViewPart*>(objects[0]);
-            int idx = std::atoi(SubNames[0].substr(4,4000).c_str());
-
-            if(projGeom.size() != 1 || !projGeom.at(0)) {
-                projGeom.clear();
-                //projGeom.push_back(refObj->getProjEdgeGeomByRef(idx));              //SB getEdgeGeomByIndex(idx)???
-                projGeom.push_back(refObj->getProjEdgeByIndex(idx));
+        if((dim->References.getValues().size() == 1) &&
+           (DrawUtil::getGeomTypeFromName(SubNames[0]) == "Edge")) {
+            int idx = DrawUtil::getIndexFromName(SubNames[0]);
+            DrawingGeometry::BaseGeom* geom = refObj->getProjEdgeByIndex(idx);
+            if (!geom) {
+                Base::Console().Log("INFO - qgivd::draw - no geom for projected edge: %d of %d\n",
+                                    idx,refObj->getEdgeGeometry().size());
+                return;
             }
-
-            if(projGeom.at(0) && projGeom.at(0)->geomType == DrawingGeometry::GENERIC ) {
-                DrawingGeometry::Generic *gen = static_cast<DrawingGeometry::Generic *>(projGeom.at(0));
+            if (geom->geomType == DrawingGeometry::GENERIC) {
+                DrawingGeometry::Generic *gen = static_cast<DrawingGeometry::Generic *>(geom);
                 Base::Vector2D pnt1 = gen->points.at(0);
                 Base::Vector2D pnt2 = gen->points.at(1);
                 distStart = Base::Vector3d(pnt1.fX, pnt1.fY, 0.);
                 distEnd = Base::Vector3d(pnt2.fX, pnt2.fY, 0.);
-
             } else {
-                projGeom.clear();
-                throw Base::Exception("Original edge not found or is invalid type");
+                throw Base::Exception("FVD::draw - Original edge not found or is invalid type (1)");
             }
-
         } else if(dim->References.getValues().size() == 2 &&
-                  SubNames[0].substr(0,6) == "Vertex" &&
-                  SubNames[1].substr(0,6) == "Vertex") {
-            // Point to Point Dimension
-            const Drawing::FeatureViewPart *refObj = static_cast<const Drawing::FeatureViewPart*>(objects[0]);
-            int idx = std::atoi(SubNames[0].substr(6,4000).c_str());
-            int idx2 = std::atoi(SubNames[1].substr(6,4000).c_str());
-
-            DrawingGeometry::Vertex *v1 = refObj->getProjVertexByIndex(idx);
-            DrawingGeometry::Vertex *v2 = refObj->getProjVertexByIndex(idx2);
-            if (!v1 || !v2) {
-                //Ugh. this is probably because the document is restoring. check log. 
+                  DrawUtil::getGeomTypeFromName(SubNames[0]) == "Vertex" &&
+                  DrawUtil::getGeomTypeFromName(SubNames[1]) == "Vertex") {
+            int idx0 = DrawUtil::getIndexFromName(SubNames[0]);
+            int idx1 = DrawUtil::getIndexFromName(SubNames[1]);
+            DrawingGeometry::Vertex *v0 = refObj->getProjVertexByIndex(idx0);
+            DrawingGeometry::Vertex *v1 = refObj->getProjVertexByIndex(idx1);
+            if (!v0 || !v1) {
+                //Ugh. this is probably because the document is restoring. check log.
+                Base::Console().Log("INFO - qgivd::draw - no geom for projected edge: %d or %d of %d\n",
+                                    idx0,idx1,refObj->getEdgeGeometry().size());
                 return;
             }
-            distStart = Base::Vector3d (v1->pnt.fX, v1->pnt.fY, 0.);
-            distEnd = Base::Vector3d (v2->pnt.fX, v2->pnt.fY, 0.);
-
+            distStart = Base::Vector3d (v0->pnt.fX, v0->pnt.fY, 0.);
+            distEnd = Base::Vector3d (v1->pnt.fX, v1->pnt.fY, 0.);
         } else if(dim->References.getValues().size() == 2 &&
-            SubNames[0].substr(0,4) == "Edge" &&
-            SubNames[1].substr(0,4) == "Edge") {
-            // Edge to Edge Dimension
-            const Drawing::FeatureViewPart *refObj = static_cast<const Drawing::FeatureViewPart*>(objects[0]);
-            int idx = DrawUtil::getIndexFromName(SubNames[0]);
-            int idx2 = DrawUtil::getIndexFromName(SubNames[1]);
-
-            if(projGeom.size() != 2 || !projGeom.at(0) || !projGeom.at(1)) {
-                projGeom.clear();
-                projGeom.push_back(refObj->getProjEdgeByIndex(idx));
-                projGeom.push_back(refObj->getProjEdgeByIndex(idx2));
+            DrawUtil::getGeomTypeFromName(SubNames[0]) == "Edge" &&
+            DrawUtil::getGeomTypeFromName(SubNames[1]) == "Edge") {
+            int idx0 = DrawUtil::getIndexFromName(SubNames[0]);
+            int idx1 = DrawUtil::getIndexFromName(SubNames[1]);
+            DrawingGeometry::BaseGeom* geom0 = refObj->getProjEdgeByIndex(idx0);
+            DrawingGeometry::BaseGeom* geom1 = refObj->getProjEdgeByIndex(idx1);
+            if (!geom0 || !geom1) {
+                Base::Console().Log("INFO - qgivd::draw - no geom for projected edge: %d or %d of %d\n",
+                                    idx0,idx1,refObj->getEdgeGeometry().size());
+                return;
             }
-
-            if ( (projGeom.at(0) && projGeom.at(0)->geomType == DrawingGeometry::GENERIC) ||
-                 (projGeom.at(1) && projGeom.at(1)->geomType == DrawingGeometry::GENERIC) ) {
-                DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(projGeom.at(0));
-                DrawingGeometry::Generic *gen2 = static_cast<DrawingGeometry::Generic *>(projGeom.at(1));
-
+            if ( (geom0->geomType == DrawingGeometry::GENERIC) &&
+                 (geom1->geomType == DrawingGeometry::GENERIC) ){
+                DrawingGeometry::Generic *gen0 = static_cast<DrawingGeometry::Generic *>(geom0);
+                DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(geom1);
                 Base::Vector2D pnt1, pnt2;
                 Base::Vector3d edge1Start, edge1End, edge2Start, edge2End;
-                pnt1 = gen1->points.at(0);
-                pnt2 = gen1->points.at(1);
-
+                pnt1 = gen0->points.at(0);
+                pnt2 = gen0->points.at(1);
                 edge1Start = Base::Vector3d(pnt1.fX, pnt1.fY, 0);
                 edge1End = Base::Vector3d(pnt2.fX, pnt2.fY, 0);
-
-                pnt1 = gen2->points.at(0);
-                pnt2 = gen2->points.at(1);
-
+                pnt1 = gen1->points.at(0);
+                pnt2 = gen1->points.at(1);
                 edge2Start = Base::Vector3d(pnt1.fX, pnt1.fY, 0);
                 edge2End = Base::Vector3d(pnt2.fX, pnt2.fY, 0);
 
-                // figure out which end of each edge to use for distance calculation
+                // figure out which end of each edge to use for distance calculation (wf- calculation? sb drawing?)
                 Base::Vector3d lin1 = edge1End - edge1Start;                    //vector from edge1Start to edge2End
                 Base::Vector3d lin2 = edge2End - edge2Start;
 
@@ -457,15 +440,13 @@ void QGraphicsItemViewDimension::draw()
                     distEnd = edge2End;
                 else
                     distEnd = edge2Start;
-
             } else {
                 //TODO: Exception here seems drastic. Can we fail more gracefully?
-                throw Base::Exception("Invalid reference for dimension type (1)");
+                throw Base::Exception("FVD::draw -Invalid reference for dimension type (1)");
             }
         }
 
         Base::Vector3d dir, norm;
-
         if (strcmp(dimType, "Distance") == 0 ) {
             dir = (distEnd-distStart);
         } else if (strcmp(dimType, "DistanceX") == 0 ) {
@@ -615,43 +596,33 @@ void QGraphicsItemViewDimension::draw()
         ar2->setHighlighted(isSelected() || hasHover);
 
     } else if(strcmp(dimType, "Diameter") == 0) {
-        // Not sure whether to treat radius and diameter as the same
         // terminology: Dimension Text, Dimension Line(s), Extension Lines, Arrowheads
         // was datumLabel, datum line/parallel line, perpendicular line, arw
         Base::Vector3d arrow1Tip, arrow2Tip, dirDimLine, centre; //was p1,p2,dir
         QGraphicsItemDatumLabel *label = dynamic_cast<QGraphicsItemDatumLabel *>(datumLabel);
         Base::Vector3d lblCenter(label->X(), label->Y(), 0);
-
         double radius;
 
-        if(dim->References.getValues().size() == 1 && SubNames[0].substr(0,4) == "Edge") {
-            // Assuming currently just edge
-
-            const Drawing::FeatureViewPart *refObj = static_cast<const Drawing::FeatureViewPart*>(objects[0]);
-            int idx = std::atoi(SubNames[0].substr(4,4000).c_str());
-
-            // Use the cached value if available otherwise load this  //WF: caching geometry here makes for difficulties at load of saved doc?
-            if(projGeom.size() != 1) {
-                projGeom.clear();
-                DrawingGeometry::BaseGeom *geom = refObj->getProjEdgeByIndex(idx);
-                if(!geom)
-                    throw Base::Exception("Edge couldn't be found for diameter dimension");
-
-                projGeom.push_back(geom);
+        if(dim->References.getValues().size() == 1 &&
+           DrawUtil::getGeomTypeFromName(SubNames[0]) == "Edge") {
+            int idx = DrawUtil::getIndexFromName(SubNames[0]);
+            DrawingGeometry::BaseGeom *geom = refObj->getProjEdgeByIndex(idx);
+            if(!geom)  {
+                Base::Console().Log("INFO - qgivd::draw - no geom for projected edge: %d of %d\n",
+                                        idx,refObj->getEdgeGeometry().size());
+                return;
+                //throw Base::Exception("Edge couldn't be found for diameter dimension");
             }
-
-            //inner diameter of torus is coming out as geomType::BSpline (4)
-            if(projGeom.at(0) &&
-               (projGeom.at(0)->geomType == DrawingGeometry::CIRCLE || projGeom.at(0)->geomType == DrawingGeometry::ARCOFCIRCLE)) {
-                  DrawingGeometry::Circle *circ = static_cast<DrawingGeometry::Circle *>(projGeom.at(0));
-                  radius = circ->radius;
-                  centre = Base::Vector3d (circ->center.fX, circ->center.fY, 0);
+            if( (geom->geomType == DrawingGeometry::CIRCLE) ||
+                (geom->geomType == DrawingGeometry::ARCOFCIRCLE) ) {
+                DrawingGeometry::Circle *circ = static_cast<DrawingGeometry::Circle *>(geom);
+                radius = circ->radius;
+                centre = Base::Vector3d (circ->center.fX, circ->center.fY, 0);
             } else {
-                projGeom.clear();
-                throw Base::Exception("Original edge not found or is invalid type");
+                throw Base::Exception("FVD::draw - Original edge not found or is invalid type (2)");
             }
         } else {
-            throw Base::Exception("Invalid reference for dimension type (2)");
+            throw Base::Exception("FVD ::draw - Invalid reference for dimension type (2)");
         }
         // Note Bounding Box size is not the same width or height as text (only used for finding center)
         float bbX  = label->boundingRect().width();
@@ -890,41 +861,30 @@ void QGraphicsItemViewDimension::draw()
         }
 
     } else if(strcmp(dimType, "Radius") == 0) {
-        // Not sure whether to treat radius and diameter as the same
         // terminology: Dimension Text, Dimension Line(s), Extension Lines, Arrowheads
         Base::Vector3d arrow1Tip, arrow2Tip, dirDimLine, centre;
         QGraphicsItemDatumLabel *label = dynamic_cast<QGraphicsItemDatumLabel *>(datumLabel);
         Base::Vector3d lblCenter(label->X(), label->Y(), 0);
-
         double radius;
-
-        if(dim->References.getValues().size() == 1 && SubNames[0].substr(0,4) == "Edge") {
-            // Assuming currently just edge
-
-            const Drawing::FeatureViewPart *refObj = static_cast<const Drawing::FeatureViewPart*>(objects[0]);
-            int idx = std::atoi(SubNames[0].substr(4,4000).c_str());
-
-            // Use the cached value if available otherwise load this
-            if(projGeom.size() != 1) {
-                projGeom.clear();
-                DrawingGeometry::BaseGeom *geom = refObj->getProjEdgeByIndex(idx);
-                if(!geom)
-                    throw Base::Exception("Edge couldn't be found for radius dimension");
-
-                projGeom.push_back(geom);
+        if(dim->References.getValues().size() == 1 &&
+           DrawUtil::getGeomTypeFromName(SubNames[0]) == "Edge") {
+            int idx = DrawUtil::getIndexFromName(SubNames[0]);
+            DrawingGeometry::BaseGeom* geom = refObj->getProjEdgeByIndex(idx);
+            if(!geom)  {
+                Base::Console().Log("INFO - qgivd::draw - no geom for projected edge: %d of %d\n",
+                                        idx,refObj->getEdgeGeometry().size());
+                return;
             }
-
-            if(projGeom.at(0) &&
-               (projGeom.at(0)->geomType == DrawingGeometry::CIRCLE || projGeom.at(0)->geomType == DrawingGeometry::ARCOFCIRCLE)) {
-                  DrawingGeometry::Circle *circ = static_cast<DrawingGeometry::Circle *>(projGeom.at(0));
-                  radius = circ->radius;
-                  centre = Base::Vector3d (circ->center.fX, circ->center.fY, 0);
+            if( (geom->geomType == DrawingGeometry::CIRCLE) ||
+                (geom->geomType == DrawingGeometry::ARCOFCIRCLE) ) {
+                DrawingGeometry::Circle *circ = static_cast<DrawingGeometry::Circle *>(geom);
+                radius = circ->radius;
+                centre = Base::Vector3d (circ->center.fX, circ->center.fY, 0);
             } else {
-                projGeom.clear();
-                throw Base::Exception("Original edge not found or is invalid type");
+                throw Base::Exception("FVD::draw - Original edge not found or is invalid type (3)");
             }
         } else {
-            throw Base::Exception("Invalid reference for dimension type (3)");
+            throw Base::Exception("FVD::draw - Invalid reference for dimension type (3)");
         }
 
         // Note Bounding Box size is not the same width or height as text (only used for finding center)
@@ -1028,7 +988,7 @@ void QGraphicsItemViewDimension::draw()
                 delete (*it);
             }
             arw.clear();
- 
+
             // These items are added to the scene-graph so should be handled by the canvas
             ar1 = new QGraphicsItemArrow();
             ar2 = new QGraphicsItemArrow();
@@ -1063,40 +1023,35 @@ void QGraphicsItemViewDimension::draw()
         }
 
     } else if(strcmp(dimType, "Angle") == 0) {
-
-
         // Only use two straight line edeges for angle
         if(dim->References.getValues().size() == 2 &&
-            SubNames[0].substr(0,4) == "Edge" &&
-            SubNames[1].substr(0,4) == "Edge") {
-            // Point to Point Dimension
-            const Drawing::FeatureViewPart *refObj = static_cast<const Drawing::FeatureViewPart*>(objects[0]);
-            int idx = std::atoi(SubNames[0].substr(4,4000).c_str());
-            int idx2 = std::atoi(SubNames[1].substr(4,4000).c_str());
-
-            // Use the cached value or gather projected edges
-            if(projGeom.size() != 2 || !projGeom.at(0) || !projGeom.at(0)) {
-                projGeom.clear();
-                projGeom.push_back(refObj->getProjEdgeByIndex(idx));
-                projGeom.push_back(refObj->getProjEdgeByIndex(idx2));
+           DrawUtil::getGeomTypeFromName(SubNames[0]) == "Edge" &&
+           DrawUtil::getGeomTypeFromName(SubNames[1]) == "Edge") {
+            int idx0 = DrawUtil::getIndexFromName(SubNames[0]);
+            int idx1 = DrawUtil::getIndexFromName(SubNames[1]);
+            DrawingGeometry::BaseGeom* geom0 = refObj->getProjEdgeByIndex(idx0);
+            DrawingGeometry::BaseGeom* geom1 = refObj->getProjEdgeByIndex(idx1);
+            if (!geom0 || !geom1) {
+                Base::Console().Log("INFO - qgivd::draw - no geom for projected edge: %d or %d of %d\n",
+                                        idx0,idx1,refObj->getEdgeGeometry().size());
+                return;
             }
-
-            if ( (projGeom.at(0) && projGeom.at(0)->geomType == DrawingGeometry::GENERIC) ||
-                 (projGeom.at(1) && projGeom.at(1)->geomType == DrawingGeometry::GENERIC) ) {
-                DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(projGeom.at(0));
-                DrawingGeometry::Generic *gen2 = static_cast<DrawingGeometry::Generic *>(projGeom.at(1));
+            if ( (geom0->geomType == DrawingGeometry::GENERIC) &&
+                 (geom1->geomType == DrawingGeometry::GENERIC) ) {
+                DrawingGeometry::Generic *gen0 = static_cast<DrawingGeometry::Generic *>(geom0);
+                DrawingGeometry::Generic *gen1 = static_cast<DrawingGeometry::Generic *>(geom1);
 
                 // Get Points for line
                 Base::Vector2D pnt1, pnt2;
                 Base::Vector3d p1S, p1E, p2S, p2E;
-                pnt1 = gen1->points.at(0);
-                pnt2 = gen1->points.at(1);
+                pnt1 = gen0->points.at(0);
+                pnt2 = gen0->points.at(1);
 
                 p1S = Base::Vector3d(pnt1.fX, pnt1.fY, 0);
                 p1E = Base::Vector3d(pnt2.fX, pnt2.fY, 0);
 
-                pnt1 = gen2->points.at(0);
-                pnt2 = gen2->points.at(1);
+                pnt1 = gen1->points.at(0);
+                pnt2 = gen1->points.at(1);
 
                 p2S = Base::Vector3d(pnt1.fX, pnt1.fY, 0);
                 p2E = Base::Vector3d(pnt2.fX, pnt2.fY, 0);
@@ -1316,10 +1271,10 @@ void QGraphicsItemViewDimension::draw()
                 label->setRotation(lAngle * 180 / M_PI);
 
             } else {
-                throw Base::Exception("Invalid reference for dimension type (4)");
+                throw Base::Exception("FVD::draw - Invalid reference for dimension type (4)");
             }
-        }
-    }
+        } //endif 2 Edges
+    }  //endif Distance/Diameter/Radius/Angle
 
     // redraw the Dimension and the parent View
     update();
@@ -1330,7 +1285,7 @@ void QGraphicsItemViewDimension::draw()
 
 }
 
-void QGraphicsItemViewDimension::drawBorder(void) 
+void QGraphicsItemViewDimension::drawBorder(void)
 {
 //Dimensions have no border!
 //    Base::Console().Message("TRACE - QGraphicsItemViewDimension::drawBorder - doing nothing!\n");
