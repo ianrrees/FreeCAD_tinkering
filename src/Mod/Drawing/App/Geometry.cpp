@@ -81,7 +81,7 @@ using namespace DrawingGeometry;
 // Collection of Geometric Features
 Wire::Wire()
 {
-  
+
 }
 
 Wire::~Wire()
@@ -95,7 +95,7 @@ Wire::~Wire()
 
 Face::Face()
 {
-  
+
 }
 
 Face::~Face()
@@ -107,7 +107,7 @@ Face::~Face()
     wires.clear();
 }
 
-//! ugh. yuck. 
+//! ugh. yuck.
 std::vector<Base::Vector2D> BaseGeom::findEndPoints()
 {
     std::vector<Base::Vector2D> result;
@@ -195,9 +195,10 @@ AOE::AOE(const BRepAdaptor_Curve& c) : Ellipse(c)
     endAngle = l;
     cw = (a < 0) ? true: false;
     largeArc = (l-f > M_PI) ? true : false;
-    
+
     startPnt = Base::Vector2D(s.X(), s.Y());
     endPnt = Base::Vector2D(e.X(), e.Y());
+    midPnt = Base::Vector2D(m.X(), m.Y());
     /*
             char las = (l-f > D_PI) ? '1' : '0'; // large-arc-flag
         char swp = (a < 0) ? '1' : '0'; // sweep-flag, i.e. clockwise (0) or counter-clockwise (1)
@@ -208,15 +209,15 @@ AOE::AOE(const BRepAdaptor_Curve& c) : Ellipse(c)
 //     if (startAngle > endAngle) {// if arc is reversed
 //         std::swap(startAngle, endAngle);
 //     }*/
-    
+
 //     double ax = s.X() - center.fX;
 //     double ay = s.Y() - center.fY;
 //     double bx = e.X() - center.fX;
 //     double by = e.Y() - center.fY;
-    
+
 //     startAngle = f;
 //     float range = l-f;
-// 
+//
 //     endAngle = startAngle + range;
 }
 
@@ -244,7 +245,7 @@ AOC::AOC()
 AOC::AOC(const BRepAdaptor_Curve& c) : Circle(c)
 {
     geomType = ARCOFCIRCLE;
-    
+
     double f = c.FirstParameter();
     double l = c.LastParameter();
     gp_Pnt s = c.Value(f);
@@ -260,9 +261,10 @@ AOC::AOC(const BRepAdaptor_Curve& c) : Circle(c)
     endAngle = l;
     cw = (a < 0) ? true: false;
     largeArc = (l-f > M_PI) ? true : false;
-    
+
     startPnt = Base::Vector2D(s.X(), s.Y());
     endPnt = Base::Vector2D(e.X(), e.Y());
+    midPnt = Base::Vector2D(m.X(), m.Y());
 }
 
 Generic::Generic()
@@ -359,4 +361,3 @@ bool BSpline::isLine()
     }
     return result;
 }
-

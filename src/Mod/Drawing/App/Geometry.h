@@ -76,7 +76,7 @@ public:
   double minor;
   double major;
   /// Angle between the major axis of the ellipse and the X axis, in radian
-  double angle; 
+  double angle;
 };
 
 class DrawingExport AOE: public Ellipse
@@ -88,6 +88,7 @@ public:
 public:
   Base::Vector2D startPnt;  //TODO: The points are used for drawing, the angles for bounding box calcs - seems redundant
   Base::Vector2D endPnt;
+  Base::Vector2D midPnt;
   /// Angle in radian
   double startAngle;
   /// Angle in radian
@@ -106,6 +107,7 @@ public:
 public:
   Base::Vector2D startPnt;
   Base::Vector2D endPnt;
+  Base::Vector2D midPnt;
   /// Angle in radian
   double startAngle;
   /// Angle in radian
@@ -178,7 +180,7 @@ struct DrawingExport Vertex
   Vertex(Base::Vector2D v) { pnt = v; }
   ~Vertex() {}
   Base::Vector2D pnt;
-  ExtractionType extractType;  
+  ExtractionType extractType;
 };
 
 }
