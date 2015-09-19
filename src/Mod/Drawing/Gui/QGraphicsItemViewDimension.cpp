@@ -861,10 +861,12 @@ void QGraphicsItemViewDimension::draw()
         }
 
     } else if(strcmp(dimType, "Radius") == 0) {
-        // terminology: Dimension Text, Dimension Line(s), Extension Lines, Arrowheads
-        Base::Vector3d arrow1Tip, arrow2Tip, dirDimLine, centre;
+        // preferred terminology: Dimension Text, Dimension Line(s), Extension Lines, Arrowheads
+        // radius gets 1 dimension line from the dimension text to a point on the curve
         QGraphicsItemDatumLabel *label = dynamic_cast<QGraphicsItemDatumLabel *>(datumLabel);
-        Base::Vector3d lblCenter(label->X(), label->Y(), 0);
+        Base::Vector3d lblCenter(label->X(), label->Y(),0.0);
+
+        Base::Vector3d pointOnCurve,curveCenter;
         double radius;
         if(dim->References.getValues().size() == 1 &&
            DrawUtil::getGeomTypeFromName(SubNames[0]) == "Edge") {
@@ -875,11 +877,16 @@ void QGraphicsItemViewDimension::draw()
                                         idx,refObj->getEdgeGeometry().size());
                 return;
             }
-            if( (geom->geomType == DrawingGeometry::CIRCLE) ||
-                (geom->geomType == DrawingGeometry::ARCOFCIRCLE) ) {
+            if (geom->geomType == DrawingGeometry::CIRCLE) {
                 DrawingGeometry::Circle *circ = static_cast<DrawingGeometry::Circle *>(geom);
                 radius = circ->radius;
-                centre = Base::Vector3d (circ->center.fX, circ->center.fY, 0);
+                curveCenter = Base::Vector3d(circ->center.fX,circ->center.fY,0.0);
+                pointOnCurve = Base::Vector3d(curveCenter.x + radius, curveCenter.y,0.0);
+            } else if (geom->geomType == DrawingGeometry::ARCOFCIRCLE) {
+                DrawingGeometry::AOC *circ = static_cast<DrawingGeometry::AOC *>(geom);
+                radius = circ->radius;
+                curveCenter = Base::Vector3d(circ->center.fX,circ->center.fY,0.0);
+                pointOnCurve = Base::Vector3d(circ->midPnt.fX, circ->midPnt.fY,0.0);
             } else {
                 throw Base::Exception("FVD::draw - Original edge not found or is invalid type (3)");
             }
@@ -887,95 +894,48 @@ void QGraphicsItemViewDimension::draw()
             throw Base::Exception("FVD::draw - Invalid reference for dimension type (3)");
         }
 
-        // Note Bounding Box size is not the same width or height as text (only used for finding center)
-        float bbX  = label->boundingRect().width();
-        float bbY = label->boundingRect().height();
-
-        dirDimLine = (lblCenter - centre).Normalize();
+        Base::Vector3d dirDimLine = (lblCenter - pointOnCurve).Normalize();
         if (fabs(dirDimLine.Length()) < (Precision::Confusion())) {
             dirDimLine = Base::Vector3d(-1.0,0.0,0.0);
         }
 
-        // Get magnitude of angle between horizontal
-        float angle = atan2f(dirDimLine.y,dirDimLine.x);
-        if (angle > M_PI_2+M_PI/12) {
-            angle -= (float)M_PI;
-        } else if (angle <= -M_PI_2+M_PI/12) {
-            angle += (float)M_PI;
-        }
-
-        //for inner placement
-        //dimension line should go from centre to curve or from lblCenter to curve
-        //currently draws a diameter (curve to curve) for innerPlacement
-        arrow1Tip = centre - dirDimLine * radius;                                    //endpoint of radius arrowhead1
-        arrow2Tip = centre + dirDimLine * radius;                                    //endpoint of radius arrowhead2
-
         QFontMetrics fm(label->font());
-
         int w = fm.width(labelText);
-
         float margin = 5.f;
-
-        Base::Vector3d dLine1Tail = lblCenter - dirDimLine * (margin + w / 2);
-        Base::Vector3d dLine2Tail = lblCenter + dirDimLine * (margin + w / 2);
-
-        bool outerPlacement = false;
-        if ((lblCenter-centre).Length() > radius) {
-            arrow1Tip = arrow2Tip;
-            outerPlacement = true;
-        }
-
-        double dTip = fabs((lblCenter - arrow1Tip).Length());
-        double dTail = fabs((lblCenter - dLine1Tail).Length());
-        if (dTail > dTip) {
-            dLine1Tail = arrow1Tip;                                    //draw a null line
-        }
-        dTip = fabs((lblCenter - arrow2Tip).Length());
-        dTail = fabs((lblCenter - dLine2Tail).Length());
-        if (dTail > dTip) {
-            dLine2Tail = arrow2Tip;                                    //draw a null line
-        }
-
+        // Note Bounding Box size is not the same width or height as text (only used for finding center)
+        float bbX  = label->boundingRect().width();
+        float bbY = label->boundingRect().height();
         label->setTransformOriginPoint(bbX / 2, bbY /2);
-        label->setRotation(angle * 180 / M_PI);
+        label->setRotation(0.0);                                                //label is always right side up
 
-        QPainterPath path;
-        path.moveTo(dLine1Tail.x, dLine1Tail.y);
-        path.lineTo(arrow1Tip.x, arrow1Tip.y);
-
-        if (!outerPlacement) {
-            path.moveTo(dLine2Tail.x, dLine2Tail.y);
-            path.lineTo(arrow2Tip.x, arrow2Tip.y);
-        }
+        Base::Vector3d dLineStart = lblCenter - dirDimLine * (margin + w / 2);  //startpoint of radius dimension line
+        QPainterPath dLinePath;                                                 //radius dimension line path
+        dLinePath.moveTo(dLineStart.x, dLineStart.y);
+        dLinePath.lineTo(pointOnCurve.x, pointOnCurve.y);
 
         QGraphicsPathItem *arrw = dynamic_cast<QGraphicsPathItem *> (arrows);
-        arrw->setPath(path);
+        arrw->setPath(dLinePath);
         arrw->setPen(pen);
 
-        // Add or remove centre lines
+        // Add or remove centre lines  (wf - this is centermark, not centerlines)
         QGraphicsPathItem *clines = dynamic_cast<QGraphicsPathItem *> (centreLines);
         QPainterPath clpath;
-
         if(dim->CentreLines.getValue()) {
             // Add centre lines to the circle
-
             double clDist = margin; // Centre Line Size
             if( margin / radius  > 0.2) {
                 // Tolerance if centre line is greater than 0.3x radius then set to limit
                 clDist = radius * 0.2;
             }
             // Vertical Line
-            clpath.moveTo(centre.x, centre.y + clDist);
-            clpath.lineTo(centre.x, centre.y - clDist);
-
-            // Vertical Line
-            clpath.moveTo(centre.x - clDist, centre.y);
-            clpath.lineTo(centre.x + clDist, centre.y);
-
+            clpath.moveTo(curveCenter.x, curveCenter.y + clDist);
+            clpath.lineTo(curveCenter.x, curveCenter.y - clDist);
+            // Horizontal Line
+            clpath.moveTo(curveCenter.x - clDist, curveCenter.y);
+            clpath.lineTo(curveCenter.x + clDist, curveCenter.y);
             QPen clPen(QColor(128,128,128));  // TODO: centre line preference?
             clines->setPen(clPen);
         }
-
         clines->setPath(clpath);
 
         // Always create Two Arrows (but sometimes hide 1!)
@@ -1005,22 +965,16 @@ void QGraphicsItemViewDimension::draw()
         ar1 = dynamic_cast<QGraphicsItemArrow *>(arw.at(0));
         ar2 = dynamic_cast<QGraphicsItemArrow *>(arw.at(1));
 
-        Base::Vector3d ar1Pos = centre + dirDimLine * radius;
+        Base::Vector3d ar1Pos = pointOnCurve;
         float arAngle = atan2(dirDimLine.y, dirDimLine.x) * 180 / M_PI;
 
         ar1->setPos(ar1Pos.x, ar1Pos.y);
-        ar1->setPos(arrow1Tip.x, arrow1Tip.y);
         ar1->setRotation(arAngle);
         ar1->setHighlighted(isSelected() || hasHover);
         ar1->show();
-        ar2->setPos(arrow2Tip.x, arrow2Tip.y);
         ar2->setRotation(arAngle);
         ar2->setHighlighted(isSelected() || hasHover);
-        ar2->show();
-
-        if(outerPlacement) {
-            ar2->hide();
-        }
+        ar2->hide();
 
     } else if(strcmp(dimType, "Angle") == 0) {
         // Only use two straight line edeges for angle

@@ -65,7 +65,7 @@ int DrawingExport getIndexFromName(std::string geomName)
          throw Base::Exception(ErrorMsg.str());
       }
    } else {
-         throw Base::Exception("getIndexFromName - empty geometry name");    
+         throw Base::Exception("getIndexFromName - empty geometry name");
    }
 }
 
@@ -74,7 +74,6 @@ std::string DrawingExport getGeomTypeFromName(std::string geomName)
    boost::regex re("^[a-zA-Z]*");                                           //one or more letters at start of string
    boost::match_results<std::string::const_iterator> what;
    boost::match_flag_type flags = boost::match_default;
-   char* endChar;
    std::string::const_iterator begin = geomName.begin();
    std::string::const_iterator end = geomName.end();
    std::stringstream ErrorMsg;
@@ -87,7 +86,7 @@ std::string DrawingExport getGeomTypeFromName(std::string geomName)
          throw Base::Exception(ErrorMsg.str());
       }
    } else {
-         throw Base::Exception("getGeomTypeFromName - empty geometry name");    
+         throw Base::Exception("getGeomTypeFromName - empty geometry name");
    }
 }
 
