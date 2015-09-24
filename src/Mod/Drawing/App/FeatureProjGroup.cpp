@@ -99,7 +99,7 @@ Base::BoundBox3d FeatureProjGroup::getBoundingBox() const
                 bb.MoveX(part->X.getValue());
                 bb.MoveY(part->Y.getValue());
             }
-            
+
             bbox.Add(bb);
         }
     }
@@ -115,16 +115,18 @@ Base::BoundBox3d FeatureProjGroup::getBoundingBox() const
 
 Drawing::FeaturePage * FeatureProjGroup::getPage(void) const
 {
-    Drawing::FeaturePage *ret = NULL;
+    //TODO: FeatureView already has FeaturePage* findParentPage()
+    return findParentPage();
+    //Drawing::FeaturePage *ret = NULL;
 
-    std::vector<App::DocumentObject*> parent = getInList();
-    for (std::vector<App::DocumentObject*>::iterator it = parent.begin(); it != parent.end(); ++it) {
-        if ((*it)->getTypeId().isDerivedFrom(FeaturePage::getClassTypeId())) {
-            ret = static_cast<FeaturePage *>(*it);
-        }
-    }
+    //std::vector<App::DocumentObject*> parent = getInList();
+    //for (std::vector<App::DocumentObject*>::iterator it = parent.begin(); it != parent.end(); ++it) {
+    //    if ((*it)->getTypeId().isDerivedFrom(FeaturePage::getClassTypeId())) {
+    //        ret = static_cast<FeaturePage *>(*it);
+    //    }
+    //}
 
-    return ret;
+    //return ret;
 }
 
 // Function provided by Joe Dowsett, 2014
@@ -210,7 +212,7 @@ void FeatureProjGroup::onChanged(const App::Property* prop)
     Drawing::FeatureViewCollection::onChanged(prop);
 }
 
-void FeatureProjGroup::moveToCentre(void) 
+void FeatureProjGroup::moveToCentre(void)
 {
     // Update the anchor view's X and Y to keep the bounding box centred on the origin
     Base::BoundBox3d tempbbox = getBoundingBox();
@@ -609,4 +611,3 @@ void FeatureProjGroup::onDocumentRestored()
 {
     execute();
 }
-

@@ -181,7 +181,7 @@ DrawingView::DrawingView(ViewProviderDrawingPage *pageVp, Gui::Document* doc, QW
         }
     }
     //when restoring, it is possible for a Dimension to be loaded before the ViewPart it applies to
-    //therefore we need to make sure parentage of the graphics representation is set properly. bit of a kludge. 
+    //therefore we need to make sure parentage of the graphics representation is set properly. bit of a kludge.
     setDimensionGroups();
 
     App::DocumentObject *obj = pageGui->getPageObject()->Template.getValue();
@@ -573,11 +573,11 @@ void DrawingView::updateTemplate(bool forceUpdate)
 void DrawingView::updateDrawing(bool forceUpdate)
 {
     // We cannot guarantee if the number of graphical representations (QGIVxxxx) have changed so check the number
-    // Why? 
+    // Why?
     const std::vector<QGraphicsItemView *> &graphicsList = m_view->getViews();
     const std::vector<App::DocumentObject*> &pageChildren  = pageGui->getPageObject()->Views.getValues();
 
-    // Count total # DocumentObjects in Page 
+    // Count total # DocumentObjects in Page
     unsigned int docObjCount = 0;
     for(std::vector<App::DocumentObject*>::const_iterator it = pageChildren.begin(); it != pageChildren.end(); ++it) {
         App::DocumentObject *docObj = *it;
@@ -610,6 +610,7 @@ void DrawingView::updateDrawing(bool forceUpdate)
                 newGraphicsList.push_back(*itGraphics);
             } else {
                 if (m_view->scene() == (*itGraphics)->scene()) {
+                    (*itGraphics)->hide();
                     m_view->scene()->removeItem(*itGraphics);
                 } else {   // this "shouldn't" happen, but it does
                     Base::Console().Log("ERROR - DrawingView::updateDrawing - %s already removed from QGraphicsScene\n",
@@ -934,7 +935,7 @@ void DrawingView::print(QPrinter* printer)
         rect = printer->pageRect();
 #endif
 
-    //bool block = 
+    //bool block =
     static_cast<void> (blockConnection(true)); // avoid to be notified by itself
     Gui::Selection().clearSelection();
 
@@ -1052,7 +1053,7 @@ void DrawingView::saveSVG()
     //TODO: Exported Svg file is not quite right. <svg width="301.752mm" height="213.36mm" viewBox="0 0 297 210"... A4: 297x210
     //      Page too small (A4 vs Letter? margins?)
     //TODO: text in Qt is in mm (actually scene units).  text in SVG is points(?). fontsize in export file is too small by 1/2.835.
-    //      resize all textItem before export? 
+    //      resize all textItem before export?
     //      postprocess generated file to mult all font-size attrib by 2.835 to get pts?
     //      duplicate all textItems and only show the appropriate one for screen/print vs export?
     svgGen.setResolution(25.4000508);    // mm/inch??  docs say this is DPI
@@ -1061,7 +1062,7 @@ void DrawingView::saveSVG()
     svgGen.setTitle(QObject::tr("FreeCAD SVG Export"));
     svgGen.setDescription(svgDescription);
 
-    //bool block = 
+    //bool block =
     static_cast<void> (blockConnection(true)); // avoid to be notified by itself
     Gui::Selection().clearSelection();
 
@@ -1091,4 +1092,3 @@ PyObject* DrawingView::getPyObject()
 }
 
 #include "moc_DrawingView.cpp"
-

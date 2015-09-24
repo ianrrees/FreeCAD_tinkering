@@ -39,6 +39,7 @@
 
 #include <Mod/Drawing/App/FeatureView.h>
 #include <Mod/Drawing/App/FeatureViewClip.h>
+#include <Mod/Drawing/App/FeaturePage.h>
 #include "ViewProviderView.h"
 
 
@@ -133,4 +134,10 @@ Drawing::FeatureView* ViewProviderView::getViewObject() const
     return dynamic_cast<Drawing::FeatureView*>(pcObject);
 }
 
-
+bool ViewProviderView::onDelete(const std::vector<std::string> &items)
+{
+    //int viewCount =
+    static_cast<void> (getViewObject()->findParentPage()->removeView(getViewObject()));
+    Gui::Selection().clearSelection();
+    return ViewProviderDocumentObject::onDelete(items);
+}
