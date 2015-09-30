@@ -72,7 +72,8 @@ PROPERTY_SOURCE(DrawingGui::ViewProviderDrawingPage, Gui::ViewProviderDocumentOb
 // Construction/Destruction
 
 ViewProviderDrawingPage::ViewProviderDrawingPage()
-  : view(0)
+  : view(0),
+    restoreState(false)
 {
     sPixmap = "Page";
 
@@ -91,7 +92,6 @@ ViewProviderDrawingPage::~ViewProviderDrawingPage()
 
 void ViewProviderDrawingPage::attach(App::DocumentObject *pcFeat)
 {
-    // call parent attach method
     ViewProviderDocumentObject::attach(pcFeat);
 }
 
@@ -204,7 +204,6 @@ bool ViewProviderDrawingPage::showDrawingView()
 
 std::vector<App::DocumentObject*> ViewProviderDrawingPage::claimChildren(void) const
 {
-
     std::vector<App::DocumentObject*> temp;
 
     // Attach the template if it exists
