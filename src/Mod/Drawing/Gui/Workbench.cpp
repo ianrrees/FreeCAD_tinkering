@@ -62,6 +62,7 @@ Gui::MenuItem* Workbench::setupMenuBar() const
     draw->setCommand("Drawing");
     //*draw << "Drawing_Open";
     //*part << "Drawing_NewA3Landscape";
+    *draw << "Drawing_NewPageDef";
     *draw << "Drawing_NewPage";
     *draw << "Drawing_NewView";
     *draw << "Drawing_ProjGroup";
@@ -86,6 +87,7 @@ Gui::ToolBarItem* Workbench::setupToolBars() const
     Gui::ToolBarItem* root = StdWorkbench::setupToolBars();
     Gui::ToolBarItem* pages = new Gui::ToolBarItem(root);
     pages->setCommand("Drawing Pages");
+    *pages << "Drawing_NewPageDef";
     *pages << "Drawing_NewPage";
 
     Gui::ToolBarItem *views = new Gui::ToolBarItem(root);
@@ -123,6 +125,7 @@ Gui::ToolBarItem* Workbench::setupCommandBars() const
     Gui::ToolBarItem* root = new Gui::ToolBarItem;
     Gui::ToolBarItem *pages = new Gui::ToolBarItem(root);
     pages->setCommand("Drawing Pages");
+    *pages << "Drawing_NewPageDef";
     *pages << "Drawing_NewPage";
 
     Gui::ToolBarItem *views = new Gui::ToolBarItem(root);
@@ -158,4 +161,3 @@ Gui::ToolBarItem* Workbench::setupCommandBars() const
 
     return root;
 }
-

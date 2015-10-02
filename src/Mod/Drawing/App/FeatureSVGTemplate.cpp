@@ -114,7 +114,7 @@ void FeatureSVGTemplate::onChanged(const App::Property* prop)
             // doesn't need to exist at this point.
             Base::FileInfo fi(PageResult.getValue());
 
-//TODO: I don't understand why it is that this "works", seems like we might have two properties where we only need one?  -Ian- 
+//TODO: I don't understand why it is that this "works", seems like we might have two properties where we only need one?  -Ian-
 Template.setValue(App::Application::getResourceDir() + "Mod/Drawing/Templates/" + fi.fileName());
 
             if (!fi.exists()) {
@@ -325,11 +325,13 @@ std::map<std::string, std::string> FeatureSVGTemplate::getEditableTextsFromTempl
         tbegin = tfrag.begin();
         tend = tfrag.end();
         boost::match_results<std::string::const_iterator> twhat;
+        //TODO: "overly complex regex" error in this while loop for some templates (ex: ../ISO/A/ISO_A4_Landscape.svg)
+        //      (old)Draw1::FeaturePage.cpp code doesn't fail
         while (boost::regex_search(tbegin, tend, twhat, e)) {
-            /*string temp1 = twhat[1],
+/*            string temp1 = twhat[1],
                    temp2 = twhat[2],
                    temp3 = twhat[3];
-            qDebug()<<"Got field id:"<<temp1.c_str()<<" editable as:"<<temp2.c_str()<<" default text:"<<temp3.c_str()<<'.';
+            qDebug()<<"Got field id:"<<temp1.c_str()<<" editable as:"<<temp2.c_str()<<" default text:"<<temp3.c_str()<<".";
 */
             if (eds.count(twhat[2]) > 0) {
                 //TODO: Throw or [better] change key
@@ -358,4 +360,3 @@ template<> const char* Drawing::FeatureSVGTemplatePython::getViewProviderName(vo
 // explicit template instantiation
 template class DrawingExport FeaturePythonT<Drawing::FeatureSVGTemplate>;
 }
-

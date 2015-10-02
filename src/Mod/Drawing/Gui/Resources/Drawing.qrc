@@ -13,6 +13,8 @@
         <file>icons/PageTemplate.svg</file>
         <file>icons/actions/document-new.png</file>
         <file>icons/actions/document-new.svg</file>
+        <file>icons/actions/drawing-new-default.svg</file>
+        <file>icons/actions/drawing-new-pick.svg</file>
         <file>icons/actions/drawing-landscape-A0.svg</file>
         <file>icons/actions/drawing-landscape-A1.svg</file>
         <file>icons/actions/drawing-landscape-A2.svg</file>

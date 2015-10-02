@@ -30,11 +30,12 @@
 
 #include <vector>
 
-#include <App/PropertyGeo.h>
-
+#include <App/Application.h>
 #include <App/Document.h>
 #include <App/DocumentObject.h>
+#include <App/PropertyGeo.h>
 #include <Base/Console.h>
+#include <Base/Parameter.h>
 #include <Gui/Action.h>
 #include <Gui/Application.h>
 #include <Gui/BitmapFactory.h>
@@ -109,31 +110,37 @@ void CmdDrawingOpen::activated(int iMsg)
 }
 
 //===========================================================================
-// Drawing_NewPage
+// Drawing_NewPageDef (default template)
 //===========================================================================
 
-DEF_STD_CMD_ACL(CmdDrawingNewPage);
+DEF_STD_CMD(CmdDrawingNewPageDef);
 
-CmdDrawingNewPage::CmdDrawingNewPage()
-  : Command("Drawing_NewPage")
+CmdDrawingNewPageDef::CmdDrawingNewPageDef()
+  : Command("Drawing_NewPageDef")
 {
     sAppModule      = "Drawing";
     sGroup          = QT_TR_NOOP("Drawing");
-    sMenuText       = QT_TR_NOOP("Insert new drawing");
-    sToolTipText    = QT_TR_NOOP("Insert new drawing");
-    sWhatsThis      = "Drawing_NewPage";
+    sMenuText       = QT_TR_NOOP("Insert new default drawing page");
+    sToolTipText    = QT_TR_NOOP("Insert new default drawing page");
+    sWhatsThis      = "Drawing_NewPageDef";
     sStatusTip      = sToolTipText;
+    sPixmap         = "actions/drawing-new-default";
 }
 
-void CmdDrawingNewPage::activated(int iMsg)
+void CmdDrawingNewPageDef::activated(int iMsg)
 {
-    Gui::ActionGroup* pcAction = qobject_cast<Gui::ActionGroup*>(_pcAction);
-    QAction* a = pcAction->actions()[iMsg];
+    Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
+        .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing");
+
+    std::string defaultDir = App::Application::getResourceDir() + "Mod/Drawing/Templates";
+    QString templateDir = QString::fromStdString(hGrp->GetASCII("TemplateDir", defaultDir.c_str()));
+    QString templateFileName = QString::fromStdString(hGrp->GetASCII("TemplateFile","A4_Landscape.svg"));
+    templateFileName = templateDir + QString::fromUtf8("/")  + templateFileName;
 
     std::string PageName = getUniqueObjectName("Page");
     std::string TemplateName = getUniqueObjectName("Template");
 
-    QFileInfo tfi(a->property("Template").toString());
+    QFileInfo tfi(templateFileName);
     if (tfi.isReadable()) {
         Gui::WaitCursor wc;
         openCommand("Drawing create page");
@@ -142,9 +149,8 @@ void CmdDrawingNewPage::activated(int iMsg)
         // Create the Template Object to attach to the page
         doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureSVGTemplate','%s')",TemplateName.c_str());
 
-        QString templateFile = a->property("Template").toString();
         //TODO: why is "Template" property set twice?
-        doCommand(Doc,"App.activeDocument().%s.Template = '%s'",TemplateName.c_str(), templateFile.toStdString().c_str());
+        doCommand(Doc,"App.activeDocument().%s.Template = '%s'",TemplateName.c_str(), templateFileName.toStdString().c_str());
         doCommand(Doc,"App.activeDocument().%s.Template = App.activeDocument().%s",PageName.c_str(),TemplateName.c_str());
 
         commitCommand();
@@ -161,10 +167,77 @@ void CmdDrawingNewPage::activated(int iMsg)
     else {
         QMessageBox::critical(Gui::getMainWindow(),
             QLatin1String("No template"),
-            QLatin1String("No template available for this page size"));
+            QLatin1String("No default template found"));
     }
 }
 
+//===========================================================================
+// Drawing_NewPage (with template choice)
+//===========================================================================
+
+DEF_STD_CMD(CmdDrawingNewPage);
+
+CmdDrawingNewPage::CmdDrawingNewPage()
+  : Command("Drawing_NewPage")
+{
+    sAppModule      = "Drawing";
+    sGroup          = QT_TR_NOOP("Drawing");
+    sMenuText       = QT_TR_NOOP("Insert new drawing page from template");
+    sToolTipText    = QT_TR_NOOP("Insert new drawing page from template");
+    sWhatsThis      = "Drawing_NewPage";
+    sStatusTip      = sToolTipText;
+    sPixmap         = "actions/drawing-new-pick";
+}
+
+void CmdDrawingNewPage::activated(int iMsg)
+{
+    Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
+        .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing");
+
+    std::string defaultDir = App::Application::getResourceDir() + "Mod/Drawing/Templates";
+    QString templateDir = QString::fromStdString(hGrp->GetASCII("TemplateDir", defaultDir.c_str()));
+
+    //TODO: Some templates are too complex for regex?
+    QString templateFileName = Gui::FileDialog::getOpenFileName(Gui::getMainWindow(),
+                                                   QString::fromUtf8(QT_TR_NOOP("Select a Template File")),
+                                                   templateDir,
+                                                   QString::fromUtf8(QT_TR_NOOP("Template (*.svg *.dxf)")));
+
+    std::string PageName = getUniqueObjectName("Page");
+    std::string TemplateName = getUniqueObjectName("Template");
+
+    QFileInfo tfi(templateFileName);
+    if (tfi.isReadable()) {
+        Gui::WaitCursor wc;
+        openCommand("Drawing create page");
+        doCommand(Doc,"App.activeDocument().addObject('Drawing::FeaturePage','%s')",PageName.c_str());
+
+        // Create the Template Object to attach to the page
+        doCommand(Doc,"App.activeDocument().addObject('Drawing::FeatureSVGTemplate','%s')",TemplateName.c_str());
+
+        //TODO: why is "Template" property set twice?
+        doCommand(Doc,"App.activeDocument().%s.Template = '%s'",TemplateName.c_str(), templateFileName.toStdString().c_str());
+        doCommand(Doc,"App.activeDocument().%s.Template = App.activeDocument().%s",PageName.c_str(),TemplateName.c_str());
+
+        commitCommand();
+        Drawing::FeaturePage* fp = dynamic_cast<Drawing::FeaturePage*>(getDocument()->getObject(PageName.c_str()));
+        Gui::ViewProvider* vp = Gui::Application::Instance->getDocument(getDocument())->getViewProvider(fp);
+        DrawingGui::ViewProviderDrawingPage* dvp = dynamic_cast<DrawingGui::ViewProviderDrawingPage*>(vp);
+        if (dvp) {
+            dvp->show();
+        }
+        else {
+            Base::Console().Log("INFO - Template: %s for Page: %s NOT Found\n", PageName.c_str(),TemplateName.c_str());
+        }
+    }
+    else {
+        QMessageBox::critical(Gui::getMainWindow(),
+            QLatin1String("No template"),
+            QLatin1String("Template file is invalid"));
+    }
+}
+
+#if 0
 Gui::Action * CmdDrawingNewPage::createAction(void)
 {
     Gui::ActionGroup* pcAction = new Gui::ActionGroup(this, Gui::getMainWindow());
@@ -211,7 +284,7 @@ Gui::Action * CmdDrawingNewPage::createAction(void)
             lastId = id;
 
             QFile file(QString::fromAscii(":/icons/actions/drawing-landscape-A0.svg"));
-            
+
             // Create an action
             QAction* a = pcAction->addAction(QString());
             if (file.open(QFile::ReadOnly)) {
@@ -312,6 +385,7 @@ bool CmdDrawingNewPage::isActive(void)
     else
         return false;
 }
+#endif
 
 //===========================================================================
 // Drawing_NewA3Landscape
@@ -378,7 +452,7 @@ void CmdDrawingNewView::activated(int iMsg)
             QObject::tr("Select a Part object."));
         return;
     }
-    
+
 //    std::vector<App::DocumentObject*> pages = getSelection().getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     std::vector<App::DocumentObject*> pages = getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     if (pages.empty()) {
@@ -521,7 +595,7 @@ void CmdDrawingProjGroup::activated(int iMsg)
     if (!selPages.empty()) {
         page = dynamic_cast<Drawing::FeaturePage *>(selPages.front());
     } else {
-        // Check that any page object exists in Document 
+        // Check that any page object exists in Document
         const std::vector<App::DocumentObject*> docPages = getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
         if (!docPages.empty()) {
             page = dynamic_cast<Drawing::FeaturePage *>(docPages.front());
@@ -728,7 +802,7 @@ void CmdDrawingClipPlus::activated(int iMsg)
             QObject::tr("Create a page first."));
         return;
     }
-    
+
     std::vector<App::DocumentObject*> views = getSelection().getObjectsOfType(Drawing::FeatureView::getClassTypeId());
     if (views.size() != 2) {
         QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
@@ -1021,6 +1095,7 @@ void CreateDrawingCommands(void)
     Gui::CommandManager &rcCmdMgr = Gui::Application::Instance->commandManager();
 
 //    rcCmdMgr.addCommand(new CmdDrawingOpen());
+    rcCmdMgr.addCommand(new CmdDrawingNewPageDef());
     rcCmdMgr.addCommand(new CmdDrawingNewPage());
     rcCmdMgr.addCommand(new CmdDrawingNewA3Landscape());
     rcCmdMgr.addCommand(new CmdDrawingNewView());
