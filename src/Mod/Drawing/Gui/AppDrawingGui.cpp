@@ -30,9 +30,11 @@
 #include <Base/Console.h>
 #include <Gui/Application.h>
 #include <Gui/Language/Translator.h>
+#include <Gui/WidgetFactory.h>
 
 #include "Workbench.h"
 
+#include "DlgPrefsDrawingImp.h"
 #include "ViewProviderPage.h"
 #include "ViewProviderView.h"
 #include "ViewProviderDimension.h"
@@ -76,7 +78,7 @@ void DrawingGuiExport initDrawingGui()
     // instantiating the commands
     CreateDrawingCommands();
     CreateDrawingCommandsDims();
-    
+
     DrawingGui::Workbench::init();
 
     //TODO: is this platform independent?? should osifont be added by installer?
@@ -98,9 +100,11 @@ void DrawingGuiExport initDrawingGui()
     DrawingGui::ViewProviderAnnotation::init();
     DrawingGui::ViewProviderSymbol::init();
 
+    // register preferences pages
+    new Gui::PrefPageProducer<DrawingGui::DlgPrefsDrawingImp> ("Drawing");
+
     // add resources and reloads the translators
     loadDrawingResource();
 }
 
 } // extern "C" {
-

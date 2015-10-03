@@ -6,7 +6,7 @@
 # runs when the gui is up
 
 #***************************************************************************
-#*   (c) Juergen Riegel (juergen.riegel@web.de) 2002                        
+#*   (c) Juergen Riegel (juergen.riegel@web.de) 2002
 #*                                                                         *
 #*   This file is part of the FreeCAD CAx development system.              *
 #*                                                                         *
@@ -33,7 +33,7 @@
 class DrawingWorkbench (Workbench):
     "Drawing workbench object"
     def __init__(self):
-        self.__class__.Icon = FreeCAD.getResourceDir() + "Mod/Drawing/Resources/icons/actions/drawing-landscape.svg"
+        self.__class__.Icon = FreeCAD.getResourceDir() + "Mod/Drawing/Resources/icons/preferences-drawing.svg"
         self.__class__.MenuText = "Drawing"
         self.__class__.ToolTip = "Drawing workbench"
 
@@ -43,7 +43,7 @@ class DrawingWorkbench (Workbench):
         import DrawingGui
     def GetClassName(self):
         return "DrawingGui::Workbench"
-        
+
 Gui.addWorkbench(DrawingWorkbench())
 
 # Append the open handler

@@ -16,7 +16,6 @@ include_directories(
     ${OCC_INCLUDE_DIR}
     ${ZLIB_INCLUDE_DIR}
     ${XercesC_INCLUDE_DIRS}
-    ${SOQT_INCLUDE_DIR}
 )
 link_directories(${OCC_LIBRARY_DIR})
 
@@ -44,6 +43,7 @@ set(DrawingGui_MOC_HDRS
     QGraphicsItemViewClip.h
     TaskProjGroup.h
     TemplateTextField.h
+    DlgPrefsDrawingImp.h
 )
 
 fc_wrap_cpp(DrawingGui_MOC_SRCS ${DrawingGui_MOC_HDRS})
@@ -52,6 +52,7 @@ SOURCE_GROUP("Moc" FILES ${DrawingGui_MOC_SRCS})
 qt4_add_resources(DrawingGui_SRCS Resources/Drawing.qrc)
 
 set(DrawingGui_UIC_SRCS
+    DlgPrefsDrawing.ui
     TaskProjGroup.ui
 )
 
@@ -73,6 +74,10 @@ SET(DrawingGui_SRCS
     TaskProjGroup.ui
     TaskProjGroup.cpp
     TaskProjGroup.h
+    DlgPrefsDrawing.ui
+    DlgPrefsDrawingImp.cpp
+    DlgPrefsDrawingImp.h
+
 )
 SET(DrawingGuiView_SRCS
     DrawingView.cpp
@@ -166,7 +171,7 @@ add_library(DrawingGui SHARED ${DrawingGui_SRCS} ${DrawingGuiView_SRCS} ${Drawin
 target_link_libraries(DrawingGui ${DrawingGui_LIBS})
 
 
-fc_target_copy_resource(DrawingGui 
+fc_target_copy_resource(DrawingGui
     ${CMAKE_SOURCE_DIR}/src/Mod/Drawing
     ${CMAKE_BINARY_DIR}/Mod/Drawing
     InitGui.py)
@@ -179,6 +184,11 @@ fc_copy_sources(DrawingGui "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_DATADIR}/Mod/Dra
 
 INSTALL(FILES ${DrawingGuiIcon_SVG} DESTINATION "${CMAKE_INSTALL_DATADIR}/Mod/Drawing/Resources/icons/actions")
 
+SET(DrawingGuiIcon_SVG
+    Resources/icons/preferences-drawing.svg
+)
+fc_copy_sources(DrawingGui "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_DATADIR}/Mod/Drawing" ${DrawingGuiIcon_SVG})
+INSTALL(FILES ${DrawingGuiIcon_SVG} DESTINATION "${CMAKE_INSTALL_DATADIR}/Mod/DrawingFem/Resources/icons")
 
 SET_BIN_DIR(DrawingGui DrawingGui /Mod/Drawing)
 SET_PYTHON_PREFIX_SUFFIX(DrawingGui)
