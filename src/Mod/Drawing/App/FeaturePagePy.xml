@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <GenerateModel xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="generateMetaModel_Module.xsd">
   <PythonExport
-    Father="DocumentObjectGroupPy"
+    Father="DocumentObjectPy"
     Name="FeaturePagePy"
     Twin="FeaturePage"
     TwinPointer="FeaturePage"
     Include="Mod/Drawing/App/FeaturePage.h"
     Namespace="Drawing"
-    FatherInclude="App/DocumentObjectGroupPy.h"
+    FatherInclude="App/DocumentObjectPy.h"
     FatherNamespace="App">
     <Documentation>
       <Author Licence="LGPL" Name="WandererFan" EMail="wandererfan@gmail.com" />
