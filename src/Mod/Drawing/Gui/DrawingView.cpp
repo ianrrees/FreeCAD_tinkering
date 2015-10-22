@@ -927,6 +927,13 @@ void DrawingView::print(QPrinter* printer)
     }
 
     QPainter p(printer);
+    if (!p.isActive() && !printer->outputFileName().isEmpty()) {
+        qApp->setOverrideCursor(Qt::ArrowCursor);
+        QMessageBox::critical(this, tr("Opening file failed"),
+            tr("Can't open file '%1' for writing.").arg(printer->outputFileName()));
+        qApp->restoreOverrideCursor();
+        return;
+    } 
     QRect rect = printer->paperRect();
 #ifdef Q_OS_WIN32
     // On Windows the preview looks broken when using paperRect as render area.
@@ -1079,13 +1086,6 @@ void DrawingView::saveSVG()
     m_view->toggleEdit(true);
 }
 
-    if (!p.isActive() && !printer->outputFileName().isEmpty()) {
-        qApp->setOverrideCursor(Qt::ArrowCursor);
-        QMessageBox::critical(this, tr("Opening file failed"),
-            tr("Can't open file '%1' for writing.").arg(printer->outputFileName()));
-        qApp->restoreOverrideCursor();
-        return;
-    }
 PyObject* DrawingView::getPyObject()
 {
     Py_Return;
