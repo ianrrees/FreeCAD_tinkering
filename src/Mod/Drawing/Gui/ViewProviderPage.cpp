@@ -61,6 +61,7 @@
 #include <Mod/Drawing/App/FeatureView.h>
 #include <Mod/Drawing/App/FeatureProjGroupItem.h>
 #include <Mod/Drawing/App/FeatureViewDimension.h>
+#include <Mod/Drawing/App/FeatureHatch.h>
 #include <Mod/Drawing/App/DrawUtil.h>
 
 using namespace DrawingGui;
@@ -218,6 +219,7 @@ std::vector<App::DocumentObject*> ViewProviderDrawingPage::claimChildren(void) c
     // for Page, valid children are any View except: FeatureProjGroupItem
     //                                               FeatureViewDimension
     //                                               any FeatuerView in a FeatureViewClip
+    //                                               FeatureHatch
 
     const std::vector<App::DocumentObject *> &views = getPageObject()->Views.getValues();
 
@@ -225,9 +227,10 @@ std::vector<App::DocumentObject*> ViewProviderDrawingPage::claimChildren(void) c
       for(std::vector<App::DocumentObject *>::const_iterator it = views.begin(); it != views.end(); ++it) {
           Drawing::FeatureView* featView = dynamic_cast<Drawing::FeatureView*> (*it);
           App::DocumentObject *docObj = *it;
-          // Don't collect if dimension, projection group item or member of ClipGroup as these should be grouped elsewhere
+          // Don't collect if dimension, projection group item, hatch or member of ClipGroup as these should be grouped elsewhere
           if(docObj->isDerivedFrom(Drawing::FeatureProjGroupItem::getClassTypeId())    ||
              docObj->isDerivedFrom(Drawing::FeatureViewDimension::getClassTypeId())    ||
+             docObj->isDerivedFrom(Drawing::FeatureHatch::getClassTypeId())            ||
              (featView && featView->isInClip()) )
               continue;
           else

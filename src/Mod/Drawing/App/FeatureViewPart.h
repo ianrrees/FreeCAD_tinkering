@@ -32,6 +32,10 @@
 #include <Base/BoundBox.h>
 #include "GeometryObject.h"
 
+namespace Drawing {
+class FeatureHatch;
+}
+
 namespace Drawing
 {
 
@@ -46,7 +50,7 @@ public:
     FeatureViewPart(void);
     virtual ~FeatureViewPart();
 
-    App::PropertyLink   Source;
+    App::PropertyLink   Source;                                        //Part Feature
     App::PropertyVector Direction;  //TODO: Rename to YAxisDirection or whatever this actually is
     App::PropertyVector XAxisDirection;
     App::PropertyBool   ShowHiddenLines;
@@ -54,6 +58,11 @@ public:
     App::PropertyFloat  LineWidth;
     App::PropertyFloat  HiddenWidth;
     App::PropertyFloatConstraint  Tolerance;
+//    App::PropertyLinkList   HatchAreas;                                //FeatureHatch
+
+    //int addHatch(App::DocumentObject *docObj);
+    //int removeHatch(App::DocumentObject *docObj);
+    std::vector<Drawing::FeatureHatch*> getHatches(void) const;
 
     const std::vector<DrawingGeometry::Vertex *> & getVertexGeometry() const;
     const std::vector<DrawingGeometry::BaseGeom  *> & getEdgeGeometry() const;

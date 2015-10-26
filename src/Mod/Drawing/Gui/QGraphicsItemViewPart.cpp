@@ -39,11 +39,15 @@
 
 
 #include <App/Application.h>
+#include <App/Document.h>
+#include <App/DocumentObject.h>
 #include <App/Material.h>
 #include <Base/Console.h>
 #include <Base/Parameter.h>
 
+#include "../App/DrawUtil.h"
 #include "../App/FeatureViewPart.h"
+#include "../App/FeatureHatch.h"
 #include "QGraphicsItemViewPart.h"
 
 using namespace DrawingGui;
@@ -192,7 +196,7 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
 
           path.moveTo(geom->points[0].fX, geom->points[0].fY);
           std::vector<Base::Vector2D>::const_iterator it = geom->points.begin();
-          //Base::Console().Message("TRACE -drawPainterPath - making an GENERIC From: (%.3f,%.3f)\n",geom->points[0].fX, geom->points[0].fY); 
+          //Base::Console().Message("TRACE -drawPainterPath - making an GENERIC From: (%.3f,%.3f)\n",geom->points[0].fX, geom->points[0].fY);
           for(++it; it != geom->points.end(); ++it) {
               path.lineTo((*it).fX, (*it).fY);
               //Base::Console().Message(">>>> To: (%.3f,%.3f)\n",(*it).fX, (*it).fY);
@@ -205,7 +209,7 @@ QPainterPath QGraphicsItemViewPart::drawPainterPath(DrawingGeometry::BaseGeom *b
 
     double rot = getViewObject()->Rotation.getValue();
     if (rot) {
-        QTransform t; 
+        QTransform t;
         t.rotate(-rot);
         path = t.map(path);
     }
@@ -237,7 +241,8 @@ void QGraphicsItemViewPart::updateView(bool update)
         for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); ++it) {
             if (dynamic_cast<QGraphicsItemEdge *> (*it) ||
                 dynamic_cast<QGraphicsItemFace *>(*it) ||
-                dynamic_cast<QGraphicsItemVertex *>(*it)) {
+                dynamic_cast<QGraphicsItemVertex *>(*it) ||
+                dynamic_cast<QGraphicsItemHatch *>(*it)) {
                 removeFromGroup(*it);
                 scene()->removeItem(*it);
 
@@ -272,11 +277,11 @@ void QGraphicsItemViewPart::drawViewPart()
         return;
     }
 
-    Drawing::FeatureViewPart *part = dynamic_cast<Drawing::FeatureViewPart *>(getViewObject());
+    Drawing::FeatureViewPart *viewPart = dynamic_cast<Drawing::FeatureViewPart *>(getViewObject());
 
-    float lineWidth = part->LineWidth.getValue() * lineScaleFactor;
-    float lineWidthHid = part->HiddenWidth.getValue() * lineScaleFactor;
-    
+    float lineWidth = viewPart->LineWidth.getValue() * lineScaleFactor;
+    float lineWidthHid = viewPart->HiddenWidth.getValue() * lineScaleFactor;
+
     prepareGeometryChange();
 
 #if MOD_DRAWING_HANDLE_FACES
@@ -292,7 +297,7 @@ void QGraphicsItemViewPart::drawViewPart()
         for(std::vector<DrawingGeometry::Wire *>::iterator wire = faceWires.begin(); wire != faceWires.end(); wire++) {
             QPainterPath wirePath;
             QPointF shapePos;
-            for(std::vector<DrawingGeometry::BaseGeom *>::iterator baseGeom = (*wire)->geoms.begin(); 
+            for(std::vector<DrawingGeometry::BaseGeom *>::iterator baseGeom = (*wire)->geoms.begin();
                 baseGeom != (*wire)->geoms.end();
                 baseGeom++) {
                 QPainterPath edgePath = drawPainterPath(*baseGeom);
@@ -327,16 +332,65 @@ void QGraphicsItemViewPart::drawViewPart()
     }
 #endif //#if MOD_DRAWING_HANDLE_FACES
 
+    // Draw Hatches
+    std::vector<Drawing::FeatureHatch*> hatchObjs = viewPart->getHatches();
+    if (!hatchObjs.empty()) {
+        std::vector<Drawing::FeatureHatch*>::iterator itHatch = hatchObjs.begin();
+        for(; itHatch != hatchObjs.end(); itHatch++) {
+            //if hatchdirection == viewPartdirection {
+            Drawing::FeatureHatch* feat = (*itHatch);
+            const std::vector<std::string> &edgeNames = feat->Edges.getSubValues();
+            std::vector<std::string>::const_iterator itEdge = edgeNames.begin();
+            std::vector<DrawingGeometry::BaseGeom*> unChained;
+
+            //get all edge geometries for this hatch
+            for (; itEdge != edgeNames.end(); itEdge++) {
+                int idxEdge = DrawUtil::getIndexFromName((*itEdge));
+                DrawingGeometry::BaseGeom* edgeGeom = viewPart->getProjEdgeByIndex(idxEdge);
+                if (!edgeGeom) {
+                    Base::Console().Log("Error - qgivp::drawViewPart - edgeGeom: %d is NULL\n",idxEdge);
+                }
+                unChained.push_back(edgeGeom);
+            }
+
+            //chain edges tail to nose into a closed region
+            std::vector<DrawingGeometry::BaseGeom*> chained = DrawingGeometry::chainGeoms(unChained);
+
+            //iterate through the chain to make QPainterPath
+            std::vector<DrawingGeometry::BaseGeom*>::iterator itChain = chained.begin();
+            QPainterPath hatchPath;
+            for (; itChain != chained.end(); itChain++) {
+                QPainterPath subPath;
+                if ((*itChain)->reversed) {
+                    subPath = drawPainterPath((*itChain)).toReversed();
+                } else {
+                    subPath = drawPainterPath((*itChain));
+                }
+                hatchPath.connectPath(subPath);
+                //_dumpPath("subpath",subPath);
+            }
+
+            QGraphicsItemHatch* hatch = new QGraphicsItemHatch(feat->getNameInDocument());
+            addToGroup(hatch);
+            hatch->setPos(0.0,0.0);
+            hatch->setPath(hatchPath);
+            hatch->setFill(feat->HatchPattern.getValue());
+            hatch->setColor(feat->HatchColor.getValue());
+            //_dumpPath("hatchPath",hatchPath);
+            hatch->setFlag(QGraphicsItem::ItemIsSelectable, true);
+        }
+    }
+
     // Draw Edges
-    const std::vector<DrawingGeometry::BaseGeom *> &geoms = part->getEdgeGeometry();
-    const std::vector<int> &refs = part->getEdgeReferences();
+    const std::vector<DrawingGeometry::BaseGeom *> &geoms = viewPart->getEdgeGeometry();
+    const std::vector<int> &refs = viewPart->getEdgeReferences();
     std::vector<DrawingGeometry::BaseGeom *>::const_iterator it = geoms.begin();
     QGraphicsItemEdge* item;
 
     for(int i = 0 ; it != geoms.end(); ++it, i++) {
         //TODO: investigate if an Edge can be both Hidden and Smooth???
         if(((*it)->extractType == DrawingGeometry::Plain)  ||
-          (((*it)->extractType == DrawingGeometry::WithHidden) && part->ShowHiddenLines.getValue()) ||
+          (((*it)->extractType == DrawingGeometry::WithHidden) && viewPart->ShowHiddenLines.getValue()) ||
           ((*it)->extractType == DrawingGeometry::WithSmooth)) {
 //          (((*it)->extractType == DrawingGeometry::WithSmooth) && part->ShowSmoothLines.getValue())) {
             //item = new QGraphicsItemEdge(refs.at(i));
@@ -365,17 +419,32 @@ void QGraphicsItemViewPart::drawViewPart()
     }
 
     // Draw Vertexs:
-    const std::vector<DrawingGeometry::Vertex *> &verts = part->getVertexGeometry();
-    //const std::vector<int> &vertRefs                    = part->getVertexReferences();
+    const std::vector<DrawingGeometry::Vertex *> &verts = viewPart->getVertexGeometry();
+    const std::vector<int> &vertRefs                    = viewPart->getVertexReferences();
     std::vector<DrawingGeometry::Vertex *>::const_iterator vert = verts.begin();
 
     for(int i = 0 ; vert != verts.end(); ++vert, i++) {
         QGraphicsItemVertex *item = new QGraphicsItemVertex(i);
-        item->setReference(refs.at(i));
+        item->setReference(vertRefs.at(i));
         addToGroup(item);
         item->setPos((*vert)->pnt.fX, (*vert)->pnt.fY);                //this is in ViewPart coords
         item->setRadius(lineWidth * vertexScaleFactor);
      }
+}
+
+std::vector<Drawing::FeatureHatch*> QGraphicsItemViewPart::getHatchesForView(Drawing::FeatureViewPart* viewPart)
+{
+    std::vector<App::DocumentObject*> docObjs = viewPart->getDocument()->getObjectsOfType(Drawing::FeatureHatch::getClassTypeId());
+    std::vector<Drawing::FeatureHatch*> hatchObjs;
+    std::string viewName = viewPart->getNameInDocument();
+    std::vector<App::DocumentObject*>::iterator itDoc = docObjs.begin();
+    for(; itDoc != docObjs.end(); itDoc++) {
+        Drawing::FeatureHatch* hatch = dynamic_cast<Drawing::FeatureHatch*>(*itDoc);
+        if (viewName.compare((hatch->PartView.getValue())->getNameInDocument()) == 0) {
+            hatchObjs.push_back(hatch);
+        }
+    }
+    return hatchObjs;
 }
 
 // As called by arc of ellipse case:
@@ -583,4 +652,3 @@ void _dumpPath(const char* text,QPainterPath path)
 
 
 #include "moc_QGraphicsItemViewPart.cpp"
-

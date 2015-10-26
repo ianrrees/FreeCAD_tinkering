@@ -107,6 +107,12 @@ Face::~Face()
     wires.clear();
 }
 
+BaseGeom::BaseGeom() :
+    geomType(NOTDEF),
+    reversed(false)
+{
+}
+
 //! ugh. yuck.
 std::vector<Base::Vector2D> BaseGeom::findEndPoints()
 {
@@ -148,6 +154,18 @@ std::vector<Base::Vector2D> BaseGeom::findEndPoints()
           break;
     }
     return result;
+}
+
+Base::Vector2D BaseGeom::getStartPoint()
+{
+    std::vector<Base::Vector2D> verts = findEndPoints();
+    return verts[0];
+}
+
+Base::Vector2D BaseGeom::getEndPoint()
+{
+    std::vector<Base::Vector2D> verts = findEndPoints();
+    return verts[1];
 }
 
 Ellipse::Ellipse()
@@ -361,3 +379,72 @@ bool BSpline::isLine()
     }
     return result;
 }
+
+//****  DrawingGeometry utility funtions
+
+extern "C" {
+//! return a vector of BaseGeom*'s in tail to nose order
+std::vector<DrawingGeometry::BaseGeom*> DrawingExport chainGeoms(std::vector<DrawingGeometry::BaseGeom*> geoms)
+{
+    std::vector<DrawingGeometry::BaseGeom*> result;
+    std::vector<bool> used(geoms.size(),false);
+    double tolerance = 0.0;
+
+    if (geoms.empty()) {
+        return result;
+    }
+
+    if (geoms.size() == 1) {                                              //don't bother for single geom (circles, ellipses,etc)
+        result.push_back(geoms[0]);
+    } else {
+        result.push_back(geoms[0]);                                    //start with first edge
+        Base::Vector2D atPoint = (geoms[0])->getEndPoint();
+        used[0] = true;
+        for (unsigned int i = 1; i < geoms.size(); i++) {              //do size-1 more edges
+            getNextReturn next = nextGeom(atPoint,geoms,used,tolerance);
+            if (next.index) {                                          //found an unused edge with vertex == atPoint
+                DrawingGeometry::BaseGeom* nextEdge = geoms.at(next.index);
+                used[next.index] = true;
+                nextEdge->reversed = next.reversed;
+                result.push_back(nextEdge);
+                if (next.reversed) {
+                    atPoint = nextEdge->getStartPoint();
+                } else {
+                    atPoint = nextEdge->getEndPoint();
+                }
+            } else {
+                Base::Console().Log("Error - Geometry::chainGeoms - couldn't find next edge\n");
+                //TARFU
+            }
+        }
+    }
+    return result;
+}
+
+//! find an unused geom starts or ends at atPoint. returns index[1:geoms.size()),reversed [true,false]
+getNextReturn DrawingExport nextGeom(Base::Vector2D atPoint,
+                       std::vector<DrawingGeometry::BaseGeom*> geoms,
+                       std::vector<bool> used,
+                       double tolerance)
+{
+    getNextReturn result(0,false);
+    std::vector<DrawingGeometry::BaseGeom*>::iterator itGeom = geoms.begin();
+    for (; itGeom != geoms.end(); itGeom++) {
+        unsigned int index = itGeom - geoms.begin();
+        if (used[index]) {
+            continue;
+        }
+        if (atPoint == (*itGeom)->getStartPoint()) {
+            result.index = index;
+            result.reversed = false;
+            break;
+        } else if (atPoint == (*itGeom)->getEndPoint()) {
+            result.index = index;
+            result.reversed = true;
+            break;
+        }
+    }
+    return result;
+}
+
+} //end extern C

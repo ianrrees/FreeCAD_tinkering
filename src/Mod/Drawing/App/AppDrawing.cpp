@@ -16,7 +16,7 @@
 
 #include <Base/Console.h>
 #include <Base/Interpreter.h>
- 
+
 #include "FeaturePage.h"
 #include "FeatureSVGTemplate.h"
 #include "FeatureParametricTemplate.h"
@@ -31,6 +31,7 @@
 #include "FeatureViewSymbol.h"
 #include "FeatureProjection.h"
 #include "FeatureViewClip.h"
+#include "FeatureHatch.h"
 #include "PageGroup.h"
 
 extern struct PyMethodDef Drawing_methods[];
@@ -60,7 +61,7 @@ void DrawingExport initDrawing()
     // NOTE: To finish the initialization of our own type objects we must
     // call PyType_Ready, otherwise we run into a segmentation fault, later on.
     // This function is responsible for adding inherited slots from a type's base class.
- 
+
     Drawing::FeaturePage            ::init();
     Drawing::FeatureView            ::init();
     Drawing::FeatureViewCollection  ::init();
@@ -78,8 +79,9 @@ void DrawingExport initDrawing()
     Drawing::FeatureParametricTemplate::init();
     Drawing::FeatureSVGTemplate     ::init();
 
-    Drawing::FeatureViewClip            ::init();
- 
+    Drawing::FeatureViewClip        ::init();
+    Drawing::FeatureHatch           ::init();
+
    // Python Types
     Drawing::FeatureViewPython      ::init();
     Drawing::FeatureViewPartPython  ::init();

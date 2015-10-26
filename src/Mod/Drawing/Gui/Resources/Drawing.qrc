@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
+        <file>icons/Annotation.svg</file>
         <file>icons/Dimension.svg</file>
         <file>icons/Dimension_Angle.svg</file>
         <file>icons/Dimension_Diameter.svg</file>
@@ -7,8 +8,10 @@
         <file>icons/Dimension_Length.svg</file>
         <file>icons/Dimension_Radius.svg</file>
         <file>icons/Dimension_Vertical.svg</file>
+        <file>icons/Hatch.svg</file>
         <file>icons/Page.svg</file>
         <file>icons/Pages.svg</file>
+        <file>icons/Symbol.svg</file>
         <file>icons/View.svg</file>
         <file>icons/PageTemplate.svg</file>
         <file>icons/preferences-drawing.svg</file>
@@ -34,6 +37,7 @@
         <file>icons/actions/drawing-draft-view.svg</file>
         <file>icons/actions/saveSVG.svg</file>
         <file>icons/actions/drawing-viewsection.svg</file>
+        <file>icons/actions/drawing-hatch.svg</file>
         <file>translations/Drawing_af.qm</file>
         <file>translations/Drawing_cs.qm</file>
         <file>translations/Drawing_de.qm</file>

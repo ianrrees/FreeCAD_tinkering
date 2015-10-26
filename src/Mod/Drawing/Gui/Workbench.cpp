@@ -117,6 +117,10 @@ Gui::ToolBarItem* Workbench::setupToolBars() const
     file->setCommand("Drawing File Access");
     *file << "Drawing_ExportPage";
     *file << "Drawing_Symbol";
+
+    Gui::ToolBarItem *decor = new Gui::ToolBarItem(root);
+    decor->setCommand("Drawing Decoration");
+    *decor << "Drawing_NewHatch";
     return root;
 }
 
@@ -155,6 +159,10 @@ Gui::ToolBarItem* Workbench::setupCommandBars() const
     file->setCommand("Drawing File Access");
     *file << "Drawing_ExportPage";
     *file << "Drawing_Symbol";
+
+    Gui::ToolBarItem *decor = new Gui::ToolBarItem(root);
+    decor->setCommand("Drawing Decoration");
+    *decor << "Drawing_NewHatch";
 
 //     *img << "Drawing_OpenBrowserView";
 //     *img << "Drawing_DraftView";

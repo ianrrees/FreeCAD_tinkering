@@ -30,9 +30,11 @@
 #include "QGraphicsItemFace.h"
 #include "QGraphicsItemEdge.h"
 #include "QGraphicsItemVertex.h"
+#include "QGraphicsItemHatch.h"
 
 namespace Drawing {
 class FeatureViewPart;
+class FeatureHatch;
 }
 
 namespace DrawingGeometry {
@@ -90,6 +92,7 @@ protected:
                                      double curx, double cury) const;
 
     QPainterPath drawPainterPath(DrawingGeometry::BaseGeom *baseGeom) const;
+    std::vector <Drawing::FeatureHatch *> getHatchesForView(Drawing::FeatureViewPart* viewPart);
     void drawViewPart();
 
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);

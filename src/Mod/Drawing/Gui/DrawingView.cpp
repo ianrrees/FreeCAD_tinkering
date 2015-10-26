@@ -88,6 +88,7 @@
 #include <Mod/Drawing/App/FeatureViewAnnotation.h>
 #include <Mod/Drawing/App/FeatureViewSymbol.h>
 #include <Mod/Drawing/App/FeatureViewClip.h>
+#include <Mod/Drawing/App/FeatureHatch.h>
 
 #include "QGraphicsItemDrawingTemplate.h"
 #include "QGraphicsItemView.h"
@@ -208,6 +209,7 @@ void DrawingView::setDimensionGroups(void)
     const std::vector<QGraphicsItemView *> &allItems = m_view->getViews();
     std::vector<QGraphicsItemView *>::const_iterator itInspect;
     int dimItemType = QGraphicsItem::UserType + 106;
+    //int hatchItemType = QGraphicsItem::UserType + 106;
 
     for (itInspect = allItems.begin(); itInspect != allItems.end(); itInspect++) {
         if (((*itInspect)->type() == dimItemType) && (!(*itInspect)->group())) {
@@ -216,6 +218,7 @@ void DrawingView::setDimensionGroups(void)
                 QGraphicsItemViewDimension* dim = dynamic_cast<QGraphicsItemViewDimension*>((*itInspect));
                 m_view->addDimToParent(dim,parent);
             }
+        //same for hatch?
         }
     }
 }
@@ -332,6 +335,8 @@ int DrawingView::attachView(App::DocumentObject *obj)
     } else if(obj->getTypeId().isDerivedFrom(Drawing::FeatureViewClip::getClassTypeId()) ) {
         Drawing::FeatureViewClip *viewClip = dynamic_cast<Drawing::FeatureViewClip *>(obj);
         qview = m_view->addFeatureViewClip(viewClip);
+    } else {
+        Base::Console().Log("Logic Error - Unknown view type in DrawingView::attachView\n");
     }
 
     if(!qview)

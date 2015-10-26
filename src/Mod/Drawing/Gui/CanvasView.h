@@ -34,6 +34,7 @@ class FeatureTemplate;
 class FeatureViewAnnotation;
 class FeatureViewSymbol;
 class FeatureViewClip;
+class FeatureHatch;
 }
 
 namespace DrawingGui
@@ -41,6 +42,7 @@ namespace DrawingGui
 class QGraphicsItemView;
 class QGraphicsItemViewDimension;
 class QGraphicsItemTemplate;
+class QGraphicsItemHatch;
 class ViewProviderDrawingPage;
 
 class DrawingGuiExport CanvasView : public QGraphicsView
@@ -70,7 +72,6 @@ public:
     QGraphicsItemView * findParent(QGraphicsItemView *) const;
 
     void addDimToParent(QGraphicsItemViewDimension* dim, QGraphicsItemView* parent);
-    
     const std::vector<QGraphicsItemView *> & getViews() const { return views; }
     int addView(QGraphicsItemView * view);
     void setViews(const std::vector<QGraphicsItemView *> &view) {views = view; }

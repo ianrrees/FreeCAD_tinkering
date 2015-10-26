@@ -1,6 +1,6 @@
 /***************************************************************************
  *   Copyright (c) 2004 Jürgen Riegel <juergen.riegel@web.de>              *
- *   Copyright (c) 2012 Luke Parry <l.parry@warwick.ac.uk>                 *
+ *   Copyright (c) 2015 Wandererfan <wandererfan@gmail.com>                *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -38,37 +38,37 @@
 #include <Gui/SoFCSelection.h>
 #include <Gui/Selection.h>
 
-#include <Mod/Drawing/App/FeatureViewSymbol.h>
-#include "ViewProviderSymbol.h"
+#include <Mod/Drawing/App/FeatureHatch.h>
+#include "ViewProviderHatch.h"
 
 using namespace DrawingGui;
 
-PROPERTY_SOURCE(DrawingGui::ViewProviderSymbol, Gui::ViewProviderDocumentObject)
+PROPERTY_SOURCE(DrawingGui::ViewProviderHatch, Gui::ViewProviderDocumentObject)
 
 //**************************************************************************
 // Construction/Destruction
 
-ViewProviderSymbol::ViewProviderSymbol()
+ViewProviderHatch::ViewProviderHatch()
 {
-    sPixmap = "Symbol";
+    sPixmap = "Hatch";
 }
 
-ViewProviderSymbol::~ViewProviderSymbol()
+ViewProviderHatch::~ViewProviderHatch()
 {
 }
 
-void ViewProviderSymbol::attach(App::DocumentObject *pcFeat)
+void ViewProviderHatch::attach(App::DocumentObject *pcFeat)
 {
     // call parent attach method
     ViewProviderDocumentObject::attach(pcFeat);
 }
 
-void ViewProviderSymbol::setDisplayMode(const char* ModeName)
+void ViewProviderHatch::setDisplayMode(const char* ModeName)
 {
     ViewProviderDocumentObject::setDisplayMode(ModeName);
 }
 
-std::vector<std::string> ViewProviderSymbol::getDisplayModes(void) const
+std::vector<std::string> ViewProviderHatch::getDisplayModes(void) const
 {
     // get the modes of the father
     std::vector<std::string> StrList = ViewProviderDocumentObject::getDisplayModes();
@@ -76,11 +76,11 @@ std::vector<std::string> ViewProviderSymbol::getDisplayModes(void) const
     return StrList;
 }
 
-void ViewProviderSymbol::updateData(const App::Property*)
+void ViewProviderHatch::updateData(const App::Property*)
 {
 }
 
-Drawing::FeatureViewSymbol* ViewProviderSymbol::getViewObject() const
+Drawing::FeatureHatch* ViewProviderHatch::getViewObject() const
 {
-    return dynamic_cast<Drawing::FeatureViewSymbol*>(pcObject);
+    return dynamic_cast<Drawing::FeatureHatch*>(pcObject);
 }

@@ -1,6 +1,6 @@
 /***************************************************************************
  *   Copyright (c) 2004 Jürgen Riegel <juergen.riegel@web.de>              *
- *   Copyright (c) 2012 Luke Parry <l.parry@warwick.ac.uk>                 *
+ *   Copyright (c) 2015 Wandererfan <wandererfan@gmail.com>                *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -22,65 +22,40 @@
  ***************************************************************************/
 
 
-#include "PreCompiled.h"
+#ifndef DRAWINGGUI_VIEWPROVIDERHATCH_H
+#define DRAWINGGUI_VIEWPROVIDERHATCH_H
 
-#ifndef _PreComp_
-#endif
+#include <Gui/ViewProviderFeature.h>
 
-/// Here the FreeCAD includes sorted by Base,App,Gui......
-#include <Base/Console.h>
-#include <Base/Parameter.h>
-#include <Base/Exception.h>
-#include <Base/Sequencer.h>
-#include <App/Application.h>
-#include <App/Document.h>
-#include <App/DocumentObject.h>
-#include <Gui/SoFCSelection.h>
-#include <Gui/Selection.h>
-
-#include <Mod/Drawing/App/FeatureViewSymbol.h>
-#include "ViewProviderSymbol.h"
-
-using namespace DrawingGui;
-
-PROPERTY_SOURCE(DrawingGui::ViewProviderSymbol, Gui::ViewProviderDocumentObject)
-
-//**************************************************************************
-// Construction/Destruction
-
-ViewProviderSymbol::ViewProviderSymbol()
-{
-    sPixmap = "Symbol";
+namespace Drawing{
+    class FeatureHatch;
 }
 
-ViewProviderSymbol::~ViewProviderSymbol()
-{
-}
+namespace DrawingGui {
 
-void ViewProviderSymbol::attach(App::DocumentObject *pcFeat)
-{
-    // call parent attach method
-    ViewProviderDocumentObject::attach(pcFeat);
-}
 
-void ViewProviderSymbol::setDisplayMode(const char* ModeName)
+class DrawingGuiExport ViewProviderHatch : public Gui::ViewProviderDocumentObject
 {
-    ViewProviderDocumentObject::setDisplayMode(ModeName);
-}
+    PROPERTY_HEADER(DrawingGui::ViewProviderHatch);
 
-std::vector<std::string> ViewProviderSymbol::getDisplayModes(void) const
-{
-    // get the modes of the father
-    std::vector<std::string> StrList = ViewProviderDocumentObject::getDisplayModes();
+public:
+    /// constructor
+    ViewProviderHatch();
+    /// destructor
+    virtual ~ViewProviderHatch();
 
-    return StrList;
-}
 
-void ViewProviderSymbol::updateData(const App::Property*)
-{
-}
+    virtual void attach(App::DocumentObject *);
+    virtual void setDisplayMode(const char* ModeName);
+    virtual bool useNewSelectionModel(void) const {return false;}
+    /// returns a list of all possible modes
+    virtual std::vector<std::string> getDisplayModes(void) const;
+    virtual void updateData(const App::Property*);
 
-Drawing::FeatureViewSymbol* ViewProviderSymbol::getViewObject() const
-{
-    return dynamic_cast<Drawing::FeatureViewSymbol*>(pcObject);
-}
+    Drawing::FeatureHatch* getViewObject() const;
+};
+
+} // namespace DrawingGui
+
+
+#endif // DRAWINGGUI_VIEWPROVIDERHATCH_H

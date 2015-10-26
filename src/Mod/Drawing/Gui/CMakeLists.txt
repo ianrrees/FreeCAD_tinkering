@@ -64,6 +64,7 @@ SET(DrawingGui_SRCS
     AppDrawingGuiPy.cpp
     Command.cpp
     CommandCreateDims.cpp
+    CommandDecorate.cpp
     Resources/Drawing.qrc
     PreCompiled.cpp
     PreCompiled.h
@@ -124,6 +125,8 @@ SET(DrawingGuiView_SRCS
     QGraphicsItemViewSymbol.h
     QGraphicsItemViewClip.cpp
     QGraphicsItemViewClip.h
+    QGraphicsItemHatch.cpp
+    QGraphicsItemHatch.h
     TemplateTextField.cpp
     TemplateTextField.h
 )
@@ -150,6 +153,8 @@ SET(DrawingGuiViewProvider_SRCS
     ViewProviderSymbol.h
     ViewProviderViewClip.cpp
     ViewProviderViewClip.h
+    ViewProviderHatch.cpp
+    ViewProviderHatch.h
 )
 
 SOURCE_GROUP("Mod" FILES ${DrawingGui_SRCS})
@@ -170,24 +175,17 @@ endif(MSVC)
 add_library(DrawingGui SHARED ${DrawingGui_SRCS} ${DrawingGuiView_SRCS} ${DrawingGuiViewProvider_SRCS})
 target_link_libraries(DrawingGui ${DrawingGui_LIBS})
 
-
 fc_target_copy_resource(DrawingGui
     ${CMAKE_SOURCE_DIR}/src/Mod/Drawing
     ${CMAKE_BINARY_DIR}/Mod/Drawing
     InitGui.py)
 
 SET(DrawingGuiIcon_SVG
-    Resources/icons/actions/drawing-landscape.svg
-)
-
-fc_copy_sources(DrawingGui "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_DATADIR}/Mod/Drawing" ${DrawingGuiIcon_SVG})
-
-INSTALL(FILES ${DrawingGuiIcon_SVG} DESTINATION "${CMAKE_INSTALL_DATADIR}/Mod/Drawing/Resources/icons/actions")
-
-SET(DrawingGuiIcon_SVG
     Resources/icons/preferences-drawing.svg
 )
+
 fc_copy_sources(DrawingGui "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_DATADIR}/Mod/Drawing" ${DrawingGuiIcon_SVG})
+
 INSTALL(FILES ${DrawingGuiIcon_SVG} DESTINATION "${CMAKE_INSTALL_DATADIR}/Mod/DrawingFem/Resources/icons")
 
 SET_BIN_DIR(DrawingGui DrawingGui /Mod/Drawing)

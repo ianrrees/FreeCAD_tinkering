@@ -46,11 +46,13 @@
 #include "ViewProviderAnnotation.h"
 #include "ViewProviderSymbol.h"
 #include "ViewProviderViewClip.h"
+#include "ViewProviderHatch.h"
 //#include "resources/qrc_Drawing.cpp"
 
 // use a different name to CreateCommand()
 void CreateDrawingCommands(void);
 void CreateDrawingCommandsDims(void);
+void CreateDrawingCommandsDecorate(void);
 
 void loadDrawingResource()
 {
@@ -78,6 +80,7 @@ void DrawingGuiExport initDrawingGui()
     // instantiating the commands
     CreateDrawingCommands();
     CreateDrawingCommandsDims();
+    CreateDrawingCommandsDecorate();
 
     DrawingGui::Workbench::init();
 
@@ -99,6 +102,7 @@ void DrawingGuiExport initDrawingGui()
     DrawingGui::ViewProviderDrawingClip::init();
     DrawingGui::ViewProviderAnnotation::init();
     DrawingGui::ViewProviderSymbol::init();
+    DrawingGui::ViewProviderHatch::init();
 
     // register preferences pages
     new Gui::PrefPageProducer<DrawingGui::DlgPrefsDrawingImp> ("Drawing");

@@ -54,7 +54,6 @@
 #include <TColgp_Array1OfPnt2d.hxx>
 #include <BRep_Tool.hxx>
 
-
 #include <Base/BoundBox.h>
 #include <Base/Console.h>
 #include <Base/Exception.h>
@@ -64,6 +63,7 @@
 #include "Geometry.h"
 #include "FeatureViewPart.h"
 #include "ProjectionAlgos.h"
+#include "FeatureHatch.h"
 //#include "FeatureViewDimension.h"
 
 using namespace Drawing;
@@ -94,6 +94,7 @@ FeatureViewPart::FeatureViewPart(void) : geometryObject(0)
     ADD_PROPERTY_TYPE(Tolerance,(0.05f),vgroup,App::Prop_None,"The tessellation tolerance");
     Tolerance.setConstraints(&floatRange);
     ADD_PROPERTY_TYPE(XAxisDirection ,(1,0,0) ,group,App::Prop_None,"X-Axis direction");
+    //ADD_PROPERTY_TYPE(HatchAreas ,(0),vgroup,App::Prop_None,"Hatched areas of this view");
 
     geometryObject = new DrawingGeometry::GeometryObject();
 }
@@ -158,7 +159,7 @@ short FeatureViewPart::mustExecute() const
             Scale.isTouched() ||
             ScaleType.isTouched() ||
             ShowHiddenLines.isTouched());
-    return result; 
+    return result;
 }
 
 void FeatureViewPart::onChanged(const App::Property* prop)
@@ -180,8 +181,56 @@ void FeatureViewPart::onChanged(const App::Property* prop)
     }
     FeatureView::onChanged(prop);
 
-//TODO: when scale changes, any Dimensions for this View sb recalculated.  
+//TODO: when scale changes, any Dimensions for this View sb recalculated.
+}
 
+#if 0
+int FeatureViewPart::addHatch(App::DocumentObject *docObj)
+{
+    if(!docObj->isDerivedFrom(Drawing::FeatureHatch::getClassTypeId()))
+        return -1;
+
+    const std::vector<App::DocumentObject *> currAreas = HatchAreas.getValues();
+    std::vector<App::DocumentObject *> newAreas(currAreas);
+    newAreas.push_back(docObj);
+    HatchAreas.setValues(newAreas);
+    HatchAreas.touch();
+    return HatchAreas.getSize();
+}
+
+int FeatureViewPart::removeHatch(App::DocumentObject *docObj)
+{
+    if(!docObj->isDerivedFrom(Drawing::FeatureHatch::getClassTypeId()))
+        return -1;
+
+    const std::vector<App::DocumentObject*> currAreas = HatchAreas.getValues();
+    std::vector<App::DocumentObject*> newAreas;
+    std::vector<App::DocumentObject*>::const_iterator it = currAreas.begin();
+    for (; it != currAreas.end(); it++) {
+        std::string areaName = docObj->getNameInDocument();
+        if (areaName.compare((*it)->getNameInDocument()) != 0) {
+            newAreas.push_back((*it));
+        }
+    }
+    HatchAreas.setValues(newAreas);
+    HatchAreas.touch();
+
+    return HatchAreas.getSize();
+}
+#endif
+
+std::vector<Drawing::FeatureHatch*> FeatureViewPart::getHatches() const
+{
+    std::vector<Drawing::FeatureHatch*> result;
+    std::vector<App::DocumentObject*> children = getInList();
+    for (std::vector<App::DocumentObject*>::iterator it = children.begin(); it != children.end(); ++it) {
+        if ((*it)->getTypeId().isDerivedFrom(FeatureHatch::getClassTypeId())) {
+            Drawing::FeatureHatch* hatch = dynamic_cast<Drawing::FeatureHatch*>(*it);
+            result.push_back(hatch);
+        }
+    }
+
+    return result;
 }
 
 const std::vector<DrawingGeometry::Vertex *> & FeatureViewPart::getVertexGeometry() const
@@ -249,7 +298,7 @@ DrawingGeometry::BaseGeom *FeatureViewPart::getCompleteEdge(int idx) const
         Base::Console().Error("getCompleteEdge - unknown error on Edge: %d\n",idx);
         return 0;
     }
-    
+
     return prjShape;
 }
 
@@ -274,7 +323,7 @@ DrawingGeometry::Vertex * FeatureViewPart::getVertex(int idx) const
     return prjShape;
 }
 
-DrawingGeometry::Vertex* FeatureViewPart::getVertexGeomByRef(int ref) const 
+DrawingGeometry::Vertex* FeatureViewPart::getVertexGeomByRef(int ref) const
 {
     const std::vector<DrawingGeometry::Vertex *> &verts = getVertexGeometry();
     if (verts.empty()) {
@@ -300,7 +349,7 @@ DrawingGeometry::Vertex* FeatureViewPart::getVertexGeomByRef(int ref) const
 }
 
 //! returns existing BaseGeom of Edge with 3D Reference = ref
-DrawingGeometry::BaseGeom* FeatureViewPart::getEdgeGeomByRef(int ref) const 
+DrawingGeometry::BaseGeom* FeatureViewPart::getEdgeGeomByRef(int ref) const
 {
     const std::vector<DrawingGeometry::BaseGeom *> &geoms = getEdgeGeometry();
     if (geoms.empty()) {
@@ -420,4 +469,3 @@ template<> const char* Drawing::FeatureViewPartPython::getViewProviderName(void)
 // explicit template instantiation
 template class DrawingExport FeaturePythonT<Drawing::FeatureViewPart>;
 }
-

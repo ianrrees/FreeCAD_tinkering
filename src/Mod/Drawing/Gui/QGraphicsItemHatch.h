@@ -20,16 +20,74 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef _DrawUtil_h_
-#define _DrawUtil_h_
+#ifndef DRAWINGGUI_QGRAPHICSITEMHATCH_H
+#define DRAWINGGUI_QGRAPHICSITEMHATCH_H
 
-namespace DrawUtil {
-extern "C" {
+#include <Qt>
+#include <QGraphicsItem>
+#include <QStyleOptionGraphicsItem>
+#include <QBitmap>
 
-int getIndexFromName(std::string geomName);
-std::string getGeomTypeFromName(std::string geomName);
-std::string makeGeomName(std::string geomType, int index);
+QT_BEGIN_NAMESPACE
+class QPainter;
+class QStyleOptionGraphicsItem;
+QT_END_NAMESPACE
 
-} //end extern "C"
-} //end namespace DrawUtil
-#endif
+namespace App {
+class Color;
+}
+
+namespace Drawing {
+class FeatureHatch;
+}
+
+namespace DrawingGeometry {
+class BaseGeom;
+}
+
+namespace DrawingGui
+{
+
+class DrawingGuiExport QGraphicsItemHatch :  public QGraphicsPathItem
+{
+
+public:
+    explicit QGraphicsItemHatch(std::string parentHatch);
+    ~QGraphicsItemHatch();
+
+    enum {Type = QGraphicsItem::UserType + 122};
+    int type() const { return Type;}
+    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
+
+public:
+    std::string getHatchName() const { return m_hatch; }
+    void setPrettyNormal();
+    void setPrettyPre();
+    void setPrettySel();
+    void setFill(std::string fillSpec);
+    void setColor(App::Color c);
+
+protected:
+    // Preselection events:
+    void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
+    void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
+    // Selection detection
+    QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+
+protected:
+    std::string m_hatch;
+
+private:
+    QPen m_pen;
+    QBrush m_brush;
+    QColor m_colNormal;
+    QColor m_colPre;
+    QColor m_colSel;
+    QBitmap m_texture;
+    Qt::BrushStyle m_fill;
+    std::string m_lastFill;
+};
+
+} // namespace DrawingViewGui
+
+#endif // DRAWINGGUI_QGRAPHICSITEMHATCH_H

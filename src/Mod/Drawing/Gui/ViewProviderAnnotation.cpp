@@ -50,7 +50,7 @@ PROPERTY_SOURCE(DrawingGui::ViewProviderAnnotation, Gui::ViewProviderDocumentObj
 
 ViewProviderAnnotation::ViewProviderAnnotation()
 {
-    sPixmap = "Page";
+    sPixmap = "Annotation";
 }
 
 ViewProviderAnnotation::~ViewProviderAnnotation()

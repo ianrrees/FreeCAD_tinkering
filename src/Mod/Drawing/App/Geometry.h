@@ -35,6 +35,7 @@ enum ExtractionType {
 };
 
 enum GeomType {
+    NOTDEF,
     CIRCLE,
     ARCOFCIRCLE,
     ELLIPSE,
@@ -46,12 +47,15 @@ enum GeomType {
 class DrawingExport BaseGeom
 {
 public:
-   BaseGeom() {}
+   BaseGeom();
    ~BaseGeom() {}
 public:
-   GeomType geomType;
-   ExtractionType extractType;
-   std::vector<Base::Vector2D> findEndPoints();
+    GeomType geomType;
+    ExtractionType extractType;
+    bool reversed;
+    std::vector<Base::Vector2D> findEndPoints();
+    Base::Vector2D getStartPoint();
+    Base::Vector2D getEndPoint();
 };
 
 class DrawingExport Circle: public BaseGeom
@@ -183,6 +187,25 @@ struct DrawingExport Vertex
   ExtractionType extractType;
 };
 
-}
+//*** utility functions
+extern "C" {
+
+struct DrawingExport getNextReturn {
+    unsigned int index;
+    bool reversed;
+    explicit getNextReturn(int i = 0, bool r = false) :
+        index(i),
+        reversed(r)
+        {}
+};
+
+std::vector<DrawingGeometry::BaseGeom*> chainGeoms(std::vector<DrawingGeometry::BaseGeom*> geoms);
+getNextReturn nextGeom(Base::Vector2D atPoint,
+                              std::vector<DrawingGeometry::BaseGeom*> geoms,
+                              std::vector<bool> used,
+                              double tolerance);
+
+} //end extern "C"
+} //end namespace DrawingGeometry
 
 #endif //DRAWING_GEOMETRY_H

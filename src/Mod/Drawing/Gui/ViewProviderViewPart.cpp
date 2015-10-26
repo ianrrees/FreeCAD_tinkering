@@ -41,6 +41,7 @@
 
 #include <Mod/Drawing/App/FeatureViewPart.h>
 #include <Mod/Drawing/App/FeatureViewDimension.h>
+#include <Mod/Drawing/App/FeatureHatch.h>
 
 #include<Mod/Drawing/App/FeaturePage.h>
 #include "ViewProviderViewPart.h"
@@ -83,7 +84,7 @@ std::vector<std::string> ViewProviderViewPart::getDisplayModes(void) const
 
 std::vector<App::DocumentObject*> ViewProviderViewPart::claimChildren(void) const
 {
-    // Collect any child fields and put them in the Feature tree
+    // Collect any child Document Objects and put them in the right place in the Feature tree
     std::vector<App::DocumentObject*> temp;
     const std::vector<App::DocumentObject *> &views = getViewPart()->getInList();
     try {
@@ -92,10 +93,13 @@ std::vector<App::DocumentObject*> ViewProviderViewPart::claimChildren(void) cons
               Drawing::FeatureViewDimension *dim = dynamic_cast<Drawing::FeatureViewDimension *>(*it);
               const std::vector<App::DocumentObject *> &refs = dim->References.getValues();
               for(std::vector<App::DocumentObject *>::const_iterator it = refs.begin(); it != refs.end(); ++it) {
-                  if(strcmp(getViewPart()->getNameInDocument(), (*it)->getNameInDocument()) == 0) {
-                     temp.push_back(dim);
+                  if(strcmp(getViewPart()->getNameInDocument(), (*it)->getNameInDocument()) == 0) {        //wf: isn't this test redundant?
+                     temp.push_back(dim);                                                                  // if a dim is in the inlist,
+                                                                                                           // it's a child of this ViewPart??
                   }
               }
+          } else if ((*it)->getTypeId().isDerivedFrom(Drawing::FeatureHatch::getClassTypeId())) {
+              temp.push_back((*it));
           }
       }
       return temp;
