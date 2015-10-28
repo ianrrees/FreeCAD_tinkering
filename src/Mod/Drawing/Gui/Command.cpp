@@ -714,7 +714,7 @@ void CmdDrawingAnnotation::activated(int iMsg)
     doCommand(Doc,"App.activeDocument().%s.X = 10.0",FeatName.c_str());
     doCommand(Doc,"App.activeDocument().%s.Y = 10.0",FeatName.c_str());
     doCommand(Doc,"App.activeDocument().%s.Scale = 7.0",FeatName.c_str());
-    doCommand(Doc,"App.activeDocument().%s.addObject(App.activeDocument().%s)",PageName.c_str(),FeatName.c_str());
+    //doCommand(Doc,"App.activeDocument().%s.addObject(App.activeDocument().%s)",PageName.c_str(),FeatName.c_str());
     Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
     page->addView(page->getDocument()->getObject(FeatName.c_str()));
     updateActive();
@@ -954,7 +954,7 @@ void CmdDrawingSymbol::activated(int iMsg)
         doCommand(Doc,"App.activeDocument().%s.X = 10.0",FeatName.c_str());
         doCommand(Doc,"App.activeDocument().%s.Y = 10.0",FeatName.c_str());
         doCommand(Doc,"App.activeDocument().%s.Symbol = svg",FeatName.c_str());
-        doCommand(Doc,"App.activeDocument().%s.addObject(App.activeDocument().%s)",PageName.c_str(),FeatName.c_str());
+        //doCommand(Doc,"App.activeDocument().%s.addObject(App.activeDocument().%s)",PageName.c_str(),FeatName.c_str());
         Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
         page->addView(page->getDocument()->getObject(FeatName.c_str()));
         updateActive();
