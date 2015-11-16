@@ -26,7 +26,10 @@
 #include <QGraphicsScene>
 #include <QGraphicsSceneHoverEvent>
 #include <QMouseEvent>
+#include <QPaintDevice>
 #include <QPainter>
+#include <QPrinter>
+#include <QSvgGenerator>
 #include <QStyleOptionGraphicsItem>
 #endif
 
@@ -66,11 +69,35 @@ void QGCustomText::centerAt(double cX, double cY)
     setPos(newX,newY);
 }
 
-
 void QGCustomText::paint ( QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget) {
     QStyleOptionGraphicsItem myOption(*option);
     myOption.state &= ~QStyle::State_Selected;
 
+    //svg text is much larger than screen text.  scene units(mm) vs points.
+    //need to scale text if going to svg.
+    //TODO: magic translation happens? approx: right ~8mm  down: 12mm + (3mm per mm of text height)
+    //SVG transform matrix translation values are different for same font size + different fonts (osifont vs Ubuntu vs Arial)???
+    //                     scale values are same for same font size + different fonts.
+    //double svgScale = 2.835;      //72dpi/(25.4mm/in)
+    //double svgScale = 3.84;       //96dpi/(25mm/in)
+    double svgScale = 2.88;         //72dpi/(25mm/in)   Qt logicalDpiY() is int
+    double svgMagicX = 8.0;
+    //double svgMagicY = 7.5;        //idk
+    double fontSize = font().pointSizeF();
+    //double ty = (12.0/svgScale + 3.0*fontSize/svgScale) + (svgMagicY/svgScale);
+    double ty = (12.0/svgScale + 3.0*fontSize/svgScale);
+    QPointF svgMove(-svgMagicX/svgScale,-ty);
+
+    QPaintDevice* hw = painter->device();
+    //QPaintDeviceMetrics hwm(hw);
+    //QPrinter* pr = dynamic_cast<QPrinter*>(hw);                      //printer does not rescale vs screen?
+    QSvgGenerator* svg = dynamic_cast<QSvgGenerator*>(hw);
+    if (svg) {
+        painter->scale(svgScale,svgScale);
+        painter->translate(svgMove);
+    } else {
+        painter->scale(1.0,1.0);
+    }
+
     QGraphicsTextItem::paint (painter, &myOption, widget);
 }
-

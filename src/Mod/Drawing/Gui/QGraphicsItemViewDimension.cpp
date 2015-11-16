@@ -157,13 +157,6 @@ void QGraphicsItemDatumLabel::mouseReleaseEvent( QGraphicsSceneMouseEvent * even
     QGraphicsItem::mouseReleaseEvent(event);
 }
 
-void QGraphicsItemDatumLabel::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
-{
-    QStyleOptionGraphicsItem myOption(*option);
-    myOption.state &= ~QStyle::State_Selected;
-    QGraphicsTextItem::paint(painter, &myOption, widget);
-}
-
 QGraphicsItemViewDimension::QGraphicsItemViewDimension(const QPoint &pos, QGraphicsScene *scene) :
     QGraphicsItemView(pos, scene),
     hasHover(false)

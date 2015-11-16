@@ -209,7 +209,6 @@ void DrawingView::setDimensionGroups(void)
     const std::vector<QGraphicsItemView *> &allItems = m_view->getViews();
     std::vector<QGraphicsItemView *>::const_iterator itInspect;
     int dimItemType = QGraphicsItem::UserType + 106;
-    //int hatchItemType = QGraphicsItem::UserType + 106;
 
     for (itInspect = allItems.begin(); itInspect != allItems.end(); itInspect++) {
         if (((*itInspect)->type() == dimItemType) && (!(*itInspect)->group())) {
@@ -218,7 +217,6 @@ void DrawingView::setDimensionGroups(void)
                 QGraphicsItemViewDimension* dim = dynamic_cast<QGraphicsItemViewDimension*>((*itInspect));
                 m_view->addDimToParent(dim,parent);
             }
-        //same for hatch?
         }
     }
 }
@@ -938,7 +936,8 @@ void DrawingView::print(QPrinter* printer)
             tr("Can't open file '%1' for writing.").arg(printer->outputFileName()));
         qApp->restoreOverrideCursor();
         return;
-    } 
+    }
+
     QRect rect = printer->paperRect();
 #ifdef Q_OS_WIN32
     // On Windows the preview looks broken when using paperRect as render area.

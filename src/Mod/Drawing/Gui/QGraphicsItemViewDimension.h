@@ -27,6 +27,7 @@
 #include <QGraphicsView>
 #include <QStyleOptionGraphicsItem>
 #include "QGraphicsItemView.h"
+#include "QGCustomText.h"
 
 namespace Drawing {
 class FeatureViewDimension;
@@ -39,7 +40,7 @@ class BaseGeom;
 namespace DrawingGui
 {
 
-class QGraphicsItemDatumLabel : public QGraphicsTextItem
+class QGraphicsItemDatumLabel : public QGCustomText
 {
 Q_OBJECT
 public:
@@ -53,8 +54,6 @@ public:
     void setPosFromCenter(const double &xCenter, const double &yCenter);
     double X() const { return posX; }
     double Y() const { return posY; }
-
-    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 
 Q_SIGNALS:
     void dragging();

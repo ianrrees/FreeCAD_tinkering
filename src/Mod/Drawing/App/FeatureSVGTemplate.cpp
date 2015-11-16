@@ -60,7 +60,10 @@ FeatureSVGTemplate::FeatureSVGTemplate()
     static const char *group = "Drawing view";
 
     //TODO: Do we need PageResult anymore?
-    ADD_PROPERTY_TYPE(PageResult, (0),  group, App::Prop_Output,    "Resulting SVG document of that page");
+    // PageTemplate points to the template file in tmp/FreeCAD-AB-CD-EF-.../myTemplate.svg
+    // When restoring saved document, Template is redundant/incorrect - PageResult is the correct info.  -wf-
+    ADD_PROPERTY_TYPE(PageResult, (0),  group, App::Prop_Output,    "Resulting SVG document of that page");    //really copy of original Template
+                                                                                                               //with EditableFields replaced?
     ADD_PROPERTY_TYPE(Template,   (""), group, App::Prop_Transient, "Template for the page");
 
     // Width and Height properties shouldn't be set by the user
@@ -102,7 +105,6 @@ short FeatureSVGTemplate::mustExecute() const
     return Drawing::FeatureTemplate::mustExecute();
 }
 
-/// get called by the container when a Property was changed
 void FeatureSVGTemplate::onChanged(const App::Property* prop)
 {
     bool updatePage = false;
@@ -110,16 +112,8 @@ void FeatureSVGTemplate::onChanged(const App::Property* prop)
     if (prop == &PageResult) {
         if (isRestoring()) {
 
-            // When loading a document the included file
-            // doesn't need to exist at this point.
-            Base::FileInfo fi(PageResult.getValue());
-
-//TODO: I don't understand why it is that this "works", seems like we might have two properties where we only need one?  -Ian-
-Template.setValue(App::Application::getResourceDir() + "Mod/Drawing/Templates/" + fi.fileName());
-
-            if (!fi.exists()) {
-                return;
-            }
+            //original template has been stored in fcstd file
+            Template.setValue(PageResult.getValue());
         }
     } else if (prop == &Template) {
         if (!isRestoring()) {
@@ -156,6 +150,7 @@ App::DocumentObjectExecReturn * FeatureSVGTemplate::execute(void)
 
     Base::FileInfo fi(temp);
     if (!fi.isReadable()) {
+        // non-empty template value, but can't read file
         // if there is a old absolute template file set use a redirect
         fi.setFile(App::Application::getResourceDir() + "Mod/Drawing/Templates/" + fi.fileName());
         // try the redirect

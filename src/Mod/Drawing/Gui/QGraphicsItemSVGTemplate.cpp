@@ -107,7 +107,8 @@ void QGraphicsItemSVGTemplate::load(const QString &fileName)
     Drawing::FeatureSVGTemplate *tmplte = getSVGTemplate();
 
 
-    std::string temp = tmplte->Template.getValue();
+    //std::string temp = tmplte->Template.getValue();
+    std::string temp = tmplte->PageResult.getValue();                    //fixes non-drawing of restored template
     if (temp.empty())
         return;
 
