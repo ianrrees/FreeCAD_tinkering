@@ -1088,6 +1088,7 @@ void DrawingView::saveSVG()
     p.end();
 
     m_view->toggleEdit(true);
+    m_view->scene()->update();
 }
 
 PyObject* DrawingView::getPyObject()

@@ -54,7 +54,7 @@ public:
     void setViewFeature(Drawing::FeatureView *obj);
     Drawing::FeatureView * getViewObject() const;
 
-    virtual void toggleBorder(bool state = true) { borderVisible = state; }
+    virtual void toggleBorder(bool state = true);
     virtual void drawBorder(void);
 
     /// Methods to ensure that Y-Coordinates are orientated correctly.

@@ -65,7 +65,7 @@ QGraphicsItemView::QGraphicsItemView(const QPoint &pos, QGraphicsScene *scene)
 {
     setFlag(QGraphicsItem::ItemIsSelectable,true);
     setFlag(QGraphicsItem::ItemSendsScenePositionChanges, true);
-    setFlag(QGraphicsItem::ItemSendsGeometryChanges,true); 
+    setFlag(QGraphicsItem::ItemSendsGeometryChanges,true);
     setAcceptHoverEvents(true);
     setPos(pos);
 
@@ -88,11 +88,11 @@ QGraphicsItemView::QGraphicsItemView(const QPoint &pos, QGraphicsScene *scene)
 
     //Add object to scene
     scene->addItem(this);
-    
+
     m_label = new QGraphicsTextItem();
     addToGroup(m_label);
     m_label->setFont(m_font);
-    
+
     m_border = new QGraphicsRectItem();
     addToGroup(m_border);
     m_decorPen.setStyle(Qt::DashLine);
@@ -291,6 +291,12 @@ void QGraphicsItemView::toggleCache(bool state)
     setCacheMode((state)? NoCache : NoCache);
 }
 
+
+void QGraphicsItemView::toggleBorder(bool state)
+{
+    borderVisible = state;
+    drawBorder();
+}
 void QGraphicsItemView::drawBorder()
 {
     if (!borderVisible) {
