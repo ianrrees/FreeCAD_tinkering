@@ -235,7 +235,7 @@ void QGraphicsItemViewPart::updateView(bool update)
        viewPart->Tolerance.isTouched() ||
        viewPart->Scale.isTouched() ||
        viewPart->ShowHiddenLines.isTouched()) {
-        // Remove all existing graphical representations (QGIxxxx)
+        // Remove all existing graphical representations (QGIxxxx)  otherwise BRect only grows, never shrinks?
         prepareGeometryChange();
         QList<QGraphicsItem *> items = childItems();
         for(QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); ++it) {

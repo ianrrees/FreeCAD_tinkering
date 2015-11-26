@@ -55,7 +55,6 @@ Q_SIGNALS:
 
 protected:
     void drawSectionFace();
-    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 };
 
 } // namespace DrawingViewGui

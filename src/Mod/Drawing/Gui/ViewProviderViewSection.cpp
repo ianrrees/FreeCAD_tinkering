@@ -46,14 +46,14 @@
 
 using namespace DrawingGui;
 
-PROPERTY_SOURCE(DrawingGui::ViewProviderViewSection, Gui::ViewProviderDocumentObject)
+PROPERTY_SOURCE(DrawingGui::ViewProviderViewSection, DrawingGui::ViewProviderViewPart)
 
 //**************************************************************************
 // Construction/Destruction
 
 ViewProviderViewSection::ViewProviderViewSection()
 {
-    sPixmap = "Page";
+    sPixmap = "Section";
 }
 
 ViewProviderViewSection::~ViewProviderViewSection()
@@ -79,9 +79,15 @@ std::vector<std::string> ViewProviderViewSection::getDisplayModes(void) const
     return StrList;
 }
 
-void ViewProviderViewSection::updateData(const App::Property*)
+void ViewProviderViewSection::updateData(const App::Property* prop)
 {
-    Base::Console().Log("Update View");
+    //Base::Console().Log("ViewProviderViewSection::updateData - Update View: %s\n",prop->getName());
+    //
+}
+
+std::vector<App::DocumentObject*> ViewProviderViewSection::claimChildren(void) const
+{
+    return ViewProviderViewPart::claimChildren();
 }
 
 Drawing::FeatureView* ViewProviderViewSection::getViewObject() const

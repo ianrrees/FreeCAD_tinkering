@@ -55,7 +55,7 @@ PROPERTY_SOURCE(DrawingGui::ViewProviderViewPart, DrawingGui::ViewProviderView)
 
 ViewProviderViewPart::ViewProviderViewPart()
 {
-    sPixmap = "Page";
+    sPixmap = "View";
 }
 
 ViewProviderViewPart::~ViewProviderViewPart()
@@ -85,6 +85,9 @@ std::vector<std::string> ViewProviderViewPart::getDisplayModes(void) const
 std::vector<App::DocumentObject*> ViewProviderViewPart::claimChildren(void) const
 {
     // Collect any child Document Objects and put them in the right place in the Feature tree
+    // valid children of a ViewPart are:
+    //    - Dimensions
+    //    - Hatches
     std::vector<App::DocumentObject*> temp;
     const std::vector<App::DocumentObject *> &views = getViewPart()->getInList();
     try {

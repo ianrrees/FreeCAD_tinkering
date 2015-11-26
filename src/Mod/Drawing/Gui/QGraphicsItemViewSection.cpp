@@ -56,19 +56,21 @@ QGraphicsItemViewSection::~QGraphicsItemViewSection()
 
 void QGraphicsItemViewSection::draw()
 {
-    drawSectionFace();
     QGraphicsItemViewPart::draw();
+    drawSectionFace();
 }
 
 void QGraphicsItemViewSection::drawSectionFace()
 {
-    // Iterate
     if(getViewObject() == 0 || !getViewObject()->isDerivedFrom(Drawing::FeatureViewSection::getClassTypeId()))
         return;
 
     Drawing::FeatureViewSection *part = dynamic_cast<Drawing::FeatureViewSection *>(getViewObject());
+    if (!part->hasGeometry()) {
+        return;
+    }
 
-    Base::Console().Log("drawing section face\n");
+    //Base::Console().Log("drawing section face\n");
 
     // Get the section face from the feature
     std::vector<DrawingGeometry::Face *> faceGeoms;
@@ -78,12 +80,14 @@ void QGraphicsItemViewSection::drawSectionFace()
         return;
     }
 
+#if MOD_DRAWING_HANDLE_FACES
     // Draw Faces
     std::vector<DrawingGeometry::Face *>::const_iterator fit = faceGeoms.begin();
 
     QGraphicsItem *graphicsItem = 0;
     QPen facePen;
 
+//TODO: check if this is the same logic as QGIVPart
     for(int i = 0 ; fit != faceGeoms.end(); ++fit, i++) {
         std::vector<DrawingGeometry::Wire *> faceWires = (*fit)->wires;
         QPainterPath facePath;
@@ -127,6 +131,7 @@ void QGraphicsItemViewSection::drawSectionFace()
             graphicsItem->setFlag(QGraphicsItem::ItemIsSelectable, true);
         }
     }
+#endif
 }
 
 void QGraphicsItemViewSection::updateView(bool update)
@@ -144,15 +149,6 @@ void QGraphicsItemViewSection::updateView(bool update)
     } else {
         QGraphicsItemViewPart::updateView();
     }
-
-
-
-
-}
-
-void QGraphicsItemViewSection::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
-{
-    QGraphicsItemViewPart::paint(painter, option, widget);
 }
 
 #include "moc_QGraphicsItemViewSection.cpp"

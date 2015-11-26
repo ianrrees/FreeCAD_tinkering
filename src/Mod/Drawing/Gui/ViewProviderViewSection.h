@@ -25,7 +25,7 @@
 #ifndef DRAWINGGUI_VIEWPROVIDERVIEWSECTION_H
 #define DRAWINGGUI_VIEWPROVIDERVIEWSECTION_H
 
-#include <Gui/ViewProviderFeature.h>
+#include "ViewProviderViewPart.h"
 
 namespace Drawing{
     class FeatureView;
@@ -34,7 +34,7 @@ namespace Drawing{
 namespace DrawingGui {
 
 
-class DrawingGuiExport ViewProviderViewSection : public Gui::ViewProviderDocumentObject
+class DrawingGuiExport ViewProviderViewSection : public ViewProviderViewPart
 {
     PROPERTY_HEADER(DrawingGui::ViewProviderViewSection);
 
@@ -50,6 +50,7 @@ public:
     /// returns a list of all possible modes
     virtual std::vector<std::string> getDisplayModes(void) const;
     virtual void updateData(const App::Property*);
+    virtual std::vector<App::DocumentObject*> claimChildren(void) const;
 
     Drawing::FeatureView* getViewObject() const;
 };
@@ -58,4 +59,3 @@ public:
 
 
 #endif // DRAWINGGUI_VIEWPROVIDERVIEW_H
-

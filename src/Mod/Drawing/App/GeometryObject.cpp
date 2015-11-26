@@ -280,7 +280,7 @@ void GeometryObject::projectSurfaces(const TopoDS_Shape &face,
     brep_hlr->Update();
     brep_hlr->Hide();
 
-    Base::Console().Log("projecting face");
+    Base::Console().Log("GeometryObject::projectSurfaces - projecting face\n");
 
     // Extract Faces
     std::vector<int> projFaceRefs;
@@ -292,7 +292,7 @@ void GeometryObject::projectSurfaces(const TopoDS_Shape &face,
 Base::BoundBox3d GeometryObject::boundingBoxOfBspline(const BSpline *spline) const
 {
     Base::BoundBox3d bb;
-    for (std::vector<BezierSegment>::const_iterator segItr( spline->segments.begin() ); 
+    for (std::vector<BezierSegment>::const_iterator segItr( spline->segments.begin() );
          segItr != spline->segments.end(); ++segItr) {
         switch (segItr->poles) {
             case 0:   // Degenerate, but safe ignore
@@ -716,7 +716,7 @@ DrawingGeometry::BaseGeom * GeometryObject::projectEdge(const TopoDS_Shape &edge
 
 /* TODO: Clean this up when faces are actually working properly...
 void debugEdge(const TopoDS_Edge &e)
-{   
+{
     gp_Pnt p0 = BRep_Tool::Pnt(TopExp::FirstVertex(e));
     gp_Pnt p1 = BRep_Tool::Pnt(TopExp::LastVertex(e));
     qDebug()<<p0.X()<<','<<p0.Y()<<','<<p0.Z()<<"\t - \t"<<p1.X()<<','<<p1.Y()<<','<<p1.Z();
@@ -746,7 +746,7 @@ void GeometryObject::extractFaces(HLRBRep_Algo *myAlgo,
 
     /* This block seems to set f1 and f2 to indices using a HLRBRep_ShapeBounds
      * object based that's based on myAlgo, but DS is also based on myAlgo too,
-     * so I don't think this is required. IR 
+     * so I don't think this is required. IR
     if (!S.IsNull()) {
         int e1 = 1;
         int e2 = DS->NbEdges();
@@ -798,7 +798,7 @@ void GeometryObject::extractFaces(HLRBRep_Algo *myAlgo,
                 }
                 DrawingGeometry::Wire *genWire = new DrawingGeometry::Wire();
 
-                // See createWire regarding BRepTools_WireExplorer vs TopExp_Explorer 
+                // See createWire regarding BRepTools_WireExplorer vs TopExp_Explorer
                 BRepTools_WireExplorer explr(*wireIt);
                 while (explr.More()) {
                     BRep_Builder builder;
@@ -1118,9 +1118,9 @@ bool GeometryObject::isSameCurve(const BRepAdaptor_Curve &c1, const BRepAdaptor_
     return false;
 }
 
-//only used by extractFaces 
+//only used by extractFaces
 void GeometryObject::createWire(const TopoDS_Shape &input,
-                                std::vector<TopoDS_Wire> &wiresOut) const 
+                                std::vector<TopoDS_Wire> &wiresOut) const
 {
     //input is a compound of edges?  there is edgesToWire logic in Part?
     if (input.IsNull()) {
@@ -1181,7 +1181,7 @@ void GeometryObject::createWire(const TopoDS_Shape &input,
                 } else {
                     lastAddFailed = true;
                 }
-            } 
+            }
         } while (found);
 
         // See note above re: BRepBuilderAPI_MakeWire annoying behaviour
@@ -1221,6 +1221,7 @@ gp_Pnt GeometryObject::findCentroid(const TopoDS_Shape &shape,
 
     Bnd_Box tBounds;
     BRepBndLib::Add(builder.Shape(), tBounds);
+
     tBounds.SetGap(0.0);
     Standard_Real xMin, yMin, zMin, xMax, yMax, zMax;
     tBounds.Get(xMin, yMin, zMin, xMax, yMax, zMax);
@@ -1246,9 +1247,15 @@ void GeometryObject::extractGeometry(const TopoDS_Shape &input,
     ///TODO: Consider whether it would be possible/beneficial to cache some of this effort (eg don't do scale in OpenCASCADE land) IR
     TopoDS_Shape transShape;
     HLRBRep_Algo *brep_hlr = NULL;
+    gp_Pnt inputCentre;
     try {
-        gp_Pnt inputCentre = findCentroid(input, direction, xAxis);
-
+        inputCentre = findCentroid(input, direction, xAxis);
+    }
+    catch (...) {
+        Base::Console().Log("GeometryObject::extractGeometry - findCentroid failed.\n");
+        return;
+    }
+    try {
         // Make tempTransform scale the object around it's centre point and
         // mirror about the Y axis
         gp_Trsf tempTransform;
@@ -1274,9 +1281,10 @@ void GeometryObject::extractGeometry(const TopoDS_Shape &input,
         brep_hlr->Projector(projector);
         brep_hlr->Update();
         brep_hlr->Hide();
+
     }
     catch (...) {
-        Standard_Failure::Raise("Fatal error occurred while projecting shape");
+        Standard_Failure::Raise("GeometryObject::extractGeometry - error occurred while projecting shape");
     }
 
     // extracting the result sets:
@@ -1287,7 +1295,7 @@ void GeometryObject::extractGeometry(const TopoDS_Shape &input,
     // V  = shapes.VCompound       ();// hard edge visibly    - real edges in original shape
     // V1 = shapes.Rg1LineVCompound();// Smoth edges visibly  - "transition edges between two surfaces"
     // VN = shapes.RgNLineVCompound();// contour edges visibly  - "sewn edges"?
-    // VO = shapes.OutLineVCompound();// contours apparents visibly  - ?edge in projection but not in original shape? 
+    // VO = shapes.OutLineVCompound();// contours apparents visibly  - ?edge in projection but not in original shape?
     // VI = shapes.IsoLineVCompound();// isoparamtriques   visibly   - ?constant u,v sort of like lat/long
     // H  = shapes.HCompound       ();// hard edge       invisibly
     // H1 = shapes.Rg1LineHCompound();// Smoth edges  invisibly
@@ -1328,7 +1336,7 @@ void GeometryObject::extractGeometry(const TopoDS_Shape &input,
             }
         }
     }
-   
+
 //     calculateGeometry(extractCompound(brep_hlr, invertShape, 2, true), Plain);  // Outline
 //     calculateGeometry(extractCompound(brep_hlr, invertShape, 3, true), WithSmooth); // Smooth Edge
 

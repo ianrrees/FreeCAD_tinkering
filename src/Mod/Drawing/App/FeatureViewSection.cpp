@@ -141,8 +141,9 @@ App::DocumentObjectExecReturn *FeatureViewSection::execute(void)
     Base::Vector3d plnPnt(tmp1.x, tmp1.y, tmp1.z);
     Base::Vector3d plnNorm(tmp2.x, tmp2.y, tmp2.z);
 
-    if(!bb.IsCutPlane(plnPnt, plnNorm))
+    if(!bb.IsCutPlane(plnPnt, plnNorm)) {
         return new App::DocumentObjectExecReturn("Section Plane doesn't intersect part");
+    }
 
     bb.Enlarge(1.0); // Enlarge the bounding box to prevent any clipping
 
@@ -189,7 +190,7 @@ App::DocumentObjectExecReturn *FeatureViewSection::execute(void)
     BRepBuilderAPI_MakeFace mkFace(mkPoly.Wire());
     TopoDS_Face aProjFace = mkFace.Face();
     if(aProjFace.IsNull())
-        return new App::DocumentObjectExecReturn("Failed to cut");
+        return new App::DocumentObjectExecReturn("FeatureViewSection - Projected face is NULL");
     // Create an infinite projection (investigate if infite extrusion necessary)
 //     BRepPrimAPI_MakePrism PrismMaker(from, Ltotal*gp_Vec(dir), 0,1); // finite prism
     TopoDS_Shape prism = BRepPrimAPI_MakePrism(aProjFace, wMax * gp_Vec(pln.Axis().Direction()), 0, 1).Shape();
@@ -211,18 +212,18 @@ App::DocumentObjectExecReturn *FeatureViewSection::execute(void)
         geometryObject->setScale(Scale.getValue());
         //TODO: Do we need to check for nonzero XAxisDirection here?
         geometryObject->extractGeometry(result, Direction.getValue(), ShowHiddenLines.getValue(), XAxisDirection.getValue());
-
         bbox = geometryObject->calcBoundingBox();
-        touch();
 
-        //return App::DocumentObject::StdReturn;
+        touch();
     }
     catch (Standard_Failure) {
         Handle_Standard_Failure e = Standard_Failure::Caught();
+        Base::Console().Log("FeatureViewSection::execute - extractGeometry failed: %s\n",e->GetMessageString());
         return new App::DocumentObjectExecReturn(e->GetMessageString());
     }
+
     // TODO: touch references? see FeatureViewPart.execute()
-    return FeatureView::execute();
+    return FeatureView::execute();                                     //sb FeatureViewPart?
 }
 
 gp_Pln FeatureViewSection::getSectionPlane() const
@@ -233,8 +234,11 @@ gp_Pln FeatureViewSection::getSectionPlane() const
     return gp_Pln(gp_Pnt(plnPnt.x, plnPnt.y, plnPnt.z), gp_Dir(plnNorm.x, plnNorm.y, plnNorm.z));
 }
 
+//! tries to find the intersection of the section plane with the part???
+//face logic is turned off in GeometryObject, so this won't work now.
 void FeatureViewSection::getSectionSurface(std::vector<DrawingGeometry::Face *> &sectionFace) const {
 
+#if MOD_DRAWING_HANDLE_FACES
     if(result.IsNull()){
         //throw Base::Exception("Sectional View Result is Empty");
         Base::Console().Log("FeatureViewSection::getSectionSurface - Sectional View Result is Empty\n");
@@ -247,9 +251,9 @@ void FeatureViewSection::getSectionSurface(std::vector<DrawingGeometry::Face *> 
     builder.MakeCompound(comp);
 
     // Iterate through all faces
-    TopExp_Explorer edges(result, TopAbs_FACE);
-    for ( ; edges.More(); edges.Next()) {
-        const TopoDS_Face& face = TopoDS::Face(edges.Current());
+    TopExp_Explorer face(result, TopAbs_FACE);
+    for ( ; faces.More(); faces.Next()) {
+        const TopoDS_Face& face = TopoDS::Face(faces.Current());
 
         BRepAdaptor_Surface adapt(face);
         if (adapt.GetType() == GeomAbs_Plane){
@@ -261,6 +265,7 @@ void FeatureViewSection::getSectionSurface(std::vector<DrawingGeometry::Face *> 
     }
     //TODO: Do we need to check for nonzero XAxisDirection here?
     geometryObject->projectSurfaces(comp, result, Direction.getValue(), XAxisDirection.getValue(), sectionFace);
+#endif
 }
 // Python Drawing feature ---------------------------------------------------------
 

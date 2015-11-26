@@ -50,7 +50,7 @@ public:
     virtual void updateData(const App::Property*);
 
 public:
-    std::vector<App::DocumentObject*> claimChildren(void) const;
+    virtual std::vector<App::DocumentObject*> claimChildren(void) const;
 
     Drawing::FeatureViewPart* getViewPart() const;
 };
@@ -59,4 +59,3 @@ public:
 
 
 #endif // DRAWINGGUI_VIEWPROVIDERVIEWPART_H
-
