@@ -48,6 +48,7 @@ public:
 
     int type() const { return Type;}
     QRectF boundingRect() const;
+    QPainterPath shape() const;
     virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 
     int getReference() const { return reference; }
@@ -70,7 +71,7 @@ protected:
     void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
-    int projIndex;                                                     //index of edge in Projection. must exist. 
+    int projIndex;                                                     //index of edge in Projection. must exist.
     int reference;                                                     //index of edge in FeatureViewPart Source. may not exist(-1).
 
     bool isHighlighted;
@@ -92,4 +93,3 @@ private:
 } // namespace DrawingViewGui
 
 #endif // DRAWINGGUI_QGRAPHICSITEMEDGE_H
-

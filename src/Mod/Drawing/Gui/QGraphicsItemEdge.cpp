@@ -27,6 +27,7 @@
 #include <QGraphicsSceneHoverEvent>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPainterPathStroker>
 #include <QStyleOptionGraphicsItem>
 #endif
 
@@ -80,6 +81,16 @@ QRectF QGraphicsItemEdge::boundingRect() const
     return shape().controlPointRect();
 }
 
+QPainterPath QGraphicsItemEdge::shape() const
+{
+    QPainterPath outline;
+    QPainterPathStroker stroker;
+    stroker.setWidth(2.0);
+    outline = stroker.createStroke(path());
+    return outline;
+}
+
+
 QVariant QGraphicsItemEdge::itemChange(GraphicsItemChange change, const QVariant &value)
 {
     if (change == ItemSelectedHasChanged && scene()) {
@@ -95,6 +106,7 @@ QVariant QGraphicsItemEdge::itemChange(GraphicsItemChange change, const QVariant
 void QGraphicsItemEdge::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
     setPrettyPre();
+    QGraphicsPathItem::hoverEnterEvent(event);
 }
 
 void QGraphicsItemEdge::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
@@ -105,6 +117,7 @@ void QGraphicsItemEdge::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
     if(!isSelected() && !isHighlighted) {
         setPrettyNormal();
     }
+    QGraphicsPathItem::hoverLeaveEvent(event);
 }
 
 void QGraphicsItemEdge::setCosmetic(bool state)
@@ -164,4 +177,3 @@ void QGraphicsItemEdge::paint ( QPainter * painter, const QStyleOptionGraphicsIt
     setPen(m_pen);
     QGraphicsPathItem::paint (painter, &myOption, widget);
 }
-
