@@ -51,6 +51,7 @@
 #include <Gui/Selection.h>
 #include <Gui/MainWindow.h>
 #include <Gui/BitmapFactory.h>
+#include <Gui/ViewProvider.h>
 #include <Gui/ViewProviderDocumentObject.h>
 #include <Gui/ViewProviderDocumentObjectGroup.h>
 
@@ -157,13 +158,15 @@ bool ViewProviderDrawingPage::onDelete(const std::vector<std::string> &items)
 
 void ViewProviderDrawingPage::setupContextMenu(QMenu* menu, QObject* receiver, const char* member)
 {
-    menu->addAction(QObject::tr("Show drawing"), receiver, member);
-//    act->setData(QVariant(1));  // Removed to resolve compile after cb16fec6bb67cec15be3fc2aeb251ab524134073
+    Gui::ViewProviderDocumentObject::setupContextMenu(menu, receiver, member);
+    QAction* act = menu->addAction(QObject::tr("Show drawing"), receiver, member);
+//    act->setData(QVariant(1));  // Removed to resolve compile after cb16fec6bb67cec15be3fc2aeb251ab524134073   //this is edit ModNum
+    act->setData(QVariant((int) ViewProvider::Default));
 }
 
 bool ViewProviderDrawingPage::setEdit(int ModNum)
 {
-    if (ModNum == 1) {
+    if (ModNum == ViewProvider::Default) {
         showDrawingView();   // show the drawing
         Gui::getMainWindow()->setActiveWindow(view);
         return false;
