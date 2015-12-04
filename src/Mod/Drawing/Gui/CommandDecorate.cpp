@@ -108,8 +108,6 @@ void CmdDrawingNewHatch::activated(int iMsg)
 
     hatch->execute();
 
-    //objFeat->addHatch(hatch);
-
     std::vector<App::DocumentObject*> pages = getDocument()->getObjectsOfType(Drawing::FeaturePage::getClassTypeId());
     Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
     page->addView(page->getDocument()->getObject(FeatName.c_str()));

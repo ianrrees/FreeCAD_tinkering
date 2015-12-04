@@ -58,7 +58,14 @@ FeatureHatch::FeatureHatch(void)
 
     std::string defaultDir = App::Application::getResourceDir() + "Mod/Drawing/patterns";
     QString patternDir = QString::fromStdString(hGrp->GetASCII("PatternDir", defaultDir.c_str()));
-    QString patternFileName = QString::fromStdString(hGrp->GetASCII("PatternFile","simple.svg"));
+    if (patternDir.isEmpty()) {                                        //PatternDir key probably has null value
+        patternDir = QString::fromStdString(defaultDir);
+    }
+    std::string defaultFileName = "simple.svg";
+    QString patternFileName = QString::fromStdString(hGrp->GetASCII("PatternFile",defaultFileName.c_str()));
+    if (patternFileName.isEmpty()) {
+        patternFileName = QString::fromStdString(defaultFileName);
+    }
     patternFileName = patternDir + QString::fromUtf8("/")  + patternFileName;
     HatchPattern.setValue(patternFileName.toUtf8().constData());
 }

@@ -135,7 +135,14 @@ void CmdDrawingNewPageDef::activated(int iMsg)
 
     std::string defaultDir = App::Application::getResourceDir() + "Mod/Drawing/Templates";
     QString templateDir = QString::fromStdString(hGrp->GetASCII("TemplateDir", defaultDir.c_str()));
-    QString templateFileName = QString::fromStdString(hGrp->GetASCII("TemplateFile","A4_Landscape.svg"));
+    if (templateDir.isEmpty()) {                                         //preference key can be present, but have null value
+        templateDir = QString::fromStdString(defaultDir);
+    }
+    std::string defaultFileName = "A4_Landscape.svg";
+    QString templateFileName = QString::fromStdString(hGrp->GetASCII("TemplateFile",defaultFileName.c_str()));
+    if (templateFileName.isEmpty()) {
+        templateFileName = QString::fromStdString(defaultFileName);
+    }
     templateFileName = templateDir + QString::fromUtf8("/")  + templateFileName;
 
     std::string PageName = getUniqueObjectName("Page");
@@ -203,6 +210,13 @@ void CmdDrawingNewPage::activated(int iMsg)
                                                    QString::fromUtf8(QT_TR_NOOP("Select a Template File")),
                                                    templateDir,
                                                    QString::fromUtf8(QT_TR_NOOP("Template (*.svg *.dxf)")));
+
+    if (templateFileName.isEmpty()) {
+        QMessageBox::critical(Gui::getMainWindow(),
+            QLatin1String("No template"),
+            QLatin1String("Must select a valid template file"));
+        return;
+    }
 
     std::string PageName = getUniqueObjectName("Page");
     std::string TemplateName = getUniqueObjectName("Template");
