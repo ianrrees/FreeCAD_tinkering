@@ -321,9 +321,12 @@ std::map<std::string, std::string> FeatureSVGTemplate::getEditableTextsFromTempl
         tend = tfrag.end();
         boost::match_results<std::string::const_iterator> twhat;
         //TODO: "overly complex regex" error in this while loop for some templates (ex: ../ISO/A/ISO_A4_Landscape.svg)
-        //      (old)Draw1::FeaturePage.cpp code doesn't fail
+        //      (old)Draw1::FeaturePage.cpp code doesn't fail on these templates
+        //TODO: finds every second freecad:editable in /ISO/A/...
+        //      every twhat[0] contains 2 freecad:editable expressions.  need to reparse to find 1 and 2???
         while (boost::regex_search(tbegin, tend, twhat, e)) {
-/*            string temp1 = twhat[1],
+/*            string temp0 = twhat[0];
+            string temp1 = twhat[1],
                    temp2 = twhat[2],
                    temp3 = twhat[3];
             qDebug()<<"Got field id:"<<temp1.c_str()<<" editable as:"<<temp2.c_str()<<" default text:"<<temp3.c_str()<<".";
@@ -338,6 +341,7 @@ std::map<std::string, std::string> FeatureSVGTemplate::getEditableTextsFromTempl
             }
 
             tbegin = twhat[0].second;
+
         }
     }
     return eds;

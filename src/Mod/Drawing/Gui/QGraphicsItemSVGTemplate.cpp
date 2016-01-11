@@ -137,15 +137,17 @@ void QGraphicsItemSVGTemplate::load(const QString &fileName)
     boost::regex tagRegex("<text([^>]*freecad:editable=[^>]*)>[^<]*<tspan[^>]*>([^<]*)</tspan>");
 
     // Smaller regexes for parsing matches to tagRegex
+    //TODO: this regex doesn't find tags with spaces in the tagname
     boost::regex editableNameRegex("freecad:editable=\"([\\w-]+)\"");
-    boost::regex boxShapeRegex("freecad:boxShape=\"([\\d.]+)[xX]([\\d.]+)\"");
+    //boost::regex boxShapeRegex("freecad:boxShape=\"([\\d.]+)[xX]([\\d.]+)\"");
     boost::regex xRegex("x=\"([\\d.-]+)\"");
     boost::regex yRegex("y=\"([\\d.-]+)\"");
 
     std::string::const_iterator begin, end;
     begin = outfragment.begin();
     end = outfragment.end();
-    boost::match_results<std::string::const_iterator> tagMatch, nameMatch, xMatch, yMatch, boxShapeMatch;
+    //boost::match_results<std::string::const_iterator> tagMatch, nameMatch, xMatch, yMatch, boxShapeMatch;
+    boost::match_results<std::string::const_iterator> tagMatch, nameMatch, xMatch, yMatch;
 
     //TODO: Find location of special fields (first/third angle) and make graphics items for them
 
@@ -153,19 +155,26 @@ void QGraphicsItemSVGTemplate::load(const QString &fileName)
     while (boost::regex_search(begin, end, tagMatch, tagRegex)) {
         if ( boost::regex_search(tagMatch[1].first, tagMatch[1].second, nameMatch, editableNameRegex) &&
              boost::regex_search(tagMatch[1].first, tagMatch[1].second, xMatch, xRegex) &&
-             boost::regex_search(tagMatch[1].first, tagMatch[1].second, yMatch, yRegex) &&
-             boost::regex_search(tagMatch[1].first, tagMatch[1].second, boxShapeMatch, boxShapeRegex) ) {
+             boost::regex_search(tagMatch[1].first, tagMatch[1].second, yMatch, yRegex) ) {
+             //boost::regex_search(tagMatch[1].first, tagMatch[1].second, yMatch, yRegex) &&
+             //boost::regex_search(tagMatch[1].first, tagMatch[1].second, boxShapeMatch, boxShapeRegex) ) {
 
             QString xStr = QString::fromStdString(xMatch[1].str());
             QString yStr = QString::fromStdString(yMatch[1].str());
             QString editableName = QString::fromStdString(nameMatch[1].str());
-            QString widthStr = QString::fromStdString(boxShapeMatch[1].str());
-            QString heightStr = QString::fromStdString(boxShapeMatch[2].str());
+            //QString widthStr = QString::fromStdString(boxShapeMatch[1].str());
+            //QString heightStr = QString::fromStdString(boxShapeMatch[2].str());
 
             double x = xStr.toDouble();
             double y = yStr.toDouble();
-            double width = widthStr.toDouble();
-            double height = heightStr.toDouble();
+            //double width = widthStr.toDouble();
+            //double height = heightStr.toDouble();
+
+            double editClickBoxSize = 1.5;
+            QColor editClickBoxColor = Qt::green;
+
+            double width = editClickBoxSize;
+            double height = editClickBoxSize;
 
             TemplateTextField *item = new TemplateTextField(this, tmplte, nameMatch[1].str());
             float pad = 1;
@@ -173,9 +182,13 @@ void QGraphicsItemSVGTemplate::load(const QString &fileName)
                           width + 2 * pad, height + 2 * pad);
 
             QPen myPen;
-            myPen.setStyle(Qt::DashLine);
+            QBrush myBrush(editClickBoxColor,Qt::SolidPattern);
+            //myPen.setStyle(Qt::DashLine);
+            myPen.setStyle(Qt::SolidLine);
+            myPen.setColor(editClickBoxColor);
             myPen.setWidth(0);  // 0 means "cosmetic pen" - always 1px
             item->setPen(myPen);
+            item->setBrush(myBrush);
 
             item->setZValue(100);
             addToGroup(item);
