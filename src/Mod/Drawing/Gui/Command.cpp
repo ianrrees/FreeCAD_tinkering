@@ -370,6 +370,7 @@ void CmdDrawingNewView::activated(int iMsg)
         doCommand(Doc,"App.activeDocument().%s.Rotation = %e",FeatName.c_str(), newRotation);
         //doCommand(Doc,"App.activeDocument().%s.addObject(App.activeDocument().%s)",PageName.c_str(),FeatName.c_str());
         Drawing::FeaturePage *page = dynamic_cast<Drawing::FeaturePage *>(pages.front());
+        //TODO: page->addView sb Python function??
         page->addView(page->getDocument()->getObject(FeatName.c_str()));
     }
     updateActive();

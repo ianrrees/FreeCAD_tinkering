@@ -27,6 +27,8 @@ PyObject* FeaturePagePy::addView(PyObject* args)
         return NULL;                             // NULL triggers exception
     }
 
+    //page->addView(page->getDocument()->getObject(FeatName.c_str()));
+
     PyErr_SetString(PyExc_NotImplementedError, "Not yet implemented");
     return 0;
 }
@@ -59,7 +61,5 @@ PyObject *FeaturePagePy::getCustomAttributes(const char* attr) const
 
 int FeaturePagePy::setCustomAttributes(const char* attr, PyObject *obj)
 {
-    return 0; 
+    return 0;
 }
-
-
