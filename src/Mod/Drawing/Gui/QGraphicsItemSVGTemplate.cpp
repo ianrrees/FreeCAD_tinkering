@@ -134,19 +134,19 @@ void QGraphicsItemSVGTemplate::load(const QString &fileName)
     std::string outfragment(ofile.str());
 
     // Find text tags with freecad:editable attribute and their matching tspans
+    // keep tagRegex in sync with App/FeatureSVGTemplate.cpp
     boost::regex tagRegex("<text([^>]*freecad:editable=[^>]*)>[^<]*<tspan[^>]*>([^<]*)</tspan>");
 
     // Smaller regexes for parsing matches to tagRegex
-    //TODO: this regex doesn't find tags with spaces in the tagname
-    boost::regex editableNameRegex("freecad:editable=\"([\\w-]+)\"");
-    //boost::regex boxShapeRegex("freecad:boxShape=\"([\\d.]+)[xX]([\\d.]+)\"");
+    boost::regex editableNameRegex("freecad:editable=\"(.*?)\"");
     boost::regex xRegex("x=\"([\\d.-]+)\"");
     boost::regex yRegex("y=\"([\\d.-]+)\"");
+    //Note: some templates have fancy Transform clauses and don't use absolute x,y to position editableFields.
+    //      editableFields will be in the wrong place in this case.
 
     std::string::const_iterator begin, end;
     begin = outfragment.begin();
     end = outfragment.end();
-    //boost::match_results<std::string::const_iterator> tagMatch, nameMatch, xMatch, yMatch, boxShapeMatch;
     boost::match_results<std::string::const_iterator> tagMatch, nameMatch, xMatch, yMatch;
 
     //TODO: Find location of special fields (first/third angle) and make graphics items for them
@@ -156,20 +156,15 @@ void QGraphicsItemSVGTemplate::load(const QString &fileName)
         if ( boost::regex_search(tagMatch[1].first, tagMatch[1].second, nameMatch, editableNameRegex) &&
              boost::regex_search(tagMatch[1].first, tagMatch[1].second, xMatch, xRegex) &&
              boost::regex_search(tagMatch[1].first, tagMatch[1].second, yMatch, yRegex) ) {
-             //boost::regex_search(tagMatch[1].first, tagMatch[1].second, yMatch, yRegex) &&
-             //boost::regex_search(tagMatch[1].first, tagMatch[1].second, boxShapeMatch, boxShapeRegex) ) {
 
             QString xStr = QString::fromStdString(xMatch[1].str());
             QString yStr = QString::fromStdString(yMatch[1].str());
             QString editableName = QString::fromStdString(nameMatch[1].str());
-            //QString widthStr = QString::fromStdString(boxShapeMatch[1].str());
-            //QString heightStr = QString::fromStdString(boxShapeMatch[2].str());
 
             double x = xStr.toDouble();
             double y = yStr.toDouble();
-            //double width = widthStr.toDouble();
-            //double height = heightStr.toDouble();
 
+            //TODO: this should probably be configurable without a code change
             double editClickBoxSize = 1.5;
             QColor editClickBoxColor = Qt::green;
 
@@ -183,7 +178,6 @@ void QGraphicsItemSVGTemplate::load(const QString &fileName)
 
             QPen myPen;
             QBrush myBrush(editClickBoxColor,Qt::SolidPattern);
-            //myPen.setStyle(Qt::DashLine);
             myPen.setStyle(Qt::SolidLine);
             myPen.setColor(editClickBoxColor);
             myPen.setWidth(0);  // 0 means "cosmetic pen" - always 1px

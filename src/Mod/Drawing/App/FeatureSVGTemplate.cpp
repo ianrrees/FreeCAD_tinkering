@@ -48,7 +48,7 @@
 #include "FeaturePage.h"
 #include "FeatureSVGTemplate.h"
 
-#include "FeatureSVGTemplatePy.h"  //?? !exists()
+#include "FeatureSVGTemplatePy.h"
 
 using namespace Drawing;
 using namespace std;
@@ -315,37 +315,37 @@ std::map<std::string, std::string> FeatureSVGTemplate::getEditableTextsFromTempl
             tfrag += "--endOfLine--";
         }
         tfile.close();
-        boost::regex e ("<text.*?id=\"(.*?)\".*?freecad:editable=\"(.*?)\".*?<tspan.*?>(.*?)</tspan>");
+        //this catches all the tags: <text ... </tspan></text>
+        //keep tagRegex in sync with Gui/QGISVGTemplate.cpp
+        boost::regex tagRegex ("<text([^>]*freecad:editable=[^>]*)>[^<]*<tspan[^>]*>([^<]*)</tspan></text>");
+        boost::regex nameRegex("freecad:editable=\"(.*?)\"");
+        boost::regex valueRegex("<tspan.*?>(.*?)</tspan>");
+
         string::const_iterator tbegin, tend;
         tbegin = tfrag.begin();
         tend = tfrag.end();
-        boost::match_results<std::string::const_iterator> twhat;
-        //TODO: "overly complex regex" error in this while loop for some templates (ex: ../ISO/A/ISO_A4_Landscape.svg)
-        //      (old)Draw1::FeaturePage.cpp code doesn't fail on these templates
-        //TODO: finds every second freecad:editable in /ISO/A/...
-        //      every twhat[0] contains 2 freecad:editable expressions.  need to reparse to find 1 and 2???
-        while (boost::regex_search(tbegin, tend, twhat, e)) {
-/*            string temp0 = twhat[0];
-            string temp1 = twhat[1],
-                   temp2 = twhat[2],
-                   temp3 = twhat[3];
-            qDebug()<<"Got field id:"<<temp1.c_str()<<" editable as:"<<temp2.c_str()<<" default text:"<<temp3.c_str()<<".";
-*/
-            if (eds.count(twhat[2]) > 0) {
-                //TODO: Throw or [better] change key
-                qDebug() << "Got duplicate value for key "<<((string)twhat[3]).c_str();
-            } else {
-                //TODO: May also need to maintain an internal map to get SVG ID
-                eds[twhat[2]] = twhat[3];
-                //editableSvgIds[twhat[2]] = twhat[1];
+        boost::match_results<std::string::const_iterator> tagMatch;
+        boost::match_results<std::string::const_iterator> nameMatch;
+        boost::match_results<std::string::const_iterator> valueMatch;
+        while (boost::regex_search(tbegin, tend, tagMatch, tagRegex)) {
+            if ( boost::regex_search(tagMatch[0].first, tagMatch[0].second, nameMatch, nameRegex) &&
+                 boost::regex_search(tagMatch[0].first, tagMatch[0].second, valueMatch, valueRegex)) {
+                //found valid name/value pair
+                string name = nameMatch[1];
+                string value = valueMatch[1];
+                if (eds.count(name) > 0) {
+                    //TODO: Throw or [better] change key
+                    qDebug() << "Got duplicate value for key "<<name.c_str();
+                } else {
+                    eds[name] = value;
+                }
             }
-
-            tbegin = twhat[0].second;
-
+            tbegin = tagMatch[0].second;
         }
     }
     return eds;
 }
+
 
 // Python Template feature ---------------------------------------------------------
 namespace App {
