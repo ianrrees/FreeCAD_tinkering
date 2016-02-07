@@ -491,7 +491,7 @@ def drawCircle(circle,forceShape=False):
         warn(circle)
     return None
 
-def drawEllipse(ellipse):
+def drawEllipse(ellipse,forceShape=False):
     "returns a Part shape from a dxf arc"
     try:
         c = vec(ellipse.loc)
@@ -2010,6 +2010,9 @@ def exportPageLegacy(page,filename):
 def readPreferences():
     # reading parameters
     p = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Draft")
+    if FreeCAD.GuiUp and p.GetBool("dxfShowDialog",False):
+        import FreeCADGui
+        FreeCADGui.showPreferences("Import-Export",2)
     global dxfCreatePart, dxfCreateDraft, dxfCreateSketch, dxfDiscretizeCurves, dxfStarBlocks
     global dxfMakeBlocks, dxfJoin, dxfRenderPolylineWidth, dxfImportTexts, dxfImportLayouts
     global dxfImportPoints, dxfImportHatches, dxfUseStandardSize, dxfGetColors, dxfUseDraftVisGroups
