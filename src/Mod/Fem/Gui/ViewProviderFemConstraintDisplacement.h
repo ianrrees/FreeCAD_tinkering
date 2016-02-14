@@ -1,6 +1,9 @@
 /***************************************************************************
- *   Copyright (c) 2010 Werner Mayer <wmayer[at]users.sourceforge.net>     *
- *                                                                         *
+ *   Copyright (c) 2015 FreeCAD Developers                                 *
+ *   Authors: Michael Hindley <hindlemp@eskom.co.za>                       *
+ *            Ruan Olwagen <olwager@eskom.co.za>                           *
+ *            Oswald van Ginkel <vginkeo@eskom.co.za>                      *
+ *   Based on Force constraint by Jan Rheinländer                          *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
  *   This library is free software; you can redistribute it and/or         *
@@ -20,48 +23,26 @@
  *                                                                         *
  ***************************************************************************/
 
+#ifndef GUI_VIEWPROVIDERFEMCONSTRAINTDISPLACEMENT_H
+#define GUI_VIEWPROVIDERFEMCONSTRAINTDISPLACEMENT_H
 
-#ifndef APP_MERGEDOCUMENTS_H
-#define APP_MERGEDOCUMENTS_H
+#include "ViewProviderFemConstraint.h"
 
-#include <boost/signals.hpp>
-#include <Base/Persistence.h>
+namespace FemGui {
 
-namespace zipios {
-class ZipInputStream;
-}
-
-namespace App {
-class Document;
-class DocumentObject;
-class AppExport MergeDocuments : public Base::Persistence
+class FemGuiExport ViewProviderFemConstraintDisplacement : public FemGui::ViewProviderFemConstraint
 {
-public:
-    MergeDocuments(App::Document* doc);
-    ~MergeDocuments();
-    bool isVerbose() const { return verbose; }
-    void setVerbose(bool on) { verbose = on; }
-    unsigned int getMemSize (void) const;
-    std::vector<App::DocumentObject*> importObjects(std::istream&);
-    void importObject(const std::vector<App::DocumentObject*>& o, Base::XMLReader & r);
-    void exportObject(const std::vector<App::DocumentObject*>& o, Base::Writer & w);
-    void Save (Base::Writer & w) const;
-    void Restore(Base::XMLReader &r);
-    void SaveDocFile (Base::Writer & w) const;
-    void RestoreDocFile(Base::Reader & r);
+    PROPERTY_HEADER(FemGui::ViewProviderFemConstraintDisplacement);
 
-private:
-    bool guiup;
-    bool verbose;
-    zipios::ZipInputStream* stream;
-    App::Document* appdoc;
-    std::vector<App::DocumentObject*> objects;
-    std::map<std::string, std::string> nameMap;
-    typedef boost::signals::connection Connection;
-    Connection connectExport;
-    Connection connectImport;
+public:
+    ViewProviderFemConstraintDisplacement();
+    virtual ~ViewProviderFemConstraintDisplacement();
+    virtual void updateData(const App::Property*);
+
+protected:
+    virtual bool setEdit(int ModNum);
 };
 
-} // namespace App
+}
 
-#endif // APP_MERGEDOCUMENTS_H
+#endif // GUI_VIEWPROVIDERFEMCONSTRAINTDISPLACEMENT_H
