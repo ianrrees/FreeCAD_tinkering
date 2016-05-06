@@ -39,28 +39,28 @@ class TechDrawGuiExport QGCustomClip : public QGraphicsItemGroup
 {
 public:
     explicit QGCustomClip(void);
-    ~QGCustomClip() {}
+    ~QGCustomClip() = default;
 
     enum {Type = QGraphicsItem::UserType + 132};
-    int type() const { return Type;}
+    int type() const { return Type; }
     virtual QRectF boundingRect() const;
 
-    void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
+    void paint( QPainter *painter,
+                const QStyleOptionGraphicsItem *option,
+                QWidget *widget = 0 );
+    
     virtual void centerAt(QPointF centerPos);
     virtual void centerAt(double cX, double cY);
     virtual void setRect(QRectF r);
     virtual void setRect(double x, double y, double w, double h);
     virtual QRectF rect();
     
-
-protected:
-
 private:
     QRectF m_rect;
 
 };
 
-} // namespace MDIViewPageGui
+} // namespace TechDrawGui
 
 #endif // DRAWINGGUI_QGCUSTOMCLIP_H
 

@@ -22,10 +22,7 @@
 
 #include "PreCompiled.h"
 #ifndef _PreComp_
-#include <assert.h>
 #include <QGraphicsScene>
-#include <QGraphicsSceneHoverEvent>
-#include <QMouseEvent>
 #include <QPainter>
 #include <QStyleOptionGraphicsItem>
 #endif
@@ -36,6 +33,7 @@
 #include <Base/Parameter.h>
 
 #include <qmath.h>
+
 #include "QGCustomClip.h"
 
 using namespace TechDrawGui;
@@ -53,12 +51,7 @@ QGCustomClip::QGCustomClip()
 
 void QGCustomClip::centerAt(QPointF centerPos)
 {
-    QRectF box = boundingRect();
-    double width = box.width();
-    double height = box.height();
-    double newX = centerPos.x() - width/2.;
-    double newY = centerPos.y() - height/2.;
-    setPos(newX,newY);
+    centerAt(centerPos.x(), centerPos.y());
 }
 
 void QGCustomClip::centerAt(double cX, double cY)
@@ -89,11 +82,14 @@ QRectF QGCustomClip::rect()
     return m_rect;
 }
 
-void QGCustomClip::paint ( QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget) {
+void QGCustomClip::paint ( QPainter *painter,
+                           const QStyleOptionGraphicsItem *option,
+                           QWidget *widget )
+{
     QStyleOptionGraphicsItem myOption(*option);
     myOption.state &= ~QStyle::State_Selected;
 
-    QGraphicsItemGroup::paint (painter, &myOption, widget);
+    QGraphicsItemGroup::paint(painter, &myOption, widget);
 }
 
 QRectF QGCustomClip::boundingRect() const     //sb shape()?
