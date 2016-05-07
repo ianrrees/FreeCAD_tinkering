@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (c) 2013 Luke Parry <l.parry@warwick.ac.uk>                 *
+ *   Copyright (c) 2016                    Ian Rees <ian.rees@gmail.com>   *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -20,49 +20,49 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef DRAWINGGUI_QGRAPHICSITEMVERTEX_H
-#define DRAWINGGUI_QGRAPHICSITEMVERTEX_H
+#include "PreCompiled.h"
+#ifndef _PreComp_
+    #include <QPen>
+    #include <QStyleOptionGraphicsItem>
+#endif // #ifndef _PreComp_
 
-#include "../App/GraphicsItems/GIVertex.h"
+#include "App/Application.h"
+#include "App/Material.h"
 
-QT_BEGIN_NAMESPACE
-class QPainter;
-class QStyleOptionGraphicsItem;
-QT_END_NAMESPACE
+#include "GIVertex.h"
 
-namespace TechDrawGui
+using namespace TechDraw;
+
+GIVertex::GIVertex(int index) :
+    projIndex(index),
+    m_fill(Qt::SolidPattern),
+    m_radius(2.0)
 {
+    auto hGrp( App::GetApplication().GetUserParameter().GetGroup("BaseApp")->
+               GetGroup("Preferences")->GetGroup("Mod/TechDraw/Colors") );
 
-class TechDrawGuiExport QGIVertex : public TechDraw::GIVertex
+    App::Color fcColor( static_cast<uint32_t>(hGrp->GetUnsigned("NormalColor", 0x00000000)) );
+    m_colCurrent = fcColor.asQColor();
+}
+
+void GIVertex::paint( QPainter *painter,
+                      const QStyleOptionGraphicsItem *option,
+                      QWidget *widget )
 {
-public:
-    QGIVertex(int index);
-    ~QGIVertex() = default;
+    QStyleOptionGraphicsItem myOption(*option);
+    myOption.state &= ~QStyle::State_Selected;
 
-    int getProjIndex() const { return projIndex; }
+    QPen pen;
+    pen.setColor(m_colCurrent);
+    setPen(pen);
 
-    float getRadius() { return m_radius; }
-    void setRadius(float r) { m_radius = r; }
-    Qt::BrushStyle getFill() { return m_fill; }
-    void setFill(Qt::BrushStyle f) { m_fill = f; }
+    QBrush brush;
+    brush.setColor(m_colCurrent);
+    brush.setStyle(m_fill);
+    setBrush(brush);
 
-    void setHighlighted(bool isHighlighted);
-    void setPrettyNormal();
-    void setPrettyPre();
-    void setPrettySel();
+    setRect(-m_radius, -m_radius, 2.0 * m_radius, 2.0 * m_radius);
 
-protected:
-    void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
-    void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
-    QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+    QGraphicsEllipseItem::paint(painter, &myOption, widget);
+}
 
-    bool isHighlighted;
-
-    QColor m_colNormal;
-    QColor m_colPre;
-    QColor m_colSel;
-};
-
-} // namespace MDIViewPageGui
-
-#endif // DRAWINGGUI_QGRAPHICSITEMVERTEX_H

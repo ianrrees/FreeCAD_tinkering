@@ -46,6 +46,8 @@ if(QT_QTGUI_LIBRARY AND QT_QTSVG_LIBRARY)
         GraphicsItems/GITemplate.cpp
         GraphicsItems/GISVGTemplate.h
         GraphicsItems/GISVGTemplate.cpp
+        GraphicsItems/GIVertex.h
+        GraphicsItems/GIVertex.cpp
         GraphicsItems/GIDrawingTemplate.h
         GraphicsItems/GIDrawingTemplate.cpp
         GraphicsItems/ZVALUE.h

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (c) 2013 Luke Parry <l.parry@warwick.ac.uk>                 *
+ *   Copyright (c) 2016                    Ian Rees <ian.rees@gmail.com>   *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -20,49 +20,39 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef DRAWINGGUI_QGRAPHICSITEMVERTEX_H
-#define DRAWINGGUI_QGRAPHICSITEMVERTEX_H
+#ifndef GIVERTEX_HEADER
+#define GIVERTEX_HEADER
 
-#include "../App/GraphicsItems/GIVertex.h"
+#include <QGraphicsItem>
 
-QT_BEGIN_NAMESPACE
-class QPainter;
-class QStyleOptionGraphicsItem;
-QT_END_NAMESPACE
+namespace TechDraw {
 
-namespace TechDrawGui
+/// Draws a vertex as a filled circle on the page.
+class TechDrawExport GIVertex : public QGraphicsEllipseItem
 {
+    public:
+        GIVertex(int index);
+        virtual ~GIVertex() = default;
 
-class TechDrawGuiExport QGIVertex : public TechDraw::GIVertex
-{
-public:
-    QGIVertex(int index);
-    ~QGIVertex() = default;
+        enum {Type = QGraphicsItem::UserType + 105};
+        int type() const { return Type;}
+        
+        virtual void paint( QPainter * painter,
+                            const QStyleOptionGraphicsItem *option,
+                            QWidget *widget = 0 );
 
-    int getProjIndex() const { return projIndex; }
+    protected:
+        /// Index of vertex in Projection. must exist.
+        int projIndex;
 
-    float getRadius() { return m_radius; }
-    void setRadius(float r) { m_radius = r; }
-    Qt::BrushStyle getFill() { return m_fill; }
-    void setFill(Qt::BrushStyle f) { m_fill = f; }
+        /// Current colour of the vertex
+        QColor m_colCurrent;
 
-    void setHighlighted(bool isHighlighted);
-    void setPrettyNormal();
-    void setPrettyPre();
-    void setPrettySel();
+        Qt::BrushStyle m_fill;
 
-protected:
-    void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
-    void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
-    QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+        float m_radius;
+};  // end class GIVertex
 
-    bool isHighlighted;
+};  // end namespace TechDraw
 
-    QColor m_colNormal;
-    QColor m_colPre;
-    QColor m_colSel;
-};
-
-} // namespace MDIViewPageGui
-
-#endif // DRAWINGGUI_QGRAPHICSITEMVERTEX_H
+#endif // #ifndef GIVERTEX_HEADER
