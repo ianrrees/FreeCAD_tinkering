@@ -42,6 +42,8 @@ if(QT_QTGUI_LIBRARY AND QT_QTSVG_LIBRARY)
         GraphicsItems/GIEdge.cpp
         GraphicsItems/GIFace.h
         GraphicsItems/GIFace.cpp
+        GraphicsItems/GIHatch.h
+        GraphicsItems/GIHatch.cpp
         GraphicsItems/GIPage.h
         GraphicsItems/GIPage.cpp
         GraphicsItems/GIPageRenderer.h

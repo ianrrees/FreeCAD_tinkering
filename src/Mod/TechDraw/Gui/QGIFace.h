@@ -23,8 +23,6 @@
 #ifndef DRAWINGGUI_QGRAPHICSITEMFACE_H
 #define DRAWINGGUI_QGRAPHICSITEMFACE_H
 
-#include <Qt>
-
 #include "../App/GraphicsItems/GIFace.h"
 
 QT_BEGIN_NAMESPACE

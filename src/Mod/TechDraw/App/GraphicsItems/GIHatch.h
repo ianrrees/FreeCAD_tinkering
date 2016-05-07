@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (c) 2015 WandererFan <wandererfan@gmail.com>                *
+ *   Copyright (c) 2016                    Ian Rees <ian.rees@gmail.com>   *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -20,46 +20,63 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef DRAWINGGUI_QGRAPHICSITEMHATCH_H
-#define DRAWINGGUI_QGRAPHICSITEMHATCH_H
+#ifndef GIHATCH_HEADER
+#define GIHATCH_HEADER
 
+#include <string>
 #include <QBitmap>
+#include <QBrush>
+#include <QGraphicsItem>
+#include <QPen>
 
-#include "../App/GraphicsItems/GIHatch.h"
+#include "../DrawHatch.h"
+
+QT_BEGIN_NAMESPACE
+    class QPainter;
+    class QStyleOptionGraphicsItem;
+QT_END_NAMESPACE
 
 namespace App {
     class Color;
 }
 
-namespace TechDrawGui
+namespace TechDraw {
+
+class TechDrawExport GIHatch : public QGraphicsPathItem
 {
+    public:
+        GIHatch(std::string parentHatch);
+        virtual ~GIHatch() = default;
 
-class TechDrawGuiExport QGIHatch : public TechDraw::GIHatch
-{
-public:
-    QGIHatch(std::string parentHatch);
-    ~QGIHatch() = default;
+        enum {Type = QGraphicsItem::UserType + 122};
+        int type() const { return Type;}
 
-    std::string getHatchName() const { return m_hatch; }
-    void setPrettyNormal();
-    void setPrettyPre();
-    void setPrettySel();
-    void setFill(std::string fillSpec);
-    void setColor(App::Color c);
+        virtual void paint( QPainter *painter,
+                            const QStyleOptionGraphicsItem *option,
+                            QWidget *widget = 0 );
 
-protected:
-    // Preselection events:
-    void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
-    void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
-    // Selection detection
-    QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+        /// Changes the "normal" color of this particular GIHatch
+        void setColor(App::Color c);
 
-    QColor m_colPre;
-    QColor m_colSel;
-    QBitmap m_texture;
-    std::string m_lastFill;
-};
+        void setFill(std::string fillSpec);
 
-} // namespace TechDrawGui
+    protected:
+        std::string m_hatch;
+        std::string m_lastFill;
 
-#endif // DRAWINGGUI_QGRAPHICSITEMHATCH_H
+        QColor m_colNormal;
+
+        /// Used with m_brush
+        QBitmap m_texture;
+
+        QBrush m_brush;
+
+        QPen m_pen;
+
+        Qt::BrushStyle m_fill;
+};  // end class GIHatch
+
+};  // end namespace TechDraw
+
+#endif // #ifndef GIHATCH_HEADER
+
