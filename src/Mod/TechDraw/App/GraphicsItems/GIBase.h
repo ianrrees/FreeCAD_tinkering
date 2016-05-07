@@ -39,7 +39,7 @@ public:
     virtual ~GIBase() = default;
 
     enum {Type = QGraphicsItem::UserType + 101};
-    int type() const { return Type;}
+    virtual int type() const { return Type;}
 
     const char * getViewName() const;
 
@@ -52,7 +52,6 @@ public:
     inline qreal getY() { return y() * -1; }
     bool isInnerView() { return m_innerView; }
     void isInnerView(bool state) { m_innerView = state; }
-    double getYInClip(double y);
     /// @}
 
     /// Used for constraining views to line up eg in a Projection Group
@@ -64,6 +63,8 @@ public:
                         QWidget *widget = nullptr );
 
 protected:
+    double getYInClip(double y);
+
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
     DrawView *viewObj;

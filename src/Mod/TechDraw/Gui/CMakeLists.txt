@@ -85,8 +85,6 @@ SET(TechDrawGuiView_SRCS
     QGCustomRect.h
     QGCustomSvg.cpp
     QGCustomSvg.h
-    QGCustomClip.cpp
-    QGCustomClip.h
     QGIView.cpp
     QGIView.h
     QGIArrow.cpp

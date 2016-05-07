@@ -36,6 +36,8 @@ if(QT_QTGUI_LIBRARY AND QT_QTSVG_LIBRARY)
         GraphicsItems/GIBase.cpp
         GraphicsItems/GICollection.h
         GraphicsItems/GICollection.cpp
+        GraphicsItems/GICustomClip.h
+        GraphicsItems/GICustomClip.cpp
         GraphicsItems/GIPage.h
         GraphicsItems/GIPage.cpp
         GraphicsItems/GIPageRenderer.h

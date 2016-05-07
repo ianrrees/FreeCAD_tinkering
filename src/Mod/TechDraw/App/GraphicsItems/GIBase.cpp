@@ -29,8 +29,12 @@
 #include "App/Material.h"
 #include "App/PropertyLinks.h"
 #include "Base/Parameter.h"
+#include "Base/Console.h"
 
 #include "../DrawView.h"
+#include "../DrawViewClip.h"
+
+#include "GICustomClip.h"
 
 #include "GIBase.h"
 
@@ -106,17 +110,15 @@ void GIBase::setPosition(qreal x, qreal y)
 
 double GIBase::getYInClip(double y)
 {
-    /* TODO: Just removing this for now - should be easier when ViewClip has been split
-    QGCustomClip* parentClip = dynamic_cast<QGCustomClip*>(parentItem());
+    auto parentClip( dynamic_cast<GICustomClip*>(parentItem()) );
     if (parentClip) {
-        QGIViewClip* parentView = dynamic_cast<QGIViewClip*>(parentClip->parentItem());
-        DrawViewClip* parentFeat = dynamic_cast<DrawViewClip*>(parentView->getViewObject());
-        double newY = parentFeat->Height.getValue() - y;
-        return newY;
+        auto parentFeat( dynamic_cast<DrawViewClip *>(parentClip->getViewObject()) );
+        assert(parentFeat);
+        return parentFeat->Height.getValue() - y;
     } else {
+        // TODO: This feels messy - can we move this method down to GIViewClip?
         Base::Console().Log("Logic Error - getYInClip called for child (%s) not in Clip\n",getViewName());
     }
-    */
     return 0.0;
 }
 

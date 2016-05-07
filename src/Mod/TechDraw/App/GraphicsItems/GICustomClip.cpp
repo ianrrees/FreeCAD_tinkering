@@ -22,23 +22,20 @@
 
 #include "PreCompiled.h"
 #ifndef _PreComp_
-#include <QGraphicsScene>
 #include <QPainter>
 #include <QStyleOptionGraphicsItem>
 #endif
 
-#include <App/Application.h>
-#include <App/Material.h>
-#include <Base/Console.h>
-#include <Base/Parameter.h>
+#include "App/Application.h"
+#include "App/Material.h"
 
 #include <qmath.h>
 
-#include "QGCustomClip.h"
+#include "GICustomClip.h"
 
-using namespace TechDrawGui;
+using namespace TechDraw;
 
-QGCustomClip::QGCustomClip()
+GICustomClip::GICustomClip()
 {
     setHandlesChildEvents(false);                //not sure if needs to handle events for Views in Group???
     setCacheMode(QGraphicsItem::NoCache);
@@ -49,12 +46,12 @@ QGCustomClip::QGCustomClip()
     m_rect = QRectF(0.,0.,10.,10.);
 }
 
-void QGCustomClip::centerAt(QPointF centerPos)
+void GICustomClip::centerAt(QPointF centerPos)
 {
     centerAt(centerPos.x(), centerPos.y());
 }
 
-void QGCustomClip::centerAt(double cX, double cY)
+void GICustomClip::centerAt(double cX, double cY)
 {
     QRectF box = boundingRect();
     double width = box.width();
@@ -64,25 +61,25 @@ void QGCustomClip::centerAt(double cX, double cY)
     setPos(newX,newY);
 }
 
-void QGCustomClip::setRect(QRectF r)
+void GICustomClip::setRect(QRectF r)
 {
     //prepareGeometryChange();??
     m_rect = r;
 }
 
-void QGCustomClip::setRect(double x, double y, double w, double h)
+void GICustomClip::setRect(double x, double y, double w, double h)
 {
     QRectF r(x,y,w,h);
     setRect(r);
 }
 
 
-QRectF QGCustomClip::rect()
+QRectF GICustomClip::rect()
 {
     return m_rect;
 }
 
-void QGCustomClip::paint ( QPainter *painter,
+void GICustomClip::paint ( QPainter *painter,
                            const QStyleOptionGraphicsItem *option,
                            QWidget *widget )
 {
@@ -92,7 +89,7 @@ void QGCustomClip::paint ( QPainter *painter,
     QGraphicsItemGroup::paint(painter, &myOption, widget);
 }
 
-QRectF QGCustomClip::boundingRect() const     //sb shape()?
+QRectF GICustomClip::boundingRect() const     //sb shape()?
 {
     return m_rect;
 }

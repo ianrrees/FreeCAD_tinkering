@@ -58,7 +58,7 @@ QGIViewClip::QGIViewClip()
     setFlag(QGraphicsItem::ItemIsSelectable, true);
     setFlag(QGraphicsItem::ItemIsMovable, true);
 
-    m_cliparea = new QGCustomClip();
+    m_cliparea = new TechDraw::GICustomClip();
     addToGroup(m_cliparea);
     m_cliparea->setPos(0.,0.);
     m_cliparea->setRect(0.,0.,5.,5.);

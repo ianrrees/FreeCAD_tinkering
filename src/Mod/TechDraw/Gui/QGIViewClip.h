@@ -28,10 +28,10 @@
 
 #include "QGIView.h"
 #include "QGCustomRect.h"
-#include "QGCustomClip.h"
+#include "../App/GraphicsItems/GICustomClip.h"
 
 namespace TechDraw {
-class DrawViewPart;
+    class DrawViewPart;
 }
 
 namespace TechDrawGui
@@ -46,7 +46,7 @@ public:
     ~QGIViewClip() = default;
 
     enum {Type = QGraphicsItem::UserType + 123};
-    int type() const { return Type;}
+    int type() const { return Type; }
 
     virtual void updateView(bool update = false);
 
@@ -63,7 +63,7 @@ protected:
 
 private:
     QGCustomRect* m_frame;
-    QGCustomClip* m_cliparea;
+    TechDraw::GICustomClip* m_cliparea;
 
 };
 

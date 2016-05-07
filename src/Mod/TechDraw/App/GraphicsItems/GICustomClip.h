@@ -20,26 +20,27 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef DRAWINGGUI_QGCUSTOMCLIP_H
-#define DRAWINGGUI_QGCUSTOMCLIP_H
+#ifndef GICUSTOMCLIP_HEADER
+#define GICUSTOMCLIP_HEADER
 
-#include <QGraphicsItem>
 #include <QPointF>
 #include <QRectF>
+
+#include "GIBase.h"
 
 QT_BEGIN_NAMESPACE
 class QPainter;
 class QStyleOptionGraphicsItem;
 QT_END_NAMESPACE
 
-namespace TechDrawGui
+namespace TechDraw
 {
 
-class TechDrawGuiExport QGCustomClip : public QGraphicsItemGroup
+class TechDrawExport GICustomClip : virtual public GIBase
 {
 public:
-    explicit QGCustomClip(void);
-    ~QGCustomClip() = default;
+    explicit GICustomClip(void);
+    ~GICustomClip() = default;
 
     enum {Type = QGraphicsItem::UserType + 132};
     int type() const { return Type; }
@@ -60,7 +61,7 @@ private:
 
 };
 
-} // namespace TechDrawGui
+} // namespace TechDraw
 
-#endif // DRAWINGGUI_QGCUSTOMCLIP_H
+#endif // #ifndef GICUSTOMCLIP_HEADER
 
