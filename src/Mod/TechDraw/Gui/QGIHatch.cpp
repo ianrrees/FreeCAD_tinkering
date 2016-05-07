@@ -23,12 +23,10 @@
 #include "PreCompiled.h"
 #ifndef _PreComp_
     #include <math.h>
-    #include <QBitmap>
     #include <QGraphicsPathItem>
     #include <QGraphicsTextItem>
     #include <QPainter>
     #include <QString>
-    #include <QSvgRenderer>
 #endif
 
 
@@ -46,8 +44,7 @@
 using namespace TechDrawGui;
 
 QGIHatch::QGIHatch(std::string parentHatch) :
-    TechDraw::GIHatch(parentHatch),
-    m_lastFill("")
+    TechDraw::GIHatch(parentHatch)
 {
     setHandlesChildEvents(false);
     setFlag(QGraphicsItem::ItemIsMovable, false);
@@ -117,41 +114,4 @@ void QGIHatch::setPrettySel()
     setPen(m_pen);
     setBrush(m_brush);
 }
-
-void QGIHatch::setFill(std::string fillSpec)
-{
-    if (fillSpec.empty()) {
-        return;
-    }
-
-    if (fillSpec == m_lastFill) {
-        return;
-    }
-
-    QString qs(QString::fromStdString(fillSpec));
-    m_lastFill = fillSpec;
-    //QString qs(QString::fromUtf8("../src/Mod/Drawing/patterns/simple.svg"));
-    //QString qs(QString::fromUtf8("../src/Mod/Drawing/patterns/square.svg"));
-    QSvgRenderer renderer(qs);
-    //QBitmap pixMap(64,64);                         //this size is scene units (mm) instead of pixels?
-    //QPixmap::fromImage(m_image);
-    //QImage(qt_patternForBrush(style, 0), 8, 8, 1, QImage::Format_MonoLSB);
-    //QPixmap::scaled(QSize,QTAspectmode,QTTransformmode)
-    QBitmap pixMap(renderer.defaultSize());
-    pixMap.fill(Qt::white);   //try  Qt::transparent?
-    QPainter painter(&pixMap);
-    renderer.render(&painter);                                         //svg texture -> bitmap
-
-    m_texture = pixMap;
-    m_brush = QBrush(m_texture);
-    m_brush.setStyle(Qt::TexturePattern);
-    //m_brush = QBrush(Qt::CrossPattern);
-    //m_brush = QBrush(Qt::DiagCrossPattern);
-}
-
-void QGIHatch::setColor(App::Color c)
-{
-    m_colNormal = c.asQColor();
-}
-
 

@@ -157,7 +157,7 @@ QGIView * QGVPage::addViewPart(TechDraw::DrawViewPart *part)
 {
     QGIViewPart *viewPart(new QGIViewPart);
 
-    viewPart->setViewPartFeature(part);
+    viewPart->setViewFeature(part);
 
     addView(viewPart);
     return viewPart;
@@ -166,7 +166,7 @@ QGIView * QGVPage::addViewPart(TechDraw::DrawViewPart *part)
 QGIView * QGVPage::addViewSection(TechDraw::DrawViewPart *part)
 {
     QGIViewSection *viewSection(new QGIViewSection);
-    viewSection->setViewPartFeature(part);
+    viewSection->setViewFeature(part);
 
     addView(viewSection);
     return viewSection;
@@ -247,7 +247,7 @@ QGIView * QGVPage::addViewDimension(TechDraw::DrawViewDimension *dim)
     assert(sc);
     sc->addItem(dimGroup);
 
-    dimGroup->setViewPartFeature(dim);
+    dimGroup->setViewFeature(dim);
 
     // TODO consider changing dimension feature to use another property for label position
     // Instead of calling addView - the view must for now be added manually

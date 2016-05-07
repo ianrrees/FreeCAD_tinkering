@@ -47,12 +47,9 @@ public:
 
     void setHighlighted(bool state);
     void setCosmetic(bool state);
-    void setStrokeWidth(float width);
     void setPrettyNormal();
     void setPrettyPre();
     void setPrettySel();
-    void setHiddenEdge(bool b);
-    bool getHiddenEdge() { return(isHiddenEdge); }
     void setSmoothEdge(bool b) { isSmoothEdge = b; }
     bool getSmoothEdge() { return(isSmoothEdge); }
 
@@ -62,16 +59,11 @@ protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
     bool isHighlighted;
-    bool isHiddenEdge;
     bool isSmoothEdge;
 
     float strokeScale;
-    QColor m_colNormal;
     QColor m_colPre;
     QColor m_colSel;
-    QColor m_colHid;
-    QColor m_defNormal;
-    Qt::PenStyle m_styleHid;
 };
 
 } // namespace MDIViewPageGui

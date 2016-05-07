@@ -41,7 +41,8 @@ GIVertex::GIVertex(int index) :
     auto hGrp( App::GetApplication().GetUserParameter().GetGroup("BaseApp")->
                GetGroup("Preferences")->GetGroup("Mod/TechDraw/Colors") );
 
-    App::Color fcColor( static_cast<uint32_t>(hGrp->GetUnsigned("NormalColor", 0x00000000)) );
+    App::Color fcColor;
+    fcColor.setPackedValue( hGrp->GetUnsigned("NormalColor", 0x00000000) );
     m_colCurrent = fcColor.asQColor();
 }
 

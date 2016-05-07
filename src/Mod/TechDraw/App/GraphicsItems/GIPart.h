@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (c) 2013 Luke Parry <l.parry@warwick.ac.uk>                 *
+ *   Copyright (c) 2016                    Ian Rees <ian.rees@gmail.com>   *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -20,57 +20,49 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef DRAWINGGUI_QGRAPHICSITEMVIEWPART_H
-#define DRAWINGGUI_QGRAPHICSITEMVIEWPART_H
+#ifndef GIPART_HEADER
+#define GIPART_HEADER
 
-#include <QObject>
-#include <QPainter>
-
-#include "QGIView.h"
-#include "QGIFace.h"
-#include "QGIEdge.h"
-#include "QGIVertex.h"
-#include "QGIHatch.h"
-
-#include "../App/Geometry.h"
-#include "../App/GraphicsItems/GIPart.h"
+#include "GIBase.h"
 
 namespace TechDraw {
-    class DrawViewPart;
-    class DrawHatch;
-}
 
-namespace TechDrawGui
+class GIFace;
+
+class TechDrawExport GIPart : virtual public GIBase
 {
+    public:
+        enum {Type = QGraphicsItem::UserType + 102};
+        int type() const override { return Type; }
 
-class TechDrawGuiExport QGIViewPart : virtual public QGIView, virtual public TechDraw::GIPart
-{
-public:
-    QGIViewPart();
-    ~QGIViewPart();
+        virtual void draw();
 
-    void toggleCache(bool state) override;
-    void toggleCosmeticLines(bool state);
-    void toggleVertices(bool state);
+    protected:
+        GIFace * drawFace(TechDrawGeometry::Face *f);
 
-    virtual void updateView(bool update = false) override;
-    void tidy();
+        /// Does the heavy lifting of drawing the part
+        QPainterPath drawPainterPath(TechDrawGeometry::BaseGeom *baseGeom) const;
 
-    void draw() override;
-    virtual QRectF boundingRect() const override;
+        /// Helper for pathArc()
+        /*!
+         * x_axis_rotation is in radian
+         */
+        void pathArcSegment( QPainterPath &path,
+                             double xc, double yc,
+                             double th0, double th1,
+                             double rx, double ry, double xAxisRotation ) const;
 
-protected:
+        /// Draws an arc using QPainterPath path
+        /*!
+         * x_axis_rotation is in radian
+         */
+        void pathArc( QPainterPath &path, double rx, double ry, double x_axis_rotation,
+                      bool large_arc_flag, bool sweep_flag,
+                      double x, double y,
+                      double curx, double cury ) const;
 
-    std::vector <TechDraw::DrawHatch *> getHatchesForView(TechDraw::DrawViewPart* viewPart);
+};  // end class GIPart
 
-    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
+};  // end namespace TechDraw
 
-    QColor m_colHid;
-
-private:
-    QList<QGraphicsItem*> deleteItems;
-};
-
-} // namespace TechDrawGui
-
-#endif // DRAWINGGUI_QGRAPHICSITEMVIEWPART_H
+#endif // #ifndef GIPART_HEADER

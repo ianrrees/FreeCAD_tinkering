@@ -41,8 +41,6 @@ public:
 
     int getProjIndex() const { return projIndex; }
 
-    float getRadius() { return m_radius; }
-    void setRadius(float r) { m_radius = r; }
     Qt::BrushStyle getFill() { return m_fill; }
     void setFill(Qt::BrushStyle f) { m_fill = f; }
 

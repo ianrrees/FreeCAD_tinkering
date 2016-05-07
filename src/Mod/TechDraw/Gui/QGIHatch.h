@@ -27,10 +27,6 @@
 
 #include "../App/GraphicsItems/GIHatch.h"
 
-namespace App {
-    class Color;
-}
-
 namespace TechDrawGui
 {
 
@@ -44,8 +40,6 @@ public:
     void setPrettyNormal();
     void setPrettyPre();
     void setPrettySel();
-    void setFill(std::string fillSpec);
-    void setColor(App::Color c);
 
 protected:
     // Preselection events:
@@ -56,8 +50,6 @@ protected:
 
     QColor m_colPre;
     QColor m_colSel;
-    QBitmap m_texture;
-    std::string m_lastFill;
 };
 
 } // namespace TechDrawGui

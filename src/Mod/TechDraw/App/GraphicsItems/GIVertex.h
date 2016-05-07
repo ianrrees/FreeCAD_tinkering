@@ -41,6 +41,9 @@ class TechDrawExport GIVertex : public QGraphicsEllipseItem
                             const QStyleOptionGraphicsItem *option,
                             QWidget *widget = 0 );
 
+        float getRadius() { return m_radius; }
+        void setRadius(float r) { m_radius = r; }
+
     protected:
         /// Index of vertex in Projection. must exist.
         int projIndex;
