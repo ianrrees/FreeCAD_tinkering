@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (c) 2013 Luke Parry <l.parry@warwick.ac.uk>                 *
+ *   Copyright (c) 2016                    Ian Rees <ian.rees@gmail.com>   *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -20,49 +20,30 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef DRAWINGGUI_QGRAPHICSITEMFACE_H
-#define DRAWINGGUI_QGRAPHICSITEMFACE_H
+#include "PreCompiled.h"
+#ifndef _PreComp_
+    #include <QStyleOptionGraphicsItem>
+#endif // #ifndef _PreComp_
 
-#include <Qt>
+#include "GIFace.h"
 
-#include "../App/GraphicsItems/GIFace.h"
+using namespace TechDraw;
 
-QT_BEGIN_NAMESPACE
-class QPainter;
-class QStyleOptionGraphicsItem;
-QT_END_NAMESPACE
-
-namespace TechDrawGui
+GIFace::GIFace(int ref) :
+    reference(ref)
 {
+}
 
-class QGIFace : public TechDraw::GIFace
+void GIFace::paint( QPainter *painter,
+                    const QStyleOptionGraphicsItem *option,
+                    QWidget *widget)
 {
-public:
-    QGIFace(int ref);
-    ~QGIFace() = default;
+    QStyleOptionGraphicsItem myOption(*option);
+    //myOption.state &= ~QStyle::State_Selected;   //temp for debugging
 
-    int getReference() const { return reference; }
-    void setPrettyNormal();
-    void setPrettyPre();
-    void setPrettySel();
+    //m_pen.setColor(m_colCurrent);
+    //setPen(m_pen);
+    //setBrush(m_brush);
+    QGraphicsPathItem::paint(painter, &myOption, widget);
+}
 
-protected:
-    // Preselection events:
-    void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
-    void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
-
-    // Selection detection
-    QVariant itemChange(GraphicsItemChange change, const QVariant &value);
-
-    //TODO: Seems like a lot of this stuff doesn't get used.
-    QPen m_pen;
-    QBrush m_brush;
-    QColor m_colNormal;
-    QColor m_colPre;
-    QColor m_colSel;
-    Qt::BrushStyle m_fill;
-};
-
-} // namespace MDIViewPageGui
-
-#endif // DRAWINGGUI_QGRAPHICSITEMFACE_H

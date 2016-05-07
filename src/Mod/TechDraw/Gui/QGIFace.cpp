@@ -22,29 +22,23 @@
 
 #include "PreCompiled.h"
 #ifndef _PreComp_
-#include <QAction>
-#include <QApplication>
-#include <QContextMenuEvent>
-#include <QGraphicsScene>
-#include <QMouseEvent>
-#include <QGraphicsSceneHoverEvent>
-#include <QPainterPathStroker>
-#include <QPainter>
-#include <QStyleOptionGraphicsItem>
+    #include <QGraphicsScene>
+    #include <QGraphicsSceneHoverEvent>
+    #include <QPainter>
 #endif
 
-#include <App/Application.h>
-#include <App/Material.h>
-#include <Base/Console.h>
-#include <Base/Parameter.h>
+#include "App/Application.h"
+#include "App/Material.h"
+#include "Base/Parameter.h"
 
 #include "QGIView.h"
+
 #include "QGIFace.h"
 
 using namespace TechDrawGui;
 
 QGIFace::QGIFace(int ref) :
-    reference(ref),
+    TechDraw::GIFace(ref),
     m_fill(Qt::NoBrush)
     //m_fill(Qt::CrossPattern)
     //m_fill(Qt::Dense3Pattern)
@@ -114,12 +108,3 @@ void QGIFace::setPrettySel() {
     //setBrush(m_brush);
 }
 
-void QGIFace::paint ( QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget) {
-    QStyleOptionGraphicsItem myOption(*option);
-    //myOption.state &= ~QStyle::State_Selected;   //temp for debugging
-
-    //m_pen.setColor(m_colCurrent);
-    //setPen(m_pen);
-    //setBrush(m_brush);
-    QGraphicsPathItem::paint (painter, &myOption, widget);
-}
