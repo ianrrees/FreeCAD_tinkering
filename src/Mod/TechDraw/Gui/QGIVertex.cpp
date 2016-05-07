@@ -49,8 +49,8 @@ QGIVertex::QGIVertex(int index) :
     setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
     setAcceptHoverEvents(true);
 
-    Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
-        .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/TechDraw/Colors");
+    auto hGrp( App::GetApplication().GetUserParameter().GetGroup("BaseApp")->
+               GetGroup("Preferences")->GetGroup("Mod/TechDraw/Colors") );
 
     App::Color fcColor;
     fcColor.setPackedValue(hGrp->GetUnsigned("SelectColor", 0x0000FF00));

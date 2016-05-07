@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (c) 2013 Luke Parry <l.parry@warwick.ac.uk>                 *
+ *   Copyright (c) 2016                    Ian Rees <ian.rees@gmail.com>   *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -20,58 +20,55 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef DRAWINGGUI_QGRAPHICSITEMFACE_H
-#define DRAWINGGUI_QGRAPHICSITEMFACE_H
+#ifndef GIEDGE_HEADER
+#define GIEDGE_HEADER
 
-#include <Qt>
 #include <QGraphicsItem>
+#include <QPen>
 
-QT_BEGIN_NAMESPACE
-class QPainter;
-class QStyleOptionGraphicsItem;
-QT_END_NAMESPACE
+namespace TechDraw {
 
-namespace TechDrawGeometry {
-class BaseGeom;
-}
-
-namespace TechDrawGui
+/// Draws an edge as a 2D line on the page
+class TechDrawExport GIEdge : public QGraphicsPathItem
 {
+    public:
+        GIEdge(int index);
+        virtual ~GIEdge() = default;
 
-class QGIFace : public QGraphicsPathItem
-{
-public:
-    explicit QGIFace(int ref = -1);
-    ~QGIFace() {}
+        enum {Type = QGraphicsItem::UserType + 103};
+        int type() const { return Type; }
 
-    enum {Type = QGraphicsItem::UserType + 104};
-    int type() const { return Type;}
-    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
+        virtual void paint( QPainter *painter,
+                            const QStyleOptionGraphicsItem *option,
+                            QWidget *widget = 0 );
 
-public:
-    int getReference() const { return reference; }
-    void setPrettyNormal();
-    void setPrettyPre();
-    void setPrettySel();
+        void setHiddenEdge(bool b);
+        bool getHiddenEdge() { return(isHiddenEdge); }
 
-protected:
-    // Preselection events:
-    void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
-    void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
+        void setStrokeWidth(float width);
 
-    // Selection detection
-    QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+    protected:
 
-    int reference;
+        bool isHiddenEdge;
+        
+        /// Index of edge in Projection. must exist.
+        int projIndex;
 
-    QPen m_pen;
-    QBrush m_brush;
-    QColor m_colNormal;
-    QColor m_colPre;
-    QColor m_colSel;
-    Qt::BrushStyle m_fill;
-};
+        /// Hang on to the pen, because QGIEdge makes changes to it
+        QPen m_pen;
 
-} // namespace MDIViewPageGui
+        /// Current colour of the edge
+        QColor m_colCurrent;
 
-#endif // DRAWINGGUI_QGRAPHICSITEMFACE_H
+        QColor m_colNormal;
+        QColor m_colHid;
+        QColor m_defNormal;
+        Qt::PenStyle m_styleHid;
+
+        float strokeWidth;        
+};  // end class GIEdge
+
+};  // end namespace TechDraw
+
+#endif // #ifndef GIEDGE_HEADER
+

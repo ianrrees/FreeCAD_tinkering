@@ -23,32 +23,25 @@
 #ifndef DRAWINGGUI_QGRAPHICSITEMEDGE_H
 #define DRAWINGGUI_QGRAPHICSITEMEDGE_H
 
-# include <QGraphicsItem>
+
+#include "../App/GraphicsItems/GIEdge.h"
 
 QT_BEGIN_NAMESPACE
 class QPainter;
 class QStyleOptionGraphicsItem;
 QT_END_NAMESPACE
 
-namespace TechDrawGeometry {
-class BaseGeom;
-}
-
 namespace TechDrawGui
 {
 
-class TechDrawGuiExport QGIEdge : public QGraphicsPathItem
+class TechDrawGuiExport QGIEdge : public TechDraw::GIEdge
 {
 public:
-    explicit QGIEdge(int index);
-    ~QGIEdge() {}
+    QGIEdge(int index);
+    ~QGIEdge() = default;
 
-    enum {Type = QGraphicsItem::UserType + 103};
-
-    int type() const { return Type;}
     QRectF boundingRect() const;
     QPainterPath shape() const;
-    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
 
     int getProjIndex() const { return projIndex; }
 
@@ -68,18 +61,11 @@ protected:
     void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
-    int projIndex;                                                     //index of edge in Projection. must exist.
-
     bool isHighlighted;
-    bool isCosmetic;
     bool isHiddenEdge;
     bool isSmoothEdge;
 
-private:
-    float strokeWidth;
     float strokeScale;
-    QPen m_pen;
-    QColor m_colCurrent;
     QColor m_colNormal;
     QColor m_colPre;
     QColor m_colSel;

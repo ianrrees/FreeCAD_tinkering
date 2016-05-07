@@ -22,19 +22,19 @@
 
 #include "PreCompiled.h"
 #ifndef _PreComp_
-#include <assert.h>
-#include <QGraphicsScene>
-#include <QGraphicsSceneHoverEvent>
-#include <QMouseEvent>
-#include <QPainter>
-#include <QPainterPathStroker>
-#include <QStyleOptionGraphicsItem>
+    #include <assert.h>
+    #include <QGraphicsScene>
+    #include <QGraphicsSceneHoverEvent>
+    #include <QMouseEvent>
+    #include <QPainter>
+    #include <QPainterPathStroker>
+    #include <QStyleOptionGraphicsItem>
 #endif
 
-#include <App/Application.h>
-#include <App/Material.h>
-#include <Base/Console.h>
-#include <Base/Parameter.h>
+#include "App/Application.h"
+#include "App/Material.h"
+#include "Base/Console.h"
+#include "Base/Parameter.h"
 
 #include <qmath.h>
 #include "QGIView.h"
@@ -43,7 +43,8 @@
 using namespace TechDrawGui;
 
 QGIEdge::QGIEdge(int index) :
-    projIndex(index)
+    GIEdge(index),
+    m_colNormal(m_colCurrent) // GIVertex ctor sets m_colCurrent to NormalColor
 {
     setCacheMode(QGraphicsItem::NoCache);
     setFlag(QGraphicsItem::ItemIsSelectable, true);
@@ -51,17 +52,14 @@ QGIEdge::QGIEdge(int index) :
     setFlag(QGraphicsItem::ItemSendsGeometryChanges,true);
     setAcceptHoverEvents(true);
 
-    strokeWidth = 1.;
-
-    isCosmetic    = false;
     isHighlighted = false;
     isHiddenEdge = false;
     isSmoothEdge = false;
 
-    Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
-        .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/TechDraw/Colors");
-    App::Color fcColor = App::Color((uint32_t) hGrp->GetUnsigned("NormalColor", 0x00000000));
-    m_colNormal = fcColor.asQColor();
+    auto hGrp( App::GetApplication().GetUserParameter().GetGroup("BaseApp")->
+               GetGroup("Preferences")->GetGroup("Mod/TechDraw/Colors") );
+
+    App::Color fcColor;
     m_defNormal = m_colNormal;
     fcColor.setPackedValue(hGrp->GetUnsigned("SelectColor", 0x0000FF00));
     m_colSel = fcColor.asQColor();
@@ -70,13 +68,11 @@ QGIEdge::QGIEdge(int index) :
     fcColor.setPackedValue(hGrp->GetUnsigned("HiddenColor", 0x08080800));
     m_colHid = fcColor.asQColor();
 
-    hGrp = App::GetApplication().GetUserParameter().GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/TechDraw");
-    m_styleHid = static_cast<Qt::PenStyle> (hGrp->GetInt("HiddenLine",2));
+    hGrp = App::GetApplication().GetUserParameter().GetGroup("BaseApp")->
+           GetGroup("Preferences")->GetGroup("Mod/TechDraw");
 
-    m_pen.setStyle(Qt::SolidLine);
-    m_pen.setCapStyle(Qt::RoundCap);
+    m_styleHid = static_cast<Qt::PenStyle> (hGrp->GetInt("HiddenLine", 2));
 
-    m_pen.setCosmetic(isCosmetic);
     setPrettyNormal();
 }
 
@@ -172,12 +168,4 @@ void QGIEdge::setHiddenEdge(bool b) {
     update();
 }
 
-void QGIEdge::paint ( QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget) {
-    QStyleOptionGraphicsItem myOption(*option);
-    myOption.state &= ~QStyle::State_Selected;
 
-    m_pen.setWidthF(strokeWidth);
-    m_pen.setColor(m_colCurrent);
-    setPen(m_pen);
-    QGraphicsPathItem::paint (painter, &myOption, widget);
-}
