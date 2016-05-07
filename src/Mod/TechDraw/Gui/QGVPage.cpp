@@ -223,7 +223,6 @@ QGIView * QGVPage::addDrawViewSymbol(TechDraw::DrawViewSymbol *view)
 
 QGIView * QGVPage::addDrawViewClip(TechDraw::DrawViewClip *view)
 {
-    QPoint qp(view->X.getValue(),view->Y.getValue());
     QGIViewClip *qview(new QGIViewClip);
     qview->setViewFeature(view);
 

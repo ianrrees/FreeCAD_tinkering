@@ -42,32 +42,24 @@ class DrawHatch;
 namespace TechDrawGui
 {
 
-class TechDrawGuiExport QGIViewPart : public QObject, public QGIView
+class TechDrawGuiExport QGIViewPart : virtual public QGIView
 {
-    Q_OBJECT
-
 public:
-
-        //TODO: Why the "explicit"?
-    explicit QGIViewPart();
+    QGIViewPart();
     ~QGIViewPart();
 
     enum {Type = QGraphicsItem::UserType + 102};
-    int type() const { return Type;}
+    int type() const override { return Type; }
 
-
-    void toggleCache(bool state);
+    void toggleCache(bool state) override;
     void toggleCosmeticLines(bool state);
     void toggleVertices(bool state);
     void setViewPartFeature(TechDraw::DrawViewPart *obj);
-    virtual void updateView(bool update = false);
+    virtual void updateView(bool update = false) override;
     void tidy();
 
     virtual void draw();
-    virtual QRectF boundingRect() const;
-
-Q_SIGNALS:
-    void selected(bool state);  //TODO: Doesn't look like we ever connect to this?
+    virtual QRectF boundingRect() const override;
 
 protected:
     /// Helper for pathArc()
@@ -91,7 +83,7 @@ protected:
     void drawViewPart();
     QGIFace* drawFace(TechDrawGeometry::Face* f);
 
-    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 
 protected:
     QColor m_colHid;
@@ -100,6 +92,6 @@ private:
     QList<QGraphicsItem*> deleteItems;
 };
 
-} // namespace MDIViewPageGui
+} // namespace TechDrawGui
 
 #endif // DRAWINGGUI_QGRAPHICSITEMVIEWPART_H

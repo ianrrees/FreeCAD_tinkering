@@ -34,6 +34,9 @@ namespace TechDraw {
 
 class DrawTemplate;
 
+// For the addGIView...() methods
+class DrawViewClip;
+
 /// Contains the QGraphicsScene and GIBase-derived objects drawn on it
 /*!
  * Note that this isn't intended as a "GUI" object in the sense that all user-
@@ -81,6 +84,9 @@ public:
 
     // Getter for DrawPage feature
     DrawPage* getDrawPage() {return m_page;};
+
+    /// Creates a new GIViewClip, and adds it to this page
+    GIBase * addGIViewClip(DrawViewClip *view);
 
 protected:
     /// As attachView (TODO: Perhaps roll this in to attachView?)

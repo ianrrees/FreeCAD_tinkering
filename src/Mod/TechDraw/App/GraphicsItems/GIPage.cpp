@@ -44,6 +44,7 @@
 #include "GICollection.h"
 #include "GIDrawingTemplate.h"
 #include "GISVGTemplate.h"
+//#include "GIViewClip.h"
 
 #include "GIPage.h"
 
@@ -212,7 +213,10 @@ void GIPage::saveSvg(QString filename)
     //      resize all textItem before export?
     //      postprocess generated file to mult all font-size attrib by 2.835 to get pts?
     //      duplicate all textItems and only show the appropriate one for screen/print vs export?
-    svgGen.setResolution(25.4000508);    // mm/inch??  docs say this is DPI
+
+//TODO    svgGen.setResolution(25.4000508);    // mm/inch??  docs say this is DPI
+    svgGen.setResolution(25);
+
     //svgGen.setResolution(600);    // resulting page is ~12.5x9mm
     //svgGen.setResolution(96);     // page is ~78x55mm
     svgGen.setTitle(QObject::tr("FreeCAD SVG Export"));
@@ -257,8 +261,7 @@ int GIPage::attachView(App::DocumentObject *obj)
         qDebug() << "Should add Symbol";
 //        view = addDrawViewSymbol( dynamic_cast<TechDraw::DrawViewSymbol *>(obj) );
     } else if(typeId.isDerivedFrom(TechDraw::DrawViewClip::getClassTypeId()) ) {
-        qDebug() << "Should add Clip";
-//        view = addDrawViewClip( dynamic_cast<TechDraw::DrawViewClip *>(obj) );
+        view = addGIViewClip( dynamic_cast<TechDraw::DrawViewClip *>(obj) );
     } else if(typeId.isDerivedFrom(TechDraw::DrawHatch::getClassTypeId()) ) {
         qDebug() << "Should add Hatch";
 //        Hatch doesn't get an addXXX method, but don't want assert triggered.
@@ -273,6 +276,17 @@ int GIPage::attachView(App::DocumentObject *obj)
         return views.size();
 }
 
+GIBase * GIPage::addGIViewClip(DrawViewClip *view)
+{
+    // TODO: Implement this
+/*    auto newGI(new GIViewClip);
+    newGI->setViewFeature(view);
+
+    addView(newGI);
+    return newGI;
+    */
+    return nullptr;
+}
 
 TechDraw::GITemplate* GIPage::getTemplate() const
 {

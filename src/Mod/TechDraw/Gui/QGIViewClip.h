@@ -23,42 +23,30 @@
 #ifndef DRAWINGGUI_QGRAPHICSITEMCLIP_H
 #define DRAWINGGUI_QGRAPHICSITEMCLIP_H
 
-#include <QObject>
-#include <QPainter>
-
 #include "QGIView.h"
 #include "QGCustomRect.h"
 #include "../App/GraphicsItems/GICustomClip.h"
 
-namespace TechDraw {
-    class DrawViewPart;
-}
-
 namespace TechDrawGui
 {
 
-class TechDrawGuiExport QGIViewClip : public QObject, public QGIView
+class TechDrawGuiExport QGIViewClip : virtual public QGIView
 {
-    Q_OBJECT
-
 public:
     explicit QGIViewClip();
     ~QGIViewClip() = default;
 
     enum {Type = QGraphicsItem::UserType + 123};
-    int type() const { return Type; }
+    int type() const override { return Type; }
 
-    virtual void updateView(bool update = false);
+    virtual void updateView(bool update = false) override;
 
     virtual void draw();
-    virtual QRectF boundingRect() const;
-
-Q_SIGNALS:
-    void selected(bool state);
+    virtual QRectF boundingRect() const override;
 
 protected:
     void drawClip();
-    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
     QGIView* getQGIVByName(std::string name);
 
 private:

@@ -60,9 +60,10 @@ protected:
 
     bool borderVisible;
     
-        // Mouse handling
+    // Mouse handling
     virtual void mouseMoveEvent(QGraphicsSceneMouseEvent * event );
     virtual void mousePressEvent(QGraphicsSceneMouseEvent * event);
+
     // Preselection events:
     virtual void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);

@@ -36,7 +36,7 @@ class BaseGeom;
 namespace TechDrawGui
 {
 
-class TechDrawGuiExport QGIViewSection : public QGIViewPart
+class TechDrawGuiExport QGIViewSection : public QObject, virtual public QGIViewPart
 {
     Q_OBJECT
 

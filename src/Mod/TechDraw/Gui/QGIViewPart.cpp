@@ -24,32 +24,23 @@
 #ifndef _PreComp_
 #include <cmath>
 #include <qmath.h>
-#include <strstream>
-#include <QAction>
-#include <QApplication>
-#include <QContextMenuEvent>
 #include <QGraphicsScene>
-#include <QMenu>
-#include <QMouseEvent>
-#include <QGraphicsSceneHoverEvent>
-#include <QPainterPathStroker>
-#include <QPainter>
-#include <QTextOption>
 #endif // #ifndef _PreComp_
 
 
-#include <App/Application.h>
-#include <App/Document.h>
-#include <App/DocumentObject.h>
-#include <App/Material.h>
-#include <Base/Console.h>
-#include <Base/Parameter.h>
+#include "App/Application.h"
+#include "App/Document.h"
+#include "App/DocumentObject.h"
+#include "App/Material.h"
+#include "Base/Console.h"
+#include "Base/Parameter.h"
 
 #include "../App/DrawUtil.h"
 #include "../App/DrawViewPart.h"
 #include "../App/DrawHatch.h"
 
 #include "../App/GraphicsItems/ZVALUE.h"
+
 #include "QGIViewPart.h"
 
 using namespace TechDrawGui;
@@ -635,5 +626,3 @@ void _dumpPath(const char* text,QPainterPath path)
         }
 }
 
-
-#include "moc_QGIViewPart.cpp"

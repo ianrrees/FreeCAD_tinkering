@@ -23,27 +23,15 @@
 
 #include "PreCompiled.h"
 #ifndef _PreComp_
-#include <cmath>
-#include <QGraphicsScene>
-#include <QMouseEvent>
-#include <QGraphicsSceneHoverEvent>
-#include <QGraphicsItem>
-#include <QStyleOptionGraphicsItem>
-#include <QGraphicsTextItem>
-#include <QPainterPathStroker>
-#include <QPainter>
-#include <QString>
-#include <QTextOption>
-#include <sstream>
-#include <algorithm>    // std::find
+    #include <cmath>
+    #include <algorithm>    // std::find
+    #include <QGraphicsScene>
 #endif
 
-#include <qmath.h>
-
-#include <App/Application.h>
-#include <App/Material.h>
-#include <Base/Console.h>
-#include <Base/Parameter.h>
+#include "App/Application.h"
+#include "App/Material.h"
+#include "Base/Console.h"
+#include "Base/Parameter.h"
 
 #include "../App/DrawViewClip.h"
 #include "QGIViewClip.h"
@@ -120,7 +108,8 @@ void QGIViewClip::drawClip()
         m_frame->hide();
     }
 
-    m_cliparea->setRect(r.adjusted(-1,-1,1,1));                        //TODO: clip just outside frame or just inside??
+    //TODO: clip just outside frame or just inside??
+    m_cliparea->setRect(r.adjusted(-1,-1,1,1));
 
     std::vector<std::string> childNames = viewClip->getChildViewNames();
     //for all child Views in Clip, add the graphics representation of the View to the Clip group
@@ -162,7 +151,8 @@ void QGIViewClip::drawClip()
     }
 }
 
-QGIView* QGIViewClip::getQGIVByName(std::string name)  //should probably be method in MDIViewPage??  but qgiv can't get drawingView? or QGVPage!
+//should probably be method in MDIViewPage??  but qgiv can't get drawingView? or QGVPage!
+QGIView* QGIViewClip::getQGIVByName(std::string name)
 {
     QList<QGraphicsItem*> qgItems = scene()->items();
     QList<QGraphicsItem*>::iterator it = qgItems.begin();
@@ -182,6 +172,4 @@ QRectF QGIViewClip::boundingRect() const
 {
     return childrenBoundingRect();
 }
-
-#include "moc_QGIViewClip.cpp"
 

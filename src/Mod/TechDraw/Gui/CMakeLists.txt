@@ -29,11 +29,9 @@ set(TechDrawGui_MOC_HDRS
     MDIViewPage.h
     QGVPage.h
     QGIViewDimension.h
-    QGIViewPart.h
     QGIViewSection.h
     QGIViewAnnotation.h
     QGIViewSymbol.h
-    QGIViewClip.h
     TaskProjGroup.h
     DlgPrefsTechDrawImp.h
     TaskLinkDim.h
