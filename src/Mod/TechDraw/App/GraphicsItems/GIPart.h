@@ -44,7 +44,7 @@ class TechDrawExport GIPart : virtual public GIBase
         virtual void tidy();
 
     protected:
-        virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
+        QVariant graphicsItemChange(GraphicsItemChange change, const QVariant &value) override;
 
         GIFace * drawFace(TechDrawGeometry::Face *f);
 

@@ -72,15 +72,6 @@ QGIViewAnnotation::QGIViewAnnotation()
 
 }
 
-QGIViewAnnotation::~QGIViewAnnotation()
-{
-    // m_textItem belongs to this group and will be deleted by Qt
-}
-
-QVariant QGIViewAnnotation::itemChange(GraphicsItemChange change, const QVariant &value)
-{
-    return QGIView::itemChange(change, value);
-}
 
 void QGIViewAnnotation::setViewAnnoFeature(TechDraw::DrawViewAnnotation *obj)
 {

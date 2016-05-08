@@ -155,7 +155,8 @@ void GIBase::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
     QGraphicsItemGroup::paint(painter, option, widget);
 }
 
-QVariant GIBase::itemChange(GraphicsItemChange change, const QVariant &value)
+
+QVariant GIBase::graphicsItemChange(GraphicsItemChange change, const QVariant &value)
 {
     if(change == ItemPositionChange && scene()) {
         QPointF newPos = value.toPointF();
@@ -165,10 +166,10 @@ QVariant GIBase::itemChange(GraphicsItemChange change, const QVariant &value)
             newPos.setY(pos().y());
         }
 
-        // TODO  find a better data structure for this
+        // TODO  find a better data structure for this (is it used for anything except projection groups?
         if(alignHash.size() == 1) {
-            QGraphicsItem*item = alignHash.begin().value();
-            QString alignMode   = alignHash.begin().key();
+            QGraphicsItem *item = alignHash.begin().value();
+            QString alignMode = alignHash.begin().key();
 
             if(alignMode == QString::fromAscii("Vertical")) {
                 newPos.setX(item->pos().x());
@@ -192,5 +193,12 @@ QVariant GIBase::itemChange(GraphicsItemChange change, const QVariant &value)
     }
 
     return QGraphicsItemGroup::itemChange(change, value);
+}
+
+
+QVariant GIBase::itemChange(GraphicsItemChange change, const QVariant &value)
+{
+    // Call the itemChange() equivalent for the non-GUI side of the hierarchy
+    return this->graphicsItemChange(change, value);
 }
 

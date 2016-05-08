@@ -54,10 +54,6 @@ QGIViewCollection::QGIViewCollection()
     setFlag(QGraphicsItem::ItemIsMovable, true);
 }
 
-QVariant QGIViewCollection::itemChange(GraphicsItemChange change, const QVariant &value)
-{
-    return QGraphicsItemGroup::itemChange(change, value);
-}
 
 void QGIViewCollection::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 {

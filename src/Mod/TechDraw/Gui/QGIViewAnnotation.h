@@ -43,7 +43,9 @@ class TechDrawGuiExport QGIViewAnnotation : public QObject, public QGIView
 
 public:
     explicit QGIViewAnnotation();
-    ~QGIViewAnnotation();
+
+    /// m_textItem belongs to this group and will be deleted by Qt
+    ~QGIViewAnnotation() = default;
 
     enum {Type = QGraphicsItem::UserType + 120};
     int type() const { return Type;}
@@ -60,7 +62,6 @@ Q_SIGNALS:
 
 protected:
     void drawAnnotation();
-    QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
 protected:
     QGCustomText *m_textItem;

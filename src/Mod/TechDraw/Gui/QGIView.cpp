@@ -190,7 +190,7 @@ QRectF QGIView::customChildrenBoundingRect() {
     return result;
 }
 
-QVariant QGIView::itemChange(GraphicsItemChange change, const QVariant &value)
+QVariant QGIView::guiGraphicsItemChange(GraphicsItemChange change, const QVariant &value)
 {
     if (change == ItemSelectedHasChanged && scene()) {
         if(isSelected()) {
@@ -201,6 +201,16 @@ QVariant QGIView::itemChange(GraphicsItemChange change, const QVariant &value)
         drawBorder();
     }
 
-    return GIBase::itemChange(change, value);
+    return value;
+}
+
+
+QVariant QGIView::itemChange(GraphicsItemChange change, const QVariant &value)
+{
+    // Calls the itemChange() equivalent for the GUI side of the hierarchy 
+    auto ret(this->guiGraphicsItemChange(change, value));
+
+    // Calls the itemChange() equivalent for the non-GUI side, goes up to Qt
+    return this->graphicsItemChange(change, ret);
 }
 

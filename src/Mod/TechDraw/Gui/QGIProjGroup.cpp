@@ -108,7 +108,9 @@ bool QGIProjGroup::sceneEventFilter(QGraphicsItem* watched, QEvent *event)
 
     return false;
 }
-QVariant QGIProjGroup::itemChange(GraphicsItemChange change, const QVariant &value)
+
+
+QVariant QGIProjGroup::guiGraphicsItemChange(GraphicsItemChange change, const QVariant &value)
 {
     if(change == ItemChildAddedChange && scene()) {
          QGraphicsItem*childItem = value.value<QGraphicsItem*>();
@@ -143,7 +145,8 @@ QVariant QGIProjGroup::itemChange(GraphicsItemChange change, const QVariant &val
             }
          }
     }
-    return QGIView::itemChange(change, value);
+
+    return QGIViewCollection::guiGraphicsItemChange(change, value);
 }
 
 

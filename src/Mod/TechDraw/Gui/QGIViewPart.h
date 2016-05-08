@@ -57,7 +57,7 @@ public:
     virtual QRectF boundingRect() const override;
 
 protected:
-    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
+    virtual QVariant guiGraphicsItemChange(GraphicsItemChange change, const QVariant &value) override;
 
     std::vector <TechDraw::DrawHatch *> getHatchesForView(TechDraw::DrawViewPart* viewPart);
 

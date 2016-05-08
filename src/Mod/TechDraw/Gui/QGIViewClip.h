@@ -46,7 +46,6 @@ public:
 
 protected:
     void drawClip();
-    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
     QGIView* getQGIVByName(std::string name);
 
 private:

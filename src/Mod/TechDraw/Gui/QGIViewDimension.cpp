@@ -1230,7 +1230,7 @@ void QGIViewDimension::drawBorder(void)
 //    Base::Console().Message("TRACE - QGIViewDimension::drawBorder - doing nothing!\n");
 }
 
-QVariant QGIViewDimension::itemChange(GraphicsItemChange change, const QVariant &value)
+QVariant QGIViewDimension::guiGraphicsItemChange(GraphicsItemChange change, const QVariant &value)
 {
    if (change == ItemSelectedHasChanged && scene()) {
         QGIDatumLabel *dLabel = dynamic_cast<QGIDatumLabel *>(datumLabel);
@@ -1242,7 +1242,8 @@ QVariant QGIViewDimension::itemChange(GraphicsItemChange change, const QVariant 
         }
         draw();
     }
-    return QGIView::itemChange(change, value);
+
+    return QGIView::guiGraphicsItemChange(change, value);
 }
 
 void QGIViewDimension::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)

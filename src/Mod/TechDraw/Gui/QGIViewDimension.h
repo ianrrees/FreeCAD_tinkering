@@ -30,11 +30,11 @@
 #include "QGCustomText.h"
 
 namespace TechDraw {
-class DrawViewDimension;
+    class DrawViewDimension;
 }
 
 namespace TechDrawGeometry {
-class BaseGeom;
+    class BaseGeom;
 }
 
 namespace TechDrawGui
@@ -66,15 +66,13 @@ protected:
     void mouseReleaseEvent( QGraphicsSceneMouseEvent * event);
     void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
     void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
+
     // Selection detection
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
-
-protected:
     double posX;
     double posY;
 
 private:
-    int strokeWidth;
     QPen m_pen;
     QColor m_colNormal;
     QColor m_colPre;
@@ -109,15 +107,19 @@ public Q_SLOTS:
 protected:
     void draw();
     // Selection detection
-    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+    virtual QVariant guiGraphicsItemChange(GraphicsItemChange change, const QVariant &value);
 
-protected:
     bool hasHover;
-    QGraphicsItem*datumLabel;                                         //dimension text
-    QGraphicsItem*arrows;                                             //dimension lines + extension lines
-    QGraphicsItem*centreLines;
 
-    std::vector<QGraphicsItem*> arw;                                  //arrowheads
+    /// Dimension text
+    QGraphicsItem *datumLabel;
+
+    /// Dimension lines + extension lines
+    QGraphicsItem *arrows;
+    QGraphicsItem *centreLines;
+
+    /// Arrowheads
+    std::vector<QGraphicsItem*> arw;
     std::vector<TechDrawGeometry::BaseGeom *> projGeom;
     QPen pen;
     QColor m_colNormal;

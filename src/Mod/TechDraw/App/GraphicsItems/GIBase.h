@@ -30,8 +30,33 @@
 
 #include "../DrawView.h"
 
+// Allows declaring QGIView as a friend of GIBase, even if it's not present.
+namespace TechDrawGui {
+    class QGIView;
+}
+
 namespace TechDraw {
 
+/// Base class for TechDraw classes that derive from QGraphicsItemGroup
+/*!
+ * In order to accommodate a split between the GUI and non-GUI code, we
+ * implement all the non-interactive QGraphics in this directory and the GUI
+ * specific code in the ../../Gui directory.  Classes in the GUI side derive
+ * from classes here, which creates a ladder-like pattern.  As an example:
+ *
+ * Non-GUI:             GUI:
+ * GIBase        <-   QGIView
+ *   ^                   ^
+ * GICollection  <-  QGIViewCollection
+ *   ^                   ^
+ * GIProjGroup   <-  QGIProjGroup
+ *
+ * This creates a few issues to be mindful of.  For example, the itemChange()
+ * method of QGraphicsItem is overridden in GIBase and QGIView, and should not
+ * be used directly.  Instead, the Non-GUI side implements
+ * graphicsItemChange(), and the GUI side implements guiGraphicsItemChange().
+ * This way, events can be passed through each class exactly once.
+ */
 class TechDrawExport GIBase : public QGraphicsItemGroup
 {
 public:
@@ -65,8 +90,6 @@ public:
 protected:
     double getYInClip(double y);
 
-    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
-
     DrawView *viewObj;
 
     bool locked;
@@ -83,6 +106,21 @@ protected:
     QGraphicsTextItem* m_label;
     QHash<QString, QGraphicsItem*> alignHash;
     QPen m_pen;
+
+    /// Used for our non-GUI children to replicate QGraphicsItem::itemChange()
+    /*!
+     * If derived classes need to override this, they should finish by calling
+     * the corresponding method of their non-GUI GIBase-derived parent only.
+     */
+    virtual QVariant graphicsItemChange(GraphicsItemChange change, const QVariant &value);
+
+private:
+    // This pattern is meant to let TechDrawGui::QGIView (if it is compied in)
+    // declare itemChange() final, so that we can resolve confusing multiple-
+    // inheritace situations.
+    friend class TechDrawGui::QGIView;
+    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+
 };
 
 } // end namespace TechDraw

@@ -66,11 +66,8 @@ void QGIViewPart::draw()
 }
 
 
-QVariant QGIViewPart::itemChange(GraphicsItemChange change, const QVariant &value)
+QVariant QGIViewPart::guiGraphicsItemChange(GraphicsItemChange change, const QVariant &value)
 {
-    //TODO: Need to fix up this logic for methods that are defined on both sides of the GI/QGI divide.
-    // perhaps adding an extra default parameter which says whether we should call the GraphicsItem equivalent?
-
     if (change == ItemSelectedHasChanged && scene()) {
         QList<QGraphicsItem*> items = childItems();
         for(QList<QGraphicsItem*>::iterator it = items.begin(); it != items.end(); ++it) {
@@ -82,11 +79,9 @@ QVariant QGIViewPart::itemChange(GraphicsItemChange change, const QVariant &valu
                 vert->setHighlighted(isSelected());
             }
         }
-    } else {
-        GIPart::itemChange(change, value);
     }
 
-    return GIBase::itemChange(change, value);
+    return QGIView::guiGraphicsItemChange(change, value);
 }
 
 

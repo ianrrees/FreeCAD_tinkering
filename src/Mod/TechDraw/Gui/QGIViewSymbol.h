@@ -66,8 +66,6 @@ protected:
     bool load(QByteArray *svgString);
     void drawSvg();
 
-    QVariant itemChange(GraphicsItemChange change, const QVariant &value);
-
     QGCustomSvg *m_svgItem;
     QSvgRenderer *m_svgRender;
 };

@@ -33,6 +33,8 @@ public:
     GICollection() = default;
     virtual ~GICollection() = default;
 
+    enum {Type = QGraphicsItem::UserType + 110};
+    int type() const { return Type;}
 }; // end class GICollection
 
 } // end namespace TechDraw

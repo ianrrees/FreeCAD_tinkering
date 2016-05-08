@@ -238,12 +238,13 @@ void GIPart::draw()
 }
 
 
-QVariant GIPart::itemChange(GraphicsItemChange change, const QVariant &value)
+QVariant GIPart::graphicsItemChange(GraphicsItemChange change, const QVariant &value)
 {
     if(change == ItemSceneChange && scene()) {
         tidy();
     }
-    return GIBase::itemChange(change, value);
+
+    return GIBase::graphicsItemChange(change, value);
 }
 
 

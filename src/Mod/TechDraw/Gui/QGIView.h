@@ -54,6 +54,7 @@ public:
     virtual void paint( QPainter *painter,
                         const QStyleOptionGraphicsItem *option,
                         QWidget *widget = nullptr );
+
     virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent * event);
 
 protected:
@@ -69,7 +70,13 @@ protected:
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
     virtual QRectF customChildrenBoundingRect(void);
 
-    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+    virtual QVariant guiGraphicsItemChange(GraphicsItemChange change, const QVariant &value);
+
+    /// Passes change events to guiGraphicsItemChange
+    /*!
+     * See note at the top of GIBase for an explanation.
+     */
+    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value) final;
 
     QBrush m_brush;
     QPen m_decorPen;

@@ -65,12 +65,6 @@ QGIViewSymbol::~QGIViewSymbol()
     delete(m_svgRender);
 }
 
-QVariant QGIViewSymbol::itemChange(GraphicsItemChange change, const QVariant &value)
-{
-
-    return QGIView::itemChange(change, value);
-}
-
 void QGIViewSymbol::setViewSymbolFeature(TechDraw::DrawViewSymbol *obj)
 {
     // called from QGVPage. (once)

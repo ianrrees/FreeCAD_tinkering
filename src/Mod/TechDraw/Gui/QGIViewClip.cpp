@@ -57,10 +57,6 @@ QGIViewClip::QGIViewClip()
     m_frame->setRect(0.,0.,5.,5.);
 }
 
-QVariant QGIViewClip::itemChange(GraphicsItemChange change, const QVariant &value)
-{
-    return QGIView::itemChange(change, value);
-}
 
 void QGIViewClip::updateView(bool update)
 {
