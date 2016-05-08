@@ -22,8 +22,8 @@
 
 #include "PreCompiled.h"
 #ifndef _PreComp_
+    #include<cmath>
     #include <QGraphicsItem>
-    #include <qmath.h>  // TODO: Break dependency on this
 #endif // #ifndef _PreComp_
 
 #include "Base/Console.h"
@@ -334,8 +334,8 @@ void GIPart::pathArcSegment( QPainterPath &path,
     double t;
     double thHalf;
 
-    sinTh = qSin(xAxisRotation);
-    cosTh = qCos(xAxisRotation);
+    sinTh = sin(xAxisRotation);
+    cosTh = cos(xAxisRotation);
 
     a00 =  cosTh * rx;
     a01 = -sinTh * ry;
@@ -343,13 +343,13 @@ void GIPart::pathArcSegment( QPainterPath &path,
     a11 =  cosTh * ry;
 
     thHalf = 0.5 * (th1 - th0);
-    t = (8.0 / 3.0) * qSin(thHalf * 0.5) * qSin(thHalf * 0.5) / qSin(thHalf);
-    x1 = xc + qCos(th0) - t * qSin(th0);
-    y1 = yc + qSin(th0) + t * qCos(th0);
-    x3 = xc + qCos(th1);
-    y3 = yc + qSin(th1);
-    x2 = x3 + t * qSin(th1);
-    y2 = y3 - t * qCos(th1);
+    t = (8.0 / 3.0) * sin(thHalf * 0.5) * sin(thHalf * 0.5) / sin(thHalf);
+    x1 = xc + cos(th0) - t * sin(th0);
+    y1 = yc + sin(th0) + t * cos(th0);
+    x3 = xc + cos(th1);
+    y3 = yc + sin(th1);
+    x2 = x3 + t * sin(th1);
+    y2 = y3 - t * cos(th1);
 
     path.cubicTo(a00 * x1 + a01 * y1, a10 * x1 + a11 * y1,
                  a00 * x2 + a01 * y2, a10 * x2 + a11 * y2,
@@ -374,11 +374,11 @@ void GIPart::pathArc( QPainterPath &path, double rx, double ry, double x_axis_ro
     int i, n_segs;
     double dx, dy, dx1, dy1, Pr1, Pr2, Px, Py, check;
 
-    rx = qAbs(rx);
-    ry = qAbs(ry);
+    rx = std::abs(rx);
+    ry = std::abs(ry);
 
-    sin_th = qSin(x_axis_rotation);
-    cos_th = qCos(x_axis_rotation);
+    sin_th = sin(x_axis_rotation);
+    cos_th = cos(x_axis_rotation);
 
     dx = (curx - x) / 2.0;
     dy = (cury - y) / 2.0;
@@ -391,8 +391,8 @@ void GIPart::pathArc( QPainterPath &path, double rx, double ry, double x_axis_ro
     /* Spec : check if radii are large enough */
     check = Px / Pr1 + Py / Pr2;
     if (check > 1) {
-        rx = rx * qSqrt(check);
-        ry = ry * qSqrt(check);
+        rx = rx * sqrt(check);
+        ry = ry * sqrt(check);
     }
 
     a00 =  cos_th / rx;
@@ -413,7 +413,7 @@ void GIPart::pathArc( QPainterPath &path, double rx, double ry, double x_axis_ro
     if (sfactor_sq < 0)
         sfactor_sq = 0;
 
-    sfactor = qSqrt(sfactor_sq);
+    sfactor = sqrt(sfactor_sq);
 
     if (sweep_flag == large_arc_flag)
         sfactor = -sfactor;
@@ -422,8 +422,8 @@ void GIPart::pathArc( QPainterPath &path, double rx, double ry, double x_axis_ro
     yc = 0.5 * (y0 + y1) + sfactor * (x1 - x0);
     /* (xc, yc) is center of the circle. */
 
-    th0 = qAtan2(y0 - yc, x0 - xc);
-    th1 = qAtan2(y1 - yc, x1 - xc);
+    th0 = atan2(y0 - yc, x0 - xc);
+    th1 = atan2(y1 - yc, x1 - xc);
 
     th_arc = th1 - th0;
     if (th_arc < 0 && sweep_flag)
@@ -431,7 +431,7 @@ void GIPart::pathArc( QPainterPath &path, double rx, double ry, double x_axis_ro
     else if (th_arc > 0 && !sweep_flag)
         th_arc -= 2 * M_PI;
 
-    n_segs = qCeil(qAbs(th_arc / (M_PI * 0.5 + 0.001)));
+    n_segs = ceil(std::abs(th_arc / (M_PI * 0.5 + 0.001)));
 
     path.moveTo(curx, cury);
 

@@ -33,8 +33,8 @@
 using namespace TechDraw;
 
 GIEdge::GIEdge(int index) :
-    projIndex(index),
     isHiddenEdge(false),
+    projIndex(index),
     strokeWidth(1.0)  
 {
     m_pen.setStyle(Qt::SolidLine);
