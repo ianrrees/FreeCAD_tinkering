@@ -32,12 +32,20 @@ class GIFace;
 class TechDrawExport GIPart : virtual public GIBase
 {
     public:
+        virtual ~GIPart();
+
         enum {Type = QGraphicsItem::UserType + 102};
         int type() const override { return Type; }
 
+        virtual void updateView(bool update = false) override;
+
         virtual void draw();
 
+        virtual void tidy();
+
     protected:
+        virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
+
         GIFace * drawFace(TechDrawGeometry::Face *f);
 
         /// Does the heavy lifting of drawing the part
@@ -61,6 +69,7 @@ class TechDrawExport GIPart : virtual public GIBase
                       double x, double y,
                       double curx, double cury ) const;
 
+        QList<QGraphicsItem*> deleteItems;
 };  // end class GIPart
 
 };  // end namespace TechDraw

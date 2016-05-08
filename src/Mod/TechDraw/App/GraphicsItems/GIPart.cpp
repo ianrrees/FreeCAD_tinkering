@@ -22,8 +22,9 @@
 
 #include "PreCompiled.h"
 #ifndef _PreComp_
-    #include<cmath>
+    #include <cmath>
     #include <QGraphicsItem>
+    #include <QGraphicsScene>
 #endif // #ifndef _PreComp_
 
 #include "Base/Console.h"
@@ -45,8 +46,62 @@ using TechDrawGeometry::ecOUTLINE;
 using TechDrawGeometry::ecSMOOTH;
 using TechDrawGeometry::ecSEAM;
 
-const float lineScaleFactor = 1.;   // temp fiddle for devel (also in QGIViewPart.cpp)
+const float lineScaleFactor = 1.;   // temp fiddle for devel
 const float vertexScaleFactor = 2.; // temp fiddle for devel
+
+GIPart::~GIPart()
+{
+    tidy();
+}
+
+
+void GIPart::updateView(bool update)
+{
+    if ( getViewObject() == nullptr ||
+         !getViewObject()->isDerivedFrom(DrawViewPart::getClassTypeId()) ) {
+        return;
+    }
+
+    GIBase::updateView(update);
+
+    auto viewPart( dynamic_cast<TechDraw::DrawViewPart *>(getViewObject()) );
+
+    if ( update ||
+         viewPart->isTouched() ||
+         viewPart->Source.isTouched() ||
+         viewPart->Direction.isTouched() ||
+         viewPart->Tolerance.isTouched() ||
+         viewPart->Scale.isTouched() ||
+         viewPart->ShowHiddenLines.isTouched() ) {
+        // Remove all existing graphical representations (QGIxxxx)  otherwise BRect only grows, never shrinks?
+        prepareGeometryChange();
+        for ( auto it : childItems() ) {
+            if ( dynamic_cast<GIEdge *>(it) ||
+                 dynamic_cast<GIFace *>(it) ||
+                 dynamic_cast<GIVertex *>(it) ||
+                 dynamic_cast<GIHatch *>(it) ) {
+                removeFromGroup(it);
+                scene()->removeItem(it);
+
+                // We store these and delete till later to prevent rendering crash ISSUE
+                deleteItems.append(it);
+            }
+        }
+        this->draw(); // this-> calls derived class draw()
+    } else if ( viewPart->LineWidth.isTouched() ||
+                viewPart->HiddenWidth.isTouched() ) {
+        for ( auto it : childItems() ) {
+            auto edge( dynamic_cast<GIEdge *>(it) );
+            if ( edge && edge->getHiddenEdge() ) {
+                edge->setStrokeWidth(viewPart->HiddenWidth.getValue() * lineScaleFactor);
+            } else {
+                edge->setStrokeWidth(viewPart->LineWidth.getValue() * lineScaleFactor);
+            }
+        }
+        this->draw(); // this-> calls derived class draw()
+    }
+}
+
 
 void GIPart::draw()
 {
@@ -69,7 +124,7 @@ void GIPart::draw()
     QPen facePen;
     facePen.setCosmetic(true);
     //QBrush faceBrush;
-    for(int i = 0 ; fit != faceGeoms.end(); fit++, i++) {
+    for( ; fit != faceGeoms.end(); fit++) {
         GIFace *newFace = drawFace(*fit);
         newFace->setPen(facePen);
         newFace->setZValue(ZVALUE::FACE);
@@ -156,8 +211,6 @@ void GIPart::draw()
             item->setPath(drawPainterPath(*itEdge));
             item->setStrokeWidth(lineWidth);
             item->setZValue(ZVALUE::EDGE);
-            item->setFlag(QGraphicsItem::ItemIsSelectable, true);
-            item->setAcceptHoverEvents(true);
             if(!(*itEdge)->visible) {
                 item->setStrokeWidth(lineWidthHid);
                 item->setHiddenEdge(true);
@@ -182,6 +235,25 @@ void GIPart::draw()
         item->setRadius(lineWidth * vertexScaleFactor);
         item->setZValue(ZVALUE::VERTEX);
      }
+}
+
+
+QVariant GIPart::itemChange(GraphicsItemChange change, const QVariant &value)
+{
+    if(change == ItemSceneChange && scene()) {
+        tidy();
+    }
+    return GIBase::itemChange(change, value);
+}
+
+
+void GIPart::tidy()
+{
+    //Delete any leftover items
+    for(QList<QGraphicsItem*>::iterator it = deleteItems.begin(); it != deleteItems.end(); ++it) {
+        delete *it;
+    }
+    deleteItems.clear();
 }
 
 

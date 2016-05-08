@@ -47,28 +47,21 @@ class TechDrawGuiExport QGIViewPart : virtual public QGIView, virtual public Tec
 {
 public:
     QGIViewPart();
-    ~QGIViewPart();
+    ~QGIViewPart() = default;
 
     void toggleCache(bool state) override;
     void toggleCosmeticLines(bool state);
     void toggleVertices(bool state);
 
-    virtual void updateView(bool update = false) override;
-    void tidy();
-
     void draw() override;
     virtual QRectF boundingRect() const override;
 
 protected:
+    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 
     std::vector <TechDraw::DrawHatch *> getHatchesForView(TechDraw::DrawViewPart* viewPart);
 
-    virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
-
     QColor m_colHid;
-
-private:
-    QList<QGraphicsItem*> deleteItems;
 };
 
 } // namespace TechDrawGui

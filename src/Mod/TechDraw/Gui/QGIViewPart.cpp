@@ -22,7 +22,6 @@
 
 #include "PreCompiled.h"
 #ifndef _PreComp_
-//    #include <cmath>
     #include <QGraphicsScene>
 #endif // #ifndef _PreComp_
 
@@ -43,7 +42,6 @@ using namespace TechDrawGui;
 
 void _dumpPath(const char* text,QPainterPath path);
 
-const float lineScaleFactor = 1.;   // temp fiddle for devel (also in GIPart.cpp)
 
 QGIViewPart::QGIViewPart()
 {
@@ -52,21 +50,27 @@ QGIViewPart::QGIViewPart()
     setAcceptHoverEvents(true);
     setFlag(QGraphicsItem::ItemIsMovable, true);
 
-    Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
-        .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors");
-    App::Color fcColor = App::Color((uint32_t) hGrp->GetUnsigned("HiddenColor", 0x08080800));
+    auto hGrp( App::GetApplication().GetUserParameter().GetGroup("BaseApp")->
+               GetGroup("Preferences")->GetGroup("Mod/Drawing/Colors") );
+
+    App::Color fcColor;
+    fcColor.setPackedValue( hGrp->GetUnsigned("HiddenColor", 0x08080800) );
     m_colHid = fcColor.asQColor();
 }
 
 
-QGIViewPart::~QGIViewPart()
+void QGIViewPart::draw()
 {
-    tidy();
+    GIPart::draw();
+    drawBorder();
 }
 
 
 QVariant QGIViewPart::itemChange(GraphicsItemChange change, const QVariant &value)
 {
+    //TODO: Need to fix up this logic for methods that are defined on both sides of the GI/QGI divide.
+    // perhaps adding an extra default parameter which says whether we should call the GraphicsItem equivalent?
+
     if (change == ItemSelectedHasChanged && scene()) {
         QList<QGraphicsItem*> items = childItems();
         for(QList<QGraphicsItem*>::iterator it = items.begin(); it != items.end(); ++it) {
@@ -78,77 +82,11 @@ QVariant QGIViewPart::itemChange(GraphicsItemChange change, const QVariant &valu
                 vert->setHighlighted(isSelected());
             }
         }
-    } else if(change == ItemSceneChange && scene()) {
-           tidy();
-    }
-    return QGIView::itemChange(change, value);
-}
-
-
-void QGIViewPart::tidy()
-{
-    //Delete any leftover items
-    for(QList<QGraphicsItem*>::iterator it = deleteItems.begin(); it != deleteItems.end(); ++it) {
-        delete *it;
-    }
-    deleteItems.clear();
-}
-
-
-void QGIViewPart::updateView(bool update)
-{
-    if (getViewObject() == 0 ||
-        !getViewObject()->isDerivedFrom(TechDraw::DrawViewPart::getClassTypeId())) {
-        return;
+    } else {
+        GIPart::itemChange(change, value);
     }
 
-    QGIView::updateView(update);
-
-    TechDraw::DrawViewPart *viewPart = dynamic_cast<TechDraw::DrawViewPart *>(getViewObject());
-
-    if(update ||
-       viewPart->isTouched() ||
-       viewPart->Source.isTouched() ||
-       viewPart->Direction.isTouched() ||
-       viewPart->Tolerance.isTouched() ||
-       viewPart->Scale.isTouched() ||
-       viewPart->ShowHiddenLines.isTouched()) {
-        // Remove all existing graphical representations (QGIxxxx)  otherwise BRect only grows, never shrinks?
-        prepareGeometryChange();
-        QList<QGraphicsItem*> items = childItems();
-        for(QList<QGraphicsItem*>::iterator it = items.begin(); it != items.end(); ++it) {
-            if (dynamic_cast<QGIEdge *> (*it) ||
-                dynamic_cast<QGIFace *>(*it) ||
-                dynamic_cast<QGIVertex *>(*it) ||
-                dynamic_cast<QGIHatch *>(*it)) {
-                removeFromGroup(*it);
-                scene()->removeItem(*it);
-
-                // We store these and delete till later to prevent rendering crash ISSUE
-                deleteItems.append(*it);
-            }
-        }
-        draw();
-    } else if(viewPart->LineWidth.isTouched() ||
-              viewPart->HiddenWidth.isTouched()) {
-        QList<QGraphicsItem*> items = childItems();
-        for(QList<QGraphicsItem*>::iterator it = items.begin(); it != items.end(); ++it) {
-            QGIEdge *edge = dynamic_cast<QGIEdge *>(*it);
-            if(edge  && edge->getHiddenEdge()) {
-                edge->setStrokeWidth(viewPart->HiddenWidth.getValue() * lineScaleFactor);
-            } else {
-                edge->setStrokeWidth(viewPart->LineWidth.getValue() * lineScaleFactor);
-            }
-        }
-        draw();
-    }
-}
-
-
-void QGIViewPart::draw()
-{
-    GIPart::draw();
-    drawBorder();
+    return GIBase::itemChange(change, value);
 }
 
 
