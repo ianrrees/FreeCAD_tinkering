@@ -29,10 +29,6 @@
 
 #include "Base/Console.h"
 
-#include "GIEdge.h"
-#include "GIFace.h"
-#include "GIHatch.h"
-#include "GIVertex.h"
 #include "ZVALUE.h"
 
 #include "../DrawHatch.h"
@@ -174,7 +170,7 @@ void GIPart::draw()
                 //_dumpPath("subpath",subPath);
             }
 
-            auto hatch( new GIHatch(feat->getNameInDocument()) );
+            auto hatch( this->makeHatch(feat->getNameInDocument()) );
             addToGroup(hatch);
             hatch->setPos(0.0,0.0);
             hatch->setPath(hatchPath);
@@ -205,7 +201,7 @@ void GIPart::draw()
             }
         }
         if (showEdge) {
-            auto item( new GIEdge(i) );
+            auto item( this->makeEdge(i) );
             addToGroup(item);                                                   //item is at scene(0,0), not group(0,0)
             item->setPos(0.0,0.0);
             item->setPath(drawPainterPath(*itEdge));
@@ -229,7 +225,7 @@ void GIPart::draw()
     const std::vector<TechDrawGeometry::Vertex *> &verts = viewPart->getVertexGeometry();
     std::vector<TechDrawGeometry::Vertex *>::const_iterator vert = verts.begin();
     for(int i = 0 ; vert != verts.end(); ++vert, i++) {
-        auto item( new GIVertex(i) );
+        auto item( this->makeVertex(i) );
         addToGroup(item);
         item->setPos((*vert)->pnt.fX, (*vert)->pnt.fY);                //this is in ViewPart coords
         item->setRadius(lineWidth * vertexScaleFactor);
@@ -278,7 +274,7 @@ GIFace * GIPart::drawFace(TechDrawGeometry::Face* f)
         facePath.addPath(wirePath);
     }
 
-    auto gFace( new GIFace(-1) );
+    auto gFace( this->makeFace(-1) );
     addToGroup(gFace);
     gFace->setPos(0.0,0.0);
     gFace->setPath(facePath);

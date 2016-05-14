@@ -24,6 +24,10 @@
 #define GIPART_HEADER
 
 #include "GIBase.h"
+#include "GIVertex.h"
+#include "GIEdge.h"
+#include "GIFace.h"
+#include "GIHatch.h"
 
 namespace TechDraw {
 
@@ -70,6 +74,20 @@ class TechDrawExport GIPart : virtual public GIBase
                       double curx, double cury ) const;
 
         QList<QGraphicsItem*> deleteItems;
+
+        /// Allows for making a new GIVertex or QGIVertex as required
+        virtual GIVertex * makeVertex(int i) const { return new GIVertex(i); }
+
+        /// Allows for making a new GIEdge or QGIEdge as required
+        virtual GIEdge * makeEdge(int i) const { return new GIEdge(i); }
+
+        /// Allows for making a new GIFace or QGIFace as required
+        virtual GIFace * makeFace(int i) const { return new GIFace(i); }
+
+        /// Allows for making a new GIHatch or QGIHatch as required
+        virtual GIHatch * makeHatch(std::string parentHatch) const
+            { return new GIHatch(parentHatch); }
+
 };  // end class GIPart
 
 };  // end namespace TechDraw

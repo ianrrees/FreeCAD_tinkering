@@ -62,6 +62,22 @@ protected:
     std::vector <TechDraw::DrawHatch *> getHatchesForView(TechDraw::DrawViewPart* viewPart);
 
     QColor m_colHid;
+
+    /// Allows for making a new GIVertex or QGIVertex as required
+    virtual TechDraw::GIVertex * makeVertex(int i) const override
+        { return new QGIVertex(i); }
+
+    /// Allows for making a new GIEdge or QGIEdge as required
+    virtual TechDraw::GIEdge * makeEdge(int i) const override
+        { return new QGIEdge(i); }
+
+    /// Allows for making a new GIFace or QGIFace as required
+    virtual TechDraw::GIFace * makeFace(int i) const override
+        { return new QGIFace(i); }
+
+    /// Allows for making a new GIHatch or QGIHatch as required
+    virtual TechDraw::GIHatch * makeHatch(std::string parentHatch) const override
+        { return new QGIHatch(parentHatch); }
 };
 
 } // namespace TechDrawGui
