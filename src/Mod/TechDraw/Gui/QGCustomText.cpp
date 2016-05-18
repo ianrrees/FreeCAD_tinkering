@@ -88,6 +88,6 @@ void QGCustomText::paint ( QPainter * painter, const QStyleOptionGraphicsItem * 
         painter->scale(1.0,1.0);
     }
 
-    QGraphicsTextItem::paint (painter, &myOption, widget);
+    QGraphicsSimpleTextItem::paint (painter, &myOption, widget);
 }
 

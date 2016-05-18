@@ -40,11 +40,11 @@ namespace TechDrawGeometry {
 namespace TechDrawGui
 {
 
-class QGIDatumLabel : public QGCustomText
+class QGIDatumLabel : public QObject, public QGCustomText
 {
 Q_OBJECT
 public:
-    explicit QGIDatumLabel();
+    QGIDatumLabel();
     ~QGIDatumLabel() = default;
 
     enum {Type = QGraphicsItem::UserType + 107};
@@ -86,8 +86,7 @@ class TechDrawGuiExport QGIViewDimension : public QObject, public QGIView
 public:
     enum {Type = QGraphicsItem::UserType + 106};
 
-    //TODO: Why explicit?
-    explicit QGIViewDimension();
+    QGIViewDimension();
     ~QGIViewDimension() = default;
 
     void setViewPartFeature(TechDraw::DrawViewDimension *obj);

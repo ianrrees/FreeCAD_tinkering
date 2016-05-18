@@ -41,10 +41,7 @@ QGIViewAnnotation::QGIViewAnnotation()
     setFlag(QGraphicsItem::ItemIsMovable, true);
 
     m_textItem = new QGCustomText();
-    m_textItem->setTextInteractionFlags(Qt::NoTextInteraction);
-    //To allow on screen editing of text:
-    //m_textItem->setTextInteractionFlags(Qt::TextEditorInteraction);   //this works
-    //QObject::connect(QGraphicsTextItem::document(), SIGNAL(contentsChanged()),m_textItem, SLOT(updateText()));  //not tested
+
     addToGroup(m_textItem);
     m_textItem->setPos(0.,0.);
 
@@ -126,9 +123,7 @@ void QGIViewAnnotation::drawAnnotation()
     ss << "</p>\n</body>\n</html> ";
 
     prepareGeometryChange();
-    m_textItem->setTextWidth(viewAnno->MaxWidth.getValue());
-    QString qs = QString::fromUtf8(ss.str().c_str());
-    m_textItem->setHtml(qs);
+    m_textItem->setText(QString::fromUtf8(ss.str().c_str()));
     m_textItem->setPos(0.,0.);
 }
 

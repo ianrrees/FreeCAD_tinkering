@@ -100,10 +100,10 @@ QVariant QGIDatumLabel::itemChange(GraphicsItemChange change, const QVariant &va
     if (change == ItemSelectedHasChanged && scene()) {
         if(isSelected()) {
             Q_EMIT selected(true);
-            setDefaultTextColor(m_colSel);
+            setBrush(QBrush(m_colSel));
         } else {
             Q_EMIT selected(false);
-            setDefaultTextColor(m_colNormal);
+            setBrush(QBrush(m_colNormal));
         }
         update();
     } else if(change == ItemPositionHasChanged && scene()) {
@@ -130,7 +130,7 @@ void QGIDatumLabel::setLabelCenter()
 void QGIDatumLabel::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
     Q_EMIT hover(true);
-    setDefaultTextColor(m_colPre);
+    setBrush(QBrush(m_colPre));
     update();
 }
 
@@ -141,7 +141,7 @@ void QGIDatumLabel::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 
     Q_EMIT hover(false);
     if(!isSelected() && !view->isSelected()) {
-        setDefaultTextColor(m_colNormal);
+        setBrush(QBrush(m_colNormal));
         update();
     }
 }
@@ -284,7 +284,7 @@ void QGIViewDimension::updateDim()
     font.setPointSizeF(dim->Fontsize.getValue());            //scene units (mm), not points
     font.setFamily(QString::fromAscii(dim->Font.getValue()));
 
-    dLabel->setPlainText(labelText);
+    dLabel->setText(labelText);
     dLabel->setFont(font);
     dLabel->setPosFromCenter(dLabel->X(),dLabel->Y());
 }
@@ -336,7 +336,7 @@ void QGIViewDimension::draw()
         pen.setColor(m_colNormal);
     }
 
-    QString labelText = lbl->toPlainText();
+    QString labelText( lbl->text() );
     Base::Vector3d lblCenter(lbl->X(), lbl->Y(), 0);
 
     //we always draw based on Projected geometry.

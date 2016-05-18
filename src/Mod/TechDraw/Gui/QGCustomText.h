@@ -23,7 +23,7 @@
 #ifndef DRAWINGGUI_QGCUSTOMTEXT_H
 #define DRAWINGGUI_QGCUSTOMTEXT_H
 
-#include <QGraphicsTextItem>
+#include <QGraphicsSimpleTextItem>
 #include <QPointF>
 
 QT_BEGIN_NAMESPACE
@@ -34,7 +34,7 @@ QT_END_NAMESPACE
 namespace TechDrawGui
 {
 
-class TechDrawGuiExport QGCustomText : public QGraphicsTextItem
+class TechDrawGuiExport QGCustomText : public QGraphicsSimpleTextItem
 {
 public:
     explicit QGCustomText(void);
