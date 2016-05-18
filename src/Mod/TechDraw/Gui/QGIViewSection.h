@@ -25,29 +25,19 @@
 
 #include "QGIViewPart.h"
 
-namespace TechDraw {
-class DrawViewSection;
-}
-
-namespace TechDrawGeometry {
-class BaseGeom;
-}
-
 namespace TechDrawGui
 {
 
-class TechDrawGuiExport QGIViewSection : public QObject, virtual public QGIViewPart
+class TechDrawGuiExport QGIViewSection : virtual public QGIViewPart
 {
-    Q_OBJECT
-
 public:
-    explicit QGIViewSection() = default;
+    QGIViewSection() = default;
     ~QGIViewSection() = default;
 
-    virtual void draw();
-    void updateView(bool update = false);
+    void draw() override;
+    void updateView(bool update = false) override;
     enum {Type = QGraphicsItem::UserType + 108};
-    int type() const { return Type;}
+    int type() const override { return Type;}
 
 protected:
     void drawSectionFace();

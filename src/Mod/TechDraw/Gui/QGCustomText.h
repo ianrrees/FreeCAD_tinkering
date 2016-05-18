@@ -23,7 +23,6 @@
 #ifndef DRAWINGGUI_QGCUSTOMTEXT_H
 #define DRAWINGGUI_QGCUSTOMTEXT_H
 
-#include <QGraphicsItem>
 #include <QGraphicsTextItem>
 #include <QPointF>
 
@@ -47,10 +46,6 @@ public:
     virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0 );
     virtual void centerAt(QPointF centerPos);
     virtual void centerAt(double cX, double cY);
-
-protected:
-
-private:
 
 };
 

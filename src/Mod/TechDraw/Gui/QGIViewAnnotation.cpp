@@ -23,35 +23,13 @@
 
 #include "PreCompiled.h"
 #ifndef _PreComp_
-#include <cmath>
-#include <QGraphicsScene>
-#include <QMouseEvent>
-#include <QGraphicsSceneHoverEvent>
-#include <QGraphicsItem>
-#include <QStyleOptionGraphicsItem>
-#include <QGraphicsTextItem>
-#include <QPainterPathStroker>
-#include <QPainter>
-#include <QString>
-#include <QTextOption>
-#include <sstream>
+    #include <QString>
 #endif
 
-#include <qmath.h>
-#include <QTextDocument>
-#include <QTextBlock>
-#include <QTextBlockFormat>
-#include <QTextFrame>
-#include <QSizeF>
-
-#include <App/Application.h>
-#include <App/Material.h>
 #include <Base/Console.h>
-#include <Base/Parameter.h>
 
 #include "../App/DrawViewAnnotation.h"
 #include "QGIViewAnnotation.h"
-#include "QGCustomText.h"
 
 using namespace TechDrawGui;
 
@@ -159,4 +137,3 @@ QRectF QGIViewAnnotation::boundingRect() const
     return childrenBoundingRect();
 }
 
-#include "moc_QGIViewAnnotation.cpp"

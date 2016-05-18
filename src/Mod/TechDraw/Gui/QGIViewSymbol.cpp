@@ -23,24 +23,14 @@
 
 #include "PreCompiled.h"
 #ifndef _PreComp_
-#include <cmath>
-#include <QGraphicsItem>
-#include <QGraphicsScene>
-#include <QGraphicsSceneHoverEvent>
-#include <QMenu>
-#include <QMouseEvent>
-#include <QString>
-#include <sstream>
+    #include <QGraphicsItem>
+    #include <QString>
 #endif
 
-#include <qmath.h>
-
-#include <App/Application.h>
-#include <App/Material.h>
 #include <Base/Console.h>
-#include <Base/Parameter.h>
 
 #include "../App/DrawViewSymbol.h"
+
 #include "QGIViewSymbol.h"
 
 using namespace TechDrawGui;

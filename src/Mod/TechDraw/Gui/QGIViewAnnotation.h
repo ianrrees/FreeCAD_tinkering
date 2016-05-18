@@ -37,10 +37,8 @@ class DrawViewAnnotation;
 namespace TechDrawGui
 {
 
-class TechDrawGuiExport QGIViewAnnotation : public QObject, public QGIView
+class TechDrawGuiExport QGIViewAnnotation : public QGIView
 {
-    Q_OBJECT
-
 public:
     explicit QGIViewAnnotation();
 
@@ -48,28 +46,23 @@ public:
     ~QGIViewAnnotation() = default;
 
     enum {Type = QGraphicsItem::UserType + 120};
-    int type() const { return Type;}
+    int type() const override { return Type;}
 
-    void updateView(bool update = false);
+    void updateView(bool update = false) override;
     void setViewAnnoFeature(TechDraw::DrawViewAnnotation *obj);
 
     virtual void draw();
-    virtual QRectF boundingRect() const;
-
-Q_SIGNALS:
-    void hover(bool state);
-    void selected(bool state);
+    virtual QRectF boundingRect() const override;
 
 protected:
     void drawAnnotation();
 
-protected:
     QGCustomText *m_textItem;
     QColor m_colNormal;
     QColor m_colSel;
     QColor m_colPre;
 };
 
-} // namespace MDIViewPageGui
+} // namespace TechDrawGui
 
 #endif // DRAWINGGUI_QGRAPHICSITEMVIEWANNOTATION_H

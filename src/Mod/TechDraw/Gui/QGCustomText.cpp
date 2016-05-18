@@ -22,24 +22,13 @@
 
 #include "PreCompiled.h"
 #ifndef _PreComp_
-#include <assert.h>
-#include <QGraphicsScene>
-#include <QGraphicsSceneHoverEvent>
-#include <QMouseEvent>
-#include <QPaintDevice>
-#include <QPainter>
-#include <QPrinter>
-#include <QSvgGenerator>
-#include <QStyleOptionGraphicsItem>
+    #include <QPaintDevice>
+    #include <QPainter>
+    #include <QRectF>
+    #include <QSvgGenerator>
+    #include <QStyleOptionGraphicsItem>
 #endif
 
-#include <App/Application.h>
-#include <App/Material.h>
-#include <Base/Console.h>
-#include <Base/Parameter.h>
-
-#include <qmath.h>
-#include <QRectF>
 #include "QGCustomText.h"
 
 using namespace TechDrawGui;
@@ -101,3 +90,4 @@ void QGCustomText::paint ( QPainter * painter, const QStyleOptionGraphicsItem * 
 
     QGraphicsTextItem::paint (painter, &myOption, widget);
 }
+

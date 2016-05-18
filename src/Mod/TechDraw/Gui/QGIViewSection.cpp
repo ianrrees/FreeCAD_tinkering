@@ -22,27 +22,14 @@
 
 #include "PreCompiled.h"
 #ifndef _PreComp_
-#include <cmath>
-#include <QAction>
-#include <QApplication>
-#include <QContextMenuEvent>
-#include <QGraphicsScene>
-#include <QMenu>
-#include <QMouseEvent>
-#include <QGraphicsSceneHoverEvent>
-#include <QPainterPathStroker>
-#include <QPainter>
-#include <QTextOption>
-#include <strstream>
 #endif
-
-#include <qmath.h>
 
 #include "Base/Console.h"
 
 #include "../App/DrawViewSection.h"
 
 #include "../App/GraphicsItems/ZVALUE.h"
+
 #include "QGIViewSection.h"
 
 using namespace TechDrawGui;
@@ -101,4 +88,3 @@ void QGIViewSection::updateView(bool update)
     }
 }
 
-#include "moc_QGIViewSection.cpp"
