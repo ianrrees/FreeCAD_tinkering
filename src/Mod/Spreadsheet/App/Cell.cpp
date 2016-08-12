@@ -31,6 +31,7 @@
 #include <Base/Reader.h>
 #include <Base/Quantity.h>
 #include <Base/Writer.h>
+#include <Base/Tools.h>
 #include <App/Expression.h>
 #include "Sheet.h"
 #include <iomanip>
@@ -614,7 +615,7 @@ void Cell::save(Base::Writer &writer) const
         std::string content;
 
         getStringContent(content);
-        writer.Stream() << "content=\"" << App::Property::encodeAttribute(content) << "\" ";
+        writer.Stream() << "content=\"" << Base::Tools::encodeAttribute(content) << "\" ";
     }
 
     if (isUsed(ALIGNMENT_SET))
@@ -630,10 +631,10 @@ void Cell::save(Base::Writer &writer) const
         writer.Stream() << "backgroundColor=\"" << encodeColor(backgroundColor) << "\" ";
 
     if (isUsed(DISPLAY_UNIT_SET))
-        writer.Stream() << "displayUnit=\"" << App::Property::encodeAttribute(displayUnit.stringRep) << "\" ";
+        writer.Stream() << "displayUnit=\"" <<Base::Tools::encodeAttribute(displayUnit.stringRep) << "\" ";
 
     if (isUsed(ALIAS_SET))
-        writer.Stream() << "alias=\"" << App::Property::encodeAttribute(alias) << "\" ";
+        writer.Stream() << "alias=\"" << Base::Tools::encodeAttribute(alias) << "\" ";
 
     if (isUsed(SPANS_SET)) {
         writer.Stream() << "rowSpan=\"" << rowSpan<< "\" ";

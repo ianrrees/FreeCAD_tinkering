@@ -329,8 +329,8 @@ void DynamicProperty::Save (Base::Writer &writer) const
         else {
             writer.Stream() << writer.ind() << "<Property name=\"" << it->first
                             << "\" type=\"" << it->second->getTypeId().getName()
-                            << "\" group=\"" << encodeAttribute(pt->second.group)
-                            << "\" doc=\"" << encodeAttribute(pt->second.doc)
+                            << "\" group=\"" << Base::Tools::encodeAttribute(pt->second.group)
+                            << "\" doc=\"" << Base::Tools::encodeAttribute(pt->second.doc)
                             << "\" attr=\"" << pt->second.attr << "\" ro=\"" << pt->second.readonly
                             << "\" hide=\"" << pt->second.hidden << "\">" << std::endl;
         }

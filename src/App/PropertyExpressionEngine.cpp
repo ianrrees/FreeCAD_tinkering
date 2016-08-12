@@ -27,6 +27,7 @@
 #include <Base/Interpreter.h>
 #include <Base/Writer.h>
 #include <Base/Reader.h>
+#include <Base/Tools.h>
 #include "Expression.h"
 #include "ExpressionVisitors.h"
 #include "PropertyExpressionEngine.h"
@@ -181,10 +182,10 @@ void PropertyExpressionEngine::Save(Base::Writer &writer) const
     writer.Stream() << writer.ind() << "<ExpressionEngine count=\"" <<  expressions.size() <<"\">" << std::endl;
     writer.incInd();
     for (ExpressionMap::const_iterator it = expressions.begin(); it != expressions.end(); ++it) {
-        writer.Stream() << writer.ind() << "<Expression path=\"" <<  Property::encodeAttribute(it->first.toString()) <<"\"" <<
-                           " expression=\"" << Property::encodeAttribute(it->second.expression->toString()) << "\"";
+        writer.Stream() << writer.ind() << "<Expression path=\"" <<  Base::Tools::encodeAttribute(it->first.toString()) <<"\"" <<
+                           " expression=\"" << Base::Tools::encodeAttribute(it->second.expression->toString()) << "\"";
         if (it->second.comment.size() > 0)
-            writer.Stream() << " comment=\"" << Property::encodeAttribute(it->second.comment) << "\"";
+            writer.Stream() << " comment=\"" << Base::Tools::encodeAttribute(it->second.comment) << "\"";
         writer.Stream() << "/>" << std::endl;
     }
     writer.decInd();

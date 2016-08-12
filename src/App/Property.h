@@ -150,7 +150,6 @@ public:
     /// Paste the value from the property (mainly for Undo/Redo and transactions)
     virtual void Paste(const Property &from) = 0;
 
-
     friend class PropertyContainer;
 
 protected:
