@@ -43,9 +43,11 @@
 #include "SpinBox.h"
 
 #include <Base/Console.h>
+#include <Base/Tools.h>
 #include <App/Application.h>
 #include <App/DocumentObject.h>
 #include <App/Material.h>
+#include <App/MaterialDatabase.h>
 
 using namespace Gui::Dialog;
 using namespace std;
@@ -253,9 +255,10 @@ void DlgDisplayPropertiesImp::on_buttonColorPlot_clicked()
 void DlgDisplayPropertiesImp::on_changeMaterial_activated(int index)
 {
     std::vector<Gui::ViewProvider*> Provider = getSelection();
-    App::Material::MaterialType matType = static_cast<App::Material::MaterialType>(changeMaterial->itemData(index).toInt());
-    App::Material mat(matType);
-    App::Color diffuseColor = mat.diffuseColor;
+    QString matName = static_cast<QString>(changeMaterial->itemData(index).toString());
+    App::MaterialDatabase & database = App::GetApplication().getMaterialDatabase();
+    App::Material * mat = database.getMaterial(Base::Tools::toStdString(matName).c_str());
+    App::Color diffuseColor = mat->getDiffuseColor();
     buttonColor->setColor(QColor((int)(diffuseColor.r*255.0f), (int)(diffuseColor.g*255.0f), (int)(diffuseColor.b*255.0f)));
 
     for (std::vector<Gui::ViewProvider*>::iterator It= Provider.begin();It!=Provider.end();++It) {
@@ -423,17 +426,17 @@ void DlgDisplayPropertiesImp::setDisplayModes(const std::vector<Gui::ViewProvide
 void DlgDisplayPropertiesImp::setMaterial(const std::vector<Gui::ViewProvider*>& views)
 {
     bool material = false;
-    App::Material::MaterialType matType = App::Material::DEFAULT;
+    std::string matName = "DEFAULT";
     for (std::vector<Gui::ViewProvider*>::const_iterator it = views.begin(); it != views.end(); ++it) {
         App::Property* prop = (*it)->getPropertyByName("ShapeMaterial");
         if (prop && prop->getTypeId() == App::PropertyMaterial::getClassTypeId()) {
             material = true;
-            matType = static_cast<App::PropertyMaterial*>(prop)->getValue().getType();
+            matName = static_cast<App::PropertyMaterial*>(prop)->getValue()->getName();
             break;
         }
     }
 
-    int index = changeMaterial->findData(matType);
+    int index = changeMaterial->findData(Base::Tools::fromStdString(matName));
     if (index >= 0) {
         changeMaterial->setCurrentIndex(index);
     }
@@ -457,28 +460,28 @@ void DlgDisplayPropertiesImp::setColorPlot(const std::vector<Gui::ViewProvider*>
 
 void DlgDisplayPropertiesImp::fillupMaterials()
 {
-    changeMaterial->addItem(tr("Default"), App::Material::DEFAULT);
-    changeMaterial->addItem(tr("Aluminium"), App::Material::ALUMINIUM);
-    changeMaterial->addItem(tr("Brass"), App::Material::BRASS);
-    changeMaterial->addItem(tr("Bronze"), App::Material::BRONZE);
-    changeMaterial->addItem(tr("Copper"), App::Material::COPPER);
-    changeMaterial->addItem(tr("Chrome"), App::Material::CHROME);
-    changeMaterial->addItem(tr("Emerald"), App::Material::EMERALD);
-    changeMaterial->addItem(tr("Gold"), App::Material::GOLD);
-    changeMaterial->addItem(tr("Jade"), App::Material::JADE);
-    changeMaterial->addItem(tr("Metalized"), App::Material::METALIZED);
-    changeMaterial->addItem(tr("Neon GNC"), App::Material::NEON_GNC);
-    changeMaterial->addItem(tr("Neon PHC"), App::Material::NEON_PHC);
-    changeMaterial->addItem(tr("Obsidian"), App::Material::OBSIDIAN);
-    changeMaterial->addItem(tr("Pewter"), App::Material::PEWTER);
-    changeMaterial->addItem(tr("Plaster"), App::Material::PLASTER);
-    changeMaterial->addItem(tr("Plastic"), App::Material::PLASTIC);
-    changeMaterial->addItem(tr("Ruby"), App::Material::RUBY);
-    changeMaterial->addItem(tr("Satin"), App::Material::SATIN);
-    changeMaterial->addItem(tr("Shiny plastic"), App::Material::SHINY_PLASTIC);
-    changeMaterial->addItem(tr("Silver"), App::Material::SILVER);
-    changeMaterial->addItem(tr("Steel"), App::Material::STEEL);
-    changeMaterial->addItem(tr("Stone"), App::Material::STONE);
+    changeMaterial->addItem(tr("Default"), QString::fromLatin1("DEFAULT"));
+    changeMaterial->addItem(tr("Aluminium"), QString::fromLatin1("ALUMINIUM"));
+    changeMaterial->addItem(tr("Brass"), QString::fromLatin1("BRASS"));
+    changeMaterial->addItem(tr("Bronze"), QString::fromLatin1("BRONZE"));
+    changeMaterial->addItem(tr("Copper"), QString::fromLatin1("COPPER"));
+    changeMaterial->addItem(tr("Chrome"), QString::fromLatin1("CHROME"));
+    changeMaterial->addItem(tr("Emerald"), QString::fromLatin1("EMERALD"));
+    changeMaterial->addItem(tr("Gold"), QString::fromLatin1("GOLD"));
+    changeMaterial->addItem(tr("Jade"), QString::fromLatin1("JADE"));
+    changeMaterial->addItem(tr("Metalized"), QString::fromLatin1("METALIZED"));
+    changeMaterial->addItem(tr("Neon GNC"), QString::fromLatin1("NEON_GNC"));
+    changeMaterial->addItem(tr("Neon PHC"), QString::fromLatin1("NEON_PHC"));
+    changeMaterial->addItem(tr("Obsidian"), QString::fromLatin1("OBSIDIAN"));
+    changeMaterial->addItem(tr("Pewter"), QString::fromLatin1("PEWTER"));
+    changeMaterial->addItem(tr("Plaster"), QString::fromLatin1("PLASTER"));
+    changeMaterial->addItem(tr("Plastic"), QString::fromLatin1("PLASTIC"));
+    changeMaterial->addItem(tr("Ruby"), QString::fromLatin1("RUBY"));
+    changeMaterial->addItem(tr("Satin"), QString::fromLatin1("SATIN"));
+    changeMaterial->addItem(tr("Shiny plastic"), QString::fromLatin1("SHINY_PLASTIC"));
+    changeMaterial->addItem(tr("Silver"), QString::fromLatin1("SILVER"));
+    changeMaterial->addItem(tr("Steel"), QString::fromLatin1("STEEL"));
+    changeMaterial->addItem(tr("Stone"), QString::fromLatin1("STONE"));
 }
 
 void DlgDisplayPropertiesImp::setShapeColor(const std::vector<Gui::ViewProvider*>& views)

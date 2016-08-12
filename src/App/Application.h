@@ -28,6 +28,7 @@
 #include <boost/signal.hpp>
 
 #include <vector>
+#include <memory>
 
 #include <Base/PyObjectBase.h>
 #include <Base/Parameter.h>
@@ -47,7 +48,7 @@ class Document;
 class DocumentObject;
 class ApplicationObserver;
 class Property;
-
+class MaterialDatabase;
 
 
 /** The Application
@@ -222,6 +223,9 @@ public:
     std::map<std::string, std::string> getExportFilters(void) const;
     //@}
 
+    /** Material database */
+    MaterialDatabase & getMaterialDatabase();
+
     /** @name Init, Destruct an Access methods */
     //@{
     static void init(int argc, char ** argv);
@@ -320,6 +324,7 @@ private:
     static PyObject* sAddDocObserver    (PyObject *self,PyObject *args);
     static PyObject* sRemoveDocObserver (PyObject *self,PyObject *args);
 
+    static PyObject* sGetMaterialDatabase(PyObject *self, PyObject *args, PyObject *kwd);
     static PyObject *sSetLogLevel       (PyObject *self,PyObject *args);
     static PyObject *sGetLogLevel       (PyObject *self,PyObject *args);
 
@@ -370,6 +375,8 @@ private:
     std::map<std::string,ParameterManager *> mpcPramManager;
     std::map<std::string,std::string> &_mConfig;
     App::Document* _pActiveDoc;
+
+    std::shared_ptr<MaterialDatabase> _pMaterialDatbase;
 
     static Base::ConsoleObserverStd  *_pConsoleObserverStd;
     static Base::ConsoleObserverFile *_pConsoleObserverFile;

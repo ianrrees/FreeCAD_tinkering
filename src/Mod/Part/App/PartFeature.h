@@ -29,6 +29,9 @@
 #include <App/GeoFeature.h>
 #include <App/FeaturePython.h>
 #include <App/PropertyGeo.h>
+#include <App/PropertyLinks.h>
+#include <App/PropertyPartMaterial.h>
+#include <boost/signals.hpp>
 // includes for findAllFacesCutBy()
 #include <TopoDS_Face.hxx>
 class gp_Dir;
@@ -52,6 +55,7 @@ public:
     virtual ~Feature();
 
     PropertyPartShape Shape;
+    App::PropertyPartMaterial Material;
 
     /** @name methods override feature */
     //@{
@@ -83,6 +87,8 @@ protected:
     ShapeHistory buildHistory(BRepBuilderAPI_MakeShape&, TopAbs_ShapeEnum type,
         const TopoDS_Shape& newS, const TopoDS_Shape& oldS);
     ShapeHistory joinHistory(const ShapeHistory&, const ShapeHistory&);
+
+    static boost::signals::scoped_connection created_connection;
 };
 
 class FilletBase : public Part::Feature

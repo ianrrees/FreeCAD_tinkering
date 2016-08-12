@@ -92,6 +92,10 @@
 #include "PropertyLinks.h"
 #include "PropertyPythonObject.h"
 #include "PropertyExpressionEngine.h"
+#include "PropertyPartMaterial.h"
+#include "MaterialStack.h"
+#include "MaterialComposition.h"
+#include "PropertyDocumentMaterialSource.h"
 #include "Document.h"
 #include "DocumentObjectGroup.h"
 #include "DocumentObjectFileIncluded.h"
@@ -107,10 +111,13 @@
 #include "Origin.h"
 #include "MaterialObject.h"
 #include "TextDocument.h"
+#include "DefaultMaterialSource.h"
 #include "Expression.h"
 #include "Transactions.h"
 #include <App/MaterialPy.h>
 #include <Base/GeometryPyCXX.h>
+#include "MaterialDatabasePy.h"
+#include "FileMaterialSourcePy.h"
 
 // If you stumble here, run the target "BuildExtractRevision" on Windows systems
 // or the Python script "SubWCRev.py" on Linux based systems which builds
@@ -970,6 +977,28 @@ std::map<std::string, std::string> Application::getExportFilters(void) const
     return filter;
 }
 
+MaterialDatabase &Application::getMaterialDatabase()
+{
+    if (_pMaterialDatbase == 0) {
+        _pMaterialDatbase = std::make_shared<MaterialDatabase>();
+
+        /* Add the legacy materials */
+        _pMaterialDatbase->addMaterialSource(std::make_shared<DefaultMaterialSource>());
+
+        /* Add system materials */
+
+        std::string system_dir = getResourceDir() + "/Mod/Material/StandardMaterial";
+        _pMaterialDatbase->addMaterialSource(std::make_shared<FileMaterialSource>("System", system_dir.c_str()));
+
+        /* Add user materials */
+        std::string user_dir = getUserAppDataDir() + "Materials";
+        _pMaterialDatbase->addMaterialSource(std::make_shared<FileMaterialSource>("User", user_dir.c_str()));
+
+    }
+
+    return *_pMaterialDatbase;
+}
+
 //**************************************************************************
 // signaling
 void Application::slotNewObject(const App::DocumentObject&O)
@@ -1308,6 +1337,8 @@ void Application::initTypes(void)
     App ::PropertyColorList         ::init();
     App ::PropertyMaterial          ::init();
     App ::PropertyMaterialList      ::init();
+    App ::PropertyDocumentMaterialSource::init();
+    App ::PropertyPartMaterial      ::init();
     App ::PropertyPath              ::init();
     App ::PropertyFile              ::init();
     App ::PropertyFileIncluded      ::init();
@@ -1324,6 +1355,12 @@ void Application::initTypes(void)
     App ::GeoFeatureGroupExtensionPython::init();
     App ::OriginGroupExtension          ::init();
     App ::OriginGroupExtensionPython    ::init();
+
+    Py::PropertyPartMaterial        ::init_type();
+
+    // Material support
+    App ::MaterialDatabase          ::init();
+    App ::MaterialSource            ::init();
 
     // Document classes
     App ::TransactionalObject       ::init();

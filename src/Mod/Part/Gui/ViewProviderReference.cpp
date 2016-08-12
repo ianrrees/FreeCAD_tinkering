@@ -113,13 +113,15 @@ ViewProviderPartReference::ViewProviderPartReference()
   , noPerVertexNormals(true)
   , qualityNormals(false)
 {
-    App::Material mat;
-    mat.ambientColor.set(0.2f,0.2f,0.2f);
-    mat.diffuseColor.set(0.1f,0.1f,0.1f);
-    mat.specularColor.set(0.0f,0.0f,0.0f);
-    mat.emissiveColor.set(0.0f,0.0f,0.0f);
-    mat.shininess = 0.0f;
-    mat.transparency = 0.0f;
+#if 0
+    App::Material * mat = App::GetApplication().getMaterialDatabase().getMaterial("DEFAULT");
+    mat->setAmbientColor(App::Color(0.2f,0.2f,0.2f));
+    mat->setDiffuseColor(App::Color(0.1f,0.1f,0.1f));
+    mat->setSpecularColor(App::Color(0.0f,0.0f,0.0f));
+    mat->setEmissiveColor(App::Color(0.0f,0.0f,0.0f));
+    mat->setShininess(0.0f);
+    mat->setTransparency(0.0f);
+#endif
     //ADD_PROPERTY(LineMaterial,(mat));
     //ADD_PROPERTY(PointMaterial,(mat));
     //ADD_PROPERTY(LineColor,(mat.diffuseColor));

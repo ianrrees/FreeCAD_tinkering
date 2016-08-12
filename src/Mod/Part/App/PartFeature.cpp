@@ -52,20 +52,25 @@
 #include <Base/Stream.h>
 #include <Base/Placement.h>
 #include <Base/Rotation.h>
+#include <Base/Tools.h>
 #include <App/FeaturePythonPyImp.h>
+#include <App/Document.h>
+#include <App/Application.h>
+#include <boost/bind.hpp>
 
 #include "PartFeature.h"
 #include "PartFeaturePy.h"
 
 using namespace Part;
 
+boost::signals::scoped_connection Part::Feature::created_connection;
 
 PROPERTY_SOURCE(Part::Feature, App::GeoFeature)
-
 
 Feature::Feature(void) 
 {
     ADD_PROPERTY(Shape, (TopoDS_Shape()));
+    ADD_PROPERTY(Material, (App::PropertyPartMaterial()));
 }
 
 Feature::~Feature()

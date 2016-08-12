@@ -42,6 +42,7 @@
 
 #include "PropertyStandard.h"
 #include "MaterialPy.h"
+#include "MaterialDatabase.h"
 #include "ObjectIdentifier.h"
 
 using namespace App;
@@ -2675,14 +2676,14 @@ PropertyMaterial::~PropertyMaterial()
 
 }
 
-void PropertyMaterial::setValue(const Material &mat)
+void PropertyMaterial::setValue(Material *mat)
 {
     aboutToSetValue();
-    _cMat=mat;
+    _cMat = mat;
     hasSetValue();
 }
 
-const Material& PropertyMaterial::getValue(void) const 
+const Material* PropertyMaterial::getValue(void) const
 {
     return _cMat;
 }
@@ -2690,54 +2691,64 @@ const Material& PropertyMaterial::getValue(void) const
 void PropertyMaterial::setAmbientColor(const Color& col)
 {
     aboutToSetValue();
-    _cMat.ambientColor = col;
+    _cMat->setAmbientColor(col);
     hasSetValue();
 }
 
 void PropertyMaterial::setDiffuseColor(const Color& col)
 {
     aboutToSetValue();
-    _cMat.diffuseColor = col;
+    if (_cMat)
+        _cMat->setDiffuseColor(col);
     hasSetValue();
 }
 
 void PropertyMaterial::setSpecularColor(const Color& col)
 {
     aboutToSetValue();
-    _cMat.specularColor = col;
+    if (_cMat)
+        _cMat->setSpecularColor(col);
     hasSetValue();
 }
 
 void PropertyMaterial::setEmissiveColor(const Color& col)
 {
     aboutToSetValue();
-    _cMat.emissiveColor = col;
+    if (_cMat)
+        _cMat->setEmissiveColor(col);
     hasSetValue();
 }
 
 void PropertyMaterial::setShininess(float val)
 {
     aboutToSetValue();
-    _cMat.shininess = val;
+    if (_cMat)
+        _cMat->setShininess(val);
     hasSetValue();
 }
 
 void PropertyMaterial::setTransparency(float val)
 {
     aboutToSetValue();
-    _cMat.transparency = val;
+    if (_cMat)
+        _cMat->setTransparency(val);
     hasSetValue();
+}
+
+void PropertyMaterial::resolveMaterial(MaterialDatabase &database)
+{
+    setValue(database.getMaterial(_Name.c_str()));
 }
 
 PyObject *PropertyMaterial::getPyObject(void)
 {
-    return new MaterialPy(new Material(_cMat));
+    return Py::new_reference_to(_cMat->getPyObject());
 }
 
 void PropertyMaterial::setPyObject(PyObject *value)
 {
     if (PyObject_TypeCheck(value, &(MaterialPy::Type))) {
-        setValue(*static_cast<MaterialPy*>(value)->getMaterialPtr());
+        setValue(static_cast<MaterialPy*>(value)->getMaterialPtr());
     }
     else {
         std::string error = std::string("type must be 'Material', not ");
@@ -2748,13 +2759,7 @@ void PropertyMaterial::setPyObject(PyObject *value)
 
 void PropertyMaterial::Save (Base::Writer &writer) const
 {
-    writer.Stream() << writer.ind() << "<PropertyMaterial ambientColor=\"" 
-        <<  _cMat.ambientColor.getPackedValue() 
-        << "\" diffuseColor=\"" <<  _cMat.diffuseColor.getPackedValue() 
-        << "\" specularColor=\"" <<  _cMat.specularColor.getPackedValue()
-        << "\" emissiveColor=\"" <<  _cMat.emissiveColor.getPackedValue()
-        << "\" shininess=\"" <<  _cMat.shininess << "\" transparency=\"" 
-        <<  _cMat.transparency << "\"/>" << endl;
+    writer.Stream() << writer.ind() << "<PropertyMaterial name=\"" <<  _cMat->getName() << "\"/>" << endl;
 }
 
 void PropertyMaterial::Restore(Base::XMLReader &reader)
@@ -2763,12 +2768,8 @@ void PropertyMaterial::Restore(Base::XMLReader &reader)
     reader.readElement("PropertyMaterial");
     // get the value of my Attribute
     aboutToSetValue();
-    _cMat.ambientColor.setPackedValue(reader.getAttributeAsUnsigned("ambientColor"));
-    _cMat.diffuseColor.setPackedValue(reader.getAttributeAsUnsigned("diffuseColor"));
-    _cMat.specularColor.setPackedValue(reader.getAttributeAsUnsigned("specularColor"));
-    _cMat.emissiveColor.setPackedValue(reader.getAttributeAsUnsigned("emissiveColor"));
-    _cMat.shininess = (float)reader.getAttributeAsFloat("shininess");
-    _cMat.transparency = (float)reader.getAttributeAsFloat("transparency");
+    _Name = reader.getAttribute("name");
+    _cMat = 0;
     hasSetValue();
 }
 
@@ -2823,7 +2824,7 @@ int PropertyMaterialList::getSize(void) const
     return static_cast<int>(_lValueList.size());
 }
 
-void PropertyMaterialList::setValue(const Material& lValue)
+void PropertyMaterialList::setValue(Material *lValue)
 {
     aboutToSetValue();
     _lValueList.resize(1);
@@ -2831,7 +2832,7 @@ void PropertyMaterialList::setValue(const Material& lValue)
     hasSetValue();
 }
 
-void PropertyMaterialList::setValues(const std::vector<Material>& values)
+void PropertyMaterialList::setValues(const std::vector<Material*>& values)
 {
     aboutToSetValue();
     _lValueList = values;
@@ -2843,7 +2844,7 @@ PyObject *PropertyMaterialList::getPyObject(void)
     Py::Tuple tuple(getSize());
 
     for (int i = 0; i<getSize(); i++) {
-        tuple.setItem(i, Py::asObject(new MaterialPy(new Material(_lValueList[i]))));
+        tuple.setItem(i, Py::asObject(_lValueList[i]->getPyObject()));
     }
 
     return Py::new_reference_to(tuple);
@@ -2852,15 +2853,15 @@ PyObject *PropertyMaterialList::getPyObject(void)
 void PropertyMaterialList::setPyObject(PyObject *value)
 {
     if (PyObject_TypeCheck(value, &(MaterialPy::Type))) {
-        setValue(*static_cast<MaterialPy*>(value)->getMaterialPtr());
+        setValue(static_cast<MaterialPy*>(value)->getMaterialPtr());
     }
     else if (PyList_Check(value) || PyTuple_Check(value)) {
         Py::Sequence list(value);
-        std::vector<Material> materials;
+        std::vector<Material*> materials;
 
         for (Py::Sequence::iterator it = list.begin(); it != list.end(); ++it) {
             if (PyObject_TypeCheck((*it).ptr(), &(MaterialPy::Type))) {
-                Material mat = *static_cast<MaterialPy*>((*it).ptr())->getMaterialPtr();
+                Material * mat = static_cast<MaterialPy*>((*it).ptr())->getMaterialPtr();
                 materials.push_back(mat);
             }
         }
@@ -2899,13 +2900,13 @@ void PropertyMaterialList::SaveDocFile(Base::Writer &writer) const
     Base::OutputStream str(writer.Stream());
     uint32_t uCt = (uint32_t)getSize();
     str << uCt;
-    for (std::vector<App::Material>::const_iterator it = _lValueList.begin(); it != _lValueList.end(); ++it) {
-        str << it->ambientColor.getPackedValue();
-        str << it->diffuseColor.getPackedValue();
-        str << it->specularColor.getPackedValue();
-        str << it->emissiveColor.getPackedValue();
-        str << it->shininess;
-        str << it->transparency;
+    for (auto it = _lValueList.begin(); it != _lValueList.end(); ++it) {
+        str << (*it)->getAmbientColor().getPackedValue();
+        str << (*it)->getDiffuseColor().getPackedValue();
+        str << (*it)->getSpecularColor().getPackedValue();
+        str << (*it)->getEmissiveColor().getPackedValue();
+        str << (*it)->getShininess();
+        str << (*it)->getTransparency();
     }
 }
 
@@ -2914,22 +2915,22 @@ void PropertyMaterialList::RestoreDocFile(Base::Reader &reader)
     Base::InputStream str(reader);
     uint32_t uCt = 0;
     str >> uCt;
-    std::vector<Material> values(uCt);
+    std::vector<Material*> values(uCt);
     uint32_t value; // must be 32 bit long
     float valueF;
-    for (std::vector<App::Material>::iterator it = values.begin(); it != values.end(); ++it) {
+    for (auto it = values.begin(); it != values.end(); ++it) {
         str >> value;
-        it->ambientColor.setPackedValue(value);
+        (*it)->setAmbientColor(App::Color(value));
         str >> value;
-        it->diffuseColor.setPackedValue(value);
+        (*it)->setDiffuseColor(App::Color(value));
         str >> value;
-        it->specularColor.setPackedValue(value);
+        (*it)->setSpecularColor(App::Color(value));
         str >> value;
-        it->emissiveColor.setPackedValue(value);
+        (*it)->setEmissiveColor(App::Color(value));
         str >> valueF;
-        it->shininess = valueF;
+        (*it)->setShininess(valueF);
         str >> valueF;
-        it->transparency = valueF;
+        (*it)->setTransparency(valueF);
     }
     setValues(values);
 }

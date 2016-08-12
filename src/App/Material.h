@@ -30,9 +30,18 @@
 
 #include <sstream>
 #include <iomanip>
+#include <memory>
+#include <boost/any.hpp>
+#include <boost/noncopyable.hpp>
+
+#include <Base/BaseClass.h>
+#include <CXX/Objects.hxx>
 
 namespace App
 {
+
+class MaterialSource;
+class MaterialDatabase;
 
 /** Color class
  */
@@ -49,11 +58,13 @@ public:
      * Does basically the same as the constructor above unless that (R,G,B,A) is
      * encoded as an unsigned int.
      */
-    Color(uint32_t rgba)
+    explicit Color(uint32_t rgba)
     { setPackedValue( rgba ); }
+
     /** Copy constructor. */
     Color(const Color& c)
       :r(c.r),g(c.g),b(c.b),a(c.a){}
+
     /** Returns true if both colors are equal. Therefore all components must be equal. */
     bool operator==(const Color& c) const
     {
@@ -136,102 +147,101 @@ public:
 
 /** Material class
  */
-class AppExport Material
+class AppExport Material : private boost::noncopyable
 {
-public:
-    enum MaterialType {
-        BRASS,
-        BRONZE,
-        COPPER,
-        GOLD,
-        PEWTER,
-        PLASTER,
-        PLASTIC,
-        SILVER,
-        STEEL,
-        STONE,
-        SHINY_PLASTIC,
-        SATIN,
-        METALIZED,
-        NEON_GNC,
-        CHROME,
-        ALUMINIUM,
-        OBSIDIAN,
-        NEON_PHC,
-        JADE,
-        RUBY,
-        EMERALD,
-        DEFAULT,
-        USER_DEFINED
-    };
-
 public:
     /** @name Constructors
      */
     //@{
-    /** Sets the USER_DEFINED material type. The user must set the colors afterwards. */
-    Material(void);
-    /** Defines the colors and shininess for the material \a MatName. If \a MatName isn't defined then USER_DEFINED is
-     * set and the user must define the colors itself.
-     */
-    Material(const char* MatName);
-    /** Does basically the same as the constructor above unless that it accepts a MaterialType as argument. */
-    Material(const MaterialType MatType);
+    /** Create a material from a set of properties */
+
+    Material(const App::MaterialSource * _matSource, const std::vector<boost::any> & properties);
+
     //@}
     ~Material();
 
-    /** Set a material by name
-     *  There are some standard materials defined which are:
-     *  \li Brass
-     *  \li Bronze
-     *  \li Copper
-     *  \li Gold
-     *  \li Pewter
-     *  \li Plaster
-     *  \li Plastic
-     *  \li Silver
-     *  \li Steel
-     *  \li Stone
-     *  \li Shiny plastic
-     *  \li Satin
-     *  \li Metalized
-     *  \li Neon GNC
-     *  \li Chrome
-     *  \li Aluminium
-     *  \li Obsidian
-     *  \li Neon PHC
-     *  \li Jade
-     *  \li Ruby
-     *  \li Emerald
-     * Furthermore there two additional modes \a Default which defines a kind of grey metallic and user defined that
-     * does nothing.
-     * The Color and the other properties of the material are defined in the range [0-1].
-     * If \a MatName is an unknown material name then the type USER_DEFINED is set and the material doesn't get changed.
-     */
-    void set(const char* MatName);
-    /**
-     * This method is provided for convenience which does basically the same as the method above unless that it accepts a MaterialType
-     * as argument.
-     */
-    void setType(const MaterialType MatType);
-    /**
-     * Returns the currently set material type.
-     */
-    MaterialType getType() const
-    { return _matType; }
+    // Special struct to signify a removed property
+    typedef struct deleted_property_s {
+        deleted_property_s() { }
+    } deleted_property_t;
 
-    /** @name Properties */
-    //@{
-    Color ambientColor;  /**< Defines the ambient color. */
-    Color diffuseColor;  /**< Defines the diffuse color. */
-    Color specularColor; /**< Defines the specular color. */
-    Color emissiveColor; /**< Defines the emissive color. */
-    float shininess;
-    float transparency;
-    //@}
+
+    // Special struct to signify a removed property
+    typedef struct unknown_property_s {
+        unknown_property_s(const std::string & s) : value(s) { }
+    private:
+        std::string value;
+    } unknown_property_t;
+
+    // Getters
+
+    int getPropertyId(const char * propName) const;
+
+    const boost::any & getProperty(const char * propName) const;
+
+    const boost::any & getProperty(int id) const;
+
+    const std::vector<boost::any> & getProperties() const { return _matProperties; }
+
+    // Setters
+
+    void setProperty(const char * propName, const boost::any & value);
+
+    void setProperty(int id, const boost::any & value);
+
+    void setProperties(const std::vector<boost::any> & properties);
+
+    // Remove property
+
+    void removeProperty(const char * propName);
+
+    void removeProperty(int id);
+
+    // Whether changes to this material can be undone or not
+
+    bool canUndo() const;
+
+    // Convenience function to access various proerties
+
+    std::string getName() const;
+
+    Color getAmbientColor() const;
+    void setAmbientColor(const Color & color);
+
+    Color getDiffuseColor() const;
+    void setDiffuseColor(const Color & color);
+
+    Color getSpecularColor() const;
+    void setSpecularColor(const Color & color);
+
+    Color getEmissiveColor() const;
+    void setEmissiveColor(const Color & color);
+
+    float getShininess() const;
+    void setShininess(float value);
+
+    float getTransparency() const;
+    void setTransparency(float value);
+
+    virtual PyObject *getPyObject(void);
 
 private:
-    MaterialType _matType;
+
+    friend class MaterialPy;
+
+    PyObject * getPropertyAsPyObject(const char * propName) const;
+
+    void setPropertyFromPyObject(const char * propName, const PyObject * value);
+
+    const char *getPropertyName(int id) const;
+
+    App::MaterialDatabase * getDatabase() const;
+
+    void setInternalIds();
+
+    Py::Object PythonObject;
+    const App::MaterialSource * _matSource;
+    std::vector<boost::any> _matProperties;
 };
 
 } //namespace App

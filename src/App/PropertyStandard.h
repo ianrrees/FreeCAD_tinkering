@@ -1011,17 +1011,20 @@ public:
     
     /** Sets the property 
      */
-    void setValue(const Material &mat);
+    void setValue(Material *mat);
+
     void setAmbientColor(const Color& col);
     void setDiffuseColor(const Color& col);
     void setSpecularColor(const Color& col);
     void setEmissiveColor(const Color& col);
     void setShininess(float);
     void setTransparency(float);
+
+    void resolveMaterial(App::MaterialDatabase & database);
     
     /** This method returns a string representation of the property
      */
-    const Material &getValue(void) const;
+    const Material *getValue(void) const;
 
     virtual PyObject *getPyObject(void);
     virtual void setPyObject(PyObject *);
@@ -1037,7 +1040,8 @@ public:
     virtual unsigned int getMemSize (void) const{return sizeof(_cMat);}
     
 private:
-    Material _cMat;
+    std::string _Name;
+    Material * _cMat;
 };
 
 /** Material properties
@@ -1065,15 +1069,15 @@ public:
 
     /** Sets the property
     */
-    void setValue(const Material&);
+    void setValue(Material*);
 
     /// index operator
-    const Material& operator[] (const int idx) const { return _lValueList.operator[] (idx); }
+    const Material* operator[] (const int idx) const { return _lValueList.operator[] (idx); }
 
-    void  set1Value(const int idx, const Material& value){ _lValueList.operator[] (idx) = value; }
+    void  set1Value(const int idx, Material* value){ _lValueList.operator[] (idx) = value; }
 
-    void setValues(const std::vector<Material>& values);
-    const std::vector<Material> &getValues(void) const{ return _lValueList; }
+    void setValues(const std::vector<Material *> &values);
+    const std::vector<Material*> &getValues(void) const{ return _lValueList; }
 
     virtual PyObject *getPyObject(void);
     virtual void setPyObject(PyObject *);
@@ -1091,7 +1095,7 @@ public:
     virtual unsigned int getMemSize(void) const;
 
 private:
-    std::vector<Material> _lValueList;
+    std::vector<Material*> _lValueList;
 };
 
 

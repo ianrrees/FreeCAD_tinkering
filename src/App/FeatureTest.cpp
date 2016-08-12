@@ -31,7 +31,7 @@
 #include <Base/Unit.h>
 #include "FeatureTest.h"
 #include "Material.h"
-#include "Material.h"
+#include "MaterialDatabase.h"
 
 #ifdef _MSC_VER
 #pragma warning( disable : 4700 )
@@ -65,8 +65,9 @@ FeatureTest::FeatureTest()
   ADD_PROPERTY(ConstraintFloat ,(5.0));
   ConstraintFloat.setConstraints(&floatPercent);
 
+  App::MaterialDatabase mdb;
   App::Color c;
-  App::Material mat(App::Material::GOLD);
+  App::Material * mat = mdb.getMaterial("GOLD");
   ADD_PROPERTY(Colour      ,(c) );
   ADD_PROPERTY(ColourList  ,(c) );
   ADD_PROPERTY(Material    ,(mat));

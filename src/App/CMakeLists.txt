@@ -95,6 +95,12 @@ generate_from_xml(PartPy)
 generate_from_xml(ComplexGeoDataPy)
 generate_from_xml(PropertyContainerPy)
 generate_from_xml(MaterialPy)
+#generate_from_xml(MaterialCompositionPy)
+#generate_from_xml(MaterialStackPy)
+#generate_from_xml(PropertyPartMaterialPy)
+#generate_from_xml(MaterialDatabasePy)
+generate_from_xml(MaterialSourcePy)
+generate_from_xml(FileMaterialSourcePy)
 
 generate_from_py(FreeCADInit InitScript.h)
 generate_from_py(FreeCADTest TestScript.h)
@@ -116,6 +122,9 @@ SET(FreeCADApp_XML_SRCS
     MaterialPy.xml
 )
 SOURCE_GROUP("XML" FILES ${FreeCADApp_XML_SRCS})
+
+#    MaterialStackPy.xml
+#    PropertyPartMaterialPy.xml
 
 # The document stuff
 SET(Document_CPP_SRCS
@@ -159,6 +168,11 @@ SET(Document_CPP_SRCS
     TransactionalObject.cpp
     VRMLObject.cpp
     MaterialObject.cpp
+    MaterialDatabase.cpp
+    MaterialSource.cpp
+    DefaultMaterialSource.cpp
+    FileMaterialSource.cpp
+    DocumentMaterialSource.cpp
     MergeDocuments.cpp
     TextDocument.cpp
 )
@@ -197,6 +211,11 @@ SET(Document_HPP_SRCS
     TransactionalObject.h
     VRMLObject.h
     MaterialObject.h
+    MaterialDatabase.h
+    MaterialSource.h
+    DefaultMaterialSource.h
+    FileMaterialSource.h
+    DocumentMaterialSource.h
     MergeDocuments.h
     TextDocument.h
 )
@@ -210,29 +229,41 @@ SOURCE_GROUP("Document" FILES ${Document_SRCS})
 SET(Properties_CPP_SRCS
     DynamicProperty.cpp
     ObjectIdentifier.cpp
+    MaterialStack.cpp
+    MaterialComposition.cpp
     Property.cpp
     PropertyContainer.cpp
     PropertyContainerPyImp.cpp
     PropertyFile.cpp
     PropertyGeo.cpp
     PropertyLinks.cpp
+    PropertyPartMaterial.cpp
     PropertyPythonObject.cpp
     PropertyStandard.cpp
     PropertyUnits.cpp
     PropertyExpressionEngine.cpp
+    PropertyDocumentMaterialSource.cpp
 )
+
+#    MaterialStackPyImp.cpp
+#    PropertyPartMaterialPyImp.cpp
+
 SET(Properties_HPP_SRCS
     DynamicProperty.h
     ObjectIdentifier.h
+    MaterialStack.h
+    MaterialComposition.h
     Property.h
     PropertyContainer.h
     PropertyFile.h
     PropertyGeo.h
     PropertyLinks.h
+    PropertyPartMaterial.h
     PropertyPythonObject.h
     PropertyStandard.h
     PropertyUnits.h
     PropertyExpressionEngine.h
+    PropertyDocumentMaterialSource.h
 )
 SET(Properties_SRCS
     ${Properties_CPP_SRCS}

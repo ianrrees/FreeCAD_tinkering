@@ -2654,11 +2654,11 @@ QVariant PropertyMaterialItem::toolTip(const App::Property* prop) const
 {
     assert(prop && prop->getTypeId().isDerivedFrom(App::PropertyMaterial::getClassTypeId()));
 
-    const App::Material& value = static_cast<const App::PropertyMaterial*>(prop)->getValue();
-    QColor dc = value.diffuseColor.asValue<QColor>();
-    QColor ac = value.ambientColor.asValue<QColor>();
-    QColor sc = value.specularColor.asValue<QColor>();
-    QColor ec = value.emissiveColor.asValue<QColor>();
+    const App::Material* value = static_cast<const App::PropertyMaterial*>(prop)->getValue();
+    QColor dc = value->getDiffuseColor().asValue<QColor>();
+    QColor ac = value->getAmbientColor().asValue<QColor>();
+    QColor sc = value->getSpecularColor().asValue<QColor>();
+    QColor ec = value->getEmissiveColor().asValue<QColor>();
 
     QString data = QString::fromUtf8(
         "Diffuse color: [%1, %2, %3]\n"
@@ -2672,8 +2672,8 @@ QVariant PropertyMaterialItem::toolTip(const App::Property* prop) const
         .arg(ac.red()).arg(ac.green()).arg(ac.blue())
         .arg(sc.red()).arg(sc.green()).arg(sc.blue())
         .arg(ec.red()).arg(ec.green()).arg(ec.blue())
-        .arg(value.shininess)
-        .arg(value.transparency)
+        .arg(value->getShininess())
+        .arg(value->getTransparency())
         ;
 
     return QVariant(data);
@@ -2683,15 +2683,15 @@ QVariant PropertyMaterialItem::value(const App::Property* prop) const
 {
     assert(prop && prop->getTypeId().isDerivedFrom(App::PropertyMaterial::getClassTypeId()));
 
-    const App::Material& value = static_cast<const App::PropertyMaterial*>(prop)->getValue();
+    const App::Material* value = static_cast<const App::PropertyMaterial*>(prop)->getValue();
     Material mat;
 
-    mat.diffuseColor = value.diffuseColor.asValue<QColor>();
-    mat.ambientColor = value.ambientColor.asValue<QColor>();
-    mat.specularColor = value.specularColor.asValue<QColor>();
-    mat.emissiveColor = value.emissiveColor.asValue<QColor>();
-    mat.shininess = value.shininess;
-    mat.transparency = value.transparency;
+    mat.diffuseColor = value->getDiffuseColor().asValue<QColor>();
+    mat.ambientColor = value->getAmbientColor().asValue<QColor>();
+    mat.specularColor = value->getSpecularColor().asValue<QColor>();
+    mat.emissiveColor = value->getEmissiveColor().asValue<QColor>();
+    mat.shininess = value->getShininess();
+    mat.transparency = value->getTransparency();
 
     return QVariant::fromValue<Material>(mat);
 }
@@ -3077,15 +3077,15 @@ QVariant PropertyMaterialListItem::toolTip(const App::Property* prop) const
 {
     assert(prop && prop->getTypeId().isDerivedFrom(App::PropertyMaterialList::getClassTypeId()));
 
-    const std::vector<App::Material>& values = static_cast<const App::PropertyMaterialList*>(prop)->getValues();
+    const std::vector<App::Material*>& values = static_cast<const App::PropertyMaterialList*>(prop)->getValues();
     if (values.empty())
         return QVariant();
 
-    App::Material value = values.front();
-    QColor dc = value.diffuseColor.asValue<QColor>();
-    QColor ac = value.ambientColor.asValue<QColor>();
-    QColor sc = value.specularColor.asValue<QColor>();
-    QColor ec = value.emissiveColor.asValue<QColor>();
+    App::Material* value = values.front();
+    QColor dc = value->getDiffuseColor().asValue<QColor>();
+    QColor ac = value->getAmbientColor().asValue<QColor>();
+    QColor sc = value->getSpecularColor().asValue<QColor>();
+    QColor ec = value->getEmissiveColor().asValue<QColor>();
 
     QString data = QString::fromUtf8(
         "Diffuse color: [%1, %2, %3]\n"
@@ -3099,8 +3099,8 @@ QVariant PropertyMaterialListItem::toolTip(const App::Property* prop) const
         .arg(ac.red()).arg(ac.green()).arg(ac.blue())
         .arg(sc.red()).arg(sc.green()).arg(sc.blue())
         .arg(ec.red()).arg(ec.green()).arg(ec.blue())
-        .arg(value.shininess)
-        .arg(value.transparency)
+        .arg(value->getShininess())
+        .arg(value->getTransparency())
         ;
 
     return QVariant(data);
@@ -3110,17 +3110,17 @@ QVariant PropertyMaterialListItem::value(const App::Property* prop) const
 {
     assert(prop && prop->getTypeId().isDerivedFrom(App::PropertyMaterialList::getClassTypeId()));
 
-    const std::vector<App::Material>& value = static_cast<const App::PropertyMaterialList*>(prop)->getValues();
+    const std::vector<App::Material*>& value = static_cast<const App::PropertyMaterialList*>(prop)->getValues();
     QVariantList variantList;
 
-    for (std::vector<App::Material>::const_iterator it = value.begin(); it != value.end(); ++it) {
+    for (auto it = value.begin(); it != value.end(); ++it) {
         Material mat;
-        mat.diffuseColor = it->diffuseColor.asValue<QColor>();
-        mat.ambientColor = it->ambientColor.asValue<QColor>();
-        mat.specularColor = it->specularColor.asValue<QColor>();
-        mat.emissiveColor = it->emissiveColor.asValue<QColor>();
-        mat.shininess = it->shininess;
-        mat.transparency = it->transparency;
+        mat.diffuseColor = (*it)->getDiffuseColor().asValue<QColor>();
+        mat.ambientColor = (*it)->getAmbientColor().asValue<QColor>();
+        mat.specularColor = (*it)->getSpecularColor().asValue<QColor>();
+        mat.emissiveColor = (*it)->getEmissiveColor().asValue<QColor>();
+        mat.shininess = (*it)->getShininess();
+        mat.transparency = (*it)->getTransparency();
 
         variantList << QVariant::fromValue<Material>(mat);
     }

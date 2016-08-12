@@ -56,6 +56,8 @@
 #include <Base/Sequencer.h>
 #include <App/Annotation.h>
 #include <App/Application.h>
+#include <App/Material.h>
+#include <App/MaterialDatabase.h>
 #include <App/Document.h>
 #include <App/DocumentObjectGroup.h>
 #include <Gui/Application.h>
@@ -101,31 +103,34 @@ ViewProviderMeshCurvature::ViewProviderMeshCurvature()
     pcLinkRoot = new SoGroup;
     pcLinkRoot->ref();
 
-    App::Material mat;
+    App::MaterialSource * source = App::GetApplication().getMaterialDatabase().getMaterialSource("Document");
+    App::Material * mat = source->createMaterial("default-material");
+    mat->setProperty("Father", "DEFAULT");
+
     const SbColor* cols;
     if (pcColorMat->ambientColor.getNum() == 1) {
         cols = pcColorMat->ambientColor.getValues(0);
-        mat.ambientColor.setPackedValue(cols[0].getPackedValue());
+        mat->setAmbientColor(App::Color(cols[0].getPackedValue()));
     }
     if (pcColorMat->diffuseColor.getNum() == 1) {
         cols = pcColorMat->diffuseColor.getValues(0);
-        mat.diffuseColor.setPackedValue(cols[0].getPackedValue());
+        mat->setDiffuseColor(App::Color(cols[0].getPackedValue()));
     }
     if (pcColorMat->emissiveColor.getNum() == 1) {
         cols = pcColorMat->emissiveColor.getValues(0);
-        mat.emissiveColor.setPackedValue(cols[0].getPackedValue());
+        mat->setEmissiveColor(App::Color(cols[0].getPackedValue()));
     }
     if (pcColorMat->specularColor.getNum() == 1) {
         cols = pcColorMat->specularColor.getValues(0);
-        mat.specularColor.setPackedValue(cols[0].getPackedValue());
+        mat->setSpecularColor(App::Color(cols[0].getPackedValue()));
     }
     if (pcColorMat->shininess.getNum() == 1) {
         const float* shiny = pcColorMat->shininess.getValues(0);
-        mat.shininess = shiny[0];
+        mat->setShininess(shiny[0]);
     }
     if (pcColorMat->transparency.getNum() == 1) {
         const float* trans = pcColorMat->transparency.getValues(0);
-        mat.transparency = trans[0];
+        mat->setTransparency(trans[0]);
     }
 
     ADD_PROPERTY(TextureMaterial,(mat));
@@ -143,12 +148,12 @@ ViewProviderMeshCurvature::~ViewProviderMeshCurvature()
 void ViewProviderMeshCurvature::onChanged(const App::Property* prop)
 {
     if (prop == &TextureMaterial) {
-        const App::Material& Mat = TextureMaterial.getValue();
-        pcColorMat->ambientColor.setValue(Mat.ambientColor.r,Mat.ambientColor.g,Mat.ambientColor.b);
-        pcColorMat->specularColor.setValue(Mat.specularColor.r,Mat.specularColor.g,Mat.specularColor.b);
-        pcColorMat->emissiveColor.setValue(Mat.emissiveColor.r,Mat.emissiveColor.g,Mat.emissiveColor.b);
-        pcColorMat->shininess.setValue(Mat.shininess);
-        pcColorMat->transparency.setValue(Mat.transparency);
+        const App::Material * Mat = TextureMaterial.getValue();
+        pcColorMat->ambientColor.setValue(Mat->getAmbientColor().r,Mat->getAmbientColor().g,Mat->getAmbientColor().b);
+        pcColorMat->specularColor.setValue(Mat->getSpecularColor().r,Mat->getSpecularColor().g,Mat->getSpecularColor().b);
+        pcColorMat->emissiveColor.setValue(Mat->getEmissiveColor().r,Mat->getEmissiveColor().g,Mat->getEmissiveColor().b);
+        pcColorMat->shininess.setValue(Mat->getShininess());
+        pcColorMat->transparency.setValue(Mat->getTransparency());
     }
 
     ViewProviderDocumentObject::onChanged(prop);

@@ -81,10 +81,9 @@ void DlgMaterialPropertiesImp::on_ambientColor_changed()
     for (std::vector<ViewProvider*>::iterator it= Objects.begin();it!=Objects.end();++it) {
         App::Property* prop = (*it)->getPropertyByName(material.c_str());
         if (prop && prop->getTypeId().isDerivedFrom(App::PropertyMaterial::getClassTypeId())) {
-            App::PropertyMaterial* ShapeMaterial = (App::PropertyMaterial*)prop;
-            App::Material mat = ShapeMaterial->getValue();
-            mat.ambientColor = ambient;
-            ShapeMaterial->setValue(mat);
+            App::PropertyMaterial* ShapeMaterial = static_cast<App::PropertyMaterial*>(prop);
+
+            ShapeMaterial->setAmbientColor(ambient);
         }
     }
 }
@@ -104,9 +103,8 @@ void DlgMaterialPropertiesImp::on_diffuseColor_changed()
         App::Property* prop = (*it)->getPropertyByName(material.c_str());
         if (prop && prop->getTypeId().isDerivedFrom(App::PropertyMaterial::getClassTypeId())) {
             App::PropertyMaterial* ShapeMaterial = (App::PropertyMaterial*)prop;
-            App::Material mat = ShapeMaterial->getValue();
-            mat.diffuseColor = diffuse;
-            ShapeMaterial->setValue(mat);
+
+            ShapeMaterial->setDiffuseColor(diffuse);
         }
     }
 }
@@ -126,9 +124,8 @@ void DlgMaterialPropertiesImp::on_emissiveColor_changed()
         App::Property* prop = (*it)->getPropertyByName(material.c_str());
         if (prop && prop->getTypeId().isDerivedFrom(App::PropertyMaterial::getClassTypeId())) {
             App::PropertyMaterial* ShapeMaterial = (App::PropertyMaterial*)prop;
-            App::Material mat = ShapeMaterial->getValue();
-            mat.emissiveColor = emissive;
-            ShapeMaterial->setValue(mat);
+
+            ShapeMaterial->setEmissiveColor(emissive);
         }
     }
 }
@@ -148,9 +145,8 @@ void DlgMaterialPropertiesImp::on_specularColor_changed()
         App::Property* prop = (*it)->getPropertyByName(material.c_str());
         if (prop && prop->getTypeId().isDerivedFrom(App::PropertyMaterial::getClassTypeId())) {
             App::PropertyMaterial* ShapeMaterial = (App::PropertyMaterial*)prop;
-            App::Material mat = ShapeMaterial->getValue();
-            mat.specularColor = specular;
-            ShapeMaterial->setValue(mat);
+
+            ShapeMaterial->setSpecularColor(specular);
         }
     }
 }
@@ -165,9 +161,8 @@ void DlgMaterialPropertiesImp::on_shininess_valueChanged(int sh)
         App::Property* prop = (*it)->getPropertyByName(material.c_str());
         if (prop && prop->getTypeId().isDerivedFrom(App::PropertyMaterial::getClassTypeId())) {
             App::PropertyMaterial* ShapeMaterial = (App::PropertyMaterial*)prop;
-            App::Material mat = ShapeMaterial->getValue();
-            mat.shininess = shininess;
-            ShapeMaterial->setValue(mat);
+
+            ShapeMaterial->setShininess(shininess);
         }
     }
 }
@@ -183,25 +178,25 @@ void DlgMaterialPropertiesImp::setViewProviders(const std::vector<Gui::ViewProvi
         App::Property* prop = (*it)->getPropertyByName(material.c_str());
         if (prop && prop->getTypeId().isDerivedFrom(App::PropertyMaterial::getClassTypeId())) {
             App::PropertyMaterial* ShapeMaterial = (App::PropertyMaterial*)prop;
-            App::Material mat = ShapeMaterial->getValue();
-            int r = int(mat.ambientColor.r * 255.0f);
-            int g = int(mat.ambientColor.g * 255.0f);
-            int b = int(mat.ambientColor.b * 255.0f);
+            const App::Material * mat = ShapeMaterial->getValue();
+            int r = int(mat->getAmbientColor().r * 255.0f);
+            int g = int(mat->getAmbientColor().g * 255.0f);
+            int b = int(mat->getAmbientColor().b * 255.0f);
             ambientColor->setColor( QColor(r,g,b) );
-            r = int(mat.diffuseColor.r * 255.0f);
-            g = int(mat.diffuseColor.g * 255.0f);
-            b = int(mat.diffuseColor.b * 255.0f);
+            r = int(mat->getDiffuseColor().r * 255.0f);
+            g = int(mat->getDiffuseColor().g * 255.0f);
+            b = int(mat->getDiffuseColor().b * 255.0f);
             diffuseColor->setColor( QColor(r,g,b) );
-            r = int(mat.emissiveColor.r * 255.0f);
-            g = int(mat.emissiveColor.g * 255.0f);
-            b = int(mat.emissiveColor.b * 255.0f);
+            r = int(mat->getEmissiveColor().r * 255.0f);
+            g = int(mat->getEmissiveColor().g * 255.0f);
+            b = int(mat->getEmissiveColor().b * 255.0f);
             emissiveColor->setColor( QColor(r,g,b) );
-            r = int(mat.specularColor.r * 255.0f);
-            g = int(mat.specularColor.g * 255.0f);
-            b = int(mat.specularColor.b * 255.0f);
+            r = int(mat->getSpecularColor().r * 255.0f);
+            g = int(mat->getSpecularColor().g * 255.0f);
+            b = int(mat->getSpecularColor().b * 255.0f);
             specularColor->setColor( QColor(r,g,b) );
             shininess->blockSignals(true);
-            shininess->setValue((int)(100.0f * (mat.shininess+0.001f)));
+            shininess->setValue((int)(100.0f * (mat->getShininess()+0.001f)));
             shininess->blockSignals(false);
             break;
         }

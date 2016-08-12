@@ -54,7 +54,6 @@ ViewProviderOriginFeature::ViewProviderOriginFeature () {
     ADD_PROPERTY_TYPE ( Size, (ViewProviderOrigin::defaultSize()), 0, App::Prop_ReadOnly,
     QT_TRANSLATE_NOOP("App::Property", "Visual size of the feature"));
 
-    ShapeColor.setValue ( 50.f/255, 150.f/255, 250.f/255 ); // Set default color for origin (light-blue)
     BoundingBox.setStatus(App::Property::Hidden, true); // Hide Boundingbox from the user due to it doesn't make sense
 
     // Create node for scaling the origin
@@ -83,6 +82,8 @@ void ViewProviderOriginFeature::attach(App::DocumentObject* pcObject)
 {
     ViewProviderGeometryObject::attach(pcObject);
 
+    ShapeColor.setValue ( 50.f/255, 150.f/255, 250.f/255 ); // Set default color for origin (light-blue)   
+    
     float defaultSz = ViewProviderOrigin::defaultSize();
     float sz = Size.getValue () / defaultSz;
 
