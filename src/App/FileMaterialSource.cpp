@@ -40,7 +40,7 @@ FileMaterialSource::FileMaterialSource(const char * name, const char * _director
     : MaterialSource(name)
     , directory(_directory)
 {
-    Base::Console().Log("Adding material source %s, from directory %s\n", name, directory);
+    Base::Console().Log("Adding material source %s, from directory %s\n", name, _directory);
 }
 
 Material * FileMaterialSource::readMaterial(const std::string & filename) const
