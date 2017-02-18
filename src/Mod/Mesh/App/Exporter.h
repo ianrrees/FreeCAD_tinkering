@@ -26,7 +26,9 @@
 #include <map>
 #include <ostream>
 
-#include <App/Property.h>
+#include "Base/Type.h"
+
+#include "App/Property.h"
 
 #include "MeshFeature.h"
 #include "Core/MeshIO.h"
@@ -48,6 +50,8 @@ namespace Mesh
 class Exporter
 {
     public:
+        Exporter();
+
         virtual bool addMeshFeat(App::DocumentObject *obj) = 0;
         virtual bool addPartFeat(App::DocumentObject *obj, float tol) = 0;
 
@@ -57,12 +61,20 @@ class Exporter
          * added successfully.
          */
         bool addAppGroup(App::DocumentObject *obj, float tol);
+
+        bool addObject(App::DocumentObject *obj, float tol);
+
         virtual ~Exporter() = default;
 
     protected:
         /// Does some simple escaping of characters for XML-type exports
         //TODO: Use xerces or something instead?
         static std::string xmlEscape(const std::string &input);
+
+        const Base::Type meshFeatId;
+        const Base::Type partFeatId;
+        const Base::Type appPartId;
+        const Base::Type appDOGId;
 };
 
 /// Creates a single mesh, in a file, from one or more objects
