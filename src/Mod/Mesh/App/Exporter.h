@@ -24,6 +24,7 @@
 #define MESH_EXPORTER_H
 
 #include <map>
+#include <vector>
 #include <ostream>
 
 #include "Base/Type.h"
@@ -95,6 +96,11 @@ class MergeExporter : public Exporter
         std::string fName;
 };
 
+/// Describes a material and renders it to AMF markup
+class AmfMaterial
+{
+};
+
 /// Used for exporting to Additive Manufacturing File (AMF) format
 /*!
  * The constructor and destructor write the beginning and end of the AMF,
@@ -119,37 +125,53 @@ class AmfExporter : public Exporter
         bool addPartFeat(App::DocumentObject *obj, float tol) override;
 
         /*!
-         * meta is included for the AMF object created
+         * \arg \c meta is included for the AMF object created.
+         * \arg \c materialId is 1 + an index in to materials, or 0 if no
+         * material should be specified for this mesh.
          */
-        bool addMesh(const MeshCore::MeshKernel &kernel,
-                     const std::map<std::string, std::string> &meta);
-        
+        bool addMesh( const MeshCore::MeshKernel &kernel,
+                      const std::map<std::string, std::string> &meta,
+                      int materialId = 0 );
+
     private:
+        /// If obj has a material, add it to materials and return it's AMF ID
+        /*!
+         * \returns 0 when there is no material associated with obj
+         */
+        int getMaterialId(const App::DocumentObject *obj);
+
+        /// Vector of materials used in the AMF file.
+        /*!
+         * Within the AMF file, material ID 0 is the reservered for "no
+         * material (void)", so material ID N maps to materials[N-1]
+         */
+        std::vector<AmfMaterial> materials;
+
         std::ostream *outputStreamPtr;
         int nextObjectIndex;
 
-    /// Helper for putting Base::Vector3f objects into a std::map in addMesh()
-    class VertLess
-    {
-        public:
-        bool operator()(const Base::Vector3f &a, const Base::Vector3f &b) const
+        /// Helper for putting Base::Vector3f in to a std::map in addMesh()
+        class VertLess
         {
-            if (a.x == b.x) {
-                if (a.y == b.y) {
-                    if (a.z == b.z) {
-                        return false;
+            public:
+            bool operator()(const Base::Vector3f &a, const Base::Vector3f &b) const
+            {
+                if (a.x == b.x) {
+                    if (a.y == b.y) {
+                        if (a.z == b.z) {
+                            return false;
+                        } else {
+                            return a.z < b.z;
+                        }
                     } else {
-                        return a.z < b.z;
+                        return a.y < b.y;
                     }
                 } else {
-                    return a.y < b.y;
+                    return a.x < b.x;
                 }
-            } else {
-                return a.x < b.x;
             }
-        }
-    };
-};  // class AmfExporter
+        }; // class VertLess
+}; // class AmfExporter
 
 } // namespace Mesh
 #endif // MESH_EXPORTER_H

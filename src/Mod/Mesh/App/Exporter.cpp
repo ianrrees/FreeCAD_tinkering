@@ -243,6 +243,12 @@ AmfExporter::AmfExporter( std::string fileName,
 AmfExporter::~AmfExporter()
 {
     if (outputStreamPtr) {
+        for (auto matId(0); matId < materials.size(); ++matId) {
+            *outputStreamPtr << "\t<material id=\"" << matId + 1 <<"\">\n";
+            // TODO output material[matId] here
+            *outputStreamPtr << "\t</material>\n";
+        }
+
         *outputStreamPtr << "\t<constellation id=\"0\">\n";
         for (auto objId(0); objId < nextObjectIndex; ++objId) {
             *outputStreamPtr << "\t\t<instance objectid=\"" << objId << "\">\n"
@@ -260,7 +266,7 @@ AmfExporter::~AmfExporter()
 bool AmfExporter::addPartFeat(App::DocumentObject *obj, float tol)
 {
     auto *shape(obj->getPropertyByName("Shape"));
-    // TODO: Look into a different way to extract mesh with vertex normals
+
     if (shape && shape->getTypeId().isDerivedFrom(App::PropertyComplexGeoData::getClassTypeId())) {
         Base::Reference<MeshObject> mesh(new MeshObject());
 
@@ -281,7 +287,7 @@ bool AmfExporter::addPartFeat(App::DocumentObject *obj, float tol)
         std::map<std::string, std::string> meta;
         meta["name"] = xmlEscape(obj->Label.getStrValue());
 
-        return addMesh(kernel, meta);
+        return addMesh(kernel, meta, getMaterialId(obj));
     }
     return false;
 }
@@ -296,11 +302,12 @@ bool AmfExporter::addMeshFeat(App::DocumentObject *obj)
     std::map<std::string, std::string> meta;
     meta["name"] = xmlEscape(obj->Label.getStrValue());
 
-    return addMesh(kernel, meta);
+    return addMesh(kernel, meta, getMaterialId(obj));
 }
 
-bool AmfExporter::addMesh(const MeshCore::MeshKernel &kernel,
-                          const std::map<std::string, std::string> &meta)
+bool AmfExporter::addMesh( const MeshCore::MeshKernel &kernel,
+                           const std::map<std::string, std::string> &meta,
+                           int materialId /* =0 */ )
 {
     if (!outputStreamPtr || outputStreamPtr->bad()) {
         return false;
@@ -370,8 +377,13 @@ bool AmfExporter::addMesh(const MeshCore::MeshKernel &kernel,
         seq.next(true); // allow to cancel
     }
 
-    *outputStreamPtr << "\t\t\t</vertices>\n"
-                     << "\t\t\t<volume>\n";
+    *outputStreamPtr << "\t\t\t</vertices>\n";
+    if (materialId) {
+        *outputStreamPtr << "\t\t\t<volume materialid=\""
+                         << materialId << "\">\n";
+    } else {
+        *outputStreamPtr << "\t\t\t<volume>\n";
+    }
     
     // Now that we've output all the vertices, we can
     // output the facets that refer to them!
@@ -391,5 +403,15 @@ bool AmfExporter::addMesh(const MeshCore::MeshKernel &kernel,
 
     ++nextObjectIndex;
     return true;
+}
+
+int AmfExporter::getMaterialId(const App::DocumentObject *obj)
+{
+    if(1 /*TODO test if obj has a material, etc */) {
+        materials.push_back( AmfMaterial() );
+        return materials.size();
+    }
+
+    return 0;
 }
 
