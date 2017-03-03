@@ -1,9 +1,3 @@
-import os
-import sys
-from subprocess import Popen, PIPE, check_call, check_output
-import pprint
-import re
-import logging
 
 # This script is intended to help copy dynamic libraries used by FreeCAD into
 # a Mac application bundle and change dyld commands as appropriate.  There are
@@ -12,6 +6,14 @@ import logging
 #  * @rpath is used rather than @executable_path because the libraries need to
 #    be loadable through a Python interpreter and the FreeCAD binaries.
 #  * We need to be able to add multiple rpaths in some libraries.
+
+from __future__ import print_function
+
+import os
+import sys
+from subprocess import Popen, PIPE, check_call, check_output
+import re
+import logging
 
 # Assume any libraries in these paths don't need to be bundled
 systemPaths = [ "/System/", "/usr/lib/",
@@ -83,10 +85,15 @@ class DepsGraph:
                             stack.append(ck)
                     operation(self, self.graph[node_key], *op_args)
 
+def otool(arg, path):
+    "Use like otool('-l', somefile), returns list of strings from result"
+    raw = check_output(["otool", arg, path])
+    parts = (x.strip().decode("UTF-8") for x in raw.split(b"\n"))
+    return [x for x in parts if len(x) > 0]
 
 def is_macho(path):
     output = check_output(["file", path])
-    if output.count("Mach-O") != 0:
+    if output.count(b"Mach-O") != 0:
         return True
 
     return False
@@ -109,8 +116,7 @@ def get_path(name, search_paths):
     return None
 
 def list_install_names(path_macho):
-    output = check_output(["otool", "-L", path_macho])
-    lines = output.split("\t")
+    lines = otool("-L", path_macho)
     libs = []
 
     #first line is the the filename, and if it is a library, the second line
@@ -154,7 +160,7 @@ def create_dep_nodes(install_names, search_paths):
         #location to use
         path = get_path(lib_name, search_paths)
 
-        if install_path != "" and lib[0] != "@":
+        if len(install_path) > 0 and lib[0] != "@":
             #we have an absolute path install name
             if not path:
                 path = install_path
@@ -199,15 +205,17 @@ def should_visit(prefix, path_filters, path):
 
     return False
 
-def build_deps_graph(graph, bundle_path, dirs_filter=None, search_paths=[]):
+def build_deps_graph(bundle_path, dirs_filter=None, search_paths=[]):
     """
     Walk bundle_path and build a graph of the encountered Mach-O binaries
     and there dependencies
     """
+
     #make a local copy since we add to it
     s_paths = list(search_paths)
 
-    visited = {}
+    visited = []
+    toVisit = []
 
     for root, dirs, files in os.walk(bundle_path):
         if dirs_filter != None:
@@ -221,35 +229,40 @@ def build_deps_graph(graph, bundle_path, dirs_filter=None, search_paths=[]):
             ext = os.path.splitext(f)[1]
             if ( (ext == "" and is_macho(fpath)) or
                  ext == ".so" or ext == ".dylib" ):
-                visited[fpath] = False
+                toVisit.append(fpath)
 
+    graph = DepsGraph()
     stack = []
-    for k in visited.keys():
-        if not visited[k]:
-            stack.append(k)
-            while stack:
-                k2 = stack.pop()
-                visited[k2] = True
 
-                node = Node(os.path.basename(k2), os.path.dirname(k2))
-                if not graph.in_graph(node):
-                    graph.add_node(node)
+    while toVisit:
+        stack.append( toVisit.pop() )
 
-                try:
-                   deps = create_dep_nodes(list_install_names(k2), s_paths)
-                except:
-                   logging.error("Failed to resolve dependency in " + k2)
-                   raise
+        while stack:
+            k2 = stack.pop()
+            visited.append(k2)
 
-                for d in deps:
-                    if d.name not in node.children:
-                        node.children.append(d.name)
+            node = Node(os.path.basename(k2), os.path.dirname(k2))
+            if not graph.in_graph(node):
+                graph.add_node(node)
 
-                    dk = os.path.join(d.path, d.name)
-                    if dk not in visited.keys():
-                        visited[dk] = False
-                    if not visited[dk]:
-                        stack.append(dk)
+            try:
+               deps = create_dep_nodes(list_install_names(k2), s_paths)
+            except:
+               logging.error("Failed to resolve dependency in " + k2)
+               raise
+
+            for d in deps:
+                if d.name not in node.children:
+                    node.children.append(d.name)
+
+                dk = os.path.join(d.path, d.name)
+
+                if dk not in visited:
+                    if dk not in toVisit:
+                        toVisit.append(dk)
+                    stack.append(dk)
+
+    return graph
 
 def in_bundle(lib, bundle_path):
     if lib.startswith(bundle_path):
@@ -272,12 +285,10 @@ def copy_into_bundle(graph, node, bundle_path):
 def get_rpaths(library):
     "Returns a list of rpaths specified within library"
 
-    out = check_output(["otool", "-l", library])
-
     pathRegex = r"^path (.*) \(offset \d+\)$"
     expectingRpath = False
     rpaths = []
-    for line in out.split('\n'):
+    for line in otool("-l", library):
         line = line.strip()
 
         if "cmd LC_RPATH" in line:
@@ -352,26 +363,27 @@ def print_node(graph, node, path):
     graph.visit(print_child, [node])
 
 def main():
+    #change to level to logging.DEBUG for diagnostic messages
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG,
+                        format="-- %(levelname)s: %(message)s" )
+
+    logging.debug("Called as '" + " ".join(sys.argv) + "'")
+
     if len(sys.argv) < 2:
-        print "Usage " + sys.argv[0] + " path [additional search paths]"
+        print("Usage " + sys.argv[0] + " path [additional search paths]")
         quit()
 
     path = sys.argv[1]
     bundle_path = os.path.abspath(os.path.join(path, "Contents"))
-    graph = DepsGraph()
     dir_filter = ["MacOS", "lib", "Mod", 
                   "lib/python2.7/site-packages",
                   "lib/python2.7/lib-dynload"]
     search_paths = [bundle_path + "/lib"] + sys.argv[2:]
 
-    #change to level to logging.DEBUG for diagnostic messages
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-                        format="-- %(levelname)s: %(message)s" )
-
     logging.info("Analyzing bundle dependencies...")
-    build_deps_graph(graph, bundle_path, dir_filter, search_paths)
+    graph = build_deps_graph(bundle_path, dir_filter, search_paths)
 
-    if logging.getLogger().getEffectiveLevel() == logging.DEBUG:
+    if logging.getLogger().isEnabledFor(logging.DEBUG):
        graph.visit(print_node, [bundle_path])
 
     logging.info("Copying external dependencies to bundle...")
