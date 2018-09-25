@@ -1986,6 +1986,7 @@ Document::getDependencyList(const std::vector<App::DocumentObject*>& objs) const
         ary.push_back(VertexMap[*it]);
     return ary;
 }
+#endif // #ifdef USE_OLD_DAG
 
 App::MaterialDatabase &Document::getMaterialDatabase()
 {
@@ -1998,7 +1999,6 @@ App::MaterialDatabase &Document::getMaterialDatabase()
 
     return *d->materialDatabase;
 }
-#endif
 
 void Document::_rebuildDependencyList(void)
 {

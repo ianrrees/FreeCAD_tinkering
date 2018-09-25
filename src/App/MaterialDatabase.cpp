@@ -147,7 +147,13 @@ PyObject * MaterialDatabase::string2python(const boost::any & data)
 boost::any MaterialDatabase::python2string(const PyObject * data)
 {
     PyObject* unicode = PyUnicode_AsUTF8String(const_cast<PyObject*>(data));
+
+#if PY_MAJOR_VERSION >= 3
+    std::string string = PyBytes_AsString(unicode);
+#else
     std::string string = PyString_AsString(unicode);
+#endif
+
     Py_DECREF(unicode);
 
     return string;

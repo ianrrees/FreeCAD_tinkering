@@ -191,7 +191,6 @@ void ViewProviderGeometryObject::updateData(const App::Property* prop)
         pcBoundingBox->minBounds.setValue(box.MinX, box.MinY, box.MinZ);
         pcBoundingBox->maxBounds.setValue(box.MaxX, box.MaxY, box.MaxZ);
     }
-    }
     else if (prop->getTypeId() == App::PropertyPartMaterial::getClassTypeId()) {
         const App::PropertyPartMaterial * materialProp = static_cast<const App::PropertyPartMaterial*>(prop);
         const App::MaterialComposition * mc = materialProp->getSolidMaterials(0);
@@ -226,12 +225,12 @@ void ViewProviderGeometryObject::updateData(const App::Property* prop)
 
             }
         }
-    else {
+    } else {
         ViewProviderDragger::updateData(prop);
     }
 }
 
-SoPickedPointList ViewProviderGeometryObject::getPickedPoints(const SbVec2s& pos, const View3DInventorViewer& viewer,bool pickAll) const
+SoPickedPointList ViewProviderGeometryObject::getPickedPoints(const SbVec2s& pos, const View3DInventorViewer& viewer, bool pickAll) const
 {
     SoSeparator* root = new SoSeparator;
     root->ref();

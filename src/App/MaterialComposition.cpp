@@ -22,10 +22,12 @@
 
 #include "PreCompiled.h"
 
-#include <Base/Exception.h>
-#include <Base/Reader.h>
-#include <Base/Writer.h>
-#include <Base/Tools.h>
+#include "Base/Exception.h"
+#include "Base/Reader.h"
+#include "Base/Writer.h"
+#include "Base/Tools.h"
+#include "Base/PyObjectBase.h"
+
 #include <boost/format.hpp>
 
 #include "MaterialComposition.h"
@@ -201,7 +203,8 @@ Py::Object Py::MaterialCompositionPy::getattr(const char *name)
                     return Py::asObject(value);
             }
             catch (Base::Exception & e) {
-                throw Py::Exception(boost::str(boost::format("Unable to resolve property %1% (missing material?)") % name));
+                throw Py::Exception(Base::BaseExceptionFreeCADError,
+                    boost::str(boost::format("Unable to resolve property %1% (missing material?)") % name));
             }
         }
 
